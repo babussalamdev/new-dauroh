@@ -6,7 +6,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   const router = useRouter()
 
   const api = axios.create({
-    baseURL: runtimeConfig.public.apiBase,
+    baseURL: runtimeConfig.public.apiBase as string,
     headers: {
       'Content-Type': 'application/json',
     },

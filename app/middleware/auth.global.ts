@@ -2,19 +2,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const accessToken = useCookie("AccessToken");
   const user = useState<any>("auth_user");
   const { getUser, logout } = useAuth();
-  const uuid = localStorage.getItem("uuid");
 
-  if (!uuid) {
-    const id = crypto.randomUUID();
-    localStorage.setItem("uuid", id);
+  // ✅ Hanya jalan di client
+  if (process.client) {
+    const uuid = localStorage.getItem("uuid");
+    if (!uuid) {
+      const id = crypto.randomUUID();
+      localStorage.setItem("uuid", id);
+    }
   }
 
-  const publicPages = ["/login"];
-
+  const publicPages = ["/login", "/register"];
   if (publicPages.includes(to.path)) return;
 
   if (!accessToken.value) {
-    return navigateTo("/login");
+    return await navigateTo("/login");
   }
 
   if (accessToken.value && !user.value) {
@@ -22,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       await getUser();
     } catch (error) {
       await logout();
-      return navigateTo("/login");
+      return await navigateTo("/login");
     }
   }
 });
