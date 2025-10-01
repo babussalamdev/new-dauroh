@@ -1,0 +1,1 @@
+export const useLoading = () => useState<boolean>('global_loading', () => false)

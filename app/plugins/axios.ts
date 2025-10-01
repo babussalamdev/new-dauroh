@@ -1,51 +1,45 @@
 import axios from 'axios'
-import Swal from 'sweetalert2'
+import { defineNuxtPlugin, useRuntimeConfig, useRouter } from '#app'
 
-export default defineNuxtPlugin((nuxtApp) => {
-  const runtimeConfig = useRuntimeConfig()
-  const router = useRouter()
-
-  const api = axios.create({
-    baseURL: runtimeConfig.public.apiBase as string,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-
-  // Interceptor untuk menambahkan token ke setiap request secara otomatis
-  api.interceptors.request.use((config) => {
-    const accessToken = useCookie('accessToken')
-    if (accessToken.value) {
-      config.headers.Authorization = `Bearer ${accessToken.value}`
-    }
-    return config
-  })
-
-  // Interceptor untuk menangani error secara global
-  api.interceptors.response.use(
-    response => response,
-    (error) => {
-      // Jika token expired/tidak valid (error 401)
-      if (error.response && error.response.status === 401) {
-        const accessToken = useCookie('accessToken')
-        accessToken.value = null // Hapus token yang salah
-        
-        Swal.fire({
-          title: 'Sesi Habis',
-          text: 'Silakan login kembali.',
-          icon: 'warning',
-          confirmButtonText: 'Login',
-        }).then(() => {
-          router.push('/login')
+export default defineNuxtPlugin(() => {
+    const config = useRuntimeConfig()
+    const router = useRouter()
+    
+    const createApi = (baseURL: string) => {
+        const instance = axios.create({
+            baseURL,
         })
-      }
-      return Promise.reject(error)
-    }
-  )
 
-  return {
-    provide: {
-      api: api,
-    },
-  }
-})
+        instance.interceptors.request.use((req) => {
+            const token = localStorage.getItem('IdToken')
+            if (token) {
+                req.headers.Authorization = `Bearer ${token}`
+            }
+            return req
+        })
+
+        instance.interceptors.response.use(
+            res => res,
+            async (error) => {
+                const originalRequest = error.config
+                if (error.response?.status === 401 && !originalRequest._retry) {
+                    originalRequest._retry = true
+                    const refreshToken = localStorage.get('RefreshToken')
+                    if (refreshToken) {
+                        console.log('error')
+                      } else {
+                        router.push('/signin')
+                      }
+                    }
+                    return Promise.reject(error)
+                  }
+                )
+                return instance
+              }
+              const apiBase = createApi(config.public.apiBase)
+              return {
+                provide: {
+                  apiBase
+                }
+              }
+            })

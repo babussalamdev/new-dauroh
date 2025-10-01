@@ -1,13 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  ssr:false,
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  ssr:false,
+  devServer: {
+    port: 3000
+  },
+  plugins: [
+    '~/plugins/axios.ts',
+    { src: '~/plugins/bootstrap.client.ts', mode: 'client' },
+  ],
 
     css: [
-    'bootstrap/dist/css/bootstrap.min.css', '@/assets/css/variables.scss'],
-     plugins: [{ src: '~/plugins/bootstrap.client.ts', mode: 'client' }],
-
+       'bootstrap/dist/css/bootstrap.min.css', '@/assets/css/variables.scss'],
    app: {
     head: {
       script: [
@@ -32,5 +37,10 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxt/fonts', 
     '@nuxt/icon', 
-  ]
+  ],
+    runtimeConfig: {
+    public: {
+      apiBase: process.env.API_BASE,
+    },
+  },
 })
