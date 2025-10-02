@@ -117,7 +117,7 @@ definePageMeta({ layout: "auth" });
 
 const { login, loading } = useAuth();
 
-const form = reactive({ email: "", password: "" });
+const form = reactive({ email:'', password:'' })
 
 const showPassword = ref(false);
 
@@ -126,8 +126,8 @@ function togglePasswordVisibility() {
 }
 
 const handleLogin = async () => {
-  await login(form);
-};
+  await login(form, 'user') // arahkan ke dashboard user
+}
 </script>
 
 <style scoped>

@@ -64,7 +64,8 @@
                 </li>
               </ul>
               <div class="card-body">
-                <NuxtLink to="/profile/edit" class="btn btn-outline-secondary w-100">Edit Profil</NuxtLink>
+                <NuxtLink to='/profile/edit' class="btn btn-outline-secondary w-100">
+                  Edit Profil</NuxtLink>
               </div>
             </div>
             <div class="card shadow-sm">

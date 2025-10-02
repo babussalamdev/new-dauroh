@@ -14,6 +14,9 @@ export default defineNuxtPlugin(() => {
             const token = localStorage.getItem('IdToken')
             if (token) {
                 req.headers.Authorization = `Bearer ${token}`
+            } else {
+              // hapus Authorization kalau token kosong
+              delete req.headers.Authorization
             }
             return req
         })

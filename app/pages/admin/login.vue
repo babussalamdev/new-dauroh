@@ -87,13 +87,13 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import { useAdminAuth } from "~/composables/useAdminAuth";
+import { useAuth } from "~/composables/useAuth";
 
 definePageMeta({ layout: "auth" });
 
-const { login } = useAdminAuth();
+const { login, loading } = useAuth()
 
-const form = reactive({ email: "", password: "" });
+const form = reactive({ email:'', password:'' })
 const showPassword = ref(false);
 
 function togglePasswordVisibility() {
@@ -101,8 +101,8 @@ function togglePasswordVisibility() {
 }
 
 const handleLogin = async () => {
-  await login(form);
-};
+  await login(form, 'admin') // arahkan ke dashboard admin
+}
 </script>
 
 <style scoped>

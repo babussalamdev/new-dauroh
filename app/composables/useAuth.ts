@@ -1,42 +1,50 @@
 import { useLoading } from '~/composables/useLoading'
-import Swal from "sweetalert2";
+import Swal from "sweetalert2"
+import type { AuthUser } from '~/types/auth'  // ⬅️ import tipe
 
 export const useAuth = () => {
-    const loading = useLoading() // panggil state global
-    const accessToken = useCookie("AccessToken", {
+  const loading = useLoading()
+  const accessToken = useCookie("AccessToken", {
     maxAge: 60 * 60 * 24,
     path: "/",
     sameSite: "lax",
-  });
+  })
 
-  const user = useState("auth_user", () => null)
+  const user = useState<AuthUser | null>("auth_user", () => null)  // ⬅️ pakai tipe AuthUser
   const router = useRouter()
   const { $apiBase } = useNuxtApp()
 
-  const login = async (data: any) => {
-    loading.value = true            // nyalain spinner global
-    try {
-      const res = await $apiBase.post("signin-account", data);
+const login = async (data: any, type: 'user' | 'admin' = 'user') => {
+  loading.value = true
+  try {
+    const res = await $apiBase.post("signin-account", data);
 
-      // simpan token di localStorage (supaya interceptor axios kebaca)
-      accessToken.value = res.data.AccessToken;
-      localStorage.setItem("IdToken", res.data.IdToken)
-      localStorage.setItem("RefreshToken", res.data.RefreshToken)
+    // simpan token
+    accessToken.value = res.data.AccessToken;
+    localStorage.setItem("IdToken", res.data.IdToken)
+    localStorage.setItem("RefreshToken", res.data.RefreshToken)
 
-      // kalau mau cookie juga:
-      await getUser()
-      router.push("/")
-    } catch (error: any) {
-      Swal.fire({
-        text: error.response?.data?.error || error.message || "Login gagal",
-        icon: "error",
-        showConfirmButton: false,
-        timer: 2000,
-      })
-    } finally {
-      loading.value = false          // matiin spinner global
+    // ambil profil
+    await getUser()
+
+    // redirect sesuai type login
+    if (type === 'admin') {
+      router.push('/admin')
+    } else {
+      router.push('/dashboard')
     }
+
+  } catch (error: any) {
+    Swal.fire({
+      text: error.response?.data?.error || error.message || "Login gagal",
+      icon: "error",
+      showConfirmButton: false,
+      timer: 2000,
+    })
+  } finally {
+    loading.value = false
   }
+}
 
   const logout = async () => {
     try {
@@ -56,13 +64,16 @@ export const useAuth = () => {
   const getUser = async () => {
     try {
       const res = await $apiBase.get("get-account")
-      user.value = res.data
+      user.value = res.data as AuthUser
     } catch (error) {
       user.value = null
       throw error
     }
   }
-  const isLoggedIn = computed(() => !!user.value)
+  
+  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'root')
+  const isLoggedIn = computed(() => user.value?.name)
+  
 
   return {
     user,
@@ -70,5 +81,6 @@ export const useAuth = () => {
     logout,
     getUser,
     isLoggedIn,
-}
+    isAdmin
+  }
 }

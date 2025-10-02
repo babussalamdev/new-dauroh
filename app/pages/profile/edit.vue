@@ -48,21 +48,18 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import Swal from 'sweetalert2';
-
-definePageMeta({
-  middleware: 'auth' // Halaman ini harus dilindungi
-});
+import { useAuth } from '~/composables/useAuth'
 
 useHead({
   title: 'Edit Profil'
 });
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter(); 
+const { user } = useAuth()
 
 const form = reactive({
-  name: authStore.user?.name || '',
-  email: authStore.user?.email || '',
+  name: user.value?.name || '',
+  email: user.value?.email || '',
   newPassword: '',
   confirmPassword: ''
 });

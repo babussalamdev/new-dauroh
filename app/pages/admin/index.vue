@@ -3,7 +3,6 @@
     <div class="container py-5">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Admin Dashboard</h1>
-        <span v-if="isLoggedIn" class="badge bg-primary fs-6">Halo, {{ userName }}</span>
       </div> 
 
       <ul class="nav nav-tabs mb-3" id="adminTab" role="tablist">
@@ -25,20 +24,8 @@
       </ul>
 
       <div class="tab-content" id="adminTabContent">
-        <div class="tab-pane fade show active" id="now-playing" role="tabpanel">
-          <AdminPosterCarouselManager />
-        </div>
-        <div class="tab-pane fade" id="top-movies" role="tabpanel">
-          <AdminTopCarouselManager />
-        </div>
         <div class="tab-pane fade" id="dauroh" role="tabpanel">
           <AdminTiketDaurohManager />
-        </div>
-        <div class="tab-pane fade" id="promos" role="tabpanel">
-          <AdminPromoCarouselManager />
-        </div>
-        <div class="tab-pane fade" id="studios" role="tabpanel">
-          <AdminStudioManager />
         </div>
       </div>
 
@@ -47,14 +34,21 @@
 </template>
 
 <script setup>
-import AdminPosterCarouselManager from '~/components/admin/PosterCarouselManager.vue';
-import AdminTopCarouselManager from '~/components/admin/TopCarouselManager.vue';
-import AdminTiketDaurohManager from '~/components/admin/TiketDaurohManager.vue';
-import AdminPromoCarouselManager from '~/components/admin/PromoCarouselManager.vue';
-import AdminStudioManager from '~/components/admin/StudioManager.vue';
-import { useAuth } from '~/composables/useAuth';
+import { useAuth } from '~/composables/useAuth'
 
-const { isLoggedIn, userName } = useAuth();
+definePageMeta({
+  middleware: () => {
+    const { isLoggedIn, isAdmin } = useAuth()
+    // kalau belum login atau bukan admin, lempar ke /
+    if (!isLoggedIn.value || !isAdmin.value) {
+      return navigateTo('/')
+    }
+  }
+})
+
+import AdminTiketDaurohManager from '~/components/admin/TiketDaurohManager.vue'
+
+const { isLoggedIn, userName } = useAuth()
 </script>
 
 <style scoped>

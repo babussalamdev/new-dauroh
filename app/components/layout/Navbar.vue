@@ -81,29 +81,31 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
-import { useAuth } from '~/composables/useAuth';
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useAuth } from '~/composables/useAuth'
 
-const isScrolled = ref(false);
-const { user, logout, isLoggedIn, isAdmin, userName } = useAuth();
+const isScrolled = ref(false)
+const { user, logout, isLoggedIn, isAdmin } = useAuth()
 
+// tambahkan computed username biar kebaca di template
+const userName = computed(() => user.value?.name || '')
 
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50;
-};
+  isScrolled.value = window.scrollY > 50
+}
 
 const handleLogout = async () => {
-  await logout();
-};
+  await logout()
+}
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
-});
+  window.addEventListener('scroll', handleScroll)
+})
 
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', handleScroll);
-});
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <style scoped>
