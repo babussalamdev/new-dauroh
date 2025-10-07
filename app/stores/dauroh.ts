@@ -1,27 +1,29 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 
-// Interface (Blueprint Data)
+// Interface Dauroh
 export interface Dauroh {
-  id: number;
-  title: string;
-  genre: string;
-  poster: string;
-  overlayTitle?: string;
-  overlaySubtitle?: string;
-  topOverlay?: string;
-  date?: string;
+  id: number | null
+  title: string
+  genre: string
+  poster: string
+  kuota?: number
+  pemateri?: string
+  waktu?: string
+  tempat?: string
+  fasilitas?: string
+  syarat?: string
 }
+
 export interface StudioCard {
-  id: number;
-  title: string;
-  text: string;
-  link: string;
-  image: string;
+  id: number
+  title: string
+  text: string
+  link: string
+  image: string
 }
 
 export const useDaurohStore = defineStore('dauroh', {
   state: () => ({
-    // State untuk fungsionalitas UI
     searchQuery: '',
     isLoadingDaurohs: false,
     isLoadingTopDaurohs: false,
@@ -29,53 +31,52 @@ export const useDaurohStore = defineStore('dauroh', {
     isLoadingPromos: false,
     isLoadingStudios: false,
 
-    
     nowPlayingDauroh: [] as Dauroh[],
     topDauroh: [] as Dauroh[],
     tiketDauroh: [] as Dauroh[],
     promoDauroh: [] as Dauroh[],
-    studioCards: [] as StudioCard[],
+    studioCards: [] as StudioCard[]
   }),
 
   getters: {
-    // Getters
     filteredTiketDauroh(state): Dauroh[] {
       if (!state.searchQuery) {
-        return state.tiketDauroh;
+        return state.tiketDauroh
       }
       return state.tiketDauroh.filter(dauroh =>
         dauroh.title.toLowerCase().includes(state.searchQuery.toLowerCase())
-      );
+      )
     },
     tiketDaurohChunks(): Dauroh[][] {
-      const sourceData = this.filteredTiketDauroh;
-      const chunkSize = 4;
-      const chunks = [];
+      const sourceData = this.filteredTiketDauroh
+      const chunkSize = 4
+      const chunks: Dauroh[][] = []
       for (let i = 0; i < sourceData.length; i += chunkSize) {
-        chunks.push(sourceData.slice(i, i + chunkSize));
+        chunks.push(sourceData.slice(i, i + chunkSize))
       }
-      return chunks;
+      return chunks
     }
   },
 
   actions: {
-    //  UI dan fetching data
     setSearchQuery(query: string) {
-      this.searchQuery = query;
+      this.searchQuery = query
     },
-    
-    async fetchDaurohs() {
-      this.isLoadingDaurohs = true;
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // const response = await $api.get('/daurohs');
-      // this.nowPlayingDauroh = response.data;
-      this.isLoadingDaurohs = false;
-    },
-    
+
     async fetchTiketDauroh() {
-      this.isLoadingTiketDauroh = true;
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      this.isLoadingTiketDauroh = false;
+      this.isLoadingTiketDauroh = true
+      // simulasi fetch API
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      this.isLoadingTiketDauroh = false
     },
+
+    async addTiketDauroh(newDauroh: Dauroh) {
+      // contoh BE:
+      // const res = await $apiBase.post('/tiket-dauroh', newDauroh)
+      // this.tiketDauroh.push(res.data)
+
+      newDauroh.id = Date.now() // id dummy
+      this.tiketDauroh.push(newDauroh)
+    }
   }
-});
+})

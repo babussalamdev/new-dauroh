@@ -19,9 +19,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="dauroh in daurohStore.tiketDauroh" :key="dauroh.id">
+            <tr v-for="dauroh in daurohStore.tiketDauroh" :key="dauroh.id || dauroh.title">
               <th scope="row">{{ dauroh.id }}</th>
-              <td><img :src="dauroh.poster" :alt="dauroh.title" width="50" class="rounded"></td>
+              <td>
+                <img :src="dauroh.poster" :alt="dauroh.title" width="50" class="rounded" />
+              </td>
               <td>{{ dauroh.title }}</td>
               <td>{{ dauroh.genre }}</td>
               <td class="text-end">
@@ -38,15 +40,17 @@
     </div>
   </div>
 
+  <!-- Modal tambah/edit -->
   <AdminDaurohFormModal
     v-if="showFormModal"
     :show="showFormModal"
     :is-editing="isEditing"
-    :dauroh="selectedDauroh"
+    :dauroh="selectedDauroh || undefined"
     @close="closeFormModal"
     @save="handleSave"
   />
 
+  <!-- Modal hapus -->
   <AdminDeleteConfirmationModal
     v-if="showDeleteModal"
     :show="showDeleteModal"
@@ -56,71 +60,79 @@
   />
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import { useDaurohStore } from '~/stores/dauroh';
-import AdminDaurohFormModal from '~/components/admin/AdminDaurohFormModal.vue';
-import AdminDeleteConfirmationModal from '~/components/admin/AdminDeleteConfirmationModal.vue';
-// Import spinner
-import CommonLoadingSpinner from '~/components/common/LoadingSpinner.vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useDaurohStore } from '@/stores/dauroh' // ✅ pakai @ alias
+import AdminDaurohFormModal from '@/components/admin/AdminDaurohFormModal.vue'
+import AdminDeleteConfirmationModal from '@/components/admin/AdminDeleteConfirmationModal.vue'
+import CommonLoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import type { Dauroh } from '@/stores/dauroh'
 
-const daurohStore = useDaurohStore();
+const daurohStore = useDaurohStore()
 
-const showFormModal = ref(false);
-const showDeleteModal = ref(false);
-const isEditing = ref(false);
-const selectedDauroh = ref(null);
+const showFormModal = ref(false)
+const showDeleteModal = ref(false)
+const isEditing = ref(false)
+const selectedDauroh = ref<Dauroh | null>(null)
 
 onMounted(() => {
-  // Panggil fungsi fetch untuk simulasi loading
-  // Kita asumsikan data selalu di-fetch ulang saat komponen dibuka
-  daurohStore.fetchTiketDauroh();
-});
+  daurohStore.fetchTiketDauroh()
+})
 
-// ... (semua fungsi modal lainnya tidak perlu diubah)
 const openAddModal = () => {
-  isEditing.value = false;
-  selectedDauroh.value = { title: '', genre: '', poster: '' };
-  showFormModal.value = true;
-};
+  isEditing.value = false
+selectedDauroh.value = {
+  id: null,
+  title: '',       // kasih string kosong juga
+  genre: '',
+  poster: ''
+}
+  showFormModal.value = true
+}
 
-const openUpdateModal = (dauroh) => {
-  isEditing.value = true;
-  selectedDauroh.value = { ...dauroh };
-  showFormModal.value = true;
-};
+const openUpdateModal = (dauroh: Dauroh) => {
+  // untuk sekarang belum ada update di store, jadi kita hanya simpan state
+  isEditing.value = true
+  selectedDauroh.value = { ...dauroh }
+  showFormModal.value = true
+}
 
 const closeFormModal = () => {
-  showFormModal.value = false;
-};
+  showFormModal.value = false
+}
 
-const handleSave = (daurohData) => {
-  const payload = {
+const handleSave = (daurohData: Dauroh) => {
+  const payload: Dauroh = {
+    id: daurohData.id ?? null,
     title: daurohData.title,
     genre: daurohData.genre,
     poster: daurohData.poster
-  };
-  if (isEditing.value) {
-    daurohStore.updateTiketDauroh(daurohData.id, payload);
-  } else {
-    daurohStore.addTiketDauroh(payload);
   }
-};
 
-const openDeleteModal = (dauroh) => {
-  selectedDauroh.value = dauroh;
-  showDeleteModal.value = true;
-};
+  if (isEditing.value) {
+    // TODO: buat action updateTiketDauroh di store kalau mau edit
+    console.log('Fitur edit belum diimplementasi', payload)
+  } else {
+    // contoh BE: await daurohStore.addTiketDaurohAPI(payload)
+    daurohStore.addTiketDauroh(payload) // ✅ ini sudah ada di store
+  }
+  showFormModal.value = false
+}
+
+const openDeleteModal = (dauroh: Dauroh) => {
+  selectedDauroh.value = dauroh
+  showDeleteModal.value = true
+}
 
 const closeDeleteModal = () => {
-  showDeleteModal.value = false;
-};
+  showDeleteModal.value = false
+}
 
 const confirmDelete = () => {
-  if (selectedDauroh.value) {
-    daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
-  }
-};
+  // TODO: buat action deleteTiketDauroh di store kalau mau hapus
+  console.log('Fitur delete belum diimplementasi untuk id', selectedDauroh.value?.id)
+  showDeleteModal.value = false
+}
 </script>
 
 <style scoped>

@@ -1,38 +1,30 @@
 <template>
   <div v-if="show" class="modal fade show d-block" tabindex="-1" @click.self="close">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Detail Dauroh</h5>
+          <h5 class="modal-title">{{ dauroh?.title || 'Detail Dauroh' }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
-        <div class="modal-body p-0" v-if="dauroh">
-          <div class="text-center" style="background-color: #f8f9fa;">
-            <img 
-              :src="dauroh.poster" 
-              class="img-fluid" 
-              alt="Poster Dauroh" 
-              style="max-height: 250px; object-fit: contain;"
-            >
-          </div>
-          <div class="p-4">
-            <h3 class="card-title">{{ dauroh.title }}</h3>
-            <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill mb-3">{{ dauroh.genre }}</span>
-            
-            <h6 class="mt-4 fw-bold">Deskripsi</h6>
-            <p>
-              Selamat datang di Dauroh "{{ dauroh.title }}". Dauroh ini akan membahas secara mendalam mengenai {{ dauroh.genre }}. Cocok untuk Anda yang ingin memperdalam ilmu dan pemahaman.  
-            </p>
-
-            <h6 class="mt-4 fw-bold">Detail Acara</h6>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item px-0"><strong>Tanggal:</strong> {{ dauroh.date || 'Akan diumumkan' }}</li>
-              <li class="list-group-item px-0"><strong>Pemateri:</strong> Ustadz Fulan</li>
-              <li class="list-group-item px-0"><strong>Lokasi:</strong> Masjid Babussalam</li>
-            </ul>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <img :src="dauroh?.poster" alt="Poster Dauroh" class="img-fluid rounded shadow-sm" />
+            </div>
+            <div class="col-md-8">
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Judul:</strong> {{ dauroh?.title }}</li>
+                <li v-if="dauroh?.pemateri" class="list-group-item"><strong>Pemateri:</strong> {{ dauroh?.pemateri }}</li>
+                <li v-if="dauroh?.waktu" class="list-group-item"><strong>Waktu:</strong> {{ dauroh?.waktu }}</li>
+                <li v-if="dauroh?.tempat" class="list-group-item"><strong>Tempat:</strong> {{ dauroh?.tempat }}</li>
+                <li v-if="dauroh?.kuota" class="list-group-item"><strong>Kuota:</strong> {{ dauroh?.kuota }} peserta</li>
+                <li v-if="dauroh?.fasilitas" class="list-group-item"><strong>Fasilitas:</strong> {{ dauroh?.fasilitas }}</li>
+                <li v-if="dauroh?.syarat" class="list-group-item"><strong>Syarat & Ketentuan:</strong> {{ dauroh?.syarat }}</li>
+              </ul>
+            </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer d-flex justify-content-between">
           <button type="button" class="btn btn-secondary" @click="close">Tutup</button>
           <button type="button" class="btn btn-primary" @click="register">Daftar Sekarang</button>
         </div>
@@ -42,22 +34,28 @@
   <div v-if="show" class="modal-backdrop fade show"></div>
 </template>
 
-<script setup>
-const props = defineProps({
-  show: { type: Boolean, required: true },
-  dauroh: { type: Object, default: null },
-});
+<script setup lang="ts">
+import type { Dauroh } from '~/stores/dauroh'
 
-const emit = defineEmits(['close', 'register']);
+const props = defineProps<{
+  show: boolean
+  dauroh?: Dauroh
+}>()
 
-const close = () => emit('close');
-const register = () => {
-  emit('register', props.dauroh);
-};
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'register', val: Dauroh | undefined): void
+}>()
+
+const close = () => emit('close')
+const register = () => emit('register', props.dauroh)
 </script>
 
 <style scoped>
 .modal {
   background-color: rgba(0, 0, 0, 0.5);
+}
+.list-group-item {
+  font-size: 0.9rem;
 }
 </style>

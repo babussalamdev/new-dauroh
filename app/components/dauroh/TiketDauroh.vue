@@ -1,10 +1,28 @@
 <template>
   <div class="container mt-0">
-    <div v-if="!daurohStore.isLoadingTiketDauroh && daurohStore.tiketDaurohChunks.length > 0" id="tiketDauroh" class="carousel slide carousel-dark" data-bs-ride="carousel" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
+    <!-- Carousel Dauroh -->
+    <div
+      v-if="!daurohStore.isLoadingTiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
+      id="tiketDauroh"
+      class="carousel slide carousel-dark"
+      data-bs-ride="carousel"
+      @mouseenter="isHovered = true"
+      @mouseleave="isHovered = false"
+    >
       <div class="carousel-inner">
-        <div v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" :key="chunkIndex" :class="['carousel-item', { active: chunkIndex === 0 }]">
+        <div
+          v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks"
+          :key="chunkIndex"
+          :class="['carousel-item', { active: chunkIndex === 0 }]"
+        >
           <div class="row g-3 justify-content-center">
-            <NuxtLink :to="'/dauroh/' + dauroh.id" v-for="dauroh in chunk" :key="dauroh.id" class="col-6 col-md-3 mb-4 text-decoration-none">
+            <!-- Card Dauroh -->
+            <NuxtLink
+              :to="'/dauroh/' + dauroh.id"
+              v-for="dauroh in chunk"
+              :key="dauroh.id || dauroh.title"
+              class="col-6 col-md-3 mb-4 text-decoration-none"
+            >
               <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                 <div class="position-relative">
                   <img :src="dauroh.poster" class="card-img-top" :alt="dauroh.title" />
@@ -12,10 +30,22 @@
                 </div>
                 <div class="card-body d-flex flex-column p-3">
                   <h6 class="card-title fw-bold text-dark">{{ dauroh.title }}</h6>
-                  <small class="text-muted mb-2">{{ dauroh.date || dauroh.genre }}</small>
+                  <small class="text-muted mb-1">{{ dauroh.date || dauroh.genre }}</small>
+                  <!-- Kuota Peserta -->
+                  <small v-if="dauroh.kuota" class="text-muted mb-2">Kuota: {{ dauroh.kuota }}</small>
                   <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
-                    <button class="btn btn-sm btn-outline-primary rounded-pill w-100" @click.prevent="openDetailModal(dauroh)">Detail</button>
-                    <button class="btn btn-sm btn-primary rounded-pill w-100" @click.prevent="handleRegisterClick(dauroh)">Daftar</button>
+                    <button
+                      class="btn btn-sm btn-outline-primary rounded-pill w-100"
+                      @click.prevent="openDetailModal(dauroh)"
+                    >
+                      Detail
+                    </button>
+                    <button
+                      class="btn btn-sm btn-primary rounded-pill w-100"
+                      @click.prevent="handleRegisterClick(dauroh)"
+                    >
+                      Daftar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -23,8 +53,9 @@
           </div>
         </div>
       </div>
-      </div>
-    
+    </div>
+
+    <!-- Skeleton -->
     <div v-else-if="daurohStore.isLoadingTiketDauroh" class="skeleton-container">
       <div class="row g-3 justify-content-center">
         <div v-for="n in 4" :key="n" class="col-6 col-md-3 mb-4">
@@ -43,23 +74,27 @@
       </div>
     </div>
 
+    <!-- Tidak Ada Data -->
     <div v-else class="text-center py-5">
       <h5 class="text-muted">Tidak ada dauroh yang tersedia saat ini</h5>
       <p v-if="daurohStore.searchQuery">Coba gunakan kata kunci pencarian yang lain.</p>
     </div>
 
+    <!-- Modal Detail -->
     <DaurohDetailModal
       :show="showDetailModal"
       :dauroh="selectedDauroh"
       @close="closeDetailModal"
       @register="handleRegisterFromDetail"
     />
+    <!-- Modal Registrasi -->
     <DaurohRegistrationModal
       :show="showRegistrationModal"
       :dauroh="selectedDauroh"
       @close="closeRegistrationModal"
       @submit="handleRegistrationSubmit"
     />
+    <!-- Modal QR -->
     <QrCodeModal
       :show="showQrModal"
       @close="closeQrModal"
@@ -71,7 +106,7 @@
 import { ref } from "vue";
 import { useDaurohStore } from "~/stores/dauroh";
 import { useUserStore } from "~/stores/user";
-import { useAuth } from '~/composables/useAuth'; // Import useAuth
+import { useAuth } from '~/composables/useAuth';
 import DaurohDetailModal from "~/components/modals/DaurohDetailModal.vue";
 import QrCodeModal from '~/components/modals/QrCodeModal.vue';
 import DaurohRegistrationModal from '~/components/modals/DaurohRegistrationModal.vue';
@@ -79,7 +114,7 @@ import DaurohRegistrationModal from '~/components/modals/DaurohRegistrationModal
 const isHovered = ref(false);
 const daurohStore = useDaurohStore();
 const userStore = useUserStore();
-const { isLoggedIn } = useAuth(); // Gunakan isLoggedIn dari composable
+const { isLoggedIn } = useAuth();
 const router = useRouter();
 
 const selectedDauroh = ref(null);
@@ -99,11 +134,11 @@ const handleRegisterFromDetail = (dauroh) => {
   closeDetailModal();
   setTimeout(() => {
     handleRegisterClick(dauroh);
-  }, 200); // Sedikit delay agar transisi modal mulus
+  }, 200);
 };
 
 const handleRegisterClick = (dauroh) => {
-  if (!isLoggedIn.value) { // Gunakan .value karena ini adalah ref/computed
+  if (!isLoggedIn.value) {
     router.push('/login');
   } else {
     selectedDauroh.value = dauroh;
@@ -127,6 +162,7 @@ const closeQrModal = () => {
 </script>
 
 <style scoped>
+/* styling original kamu */
 .carousel {
   position: relative;
 }
@@ -137,9 +173,8 @@ const closeQrModal = () => {
 }
 @media (max-width: 768px) {
   .carousel-inner {
-    padding: 15px; /* Perkecil padding untuk layar HP */
+    padding: 15px;
   }
-
   .carousel-control-prev,
   .carousel-control-next {
     display: none;

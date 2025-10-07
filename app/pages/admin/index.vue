@@ -7,19 +7,7 @@
 
       <ul class="nav nav-tabs mb-3" id="adminTab" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="now-playing-tab" data-bs-toggle="tab" data-bs-target="#now-playing" type="button" role="tab">Now Playing</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="top-movies-tab" data-bs-toggle="tab" data-bs-target="#top-movies" type="button" role="tab">Top Carousel</button>
-        </li>
-        <li class="nav-item" role="presentation">
           <button class="nav-link" id="dauroh-tab" data-bs-toggle="tab" data-bs-target="#dauroh" type="button" role="tab">Tiket Dauroh</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="promos-tab" data-bs-toggle="tab" data-bs-target="#promos" type="button" role="tab">Promo</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="studios-tab" data-bs-toggle="tab" data-bs-target="#studios" type="button" role="tab">Studios</button>
         </li>
       </ul>
 
