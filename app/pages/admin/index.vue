@@ -1,53 +1,82 @@
 <template>
-  <div class="admin-dashboard bg-light">
-    <div class="container py-5">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Admin Dashboard</h1>
-      </div> 
-
-      <ul class="nav nav-tabs mb-3" id="adminTab" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="dauroh-tab" data-bs-toggle="tab" data-bs-target="#dauroh" type="button" role="tab">Tiket Dauroh</button>
-        </li>
-      </ul>
-
-      <div class="tab-content" id="adminTabContent">
-        <div class="tab-pane fade" id="dauroh" role="tabpanel">
-          <AdminTiketDaurohManager />
-        </div>
-      </div>
-
+  <div>
+    <div class="page-header mb-4">
+      <h1 class="page-title">Dashboard</h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
+          <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+        </ol>
+      </nav>
     </div>
+
+    <ul class="nav nav-pills mb-3" id="adminTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dauroh-tab" data-bs-toggle="tab" data-bs-target="#dauroh" type="button" role="tab">Tiket Dauroh</button>
+      </li>
+    </ul>
+    <div class="tab-content" id="adminTabContent">
+      <div class="tab-pane fade show active" id="dauroh" role="tabpanel">
+        <AdminTiketDaurohManager />
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { useAuth } from '~/composables/useAuth'
+import { useAuth } from '~/composables/useAuth';
+import AdminTiketDaurohManager from '~/components/admin/TiketDaurohManager.vue';
 
 definePageMeta({
+  layout: 'admin',
   middleware: () => {
-    const { isLoggedIn, isAdmin } = useAuth()
-    // kalau belum login atau bukan admin, lempar ke /
+    const { isLoggedIn, isAdmin } = useAuth();
     if (!isLoggedIn.value || !isAdmin.value) {
-      return navigateTo('/')
+      return navigateTo('/');
     }
   }
-})
-
-import AdminTiketDaurohManager from '~/components/admin/TiketDaurohManager.vue'
-
-const { isLoggedIn, userName } = useAuth()
+});
 </script>
 
 <style scoped>
-.admin-dashboard {
-  min-height: 100vh;
+/* Style ini tetap sama untuk menjaga konsistensi */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.nav-tabs .nav-link {
-  color: #6c757d;
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
 }
-.nav-tabs .nav-link.active {
-  color: #0d6efd;
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 0.875rem;
+}
+.breadcrumb a {
+  text-decoration: none;
+  color: var(--bs-secondary-color);
+}
+.breadcrumb a:hover {
+  color: var(--bs-body-color);
+}
+
+.nav-pills .nav-link {
+  color: #5a5a5a;
+  background-color: transparent;
   font-weight: 500;
+  border: 1px solid #dee2e6;
+  margin-right: 8px;
+  border-radius: 0.375rem;
+}
+
+.nav-pills .nav-link.active {
+  color: #fff;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 </style>

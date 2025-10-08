@@ -16,8 +16,8 @@ export default defineNuxtConfig({
    app: {
     head: {
       script: [
-        { src: 'https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js', tagPosition: 'bodyClose' },
-        { src: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js', tagPosition: 'bodyClose' },
+        // { src: 'https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js', tagPosition: 'bodyClose' },
+        // { src: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js', tagPosition: 'bodyClose' },
         { innerHTML: `window.gtranslateSettings = {"default_language":"id","languages":["id","ar","en"],"wrapper_selector":".gtranslate_wrapper","flag_size":24,"switcher_horizontal_position":"inline","flag_style":"3d"}`, tagPosition: 'bodyClose'},
         { src: 'https://cdn.gtranslate.net/widgets/latest/dwf.js', defer: true, tagPosition: 'bodyClose' }
       ],

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useToastStore } from './toast';
 
 // Interface Dauroh
 export interface Dauroh {
@@ -25,11 +26,13 @@ export interface StudioCard {
 export const useDaurohStore = defineStore('dauroh', {
   state: () => ({
     searchQuery: '',
-    isLoadingDaurohs: false,
-    isLoadingTopDaurohs: false,
-    isLoadingTiketDauroh: false,
-    isLoadingPromos: false,
-    isLoadingStudios: false,
+    loading: {
+      nowPlaying: false,
+      topDauroh: false,
+      tiketDauroh: false,
+      promos: false,
+      studios: false,
+    },
 
     nowPlayingDauroh: [] as Dauroh[],
     topDauroh: [] as Dauroh[],
@@ -64,10 +67,22 @@ export const useDaurohStore = defineStore('dauroh', {
     },
 
     async fetchTiketDauroh() {
-      this.isLoadingTiketDauroh = true
-      // simulasi fetch API
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      this.isLoadingTiketDauroh = false
+      const toastStore = useToastStore();
+      this.loading.tiketDauroh = true
+      try {
+        // simulasi fetch API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Jika berhasil, data akan diisi di sini.
+        // Contoh: this.tiketDauroh = response.data;
+      } catch (error) {
+        console.error("Gagal mengambil data tiket dauroh:", error);
+        toastStore.showToast({
+          message: 'Gagal memuat data dauroh. Coba lagi nanti.',
+          type: 'danger'
+        });
+      } finally {
+        this.loading.tiketDauroh = false
+      }
     },
 
     async addTiketDauroh(newDauroh: Dauroh) {

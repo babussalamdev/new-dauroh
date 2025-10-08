@@ -1,24 +1,19 @@
 <template>
-<div>
-  <!-- overlay spinner -->
-   <div
-      v-if="loading"
-      class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-    >
+  <div class="main-layout-wrapper">
+    <div v-if="loading" class="loading-overlay">
       <div class="spinner-border text-light" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-  </div>
-    <div class="main-layout-wrapper">
-      <LayoutNavbar />
-      <main class="main-content-scroll-area">
-        <NuxtPage />
-      </main>
-      <LayoutFooter />
 
-      <NotificationsToastNotification />
-    </div>
+    <LayoutNavbar />
+    <main class="main-content-scroll-area">
+      <NuxtPage />
+    </main>
+    <LayoutFooter />
+
+    <NotificationsToastNotification />
+  </div>
 </template>
 
 <script setup>
@@ -38,16 +33,18 @@ import  NotificationsToastNotification  from '~/components/notifications/ToastNo
 .main-content-scroll-area {
     padding-top: 20px; /* Memberi ruang agar konten tidak ketutup navbar */
 }
-.global-loading-overlay {
+
+/* PENAMBAHAN STYLE BARU UNTUK OVERLAY */
+.loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(255, 255, 255, 0.7);
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Latar belakang semi-transparan */
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 9999;
+  align-items: center;
+  z-index: 9999; /* Pastikan berada di paling atas */
 }
 </style>

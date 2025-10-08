@@ -34,7 +34,7 @@ body {
   padding: 0;
   box-sizing: border-box;
   /* Background gradasi */
-  background: linear-gradient(180deg, #3296fa 100%, #dcf0ff 100%);
+  background: linear-gradient(180deg, #e7eaf1 100%, #dcf0ff 100%);
   color: var(--color-text-dark);
   overflow-x: hidden;
 }

@@ -2,7 +2,7 @@
   <div class="container mt-0">
     <!-- Carousel Dauroh -->
     <div
-      v-if="!daurohStore.isLoadingTiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
+    v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
       id="tiketDauroh"
       class="carousel slide carousel-dark"
       data-bs-ride="carousel"
@@ -56,7 +56,7 @@
     </div>
 
     <!-- Skeleton -->
-    <div v-else-if="daurohStore.isLoadingTiketDauroh" class="skeleton-container">
+     <div v-else-if="daurohStore.loading.tiketDauroh" class="skeleton-container">
       <div class="row g-3 justify-content-center">
         <div v-for="n in 4" :key="n" class="col-6 col-md-3 mb-4">
           <div class="card dauroh-card rounded-lg overflow-hidden h-100 placeholder-glow">

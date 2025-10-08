@@ -88,7 +88,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useAuth } from '~/composables/useAuth';
 import { useUserStore } from '~/stores/user';
 import QrCodeModal from '~/components/modals/QrCodeModal.vue';
 import Swal from 'sweetalert2';
