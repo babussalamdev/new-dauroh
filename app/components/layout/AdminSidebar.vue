@@ -11,35 +11,31 @@
       <li class="nav-item">
         <span class="nav-category">MENU UTAMA</span>
       </li>
-      <li class="nav-item">
-        <NuxtLink to="/admin" class="nav-link">
-          <i class="bi bi-speedometer2 me-2"></i>
-          Dashboard
+      
+      <li v-for="item in mainMenuItems" :key="item.text" class="nav-item">
+        <NuxtLink :to="item.to" class="nav-link">
+          <i :class="`bi ${item.icon} me-2`"></i>
+          {{ item.text }}
         </NuxtLink>
       </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#collapseManajemen" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapseManajemen">
-          <i class="bi bi-archive-fill me-2"></i>
-          Manajemen Konten
+      <li v-for="dropdown in dropdownMenuItems" :key="dropdown.id" class="nav-item">
+        <a class="nav-link collapsed" :href="`#${dropdown.id}`" data-bs-toggle="collapse" role="button">
+          <i :class="`bi ${dropdown.icon} me-2`"></i>
+          {{ dropdown.text }}
           <i class="bi bi-chevron-down ms-auto"></i>
         </a>
-        <div class="collapse" id="collapseManajemen">
+        <div class="collapse" :id="dropdown.id">
           <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <NuxtLink to="/admin" class="nav-link">
-                Tiket Dauroh
+            <li v-for="subItem in dropdown.items" :key="subItem.text" class="nav-item">
+              <NuxtLink :to="subItem.to" :class="['nav-link', { disabled: subItem.disabled }]">
+                - {{ subItem.text }}
               </NuxtLink>
-            </li>
-            <li class="nav-item">
-              <a href="#" class="nav-link disabled">
-                Promo (Contoh)
-              </a>
             </li>
           </ul>
         </div>
       </li>
-      </ul>
+    </ul>
     
     <div class="mt-auto p-3">
       <NuxtLink to="/" class="btn btn-outline-secondary btn-sm w-100">
@@ -50,7 +46,13 @@
   </div>
 </template>
 
+<script setup>
+// Impor data menu dari file terpisah
+import { mainMenuItems, dropdownMenuItems } from '~/data/adminMenu';
+</script>
+
 <style scoped>
+/* Style tidak perlu diubah sama sekali, tetap sama seperti sebelumnya */
 .admin-sidebar {
   background-color: #212529;
   color: white;
@@ -65,12 +67,10 @@
   z-index: 1030;
   border-right: 1px solid var(--bs-border-color);
 }
-
 .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .nav-category {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
@@ -78,7 +78,6 @@
   color: #6c757d;
   text-transform: uppercase;
 }
-
 .nav-link {
   color: #adb5bd;
   padding: 0.65rem 1rem;
@@ -86,46 +85,37 @@
   align-items: center;
   font-size: 0.9rem;
 }
-
 .nav-link:hover {
   color: #ffffff;
   background-color: rgba(255, 255, 255, 0.1);
 }
-
 .nav-link.router-link-exact-active {
   color: #ffffff;
   font-weight: 500;
 }
-
 .nav-link i {
   font-size: 1rem;
   width: 20px;
   text-align: center;
 }
-
 .nav-link .bi-chevron-down {
   transition: transform 0.3s ease;
 }
-
 .nav-link:not(.collapsed) .bi-chevron-down {
   transform: rotate(-180deg);
 }
-
 .sub-menu {
   padding-left: 1.5rem;
   background-color: rgba(0, 0, 0, 0.2);
 }
-
 .sub-menu .nav-link {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   font-size: 0.85rem;
 }
-
-/* Pastikan style ini yang digunakan */
 .sub-menu .nav-link.router-link-exact-active {
   color: #ffffff;
   font-weight: 700;
-  background-color: rgba(255, 255, 255, 0.1); /* Bukan warna biru */
+  background-color: rgba(255, 255, 255, 0.1);
 }
 </style>

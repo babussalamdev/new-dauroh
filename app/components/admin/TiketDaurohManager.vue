@@ -30,12 +30,16 @@
               <td>{{ dauroh.title }}</td>
               <td>{{ dauroh.genre }}</td>
               <td class="text-end">
-                <button class="btn btn-primary btn-sm me-2">Edit</button>
-                <button class="btn btn-danger btn-sm">Hapus</button>
+                <button class="btn btn-primary btn-sm me-2" @click="openUpdateModal(dauroh)">Edit</button>
+                <button class="btn btn-danger btn-sm" @click="openDeleteModal(dauroh)">Hapus</button>
               </td>
             </tr>
             <tr v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDauroh.length === 0">
-              <td colspan="5" class="text-center text-muted py-4">Belum ada data Dauroh.</td>
+              <td colspan="5" class="text-center py-5">
+                <i class="bi bi-x-circle fs-3 text-muted"></i>
+                <h6 class="mt-2 mb-1">Belum Ada Data</h6>
+                <p class="text-muted small">Silakan tambahkan dauroh baru untuk memulai.</p>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -71,23 +75,26 @@ import type { Dauroh } from '@/stores/dauroh'
 
 const daurohStore = useDaurohStore()
 
+// --- SEMUA LOGIKA MODAL DIKEMBALIKAN KE SINI ---
 const showFormModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const selectedDauroh = ref<Dauroh | null>(null)
 
 onMounted(() => {
-  daurohStore.fetchTiketDauroh()
+  if (daurohStore.tiketDauroh.length === 0) {
+     daurohStore.fetchTiketDauroh()
+  }
 })
 
 const openAddModal = () => {
   isEditing.value = false
-selectedDauroh.value = {
-  id: null,
-  title: '',
-  genre: '',
-  poster: ''
-}
+  selectedDauroh.value = {
+    id: null,
+    title: '',
+    genre: '',
+    poster: ''
+  }
   showFormModal.value = true
 }
 
@@ -102,19 +109,16 @@ const closeFormModal = () => {
 }
 
 const handleSave = (daurohData: Dauroh) => {
-  const payload: Dauroh = {
-    id: daurohData.id ?? null,
-    title: daurohData.title,
-    genre: daurohData.genre,
-    poster: daurohData.poster
-  }
-
   if (isEditing.value) {
-    console.log('Fitur edit belum diimplementasi', payload)
+    // // NANTI: Panggil action untuk update ke backend
+    // daurohStore.updateTiketDauroh(daurohData.id, daurohData);
+    console.log('Update Dauroh:', daurohData);
   } else {
-    daurohStore.addTiketDauroh(payload)
+    // // NANTI: Panggil action untuk menambah ke backend
+    // daurohStore.addTiketDauroh(daurohData);
+    daurohStore.addTiketDauroh(daurohData)
   }
-  showFormModal.value = false
+  closeFormModal();
 }
 
 const openDeleteModal = (dauroh: Dauroh) => {
@@ -127,18 +131,19 @@ const closeDeleteModal = () => {
 }
 
 const confirmDelete = () => {
-  console.log('Fitur delete belum diimplementasi untuk id', selectedDauroh.value?.id)
-  showDeleteModal.value = false
+  if (selectedDauroh.value?.id) {
+    // // NANTI: Panggil action untuk menghapus dari backend
+    // daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
+    console.log('Hapus Dauroh ID:', selectedDauroh.value.id);
+  }
+  closeDeleteModal();
 }
 </script>
 
 <style scoped>
-/* Menambahkan style untuk font size kecil di tabel */
 .fs-sm {
   font-size: 0.875rem;
 }
-
-/* Mengatur agar tombol aksi tidak turun baris di layar kecil */
 .btn-sm {
   white-space: nowrap;
 }
