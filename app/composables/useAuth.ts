@@ -1,6 +1,6 @@
 import { useLoading } from '~/composables/useLoading'
 import Swal from "sweetalert2"
-import type { AuthUser } from '~/types/auth'  // ⬅️ import tipe
+import type { AuthUser } from '~/types/auth'  // import tipe
 
 export const useAuth = () => {
   const loading = useLoading()
@@ -24,7 +24,7 @@ export const useAuth = () => {
       localStorage.setItem("IdToken", res.data.IdToken)
       localStorage.setItem("RefreshToken", res.data.RefreshToken)
 
-      // ✅ BARU: Simpan tipe login ke session storage
+      // Simpan tipe login ke session storage
       if (process.client) {
         sessionStorage.setItem('loginType', type)
       }
@@ -63,7 +63,6 @@ export const useAuth = () => {
       useCookie("AccessToken").value = null
       user.value = null
       
-      // ✅ BARU: Hapus tipe login saat logout
       if (process.client) {
         sessionStorage.removeItem('loginType')
       }
@@ -82,7 +81,7 @@ export const useAuth = () => {
     }
   }
   
-  // ✅ MODIFIKASI: Logika isAdmin sekarang lebih pintar
+  // Logika isAdmin
   const isAdmin = computed(() => {
     const roleIsAdmin = user.value?.role === 'admin' || user.value?.role === 'root';
     if (!roleIsAdmin) {

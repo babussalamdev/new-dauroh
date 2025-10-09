@@ -8,7 +8,7 @@
             <span class="fs-4 text-dark-custom">Dauroh</span> <span class="fs-4 text-primary">Babussalam</span>
           </a>
           <div class="d-flex gap-3">
-            <a href="https://www.instagram.com/babussalam_assunnah?utm_source=ig_web_button_share_sheet&igsh=ZzZ4OTVranJ5cXdl" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-instagram"></i></a>
+            <a href="https://www.instagram.com/babussalam_assunnah" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-instagram"></i></a>
             <a href="#" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-whatsapp"></i></a>
             <a href="https://www.youtube.com/@BabussalamAsSunnah" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-youtube"></i></a>
             <a href="https://www.facebook.com/YayasanBabussalamAssunnah" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-facebook"></i></a>
@@ -25,15 +25,7 @@
       <hr class="my-4">
 
       <div class="text-center">
-        <ul class="list-unstyled d-flex flex-wrap justify-content-center gap-2 gap-md-4 mb-3">
-          <li><a href="#" class="text-decoration-none">Tentang kami</a></li>|
-          <li><a href="#" class="text-decoration-none">FAQ</a></li>|
-          <li><a href="#" class="text-decoration-none">Syarat penggunaan</a></li>|
-          <li><a href="#" class="text-decoration-none">Relasi Investor</a></li>|
-          <li><a href="#" class="text-decoration-none">Lowongan</a></li>|
-          <li><a href="#" class="text-decoration-none">Kebijakan privasi</a></li>|
-          <li><a href="#" class="text-decoration-none">Hubungi kami</a></li>
-        </ul>
+       
         <p class="text-muted-custom small">
           Copyrights © {{ new Date().getFullYear() }} Babussalam
         </p>

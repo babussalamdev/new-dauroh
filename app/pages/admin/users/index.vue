@@ -15,23 +15,23 @@
             <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control bg-light border-0" placeholder="Cari user...">
           </div>
-          <NuxtLink to="/admin/users/create" class="btn btn-primary btn-sm">
+          <NuxtLink to="/admin/users/create" class="btn btn-success btn-sm">
             <i class="bi bi-plus-lg me-1"></i>
             Tambah User Baru
           </NuxtLink>
         </div>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body"> 
         <div class="table-responsive">
-          <table class="table table-hover align-middle fs-sm mb-0">
+          <table class="table table-bordered table-hover align-middle fs-sm">
             <thead class="table-light">
               <tr>
-                <th class="py-3 px-4">ID</th>
-                <th class="py-3 px-4">Nama Lengkap</th>
-                <th class="py-3 px-4">Email</th>
-                <th class="py-3 px-4">Role</th>
-                <th class="py-3 px-4">Tanggal Bergabung</th>
-                <th class="py-3 px-4 text-end">Aksi</th>
+                <th>ID</th>
+                <th>Nama Lengkap</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Tanggal Bergabung</th>
+                <th class="text-end">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -51,7 +51,6 @@
 </template>
 
 <script setup lang="ts">
-// Script setup tidak ada perubahan, data tetap kosong
 import { ref, onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import AdminDeleteConfirmationModal from '~/components/admin/AdminDeleteConfirmationModal.vue';
@@ -75,11 +74,11 @@ const selectedUser = ref<User | null>(null);
 const openDeleteModal = (user: User) => { selectedUser.value = user; showDeleteModal.value = true; };
 const closeDeleteModal = () => { showDeleteModal.value = false; };
 const confirmDelete = () => { if (!selectedUser.value) return; console.log('Hapus user ID:', selectedUser.value.id); closeDeleteModal(); };
-const getRoleBadge = (role: string) => { /* ... (fungsi badge tetap sama) ... */ };
+const getRoleBadge = (role: string) => { };
 </script>
 
 <style scoped>
-/* Style ini sekarang lebih bersih dan konsisten */
+/* [DIUBAH] Style kustom untuk tabel dan header tabel dihapus */
 .fs-sm { 
     font-size: 0.875rem; 
 }
@@ -96,19 +95,7 @@ const getRoleBadge = (role: string) => { /* ... (fungsi badge tetap sama) ... */
     border-bottom: 1px solid #e2e8f0; 
     padding: 1rem 1.25rem; 
 }
-.table { 
-    border-top: 1px solid #e2e8f0; 
-}
-.table > :not(caption) > * > * { 
-    border-bottom-width: 0; 
-}
-.table th { 
-    font-weight: 600; 
-    color: #64748b; 
-    text-transform: uppercase; 
-    font-size: 0.75rem; 
-    letter-spacing: 0.5px; 
-}
+/* Style di bawah ini biarkan saja karena tidak berhubungan dengan tabel */
 .avatar { 
     width: 32px; 
     height: 32px; 
@@ -131,5 +118,5 @@ const getRoleBadge = (role: string) => { /* ... (fungsi badge tetap sama) ... */
 .breadcrumb a { 
     text-decoration: none; 
     color: var(--bs-secondary-color); 
-    }
+}
 </style>
