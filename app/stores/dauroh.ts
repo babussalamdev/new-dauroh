@@ -67,13 +67,13 @@ export const useDaurohStore = defineStore('dauroh', {
     },
 
     async fetchTiketDauroh() {
+      const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       this.loading.tiketDauroh = true
       try {
-        // simulasi fetch API
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        // Jika berhasil, data akan diisi di sini.
-        // Contoh: this.tiketDauroh = response.data;
+        // untuk bagian integrasi be nya
+        // const response = await $apiBase.get('/tiket-dauroh');
+        // this.tiketDauroh = response.data;
       } catch (error) {
         console.error("Gagal mengambil data tiket dauroh:", error);
         toastStore.showToast({
@@ -86,12 +86,29 @@ export const useDaurohStore = defineStore('dauroh', {
     },
 
     async addTiketDauroh(newDauroh: Dauroh) {
-      // contoh BE:
-      // const res = await $apiBase.post('/tiket-dauroh', newDauroh)
-      // this.tiketDauroh.push(res.data)
+       const { $apiBase } = useNuxtApp();
+       const toastStore = useToastStore();
+      try {
+        // untuk bagian integrasi be nya
+        // const response = await $apiBase.post('/tiket-dauroh', newDauroh);
+        // this.tiketDauroh.push(response.data); // Ambil data dari respons API
+        
+        // Baris di bawah ini hanya untuk sementara, hapus jika sudah terhubung ke backend
+        newDauroh.id = Date.now(); // Ini adalah ID dummy sementara
+        this.tiketDauroh.push(newDauroh);
 
-      newDauroh.id = Date.now() // id dummy
-      this.tiketDauroh.push(newDauroh)
+        toastStore.showToast({
+          message: 'Dauroh baru berhasil ditambahkan.',
+          type: 'success'
+        });
+
+      } catch (error) {
+        console.error("Gagal menambahkan tiket dauroh:", error);
+        toastStore.showToast({
+          message: 'Gagal menambahkan dauroh baru.',
+          type: 'danger'
+        });
+      }
     }
   }
 })

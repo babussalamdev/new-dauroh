@@ -1,8 +1,8 @@
 <template>
   <div v-if="show" class="modal fade show d-block" tabindex="-1" @click.self="close">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header border-0">
           <h5 class="modal-title">{{ dauroh?.title || 'Detail Dauroh' }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
@@ -12,19 +12,47 @@
               <img :src="dauroh?.poster" alt="Poster Dauroh" class="img-fluid rounded shadow-sm" />
             </div>
             <div class="col-md-8">
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item"><strong>Judul:</strong> {{ dauroh?.title }}</li>
-                <li v-if="dauroh?.pemateri" class="list-group-item"><strong>Pemateri:</strong> {{ dauroh?.pemateri }}</li>
-                <li v-if="dauroh?.waktu" class="list-group-item"><strong>Waktu:</strong> {{ dauroh?.waktu }}</li>
-                <li v-if="dauroh?.tempat" class="list-group-item"><strong>Tempat:</strong> {{ dauroh?.tempat }}</li>
-                <li v-if="dauroh?.kuota" class="list-group-item"><strong>Kuota:</strong> {{ dauroh?.kuota }} peserta</li>
-                <li v-if="dauroh?.fasilitas" class="list-group-item"><strong>Fasilitas:</strong> {{ dauroh?.fasilitas }}</li>
-                <li v-if="dauroh?.syarat" class="list-group-item"><strong>Syarat & Ketentuan:</strong> {{ dauroh?.syarat }}</li>
-              </ul>
+              
+              <div v-if="dauroh?.pemateri" class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-person-fill me-2 text-primary"></i>Pemateri & Tema</h6>
+                <ul class="list-unstyled ps-4">
+                  <li v-for="(p, index) in dauroh.pemateri.split(',')" :key="index" class="mb-1">
+                    <small>{{ p.trim() }}</small>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Waktu & Tempat</h6>
+                <ul class="list-unstyled ps-4">
+                  <li v-if="dauroh?.waktu"><small><strong>Waktu:</strong> {{ dauroh.waktu }}</small></li>
+                  <li v-if="dauroh?.tempat"><small><strong>Tempat:</strong> {{ dauroh.tempat }}</small></li>
+                </ul>
+              </div>
+
+              <div v-if="dauroh?.kuota" class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i>Kuota Peserta</h6>
+                 <p class="ps-4 mb-0"><small>{{ dauroh.kuota }} Peserta</small></p>
+              </div>
+
+              <div v-if="dauroh?.fasilitas" class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-gift-fill me-2 text-primary"></i>Fasilitas</h6>
+                <ul class="list-unstyled ps-4">
+                   <li v-for="(f, index) in dauroh.fasilitas.split(',')" :key="index" class="mb-1">
+                    <small>{{ f.trim() }}</small>
+                  </li>
+                </ul>
+              </div>
+
+              <div v-if="dauroh?.syarat" class="detail-section">
+                <h6 class="fw-bold"><i class="bi bi-card-checklist me-2 text-primary"></i>Syarat & Ketentuan</h6>
+                <p class="ps-4 mb-0"><small>{{ dauroh.syarat }}</small></p>
+              </div>
+
             </div>
           </div>
         </div>
-        <div class="modal-footer d-flex justify-content-between">
+        <div class="modal-footer d-flex justify-content-between border-0">
           <button type="button" class="btn btn-secondary" @click="close">Tutup</button>
           <button type="button" class="btn btn-primary" @click="register">Daftar Sekarang</button>
         </div>
@@ -55,7 +83,13 @@ const register = () => emit('register', props.dauroh)
 .modal {
   background-color: rgba(0, 0, 0, 0.5);
 }
-.list-group-item {
+.modal-body {
   font-size: 0.9rem;
+}
+.detail-section h6 {
+  font-size: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 </style>

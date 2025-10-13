@@ -32,14 +32,19 @@
                 <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Riwayat Dauroh</h5>
               </div>
               <div class="card-body">
-                <div v-for="movie in userStore.getHistoryDauroh" :key="movie.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                  <img :src="movie.poster" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="movie.title">
-                  <div class="ms-3 flex-grow-1">
-                    <h6 class="fw-bold mb-1">{{ movie.title }}</h6>
-                    <p class="text-muted mb-1 small">{{ movie.genre }}</p>
-                    <span class="badge bg-secondary">Selesai</span>
+                <div v-if="userStore.getHistoryDauroh.length > 0">
+                  <div v-for="movie in userStore.getHistoryDauroh" :key="movie.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <img :src="movie.poster" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="movie.title">
+                    <div class="ms-3 flex-grow-1">
+                      <h6 class="fw-bold mb-1">{{ movie.title }}</h6>
+                      <p class="text-muted mb-1 small">{{ movie.genre }}</p>
+                      <span class="badge bg-secondary">Selesai</span>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" @click="downloadCertificate(movie)">Unduh Sertifikat</button>
                   </div>
-                  <button class="btn btn-outline-secondary btn-sm" @click="downloadCertificate(movie)">Unduh Sertifikat</button>
+                </div>
+                <div v-else class="text-center text-muted py-3">
+                  <p class="mb-0">Belum ada riwayat dauroh yang selesai.</p>
                 </div>
               </div>
             </div>
@@ -60,7 +65,7 @@
                 </li>
                 <li class="list-group-item">
                   <small class="text-muted">Tanggal Bergabung</small>
-                  <p class="fw-bold mb-0">10 September 2025</p>
+                  <p class="fw-bold mb-0">{{ joinedDate }}</p>
                 </li>
               </ul>
               <div class="card-body">
@@ -87,17 +92,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useUserStore } from '~/stores/user';
 import QrCodeModal from '~/components/modals/QrCodeModal.vue';
 import Swal from 'sweetalert2';
+import { useAuth } from '~/composables/useAuth';
 
-const { isLoggedIn, userName, userEmail } = useAuth();
+const { user, isLoggedIn, userName, userEmail } = useAuth();
 const userStore = useUserStore();
 
 const showQrModal = ref(false);
 const openQrModal = () => (showQrModal.value = true);
 const closeQrModal = () => (showQrModal.value = false);
+
+// untuk bagian integrasi be nya: Properti ini akan mengambil data dari 'user' object
+const joinedDate = computed(() => {
+  // Anda perlu menambahkan properti `joined_date` atau sejenisnya pada data user dari backend
+  // Contoh: return new Date(user.value?.joined_date).toLocaleDateString('id-ID');
+  return user.value?.joined_date || 'Tanggal tidak tersedia';
+});
 
 const downloadCertificate = (dauroh) => {
   Swal.fire({

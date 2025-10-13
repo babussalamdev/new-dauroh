@@ -28,6 +28,6 @@ const toastStore = useToastStore();
 
 <style scoped>
 .toast-container {
-  z-index: 1100; /* Pastikan di atas modal backdrop */
+  z-index: 1100;
 }
 </style>

@@ -90,55 +90,53 @@ const form = reactive({
 
 // SIMULASI PENGAMBILAN DATA USER DARI API
 onMounted(() => {
-  // // NANTI: Di sini Anda akan mengambil data user berdasarkan ID dari API
-  // const { $apiBase } = useNuxtApp();
-  // $apiBase.get(`/users/${userId}`).then(response => {
-  //   form.name = response.data.name;
-  //   form.email = response.data.email;
-  //   form.role = response.data.role;
-  //   loading.value = false;
-  // }).catch(error => {
-  //   console.error(error);
-  //   loading.value = false;
-  // });
-
-  // Untuk sekarang, kita simulasi dengan data dummy
-  setTimeout(() => {
-    const dummyUsers = [
-      { id: 1, name: 'Root User', email: 'root@example.com', role: 'root' },
-      { id: 2, name: 'Admin User', email: 'admin@example.com', role: 'admin' },
-      { id: 3, name: 'Regular User', email: 'user@example.com', role: 'user' },
-    ];
-    const userToEdit = dummyUsers.find(u => u.id === userId);
-    if (userToEdit) {
-      form.name = userToEdit.name;
-      form.email = userToEdit.email;
-      form.role = userToEdit.role;
-    }
+  // untuk bagian integrasi be nya
+  // Ganti bagian ini dengan panggilan API sesungguhnya untuk mengambil data user by ID
+  const { $apiBase } = useNuxtApp();
+  $apiBase.get(`/users/${userId}`).then(response => {
+    form.name = response.data.name;
+    form.email = response.data.email;
+    form.role = response.data.role;
     loading.value = false;
-  }, 500);
+  }).catch(error => {
+    console.error(error);
+    // Tampilkan pesan error jika gagal mengambil data
+    Swal.fire({
+      title: 'Error!',
+      text: 'Gagal memuat data user.',
+      icon: 'error',
+    }).then(() => {
+      router.push('/admin/users');
+    });
+  });
 });
 
 const handleSubmit = () => {
-  // // NANTI: Kirim data 'form' yang sudah diubah ke API backend
-  // const { $apiBase } = useNuxtApp();
-  // $apiBase.put(`/users/${userId}`, form).then(() => { ... });
-
-  console.log('Data user yang diupdate:', form);
-  Swal.fire({
-    title: 'Berhasil!',
-    text: 'Data user telah diperbarui.',
-    icon: 'success',
-    timer: 2000,
-    showConfirmButton: false,
-  }).then(() => {
-    router.push('/admin/users');
+  // untuk bagian integrasi be nya
+  // Ganti bagian ini dengan panggilan API sesungguhnya untuk update data user
+  const { $apiBase } = useNuxtApp();
+  $apiBase.put(`/users/${userId}`, form).then(() => {
+    Swal.fire({
+      title: 'Berhasil!',
+      text: 'Data user telah diperbarui.',
+      icon: 'success',
+      timer: 2000,
+      showConfirmButton: false,
+    }).then(() => {
+      router.push('/admin/users');
+    });
+  }).catch(error => {
+    console.error('Gagal mengupdate user:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'Gagal menyimpan perubahan.',
+      icon: 'error',
+    });
   });
 };
 </script>
 
 <style scoped>
-/* Style sama seperti halaman create */
 .page-title {
   font-size: 1.75rem;
   font-weight: 600;

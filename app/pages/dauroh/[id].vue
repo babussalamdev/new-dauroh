@@ -10,14 +10,14 @@
             
             <h5 class="mt-4">Deskripsi</h5>
             <p>
-              Selamat datang di Dauroh "{{ dauroh.title }}". Dauroh ini akan membahas secara mendalam mengenai {{ dauroh.genre }}. Cocok untuk Anda yang ingin memperdalam ilmu dan pemahaman. (Deskripsi lengkap akan ditampilkan di sini saat terhubung dengan backend).
+              {{ dauroh.description || 'Deskripsi untuk dauroh ini belum tersedia.' }}
             </p>
 
             <h5 class="mt-4">Detail Acara</h5>
             <ul class="list-group list-group-flush">
               <li class="list-group-item"><strong>Tanggal:</strong> {{ dauroh.date || 'Akan diumumkan' }}</li>
-              <li class="list-group-item"><strong>Pemateri:</strong> Ustadz Fulan (Contoh)</li>
-              <li class="list-group-item"><strong>Lokasi:</strong> Masjid Babussalam (Contoh)</li>
+              <li class="list-group-item"><strong>Pemateri:</strong> {{ dauroh.pemateri || 'Akan diumumkan' }}</li>
+              <li class="list-group-item"><strong>Lokasi:</strong> {{ dauroh.tempat || 'Akan diumumkan' }}</li>
             </ul>
 
             <div class="d-grid mt-4">
@@ -65,6 +65,7 @@ const { isLoggedIn } = useAuth(); // Gunakan isLoggedIn dari useAuth
 const daurohId = parseInt(route.params.id);
 
 const dauroh = computed(() => {
+  // untuk bagian integrasi be nya: Seharusnya ini memanggil API untuk mendapatkan detail satu dauroh
   const allDauroh = [
     ...daurohStore.nowPlayingDauroh,
     ...daurohStore.topDauroh,
