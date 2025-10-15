@@ -85,17 +85,25 @@ export const useDaurohStore = defineStore('dauroh', {
       }
     },
 
-    async addTiketDauroh(newDauroh: Dauroh) {
+    async addTiketDauroh(payload: { daurohData: Dauroh, file: File | null }) {
        const { $apiBase } = useNuxtApp();
        const toastStore = useToastStore();
+       const { daurohData, file } = payload;
       try {
+        if (file) {
+          // Simulasi upload file dan mendapatkan URL
+          daurohData.poster = URL.createObjectURL(file);
+        } else {
+          // Gunakan placeholder jika tidak ada file
+          daurohData.poster = 'https://via.placeholder.com/300x450.png?text=No+Image';
+        }
+
         // untuk bagian integrasi be nya
-        // const response = await $apiBase.post('/tiket-dauroh', newDauroh);
-        // this.tiketDauroh.push(response.data); // Ambil data dari respons API
+        // const response = await $apiBase.post('/tiket-dauroh', formData);
+        // this.tiketDauroh.push(response.data);
         
-        // Baris di bawah ini hanya untuk sementara, hapus jika sudah terhubung ke backend
-        newDauroh.id = Date.now(); // Ini adalah ID dummy sementara
-        this.tiketDauroh.push(newDauroh);
+        daurohData.id = Date.now();
+        this.tiketDauroh.push(daurohData);
 
         toastStore.showToast({
           message: 'Dauroh baru berhasil ditambahkan.',
@@ -106,6 +114,51 @@ export const useDaurohStore = defineStore('dauroh', {
         console.error("Gagal menambahkan tiket dauroh:", error);
         toastStore.showToast({
           message: 'Gagal menambahkan dauroh baru.',
+          type: 'danger'
+        });
+      }
+    },
+
+    async updateTiketDauroh(payload: { daurohData: Dauroh, file: File | null }) {
+      const toastStore = useToastStore();
+      const { daurohData, file } = payload;
+      try {
+        if (file) {
+          daurohData.poster = URL.createObjectURL(file);
+        }
+
+        const index = this.tiketDauroh.findIndex(d => d.id === daurohData.id);
+        if (index !== -1) {
+          this.tiketDauroh[index] = daurohData;
+          toastStore.showToast({
+            message: 'Dauroh berhasil diperbarui.',
+            type: 'success'
+          });
+        }
+      } catch (error) {
+        console.error("Gagal memperbarui tiket dauroh:", error);
+        toastStore.showToast({
+          message: 'Gagal memperbarui dauroh.',
+          type: 'danger'
+        });
+      }
+    },
+
+    async deleteTiketDauroh(id: number) {
+      const toastStore = useToastStore();
+      try {
+        const index = this.tiketDauroh.findIndex(d => d.id === id);
+        if (index !== -1) {
+          this.tiketDauroh.splice(index, 1);
+          toastStore.showToast({
+            message: 'Dauroh berhasil dihapus.',
+            type: 'success'
+          });
+        }
+      } catch (error) {
+        console.error("Gagal menghapus tiket dauroh:", error);
+        toastStore.showToast({
+          message: 'Gagal menghapus dauroh.',
           type: 'danger'
         });
       }

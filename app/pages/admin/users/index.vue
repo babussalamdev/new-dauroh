@@ -78,7 +78,6 @@ const getRoleBadge = (role: string) => { };
 </script>
 
 <style scoped>
-/* [DIUBAH] Style kustom untuk tabel dan header tabel dihapus */
 .fs-sm { 
     font-size: 0.875rem; 
 }
@@ -95,7 +94,6 @@ const getRoleBadge = (role: string) => { };
     border-bottom: 1px solid #e2e8f0; 
     padding: 1rem 1.25rem; 
 }
-/* Style di bawah ini biarkan saja karena tidak berhubungan dengan tabel */
 .avatar { 
     width: 32px; 
     height: 32px; 

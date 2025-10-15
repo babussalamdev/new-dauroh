@@ -88,7 +88,7 @@ onMounted(() => {
 
 const openAddModal = () => {
   isEditing.value = false
-  selectedDauroh.value = null // Biarkan null saat menambah, modal akan mengosongkan form
+  selectedDauroh.value = null
   showFormModal.value = true
 }
 
@@ -102,39 +102,11 @@ const closeFormModal = () => {
   showFormModal.value = false
 }
 
-// ==== PERUBAHAN UTAMA DI FUNGSI INI ====
 const handleSave = (payload: { daurohData: Dauroh, file: File | null }) => {
-  const { daurohData, file } = payload;
-  
-  // untuk bagian integrasi be nya:
-  // Di sini Anda akan menangani upload file.
-  // Buat FormData untuk mengirim file dan data JSON bersamaan.
-  const formData = new FormData();
-
-  if (file) {
-    formData.append('posterFile', file); // 'posterFile' adalah key yang akan diterima backend
-  }
-  
-  // Tambahkan data dauroh lainnya sebagai string JSON
-  formData.append('dauroh', JSON.stringify(daurohData));
-
-  // Contoh logging untuk verifikasi
-  console.log('FormData yang akan dikirim ke backend:');
-  for (let [key, value] of formData.entries()) {
-    console.log(key, value);
-  }
-  
-  // Panggil action store dengan data dauroh.
-  // Logika upload file (API call) sebaiknya ditempatkan di dalam action store.
-  // Untuk sementara, kita tetap panggil action dengan daurohData saja.
   if (isEditing.value) {
-    // NANTI: Panggil action untuk update ke backend
-    // daurohStore.updateTiketDauroh(daurohData.id, formData);
-    console.log('Update Dauroh:', daurohData, 'File:', file);
+    daurohStore.updateTiketDauroh(payload);
   } else {
-    // NANTI: Panggil action untuk menambah ke backend
-    // daurohStore.addTiketDauroh(formData);
-    daurohStore.addTiketDauroh(daurohData); // Untuk sementara, agar UI tetap update
+    daurohStore.addTiketDauroh(payload);
   }
   closeFormModal();
 }
@@ -150,9 +122,7 @@ const closeDeleteModal = () => {
 
 const confirmDelete = () => {
   if (selectedDauroh.value?.id) {
-    // NANTI: Panggil action untuk menghapus dari backend
-    // daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
-    console.log('Hapus Dauroh ID:', selectedDauroh.value.id);
+    daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
   }
   closeDeleteModal();
 }
