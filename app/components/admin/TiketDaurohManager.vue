@@ -82,11 +82,13 @@ const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const selectedDauroh = ref<Dauroh | null>(null)
 
+// ===== BAGIAN PENTING ADA DI SINI =====
+// onMounted akan dijalankan saat komponen pertama kali ditampilkan
 onMounted(() => {
-  if (daurohStore.tiketDauroh.length === 0) {
-     daurohStore.fetchTiketDauroh()
-  }
+  // Panggil action untuk mengambil data dari API
+  daurohStore.fetchTiketDauroh();
 })
+// =====================================
 
 const openAddModal = () => {
   isEditing.value = false

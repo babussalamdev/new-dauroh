@@ -1,6 +1,5 @@
 <template>
   <div class="container mt-0">
-    <!-- Carousel Dauroh -->
     <div
     v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
       id="tiketDauroh"
@@ -16,22 +15,20 @@
           :class="['carousel-item', { active: chunkIndex === 0 }]"
         >
           <div class="row g-3 justify-content-center">
-            <!-- Card Dauroh -->
             <NuxtLink
               :to="'/dauroh/' + dauroh.id"
               v-for="dauroh in chunk"
-              :key="dauroh.id || dauroh.title"
+              :key="dauroh.id || dauroh.Title"
               class="col-6 col-md-3 mb-4 text-decoration-none"
             >
               <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                 <div class="position-relative">
-                  <img :src="dauroh.poster" class="card-img-top" :alt="dauroh.title" />
+                  <img :src="dauroh.poster" class="card-img-top" :alt="dauroh.Title" />
                   <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
                 </div>
                 <div class="card-body d-flex flex-column p-3">
-                  <h6 class="card-title fw-bold text-dark">{{ dauroh.title }}</h6>
+                  <h6 class="card-title fw-bold text-dark">{{ dauroh.Title }}</h6>
                   <small class="text-muted mb-1">{{ dauroh.date || dauroh.genre }}</small>
-                  <!-- Kuota Peserta -->
                   <small v-if="dauroh.kuota" class="text-muted mb-2">Kuota: {{ dauroh.kuota }}</small>
                   <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
                     <button
@@ -55,8 +52,7 @@
       </div>
     </div>
 
-    <!-- Skeleton -->
-     <div v-else-if="daurohStore.loading.tiketDauroh" class="skeleton-container">
+    <div v-else-if="daurohStore.loading.tiketDauroh" class="skeleton-container">
       <div class="row g-3 justify-content-center">
         <div v-for="n in 4" :key="n" class="col-6 col-md-3 mb-4">
           <div class="card dauroh-card rounded-lg overflow-hidden h-100 placeholder-glow">
@@ -74,27 +70,23 @@
       </div>
     </div>
 
-    <!-- Tidak Ada Data -->
     <div v-else class="text-center py-5">
       <h5 class="text-muted">Tidak ada dauroh yang tersedia saat ini</h5>
       <p v-if="daurohStore.searchQuery">Coba gunakan kata kunci pencarian yang lain.</p>
     </div>
 
-    <!-- Modal Detail -->
     <DaurohDetailModal
       :show="showDetailModal"
       :dauroh="selectedDauroh"
       @close="closeDetailModal"
       @register="handleRegisterFromDetail"
     />
-    <!-- Modal Registrasi -->
     <DaurohRegistrationModal
       :show="showRegistrationModal"
       :dauroh="selectedDauroh"
       @close="closeRegistrationModal"
       @submit="handleRegistrationSubmit"
     />
-    <!-- Modal QR -->
     <QrCodeModal
       :show="showQrModal"
       @close="closeQrModal"
@@ -103,7 +95,8 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+// ===== TAMBAHKAN onMounted =====
+import { ref, onMounted } from "vue";
 import { useDaurohStore } from "~/stores/dauroh";
 import { useUserStore } from "~/stores/user";
 import { useAuth } from '~/composables/useAuth';
@@ -121,6 +114,16 @@ const selectedDauroh = ref(null);
 const showDetailModal = ref(false);
 const showRegistrationModal = ref(false);
 const showQrModal = ref(false);
+
+// ===== TAMBAHKAN BAGIAN INI =====
+onMounted(() => {
+  // Hanya panggil API jika data dauroh masih kosong
+  // Ini untuk mencegah data di-fetch ulang jika sudah ada
+  if (daurohStore.tiketDauroh.length === 0) {
+    daurohStore.fetchTiketDauroh();
+  }
+});
+// ===================================
 
 const openDetailModal = (dauroh) => {
   selectedDauroh.value = dauroh;
@@ -162,7 +165,6 @@ const closeQrModal = () => {
 </script>
 
 <style scoped>
-/* styling original kamu */
 .carousel {
   position: relative;
 }
