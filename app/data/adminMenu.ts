@@ -23,7 +23,6 @@ export const dropdownMenuItems: DropdownMenu[] = [
     text: 'Manajemen Konten',
     items: [
       { to: '/admin', text: 'Tiket Dauroh' },
-      // Item promo (contoh) sudah dihapus
     ]
   },
   {

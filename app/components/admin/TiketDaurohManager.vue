@@ -1,10 +1,10 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
-      <h5 class="mb-0">Manajemen Tiket Dauroh</h5>
+      <h5 class="mb-0">Manajemen Event Dauroh</h5>
       <button class="btn btn-success btn-sm" @click="openAddModal">
         <i class="bi bi-plus-lg me-1"></i>
-        Tambah Dauroh
+        Tambah Event
       </button>
     </div>
     <div class="card-body">
@@ -16,29 +16,31 @@
             <tr>
               <th scope="col" style="width: 5%;">ID</th>
               <th scope="col" style="width: 10%;">Poster</th>
-              <th scope="col">Judul</th>
-              <th scope="col">Genre/Kategori</th>
+              <th scope="col">Judul Event</th>
+              <th scope="col">Tempat</th>
+              <th scope="col">Gender</th>
               <th scope="col" class="text-end" style="width: 15%;">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="dauroh in daurohStore.tiketDauroh" :key="dauroh.id || dauroh.title">
+            <tr v-for="dauroh in daurohStore.tiketDauroh" :key="dauroh.id || dauroh.Title">
               <th scope="row">{{ dauroh.id }}</th>
               <td>
-                <img :src="dauroh.poster" :alt="dauroh.title" width="50" class="rounded" />
+                <img :src="dauroh.poster || 'https://via.placeholder.com/300x450.png?text=No+Poster'" :alt="dauroh.Title" width="50" class="rounded" />
               </td>
-              <td>{{ dauroh.title }}</td>
-              <td>{{ dauroh.genre }}</td>
+              <td>{{ dauroh.Title }}</td>
+              <td>{{ dauroh.place }}</td>
+              <td class="text-capitalize">{{ dauroh.Gender }}</td>
               <td class="text-end">
                 <button class="btn btn-primary btn-sm me-2" @click="openUpdateModal(dauroh)">Edit</button>
                 <button class="btn btn-danger btn-sm" @click="openDeleteModal(dauroh)">Hapus</button>
               </td>
             </tr>
             <tr v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDauroh.length === 0">
-              <td colspan="5" class="text-center py-5">
+              <td colspan="6" class="text-center py-5">
                 <i class="bi bi-x-circle fs-3 text-muted"></i>
-                <h6 class="mt-2 mb-1">Belum Ada Data</h6>
-                <p class="text-muted small">Silakan tambahkan dauroh baru untuk memulai.</p>
+                <h6 class="mt-2 mb-1">Belum Ada Data Event</h6>
+                <p class="text-muted small">Silakan tambahkan event baru untuk memulai.</p>
               </td>
             </tr>
           </tbody>
@@ -59,7 +61,7 @@
   <AdminDeleteConfirmationModal
     v-if="showDeleteModal"
     :show="showDeleteModal"
-    :item-name="selectedDauroh ? selectedDauroh.title : ''"
+    :item-name="selectedDauroh ? selectedDauroh.Title : ''"
     @close="closeDeleteModal"
     @confirm="confirmDelete"
   />
@@ -102,7 +104,7 @@ const closeFormModal = () => {
   showFormModal.value = false
 }
 
-const handleSave = (payload: { daurohData: Dauroh, file: File | null }) => {
+const handleSave = (payload: { daurohData: any, file: File | null }) => {
   if (isEditing.value) {
     daurohStore.updateTiketDauroh(payload);
   } else {
@@ -134,5 +136,8 @@ const confirmDelete = () => {
 }
 .btn-sm {
   white-space: nowrap;
+}
+.text-capitalize {
+  text-transform: capitalize;
 }
 </style>

@@ -9,16 +9,15 @@ export default defineNuxtPlugin(() => {
         const instance = axios.create({
             baseURL,
         })
-
+        
         instance.interceptors.request.use((req) => {
-            const token = localStorage.getItem('IdToken')
+            const token = localStorage.getItem('IdToken') // Mengambil token
             if (token) {
-                req.headers.Authorization = `Bearer ${token}`
-            } else {
-              // hapus Authorization kalau token kosong
-              delete req.headers.Authorization
+                // Baris ini yang secara otomatis menambahkan token ke header
+                req.headers.Authorization = `Bearer ${token}` 
             }
             return req
+        
         })
 
         instance.interceptors.response.use(

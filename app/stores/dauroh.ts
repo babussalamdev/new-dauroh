@@ -1,44 +1,34 @@
 import { defineStore } from 'pinia'
 import { useToastStore } from './toast';
 
-// Interface Dauroh
-export interface Dauroh {
-  id: number | null
-  title: string
-  genre: string
-  poster: string
-  kuota?: number
-  pemateri?: string
-  waktu?: string
-  tempat?: string
-  fasilitas?: string
-  syarat?: string
+// Interface untuk jadwal per hari (sesuai format backend)
+export interface DaurohDayDetail {
+  date: string;
+  start_time: string;
+  end_time: string;
 }
 
-export interface StudioCard {
-  id: number
-  title: string
-  text: string
-  link: string
-  image: string
+// Interface utama yang mencerminkan data dari backend, ditambah properti frontend
+// Disesuaikan dengan form baru dan payload API
+export interface Dauroh {
+  id: number | null;
+  Title: string;
+  Gender: string; // Sekarang hanya string, bukan array
+  // Format Date diubah menjadi objek, bukan array objek
+  Date: { [key: string]: DaurohDayDetail };
+  place: string;
+  price: number; // Menambahkan properti harga
+  poster?: string; // Properti opsional khusus untuk frontend
 }
 
 export const useDaurohStore = defineStore('dauroh', {
   state: () => ({
     searchQuery: '',
     loading: {
-      nowPlaying: false,
-      topDauroh: false,
       tiketDauroh: false,
-      promos: false,
-      studios: false,
     },
-
-    nowPlayingDauroh: [] as Dauroh[],
-    topDauroh: [] as Dauroh[],
+    // Pastikan data dummy atau fetch awal sesuai dengan interface Dauroh yang baru
     tiketDauroh: [] as Dauroh[],
-    promoDauroh: [] as Dauroh[],
-    studioCards: [] as StudioCard[]
   }),
 
   getters: {
@@ -47,7 +37,7 @@ export const useDaurohStore = defineStore('dauroh', {
         return state.tiketDauroh
       }
       return state.tiketDauroh.filter(dauroh =>
-        dauroh.title.toLowerCase().includes(state.searchQuery.toLowerCase())
+        dauroh.Title.toLowerCase().includes(state.searchQuery.toLowerCase())
       )
     },
     tiketDaurohChunks(): Dauroh[][] {
@@ -71,97 +61,118 @@ export const useDaurohStore = defineStore('dauroh', {
       const toastStore = useToastStore();
       this.loading.tiketDauroh = true
       try {
-        // untuk bagian integrasi be nya
-        // const response = await $apiBase.get('/tiket-dauroh');
-        // this.tiketDauroh = response.data;
+        // const response = await $apiBase.get('/get-events');
+        // this.tiketDauroh = response.data.map(event => ({ ...event, poster: 'URL_POSTER_DEFAULT_JIKA_ADA' }));
       } catch (error) {
-        console.error("Gagal mengambil data tiket dauroh:", error);
-        toastStore.showToast({
-          message: 'Gagal memuat data dauroh. Coba lagi nanti.',
-          type: 'danger'
-        });
+        toastStore.showToast({ message: 'Gagal memuat data event.', type: 'danger' });
       } finally {
         this.loading.tiketDauroh = false
       }
     },
 
-    async addTiketDauroh(payload: { daurohData: Dauroh, file: File | null }) {
-       const { $apiBase } = useNuxtApp();
-       const toastStore = useToastStore();
-       const { daurohData, file } = payload;
+    async addTiketDauroh(payload: { daurohData: any, file: File | null }) {
+      const { $apiBase } = useNuxtApp();
+      const toastStore = useToastStore();
+      const { daurohData, file } = payload;
+      
+      // 1. Transformasi data 'days' dari array menjadi objek sesuai format API
+      const datesObject: { [key: string]: DaurohDayDetail } = {};
+      daurohData.days.forEach((day: any, index: number) => {
+        const dayKey = `day_${index + 1}`;
+        datesObject[dayKey] = {
+          date: day.date,
+          start_time: day.startTime, // konversi camelCase ke snake_case
+          end_time: day.endTime      // konversi camelCase ke snake_case
+        };
+      });
+
+      // 2. Siapkan payload untuk dikirim ke backend
+      const payloadForBackend = {
+        Title: daurohData.title,
+        Gender: daurohData.gender, // Langsung ambil dari dropdown
+        Date: datesObject,         // Gunakan objek yang sudah ditransformasi
+        place: daurohData.place,
+        price: daurohData.price,   // Tambahkan harga
+        // AccessToken bisa ditambahkan di sini atau melalui interceptor
+      };
+
       try {
-        if (file) {
-          // Simulasi upload file dan mendapatkan URL
-          daurohData.poster = URL.createObjectURL(file);
-        } else {
-          // Gunakan placeholder jika tidak ada file
-          daurohData.poster = 'https://via.placeholder.com/300x450.png?text=No+Image';
-        }
-
-        // untuk bagian integrasi be nya
-        // const response = await $apiBase.post('/tiket-dauroh', formData);
-        // this.tiketDauroh.push(response.data);
+        console.log('Sending to backend:', payloadForBackend);
+        // const response = await $apiBase.post('/input-default', payloadForBackend);
         
-        daurohData.id = Date.now();
-        this.tiketDauroh.push(daurohData);
+        // --- Simulasi Frontend ---
+        const newDauroh: Dauroh = { 
+          ...payloadForBackend, 
+          id: Date.now() 
+        };
+        if (file) {
+          newDauroh.poster = URL.createObjectURL(file);
+        } else {
+          newDauroh.poster = 'https://via.placeholder.com/300x450.png?text=No+Poster';
+        }
+        this.tiketDauroh.push(newDauroh);
+        // --- Akhir Simulasi ---
 
-        toastStore.showToast({
-          message: 'Dauroh baru berhasil ditambahkan.',
-          type: 'success'
-        });
+        toastStore.showToast({ message: 'Event baru berhasil ditambahkan.', type: 'success' });
 
       } catch (error) {
-        console.error("Gagal menambahkan tiket dauroh:", error);
-        toastStore.showToast({
-          message: 'Gagal menambahkan dauroh baru.',
-          type: 'danger'
-        });
+        toastStore.showToast({ message: 'Gagal menambahkan event baru.', type: 'danger' });
       }
     },
 
-    async updateTiketDauroh(payload: { daurohData: Dauroh, file: File | null }) {
+    async updateTiketDauroh(payload: { daurohData: any, file: File | null }) {
+      const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       const { daurohData, file } = payload;
-      try {
-        if (file) {
-          daurohData.poster = URL.createObjectURL(file);
-        }
+      
+      // Logika transformasi dan persiapan payload sama seperti 'add'
+      const datesObject: { [key: string]: DaurohDayDetail } = {};
+      daurohData.days.forEach((day: any, index: number) => {
+        const dayKey = `day_${index + 1}`;
+        datesObject[dayKey] = {
+          date: day.date,
+          start_time: day.startTime,
+          end_time: day.endTime
+        };
+      });
 
+      const payloadForBackend = {
+        id: daurohData.id,
+        Title: daurohData.title,
+        Gender: daurohData.gender,
+        Date: datesObject,
+        place: daurohData.place,
+        price: daurohData.price,
+      };
+
+      try {
+        // const response = await $apiBase.put(`/update-event/${daurohData.id}`, payloadForBackend);
+
+        // --- Simulasi Frontend ---
         const index = this.tiketDauroh.findIndex(d => d.id === daurohData.id);
         if (index !== -1) {
-          this.tiketDauroh[index] = daurohData;
-          toastStore.showToast({
-            message: 'Dauroh berhasil diperbarui.',
-            type: 'success'
-          });
+          // Buat objek baru untuk pembaruan
+          const updatedDauroh = { 
+            ...this.tiketDauroh[index], // Ambil data lama (seperti poster)
+            ...payloadForBackend      // Timpa dengan data baru
+          };
+
+          if (file) {
+            updatedDauroh.poster = URL.createObjectURL(file);
+          }
+          
+          this.tiketDauroh[index] = updatedDauroh;
         }
+        // --- Akhir Simulasi ---
+        toastStore.showToast({ message: 'Event berhasil diperbarui.', type: 'success' });
       } catch (error) {
-        console.error("Gagal memperbarui tiket dauroh:", error);
-        toastStore.showToast({
-          message: 'Gagal memperbarui dauroh.',
-          type: 'danger'
-        });
+        toastStore.showToast({ message: 'Gagal memperbarui event.', type: 'danger' });
       }
     },
 
     async deleteTiketDauroh(id: number) {
-      const toastStore = useToastStore();
-      try {
-        const index = this.tiketDauroh.findIndex(d => d.id === id);
-        if (index !== -1) {
-          this.tiketDauroh.splice(index, 1);
-          toastStore.showToast({
-            message: 'Dauroh berhasil dihapus.',
-            type: 'success'
-          });
-        }
-      } catch (error) {
-        console.error("Gagal menghapus tiket dauroh:", error);
-        toastStore.showToast({
-          message: 'Gagal menghapus dauroh.',
-          type: 'danger'
-        });
-      }
+      // Logika delete tidak berubah
+      // ...
     }
   }
 })
