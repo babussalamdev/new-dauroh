@@ -51,6 +51,7 @@ export const useAuth = () => {
     }
   }
 
+  // ===== FUNGSI LOGOUT DIPERBARUI DI SINI =====
   const logout = async () => {
     try {
       await $apiBase.post("signout-account", {
@@ -58,16 +59,24 @@ export const useAuth = () => {
       })
     } catch {}
     finally {
+      // 1. Ambil dulu tipe loginnya SEBELUM dihapus
+      const loginType = process.client ? sessionStorage.getItem('loginType') : null;
+      
+      // 2. Bersihkan semua data sesi
       localStorage.removeItem("IdToken")
       localStorage.removeItem("RefreshToken")
       useCookie("AccessToken").value = null
       user.value = null
-      
       if (process.client) {
         sessionStorage.removeItem('loginType')
       }
       
-      router.push("/login")
+      // Arahkan ke halaman login yang sesuai
+      if (loginType === 'admin') {
+        router.push("/admin/login") // <-- Jika admin, ke login admin
+      } else {
+        router.push("/login") // <-- Jika bukan, ke login user
+      }
     }
   }
 
@@ -81,20 +90,17 @@ export const useAuth = () => {
     }
   }
   
-  // Logika isAdmin
   const isAdmin = computed(() => {
     const roleIsAdmin = user.value?.role === 'admin' || user.value?.role === 'root';
     if (!roleIsAdmin) {
-      return false; // Jika role bukan admin, sudah pasti bukan admin session
+      return false;
     }
-    // Jika role-nya admin, cek tipe login dari session
     const loginType = process.client ? sessionStorage.getItem('loginType') : null;
     return loginType === 'admin';
   })
 
   const isLoggedIn = computed(() => !!user.value?.name)
   
-
   return {
     user,
     login,

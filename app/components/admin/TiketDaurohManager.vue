@@ -19,7 +19,8 @@
               <th scope="col">Judul Event</th>
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
-              <th scope="col" class="text-end" style="width: 15%;">Aksi</th>
+              <th scope="col">Harga</th>
+              <th scope="col" class="text-center" style="width: 10%;">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -31,13 +32,18 @@
               <td>{{ dauroh.Title }}</td>
               <td>{{ dauroh.place }}</td>
               <td class="text-capitalize">{{ dauroh.Gender }}</td>
-              <td class="text-end">
-                <button class="btn btn-primary btn-sm me-2" @click="openUpdateModal(dauroh)">Edit</button>
-                <button class="btn btn-danger btn-sm" @click="openDeleteModal(dauroh)">Hapus</button>
+              <td>{{ formatCurrency(dauroh.price) }}</td>
+              <td class="text-center">
+                <button class="btn btn-link text-primary p-1" @click="openUpdateModal(dauroh)" title="Edit">
+                  <i class="bi bi-pencil-square fs-5"></i>
+                </button>
+                <button class="btn btn-link text-danger p-1" @click="openDeleteModal(dauroh)" title="Hapus">
+                  <i class="bi bi-trash fs-5"></i>
+                </button>
               </td>
             </tr>
             <tr v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDauroh.length === 0">
-              <td colspan="6" class="text-center py-5">
+              <td colspan="7" class="text-center py-5">
                 <i class="bi bi-x-circle fs-3 text-muted"></i>
                 <h6 class="mt-2 mb-1">Belum Ada Data Event</h6>
                 <p class="text-muted small">Silakan tambahkan event baru untuk memulai.</p>
@@ -82,13 +88,18 @@ const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const selectedDauroh = ref<Dauroh | null>(null)
 
-// ===== BAGIAN PENTING ADA DI SINI =====
-// onMounted akan dijalankan saat komponen pertama kali ditampilkan
 onMounted(() => {
-  // Panggil action untuk mengambil data dari API
   daurohStore.fetchTiketDauroh();
 })
-// =====================================
+
+const formatCurrency = (value: number) => {
+  if (!value) return 'Gratis'
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(value);
+}
 
 const openAddModal = () => {
   isEditing.value = false
@@ -106,14 +117,20 @@ const closeFormModal = () => {
   showFormModal.value = false
 }
 
-const handleSave = (payload: { daurohData: any, file: File | null }) => {
+// ===== PERBAIKAN DI SINI =====
+// Hapus tipe 'file' dari payload karena sudah tidak dikirim lagi
+const handleSave = (payload: { daurohData: any }) => {
   if (isEditing.value) {
-    daurohStore.updateTiketDauroh(payload);
+    // Sesuaikan pemanggilan fungsi update jika endpointnya juga berubah
+    // Untuk sekarang kita asumsikan update masih butuh format lama
+    daurohStore.updateTiketDauroh({ daurohData: payload.daurohData, file: null });
   } else {
+    // Panggil fungsi add dengan payload yang baru dan lebih simpel
     daurohStore.addTiketDauroh(payload);
   }
   closeFormModal();
 }
+// =============================
 
 const openDeleteModal = (dauroh: Dauroh) => {
   selectedDauroh.value = dauroh
@@ -136,8 +153,15 @@ const confirmDelete = () => {
 .fs-sm {
   font-size: 0.875rem;
 }
-.btn-sm {
-  white-space: nowrap;
+.btn-link {
+  text-decoration: none;
+  border: none;
+  background: none;
+  padding: 0.25rem;
+  line-height: 1;
+}
+.btn-link:hover i {
+  opacity: 0.7;
 }
 .text-capitalize {
   text-transform: capitalize;

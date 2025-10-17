@@ -67,10 +67,7 @@ const daurohId = parseInt(route.params.id);
 const dauroh = computed(() => {
   // untuk bagian integrasi be nya: Seharusnya ini memanggil API untuk mendapatkan detail satu dauroh
   const allDauroh = [
-    ...daurohStore.nowPlayingDauroh,
-    ...daurohStore.topDauroh,
-    ...daurohStore.tiketDauroh,
-    ...daurohStore.promoDauroh
+    ...daurohStore.tiketDauroh
   ];
   return allDauroh.find(d => d.id === daurohId);
 });

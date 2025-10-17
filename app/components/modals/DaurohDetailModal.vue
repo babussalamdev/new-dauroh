@@ -3,50 +3,43 @@
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header border-0">
-          <h5 class="modal-title">{{ dauroh?.title || 'Detail Dauroh' }}</h5>
+          <h5 class="modal-title">{{ dauroh?.Title || 'Detail Dauroh' }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 mb-3 mb-md-0">
-              <img :src="dauroh?.poster" alt="Poster Dauroh" class="img-fluid rounded shadow-sm" />
+              <img :src="dauroh?.poster || 'https://via.placeholder.com/300x450.png?text=No+Poster'" alt="Poster Dauroh" class="img-fluid rounded shadow-sm" />
             </div>
             <div class="col-md-8">
-              
-              <div v-if="dauroh?.pemateri" class="detail-section mb-3">
-                <h6 class="fw-bold"><i class="bi bi-person-fill me-2 text-primary"></i>Pemateri & Tema</h6>
+
+              <div v-if="dauroh?.Gender" class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-person-hearts me-2 text-primary"></i>Target Peserta</h6>
+                <p class="ps-4 mb-0 text-capitalize">
+                  <small>{{ dauroh.Gender }}</small>
+                </p>
+              </div>
+              <div class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Jadwal & Tempat</h6>
                 <ul class="list-unstyled ps-4">
-                  <li v-for="(p, index) in dauroh.pemateri.split(',')" :key="index" class="mb-1">
-                    <small>{{ p.trim() }}</small>
+                  <li v-for="(day, key, index) in dauroh?.Date" :key="key" class="mb-2">
+                    <strong>Hari ke-{{ index + 1 }}</strong>
+                    <ul class="list-unstyled ps-3">
+                      <li><small><strong>Tanggal:</strong> {{ day.date }}</small></li>
+                      <li><small><strong>Waktu:</strong> {{ day.start_time }} - {{ day.end_time }}</small></li>
+                    </ul>
+                  </li>
+                  <li v-if="dauroh?.place" class="mt-2">
+                    <small><strong>Tempat:</strong> {{ dauroh.place }}</small>
                   </li>
                 </ul>
               </div>
 
               <div class="detail-section mb-3">
-                <h6 class="fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Waktu & Tempat</h6>
-                <ul class="list-unstyled ps-4">
-                  <li v-if="dauroh?.waktu"><small><strong>Waktu:</strong> {{ dauroh.waktu }}</small></li>
-                  <li v-if="dauroh?.tempat"><small><strong>Tempat:</strong> {{ dauroh.tempat }}</small></li>
-                </ul>
-              </div>
-
-              <div v-if="dauroh?.kuota" class="detail-section mb-3">
-                <h6 class="fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i>Kuota Peserta</h6>
-                 <p class="ps-4 mb-0"><small>{{ dauroh.kuota }} Peserta</small></p>
-              </div>
-
-              <div v-if="dauroh?.fasilitas" class="detail-section mb-3">
-                <h6 class="fw-bold"><i class="bi bi-gift-fill me-2 text-primary"></i>Fasilitas</h6>
-                <ul class="list-unstyled ps-4">
-                   <li v-for="(f, index) in dauroh.fasilitas.split(',')" :key="index" class="mb-1">
-                    <small>{{ f.trim() }}</small>
-                  </li>
-                </ul>
-              </div>
-
-              <div v-if="dauroh?.syarat" class="detail-section">
-                <h6 class="fw-bold"><i class="bi bi-card-checklist me-2 text-primary"></i>Syarat & Ketentuan</h6>
-                <p class="ps-4 mb-0"><small>{{ dauroh.syarat }}</small></p>
+                <h6 class="fw-bold"><i class="bi bi-ticket-detailed me-2 text-primary"></i>Harga</h6>
+                <p class="ps-4 mb-0">
+                  <small>Rp{{ dauroh?.price?.toLocaleString('id-ID') || 'Gratis' }}</small>
+                </p>
               </div>
 
             </div>
@@ -91,5 +84,8 @@ const register = () => emit('register', props.dauroh)
   border-bottom: 1px solid #eee;
   padding-bottom: 0.5rem;
   margin-bottom: 0.75rem;
+}
+.text-capitalize {
+  text-transform: capitalize;
 }
 </style>

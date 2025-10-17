@@ -25,7 +25,7 @@ export const useUserStore = defineStore('user', {
       if (!isAlreadyRegistered) {
         this.upcomingDauroh.unshift(dauroh);
         toastStore.showToast({
-          message: `Pendaftaran untuk "${dauroh.title}" berhasil!`,
+          message: `Pendaftaran untuk "${dauroh.Title}" berhasil!`,
           type: 'success'
         });
       } else {

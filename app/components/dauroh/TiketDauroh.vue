@@ -117,7 +117,6 @@ const showQrModal = ref(false);
 
 // ===== TAMBAHKAN BAGIAN INI =====
 onMounted(() => {
-  // Hanya panggil API jika data dauroh masih kosong
   // Ini untuk mencegah data di-fetch ulang jika sudah ada
   if (daurohStore.tiketDauroh.length === 0) {
     daurohStore.fetchTiketDauroh();
