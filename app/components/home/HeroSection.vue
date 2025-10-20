@@ -5,28 +5,28 @@
         Dauroh <span class="text-primary">Babussalam</span>
       </h1>
       <div class="search-bar-hero mx-auto" style="max-width: 600px;">
-        <SearchBar />
+        <CommonSearchBar />
       </div>
 
       <div class="button-container">
         <div class="button-item" @click="handleButtonClick('/qr')">
-          <HeroButton :icon="QrCode" bgClass="btn-hero-custom" />
+          <ButtonHeroButton :icon="QrCode" bgClass="btn-hero-custom" />
           <p class="mt-1">QR Code</p>
         </div>
         
         <div class="button-item" @click="handleButtonClick('/jadwal')">
-          <HeroButton :icon="JadwalIcon" bgClass="btn-hero-custom" />
+          <ButtonHeroButton :icon="JadwalIcon" bgClass="btn-hero-custom" />
           <p class="mt-1">Jadwal</p>
         </div>
 
         <div class="button-item" @click="handleButtonClick('/sewa-booth')">
-          <HeroButton :icon="BoothIcon" bgClass="btn-hero-custom" />
+          <ButtonHeroButton :icon="BoothIcon" bgClass="btn-hero-custom" />
           <p class="mt-1">Sewa Booth</p>
         </div>
       </div>
     </div>
 
-    <QrCodeModal :show="showQrModal" @close="closeQrModal" />
+    <ModalsQrCodeModal :show="showQrModal" @close="closeQrModal" />
 
     </section>
 </template>
@@ -34,13 +34,10 @@
 <script setup>
 import { ref } from 'vue';
 import { useUserStore } from '~/stores/user';
-import { useToastStore } from '~/stores/toast'; // <-- DITAMBAHKAN
-import SearchBar from '~/components/common/SearchBar.vue';
-import HeroButton from '~/components/button/HeroButton.vue';
+import { useToastStore } from '~/stores/toast';
 import QrCode from '~/components/icons/QrIcon.vue';
 import JadwalIcon from '~/components/icons/JadwalIcon.vue';
 import BoothIcon from '~/components/icons/BoothIcon.vue';
-import QrCodeModal from '~/components/modals/QrCodeModal.vue';
 
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
@@ -48,9 +45,7 @@ const toastStore = useToastStore();
 const router = useRouter();
 
 const showQrModal = ref(false);
-// State untuk InfoModal dihapus
-// const showInfoModal = ref(false);
-// const infoModalContent = ref({ title: '', message: '' });
+
 
 const handleButtonClick = (path) => {
   if (!isLoggedIn.value) {

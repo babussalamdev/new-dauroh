@@ -75,19 +75,19 @@
       <p v-if="daurohStore.searchQuery">Coba gunakan kata kunci pencarian yang lain.</p>
     </div>
 
-    <DaurohDetailModal
+    <ModalsDaurohDetailModal
       :show="showDetailModal"
       :dauroh="selectedDauroh"
       @close="closeDetailModal"
       @register="handleRegisterFromDetail"
     />
-    <DaurohRegistrationModal
+    <ModalsDaurohRegistrationModal
       :show="showRegistrationModal"
       :dauroh="selectedDauroh"
       @close="closeRegistrationModal"
       @submit="handleRegistrationSubmit"
     />
-    <QrCodeModal
+    <ModalsQrCodeModal
       :show="showQrModal"
       @close="closeQrModal"
     />
@@ -100,9 +100,6 @@ import { ref, onMounted } from "vue";
 import { useDaurohStore } from "~/stores/dauroh";
 import { useUserStore } from "~/stores/user";
 import { useAuth } from '~/composables/useAuth';
-import DaurohDetailModal from "~/components/modals/DaurohDetailModal.vue";
-import QrCodeModal from '~/components/modals/QrCodeModal.vue';
-import DaurohRegistrationModal from '~/components/modals/DaurohRegistrationModal.vue';
 
 const isHovered = ref(false);
 const daurohStore = useDaurohStore();

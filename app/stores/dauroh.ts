@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { useToastStore } from './toast';
-import { useCookie } from '#app' // <-- JANGAN LUPA IMPORT INI
+import { useCookie } from '#app'
 
 export interface DaurohDayDetail {
   date: string;

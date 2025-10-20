@@ -13,7 +13,6 @@
 
 <script setup>
 import { useAuth } from '~/composables/useAuth';
-import AdminTiketDaurohManager from '~/components/admin/TiketDaurohManager.vue';
 
 definePageMeta({
   layout: 'admin',

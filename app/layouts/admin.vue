@@ -18,7 +18,6 @@ const isSidebarOpen = useAdminSidebar();
 </script>
 
 <style>
-/* Style ini akan mengatur transisi buka-tutup sidebar */
 body {
   background-color: #f8f9fa;
 }

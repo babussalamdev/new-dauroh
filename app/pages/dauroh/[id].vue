@@ -33,14 +33,14 @@
       <NuxtLink to="/" class="btn btn-secondary">Kembali ke Beranda</NuxtLink>
     </div>
 
-    <DaurohRegistrationModal
+    <ModalsDaurohRegistrationModal
       v-if="showRegistrationModal"
       :show="showRegistrationModal"
       :dauroh="dauroh"
       @close="closeRegistrationModal"
       @submit="handleRegistrationSubmit"
     />
-    <QrCodeModal
+    <ModalsQrCodeModal
       v-if="showQrModal"
       :show="showQrModal"
       @close="closeQrModal"
@@ -52,9 +52,7 @@
 import { ref, computed } from 'vue';
 import { useDaurohStore } from '~/stores/dauroh';
 import { useUserStore } from '~/stores/user';
-import { useAuth } from '~/composables/useAuth'; // Import useAuth
-import DaurohRegistrationModal from '~/components/modals/DaurohRegistrationModal.vue';
-import QrCodeModal from '~/components/modals/QrCodeModal.vue';
+import { useAuth } from '~/composables/useAuth';
 
 const route = useRoute();
 const router = useRouter();

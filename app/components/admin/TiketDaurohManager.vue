@@ -76,9 +76,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useDaurohStore } from '@/stores/dauroh'
-import AdminDaurohFormModal from '@/components/admin/AdminDaurohFormModal.vue'
-import AdminDeleteConfirmationModal from '@/components/admin/AdminDeleteConfirmationModal.vue'
-import CommonLoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import type { Dauroh } from '@/stores/dauroh'
 
 const daurohStore = useDaurohStore()

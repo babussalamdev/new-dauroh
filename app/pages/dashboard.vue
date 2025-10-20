@@ -87,14 +87,13 @@
       </div>
     </div>
     
-    <QrCodeModal :show="showQrModal" @close="closeQrModal" />
+    <ModalsQrCodeModal :show="showQrModal" @close="closeQrModal" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useUserStore } from '~/stores/user';
-import QrCodeModal from '~/components/modals/QrCodeModal.vue';
 import Swal from 'sweetalert2';
 import { useAuth } from '~/composables/useAuth';
 

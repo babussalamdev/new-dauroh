@@ -18,9 +18,6 @@
 
 <script setup>
 const loading = useLoading() // ambil state global loading
-
-import LayoutNavbar from '../components/layout/Navbar.vue';
-import NotificationsToastNotification from '~/components/notifications/ToastNotification.vue';
 </script>
 
 <style scoped>

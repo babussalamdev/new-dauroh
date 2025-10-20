@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import AdminDeleteConfirmationModal from '~/components/admin/AdminDeleteConfirmationModal.vue';
+import AdminDeleteConfirmationModal from '~/components/admin/DeleteConfirmationModal.vue';
 import Swal from 'sweetalert2';
 
 definePageMeta({
