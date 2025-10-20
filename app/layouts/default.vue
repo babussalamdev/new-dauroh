@@ -20,7 +20,7 @@
 const loading = useLoading() // ambil state global loading
 
 import LayoutNavbar from '../components/layout/Navbar.vue';
-import  NotificationsToastNotification  from '~/components/notifications/ToastNotification.vue';
+import NotificationsToastNotification from '~/components/notifications/ToastNotification.vue';
 </script>
 
 <style scoped>
@@ -30,8 +30,10 @@ import  NotificationsToastNotification  from '~/components/notifications/ToastNo
   color: var(--color-text-dark);
   min-height: 100vh;
 }
+
 .main-content-scroll-area {
-    padding-top: 20px; /* Memberi ruang agar konten tidak ketutup navbar */
+  padding-top: 20px;
+  /* Memberi ruang agar konten tidak ketutup navbar */
 }
 
 /* PENAMBAHAN STYLE BARU UNTUK OVERLAY */
@@ -41,10 +43,12 @@ import  NotificationsToastNotification  from '~/components/notifications/ToastNo
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Latar belakang semi-transparan */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Latar belakang semi-transparan */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* Pastikan berada di paling atas */
+  z-index: 9999;
+  /* Pastikan berada di paling atas */
 }
 </style>
