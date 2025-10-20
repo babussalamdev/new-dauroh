@@ -52,7 +52,6 @@ export const useDaurohStore = defineStore('dauroh', {
     },
 
     async fetchTiketDauroh() {
-      // ... fungsi ini tidak berubah ...
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       this.loading.tiketDauroh = true;

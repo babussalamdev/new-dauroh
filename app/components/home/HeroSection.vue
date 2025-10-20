@@ -43,7 +43,6 @@ const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
 const toastStore = useToastStore();
 const router = useRouter();
-
 const showQrModal = ref(false);
 
 
@@ -70,7 +69,6 @@ const handleQrClick = () => {
   if (userStore.upcomingDauroh.length > 0) {
     showQrModal.value = true;
   } else {
-    // --- DIGANTI DARI MODAL MENJADI TOAST NOTIFICATION ---
     toastStore.showToast({
       message: 'Anda belum terdaftar pada dauroh manapun untuk menampilkan QR Code.',
       type: 'info'
