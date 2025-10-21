@@ -9,6 +9,7 @@
       </button>
     </div>
     <div class="card-body">
+      
       <CommonLoadingSpinner v-if="daurohStore.loading.adminTiketDauroh" />
 
       <div v-else class="table-responsive">
@@ -28,7 +29,12 @@
             <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.id || dauroh.Title">
               <th scope="row">{{ dauroh.id }}</th>
               <td>
-                <img :src="dauroh.poster || 'https://via.placeholder.com/300x450.png?text=No+Poster'" :alt="dauroh.Title" width="50" class="rounded" />
+                 <img
+                    :src="dauroh.poster ? `${dauroh.poster}?t=${Date.now()}` : ''"
+                    :alt="dauroh.Title"
+                    width="50"
+                    class="rounded poster-thumbnail"
+                 />
               </td>
               <td>{{ dauroh.Title }}</td>
               <td>{{ dauroh.place }}</td>
@@ -44,25 +50,22 @@
               </td>
             </tr>
              <tr v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length === 0">
-              <td colspan="7" class="text-center py-5">
-                <i class="bi bi-x-circle fs-3 text-muted"></i>
-                <h6 class="mt-2 mb-1">Belum Ada Data Event</h6>
-                <p class="text-muted small">Silakan tambahkan event baru untuk memulai.</p>
-              </td>
-            </tr>
+               <td colspan="7" class="text-center text-muted py-4">
+                 Belum ada data event dauroh.
+               </td>
+             </tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
-
  <AdminDaurohFormModal
     v-if="showFormModal"
     :show="showFormModal"
     :is-editing="isEditing"
     :dauroh="selectedDauroh || undefined"
     @close="closeFormModal"
-    @save="handleSave"
+    @save="handleSave" 
   />
 
   <AdminDeleteConfirmationModal
@@ -86,13 +89,14 @@ const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const selectedDauroh = ref<Dauroh | null>(null)
 
+// Fetch data saat komponen dimuat
 onMounted(() => {
-  // Panggil action untuk data admin
   daurohStore.fetchAdminTiketDauroh();
 })
 
-const formatCurrency = (value: number) => {
-  if (!value && value !== 0) return 'Gratis' // Handle 0 price correctly
+// Fungsi format mata uang
+const formatCurrency = (value: number | null | undefined) => {
+  if (value === null || value === undefined || value === 0) return 'Gratis'
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -100,6 +104,7 @@ const formatCurrency = (value: number) => {
   }).format(value);
 }
 
+// Fungsi-fungsi untuk membuka/menutup modal
 const openAddModal = () => {
   isEditing.value = false
   selectedDauroh.value = null
@@ -108,28 +113,29 @@ const openAddModal = () => {
 
 const openUpdateModal = (dauroh: Dauroh) => {
   isEditing.value = true
-  // Pastikan membuat salinan objek agar tidak terjadi mutasi langsung
-  selectedDauroh.value = { ...dauroh }
+  selectedDauroh.value = { ...dauroh } // Salin objek
   showFormModal.value = true
 }
 
 const closeFormModal = () => {
   showFormModal.value = false
-  selectedDauroh.value = null // Reset selected dauroh
+  selectedDauroh.value = null
 }
 
-// handleSave sudah benar memanggil action admin
-const handleSave = (payload: { daurohData: any }) => {
+// 3. Handler untuk event @save dari AdminDaurohFormModal
+//    Payload sudah berisi daurohData dan photoBase64
+const handleSave = (payload: { daurohData: any, photoBase64: string | null }) => {
   if (isEditing.value && selectedDauroh.value?.id) {
-     // Logika update (perlu implementasi API call di store)
-     console.log("Updating dauroh:", selectedDauroh.value.id, payload.daurohData);
-     daurohStore.updateTiketDauroh({ daurohData: { ...payload.daurohData, id: selectedDauroh.value.id }, file: null });
+      // Panggil action update dari store dengan payload yang diterima
+      daurohStore.updateTiketDauroh(payload);
   } else {
-    daurohStore.addTiketDauroh(payload);
+      // Panggil action add dari store dengan payload yang diterima
+      daurohStore.addTiketDauroh(payload);
   }
-  closeFormModal();
+  closeFormModal(); // Tutup modal form setelah memanggil action
 }
 
+// Fungsi-fungsi untuk modal delete
 const openDeleteModal = (dauroh: Dauroh) => {
   selectedDauroh.value = dauroh
   showDeleteModal.value = true
@@ -137,21 +143,37 @@ const openDeleteModal = (dauroh: Dauroh) => {
 
 const closeDeleteModal = () => {
   showDeleteModal.value = false
-  selectedDauroh.value = null // Reset selected dauroh
+  selectedDauroh.value = null
 }
 
 const confirmDelete = () => {
   if (selectedDauroh.value?.id) {
     daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
   }
-  closeDeleteModal(); // closeDeleteModal sudah mereset selectedDauroh
+  closeDeleteModal();
 }
 </script>
 
 <style scoped>
-  /* Style tetap sama */
-  .fs-sm { font-size: 0.875rem; }
-  .btn-link { text-decoration: none; border: none; background: none; padding: 0.25rem; line-height: 1; }
-  .btn-link:hover i { opacity: 0.7; }
-  .text-capitalize { text-transform: capitalize; }
+  .fs-sm { 
+    font-size: 0.875rem; 
+  }
+  .btn-link { 
+    text-decoration: none; 
+    border: none; 
+    background: none; 
+    padding: 0.25rem; 
+    line-height: 1; 
+  }
+  .btn-link:hover i { 
+    opacity: 0.7; 
+  }
+  .text-capitalize { 
+    text-transform: capitalize; 
+  }
+  .poster-thumbnail {
+      object-fit: cover;
+      height: 40px;
+      width: auto;
+  }
 </style>

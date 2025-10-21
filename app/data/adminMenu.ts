@@ -1,6 +1,6 @@
 interface MenuItem {
   to: string;
-  icon?: string; // <-- Tambahkan tanda tanya (?) untuk menjadikannya opsional
+  icon?: string;
   text: string;
   disabled?: boolean;
 }
