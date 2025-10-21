@@ -1,3 +1,4 @@
+// app/components/admin/TiketDaurohManager.vue
 <template>
   <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
@@ -8,7 +9,7 @@
       </button>
     </div>
     <div class="card-body">
-      <CommonLoadingSpinner v-if="daurohStore.loading.tiketDauroh" />
+      <CommonLoadingSpinner v-if="daurohStore.loading.adminTiketDauroh" />
 
       <div v-else class="table-responsive">
         <table class="table table-bordered table-hover align-middle fs-sm">
@@ -24,7 +25,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="dauroh in daurohStore.tiketDauroh" :key="dauroh.id || dauroh.Title">
+            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.id || dauroh.Title">
               <th scope="row">{{ dauroh.id }}</th>
               <td>
                 <img :src="dauroh.poster || 'https://via.placeholder.com/300x450.png?text=No+Poster'" :alt="dauroh.Title" width="50" class="rounded" />
@@ -42,7 +43,7 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDauroh.length === 0">
+             <tr v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length === 0">
               <td colspan="7" class="text-center py-5">
                 <i class="bi bi-x-circle fs-3 text-muted"></i>
                 <h6 class="mt-2 mb-1">Belum Ada Data Event</h6>
@@ -55,7 +56,7 @@
     </div>
   </div>
 
-  <AdminDaurohFormModal
+ <AdminDaurohFormModal
     v-if="showFormModal"
     :show="showFormModal"
     :is-editing="isEditing"
@@ -86,11 +87,12 @@ const isEditing = ref(false)
 const selectedDauroh = ref<Dauroh | null>(null)
 
 onMounted(() => {
-  daurohStore.fetchTiketDauroh();
+  // Panggil action untuk data admin
+  daurohStore.fetchAdminTiketDauroh();
 })
 
 const formatCurrency = (value: number) => {
-  if (!value) return 'Gratis'
+  if (!value && value !== 0) return 'Gratis' // Handle 0 price correctly
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -106,28 +108,27 @@ const openAddModal = () => {
 
 const openUpdateModal = (dauroh: Dauroh) => {
   isEditing.value = true
+  // Pastikan membuat salinan objek agar tidak terjadi mutasi langsung
   selectedDauroh.value = { ...dauroh }
   showFormModal.value = true
 }
 
 const closeFormModal = () => {
   showFormModal.value = false
+  selectedDauroh.value = null // Reset selected dauroh
 }
 
-// ===== PERBAIKAN DI SINI =====
-// Hapus tipe 'file' dari payload karena sudah tidak dikirim lagi
+// handleSave sudah benar memanggil action admin
 const handleSave = (payload: { daurohData: any }) => {
-  if (isEditing.value) {
-    // Sesuaikan pemanggilan fungsi update jika endpointnya juga berubah
-    // Untuk sekarang kita asumsikan update masih butuh format lama
-    daurohStore.updateTiketDauroh({ daurohData: payload.daurohData, file: null });
+  if (isEditing.value && selectedDauroh.value?.id) {
+     // Logika update (perlu implementasi API call di store)
+     console.log("Updating dauroh:", selectedDauroh.value.id, payload.daurohData);
+     daurohStore.updateTiketDauroh({ daurohData: { ...payload.daurohData, id: selectedDauroh.value.id }, file: null });
   } else {
-    // Panggil fungsi add dengan payload yang baru dan lebih simpel
     daurohStore.addTiketDauroh(payload);
   }
   closeFormModal();
 }
-// =============================
 
 const openDeleteModal = (dauroh: Dauroh) => {
   selectedDauroh.value = dauroh
@@ -136,31 +137,21 @@ const openDeleteModal = (dauroh: Dauroh) => {
 
 const closeDeleteModal = () => {
   showDeleteModal.value = false
+  selectedDauroh.value = null // Reset selected dauroh
 }
 
 const confirmDelete = () => {
   if (selectedDauroh.value?.id) {
     daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
   }
-  closeDeleteModal();
+  closeDeleteModal(); // closeDeleteModal sudah mereset selectedDauroh
 }
 </script>
 
 <style scoped>
-.fs-sm {
-  font-size: 0.875rem;
-}
-.btn-link {
-  text-decoration: none;
-  border: none;
-  background: none;
-  padding: 0.25rem;
-  line-height: 1;
-}
-.btn-link:hover i {
-  opacity: 0.7;
-}
-.text-capitalize {
-  text-transform: capitalize;
-}
+  /* Style tetap sama */
+  .fs-sm { font-size: 0.875rem; }
+  .btn-link { text-decoration: none; border: none; background: none; padding: 0.25rem; line-height: 1; }
+  .btn-link:hover i { opacity: 0.7; }
+  .text-capitalize { text-transform: capitalize; }
 </style>

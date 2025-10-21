@@ -1,7 +1,8 @@
+// app/components/dauroh/TiketDauroh.vue
 <template>
   <div class="container mt-0">
     <div
-    v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
+      v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
       id="tiketDauroh"
       class="carousel slide carousel-dark"
       data-bs-ride="carousel"
@@ -15,7 +16,7 @@
           :class="['carousel-item', { active: chunkIndex === 0 }]"
         >
           <div class="row g-3 justify-content-center">
-            <NuxtLink
+             <NuxtLink
               :to="'/dauroh/' + dauroh.id"
               v-for="dauroh in chunk"
               :key="dauroh.id || dauroh.Title"
@@ -50,10 +51,18 @@
           </div>
         </div>
       </div>
+      <button v-if="daurohStore.tiketDaurohChunks.length > 1" class="carousel-control-prev" type="button" data-bs-target="#tiketDauroh" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button v-if="daurohStore.tiketDaurohChunks.length > 1" class="carousel-control-next" type="button" data-bs-target="#tiketDauroh" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
     </div>
 
     <div v-else-if="daurohStore.loading.tiketDauroh" class="skeleton-container">
-      <div class="row g-3 justify-content-center">
+     <div class="row g-3 justify-content-center">
         <div v-for="n in 4" :key="n" class="col-6 col-md-3 mb-4">
           <div class="card dauroh-card rounded-lg overflow-hidden h-100 placeholder-glow">
             <div class="card-img-top placeholder" style="aspect-ratio: 2 / 3;"></div>
@@ -70,7 +79,7 @@
       </div>
     </div>
 
-    <div v-else class="text-center py-5">
+    <div v-else-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDauroh.length === 0" class="text-center py-5">
       <h5 class="text-muted">Tidak ada dauroh yang tersedia saat ini</h5>
       <p v-if="daurohStore.searchQuery">Coba gunakan kata kunci pencarian yang lain.</p>
     </div>
@@ -95,7 +104,6 @@
 </template>
 
 <script setup>
-// ===== TAMBAHKAN onMounted =====
 import { ref, onMounted } from "vue";
 import { useDaurohStore } from "~/stores/dauroh";
 import { useUserStore } from "~/stores/user";
@@ -112,14 +120,12 @@ const showDetailModal = ref(false);
 const showRegistrationModal = ref(false);
 const showQrModal = ref(false);
 
-// ===== TAMBAHKAN BAGIAN INI =====
 onMounted(() => {
-  // Ini untuk mencegah data di-fetch ulang jika sudah ada
-  if (daurohStore.tiketDauroh.length === 0) {
-    daurohStore.fetchTiketDauroh();
-  }
+  // Panggil action untuk data publik
+  daurohStore.fetchPublicTiketDauroh();
 });
-// ===================================
+
+// Fungsi-fungsi lainnya (openDetailModal, handleRegisterClick, dll) tetap sama
 
 const openDetailModal = (dauroh) => {
   selectedDauroh.value = dauroh;
@@ -133,114 +139,52 @@ const handleRegisterFromDetail = (dauroh) => {
   closeDetailModal();
   setTimeout(() => {
     handleRegisterClick(dauroh);
-  }, 200);
+  }, 200); // Small delay to ensure modal is closed
 };
 
-const handleRegisterClick = (dauroh) => {
+ const handleRegisterClick = (dauroh) => {
   if (!isLoggedIn.value) {
-    router.push('/login');
+      router.push('/login');
   } else {
-    selectedDauroh.value = dauroh;
-    showRegistrationModal.value = true;
+      selectedDauroh.value = dauroh;
+      showRegistrationModal.value = true;
   }
-};
+ };
 
-const closeRegistrationModal = () => {
-  showRegistrationModal.value = false;
-};
+ const closeRegistrationModal = () => {
+   showRegistrationModal.value = false;
+ };
 
-const handleRegistrationSubmit = (registrationData) => {
-  closeRegistrationModal();
-  userStore.registerDauroh(registrationData);
-  showQrModal.value = true;
-};
+ const handleRegistrationSubmit = (registrationData) => {
+   closeRegistrationModal();
+   userStore.registerDauroh(registrationData); // Assuming registerDauroh handles the logic
+   // Optionally show QR modal or success message
+   showQrModal.value = true; // Example: show QR right after registration
+ };
 
-const closeQrModal = () => {
-  showQrModal.value = false;
-};
+ const closeQrModal = () => {
+   showQrModal.value = false;
+ };
+
 </script>
 
 <style scoped>
-.carousel {
-  position: relative;
-}
-.carousel-inner {
-  overflow: visible;
-  padding: 60px; /* Padding untuk layar besar */
-  overflow-x: hidden;
-}
-@media (max-width: 768px) {
-  .carousel-inner {
-    padding: 15px;
+  /* Style tetap sama */
+  .carousel { position: relative; }
+  .carousel-inner { overflow: visible; padding: 60px; overflow-x: hidden; }
+  @media (max-width: 768px) {
+    .carousel-inner { padding: 15px; }
+    .carousel-control-prev, .carousel-control-next { display: none; }
   }
-  .carousel-control-prev,
-  .carousel-control-next {
-    display: none;
-  }
-}
-.card.dauroh-card {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-  border: none;
-  cursor: pointer;
-}
-.card.dauroh-card:hover {
-  transform: translateY(-5px);
-}
-.card.dauroh-card img {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-}
-.overlay-top {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: #0d6efd;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 5px;
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-.card-body {
-  flex-grow: 1;
-}
-.card-body .btn {
-  font-size: 0.8rem;
-  padding: 0.25rem 0.75rem;
-}
-.carousel-control-prev,
-.carousel-control-next {
-  width: 50px;
-  height: 50px;
-  background-color: rgba(255, 255, 255, 0.7);
-  border-radius: 50%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.carousel-control-prev {
-  position: absolute;
-}
-.carousel-control-next {
-  position: absolute;
-}
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-  filter: invert(1) grayscale(100);
-}
-@media (min-width: 375px) {
-  .flex-sm-row .btn {
-    width: auto;
-  }
-}
-.placeholder {
-  background-color: #e9ecef;
-}
-.card-img-top.placeholder {
-  width: 100%;
-}
+  .card.dauroh-card { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease; border: none; cursor: pointer; }
+  .card.dauroh-card:hover { transform: translateY(-5px); }
+  .card.dauroh-card img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+  .overlay-top { position: absolute; top: 10px; left: 10px; background-color: #0d6efd; color: white; padding: 4px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; }
+  .card-body { flex-grow: 1; }
+  .card-body .btn { font-size: 0.8rem; padding: 0.25rem 0.75rem; }
+  .carousel-control-prev, .carousel-control-next { width: 50px; height: 50px; background-color: rgba(255, 255, 255, 0.7); border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); opacity: 0.8; transition: opacity 0.3s ease; top: 50%; transform: translateY(-50%); position: absolute; } /* Added position: absolute */
+  .carousel-control-prev-icon, .carousel-control-next-icon { filter: invert(1) grayscale(100); }
+  @media (min-width: 375px) { .flex-sm-row .btn { width: auto; } }
+  .placeholder { background-color: #e9ecef; }
+  .card-img-top.placeholder { width: 100%; }
 </style>
