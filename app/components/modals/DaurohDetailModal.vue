@@ -29,8 +29,8 @@
                       <li><small><strong>Waktu:</strong> {{ day.start_time }} - {{ day.end_time }}</small></li>
                     </ul>
                   </li>
-                  <li v-if="dauroh?.place" class="mt-2">
-                    <small><strong>Tempat:</strong> {{ dauroh.place }}</small>
+                  <li v-if="dauroh?.Place" class="mt-2">
+                    <small><strong>Tempat:</strong> {{ dauroh.Place }}</small>
                   </li>
                 </ul>
               </div>
@@ -38,7 +38,7 @@
               <div class="detail-section mb-3">
                 <h6 class="fw-bold"><i class="bi bi-ticket-detailed me-2 text-primary"></i>Harga</h6>
                 <p class="ps-4 mb-0">
-                  <small>Rp{{ dauroh?.price?.toLocaleString('id-ID') || 'Gratis' }}</small>
+                  <small>Rp{{ dauroh?.Price?.toLocaleString('id-ID') || 'Gratis' }}</small>
                 </p>
               </div>
 

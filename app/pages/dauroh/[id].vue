@@ -29,7 +29,7 @@
                <li v-else class="list-group-item"><strong>Tanggal:</strong> Akan diumumkan</li>
 
               <li class="list-group-item"><strong>Pemateri:</strong> {{ dauroh.pemateri || 'Akan diumumkan' }}</li>
-              <li class="list-group-item"><strong>Lokasi:</strong> {{ dauroh.place || 'Akan diumumkan' }}</li>
+              <li class="list-group-item"><strong>Lokasi:</strong> {{ dauroh.Place || 'Akan diumumkan' }}</li>
                <li class="list-group-item"><strong>Harga:</strong> {{ formatCurrency(dauroh.price) }}</li>
             </ul>
 
