@@ -20,7 +20,7 @@ export const useUserStore = defineStore('user', {
       const { dauroh, participants } = registrationData;
       const toastStore = useToastStore();
       
-      const isAlreadyRegistered = this.upcomingDauroh.some(item => item.id === dauroh.id);
+      const isAlreadyRegistered = this.upcomingDauroh.some(item => item.sk === dauroh.sk);
       
       if (!isAlreadyRegistered) {
         this.upcomingDauroh.unshift(dauroh);

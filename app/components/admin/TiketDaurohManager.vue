@@ -25,11 +25,11 @@
               <th scope="col" class="text-center" style="width: 15%;">Aksi</th> </tr>
           </thead>
           <tbody>
-            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.id || dauroh.Title">
-              <th scope="row">{{ dauroh.id }}</th>
+            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.sk || dauroh.Title">
+              <th scope="row">{{ dauroh.sk }}</th>
               <td>
                  <img
-                    :src="dauroh.poster ? `${dauroh.poster}?t=${Date.now()}` : '/assets/img/placeholder-poster.png'"
+                    :src="dauroh.poster ? `${dauroh.poster}?t=${Date.now()}` : ''"
                     :alt="dauroh.Title"
                     width="40"
                     height="60"
@@ -42,7 +42,7 @@
               <td class="text-capitalize">{{ dauroh.Gender || 'Umum' }}</td>
               <td>{{ formatCurrency(dauroh.Price) }}</td>
               <td class="text-center">
-                 <NuxtLink :to="`/admin/dauroh/detail/${dauroh.id}`" class="btn btn-link text-info p-1" title="Lihat/Edit Detail Lanjutan">
+                 <NuxtLink :to="`/admin/dauroh/detail/${dauroh.sk}`" class="btn btn-link text-info p-1" title="Lihat/Edit Detail Lanjutan">
                   <i class="bi bi-search fs-5"></i>
                 </NuxtLink>
                 <button class="btn btn-link text-primary p-1" @click="openUpdateModal(dauroh)" title="Edit Info Dasar">
@@ -68,7 +68,7 @@
     v-if="showFormModal"
     :show="showFormModal"
     :is-editing="isEditing"
-    :dauroh="selectedDauroh || undefined"
+    :Dauroh="selectedDauroh"
     @close="closeFormModal"
     @save="handleSave"
   />
@@ -85,15 +85,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useDaurohStore } from '@/stores/dauroh'
-import type { Dauroh } from '@/stores/dauroh'
+import type { Dauroh } from '@/stores/dauroh' // Import interface Dauroh
 
 const daurohStore = useDaurohStore()
 
 // State untuk modal form & delete
 const showFormModal = ref(false)
 const showDeleteModal = ref(false)
-const isEditing = ref(false) // Untuk membedakan mode modal form (tambah/edit)
-const selectedDauroh = ref<Dauroh | null>(null)
+const isEditing = ref(false)
+const selectedDauroh = ref<Partial<Dauroh> | null>(null) // Hanya perlu Partial untuk edit dasar
 
 // Fetch data saat komponen dimuat
 onMounted(() => {
@@ -102,7 +102,7 @@ onMounted(() => {
   }
 })
 
-// Fungsi format mata uang
+// Fungsi format mata uang (tidak berubah)
 const formatCurrency = (value: number | null | undefined) => {
   if (value === null || value === undefined || value === 0) return 'Gratis'
   return new Intl.NumberFormat('id-ID', {
@@ -121,15 +121,15 @@ const openAddModal = () => {
 
 const openUpdateModal = (dauroh: Dauroh) => {
   isEditing.value = true
-  // Salin data dasar yang relevan untuk modal edit
+  // Salin hanya data dasar yang relevan untuk modal edit
   selectedDauroh.value = {
-      id: dauroh.id,
+      sk: dauroh.sk,
       Title: dauroh.Title,
       Place: dauroh.Place,
       Gender: dauroh.Gender,
       Price: dauroh.Price,
-      // Tidak perlu menyalin Date atau poster ke modal ini
-  } as Dauroh; // Type assertion jika perlu
+      // Tidak perlu menyalin Date atau poster ke modal dasar ini
+  }; // Tidak perlu type assertion jika pakai Partial<Dauroh>
   showFormModal.value = true
 }
 
@@ -138,23 +138,21 @@ const closeFormModal = () => {
   selectedDauroh.value = null
 }
 
-// Handler untuk event @save dari modal form
+// Handler untuk event @save dari modal form (AdminDaurohFormModal)
 // Payload HANYA berisi data dasar
-const handleSave = async (payload: { daurohData: Omit<Dauroh, 'Date' | 'poster' | 'scheduleDays'>, photoBase64: null }) => {
-  // Panggil action store yang sesuai (hanya data dasar)
+const handleSave = async (payload: { daurohData: Omit<Dauroh, 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null }) => {
   let success = false;
-  if (isEditing.value && payload.daurohData.id) {
-    // Panggil action update basic (akan dibuat di store)
+  if (isEditing.value && payload.daurohData.sk) {
+    // Panggil action update basic dari store
     success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
   } else {
-    // Panggil action add basic (akan dibuat/disesuaikan di store)
+    // Panggil action add basic dari store
     success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
   }
 
-  // Tutup modal jika berhasil
+  // Tutup modal jika berhasil (store sudah handle fetch ulang)
   if (success) {
       closeFormModal();
-      // Store akan handle fetch ulang jika perlu
   }
   // Jika gagal, toast error akan muncul dari store, modal tetap terbuka
 }
@@ -162,7 +160,7 @@ const handleSave = async (payload: { daurohData: Omit<Dauroh, 'Date' | 'poster' 
 
 // --- Fungsi untuk Modal Delete (Tetap Sama) ---
 const openDeleteModal = (dauroh: Dauroh) => {
-  selectedDauroh.value = dauroh
+  selectedDauroh.value = dauroh // Berisi Dauroh lengkap
   showDeleteModal.value = true
 }
 
@@ -172,15 +170,16 @@ const closeDeleteModal = () => {
 }
 
 const confirmDelete = () => {
-  if (selectedDauroh.value?.id) {
-    daurohStore.deleteTiketDauroh(selectedDauroh.value.id);
+  // Pastikan selectedDauroh memiliki id sebelum menghapus
+  if (selectedDauroh.value?.sk) {
+    daurohStore.deleteTiketDauroh(selectedDauroh.value.sk);
   }
-  closeDeleteModal();
+  closeDeleteModal(); // Selalu tutup modal setelah konfirmasi
 }
 </script>
 
 <style scoped>
-  /* Styling (termasuk table-sm) dari implementasi sebelumnya */
+  /* Styling tidak berubah */
   .fs-sm {
     font-size: 0.875rem;
   }
@@ -193,9 +192,9 @@ const confirmDelete = () => {
     background: none;
     padding: 0.25rem;
     line-height: 1;
-    font-size: 0.9rem; /* Sedikit diperbesar agar ikon tidak terlalu kecil */
-    vertical-align: middle; /* Jaga agar ikon sejajar */
-    margin: 0 0.15rem; /* Beri sedikit jarak antar tombol */
+    font-size: 0.9rem;
+    vertical-align: middle;
+    margin: 0 0.15rem;
   }
   .btn-link:hover i, .btn-link:hover {
     opacity: 0.7;
