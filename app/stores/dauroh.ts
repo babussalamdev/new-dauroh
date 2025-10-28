@@ -226,23 +226,55 @@ export const useDaurohStore = defineStore('dauroh', {
       if (!accessTokenFromBody) { /* ... handle error ... */ return false; }
 
       this.loading.savingBasic = true;
+      let success = false;
+      
       // Payload POST sesuai Postman
-      const payload: DaurohPostPayload = {
+const payload: DaurohPostPayload = {
         Title: daurohData.Title,
-        Gender: daurohData.Gender || 'Umum',
+        Gender: daurohData.Gender || 'Umum', // Default ke Umum jika kosong
         place: daurohData.Place || '', // lowercase
-        price: String(daurohData.Price || 0), // lowercase string
+        price: String(daurohData.Price || 0), // lowercase string, default 0 jika null/undefined
         AccessToken: accessTokenFromBody,
       };
 
-      let success = false;
+      console.log('Store: addTiketDaurohBasic - Payload to send:', payload); // Debug payload
+
       try {
+        console.log('Store: addTiketDaurohBasic - Sending POST request...');
+        // Kirim request POST ke API
         await $apiBase.post('/input-default?type=event', payload);
+        console.log('Store: addTiketDaurohBasic - API call successful.');
+
         toastStore.showToast({ message: 'Event baru berhasil ditambahkan.', type: 'success' });
-        await this.fetchAdminTiketDauroh(); // Refresh list
-        success = true;
-      } catch (error: any) { /* ... error handling (cek Invalid Access Token) ... */ success = false; }
-      finally { this.loading.savingBasic = false; return success; }
+        success = true; // Set success ke true jika API call berhasil
+
+        // Refresh list SETELAH sukses menambah data
+        try {
+            console.log('Store: addTiketDaurohBasic - Refreshing admin list...');
+            await this.fetchAdminTiketDauroh(); // Refresh list admin
+            console.log('Store: addTiketDaurohBasic - Admin list refreshed.');
+        } catch (refreshError: any) {
+            console.error('Store: addTiketDaurohBasic - Failed to refresh admin list after add:', refreshError);
+            // Tetap anggap sukses karena data sudah ditambahkan, beri warning saja
+            toastStore.showToast({ message: 'Event ditambahkan, tapi gagal refresh daftar.', type: 'info' });
+        }
+
+      } catch (error: any) {
+        // Tangani error dari API call POST
+        console.error('Store: addTiketDaurohBasic - API call POST failed:', error);
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Gagal menambahkan event baru.';
+        console.error('Store: addTiketDaurohBasic - Error message:', errorMessage);
+        toastStore.showToast({ message: `Error: ${errorMessage}`, type: 'danger' });
+        success = false; // Set success ke false jika API call gagal
+
+      } finally {
+        // SELALU set loading state ke false di akhir, APAPUN YANG TERJADI
+        console.log('Store: addTiketDaurohBasic - Executing finally block...');
+        this.loading.savingBasic = false;
+        console.log('Store: addTiketDaurohBasic - loading.savingBasic set to false.');
+      }
+
+      return success; // Return status success akhir
     },
 
     // Update Basic Info (PUT /update-default?type=event&sk=...)

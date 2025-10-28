@@ -10,41 +10,45 @@
     </div>
     <div class="card-body">
 
-      <CommonLoadingSpinner v-if="daurohStore.loading.adminTiketDauroh" />
-
-      <div v-else class="table-responsive">
+      <div class="table-responsive">
         <table class="table table-bordered table-hover table-sm align-middle fs-sm">
           <thead class="table-light">
             <tr>
-              <th scope="col" style="width: 5%;">ID</th>
+              <th scope="col" style="width: 5%;">SK</th>
               <th scope="col" style="width: 10%;">Poster</th>
               <th scope="col">Judul Event</th>
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
               <th scope="col">Harga</th>
-              <th scope="col" class="text-center" style="width: 15%;">Aksi</th> </tr>
+              <th scope="col" class="text-center" style="width: 15%;">Aksi</th>
+            </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
             <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.sk || dauroh.Title">
               <th scope="row">{{ dauroh.sk }}</th>
               <td>
                  <img
                     :src="dauroh.poster ? `${dauroh.poster}?t=${Date.now()}` : ''"
-                    :alt="dauroh.Title"
+                    :alt="dauroh.poster ? dauroh.Title : 'Tidak ada poster'"
                     width="40"
                     height="60"
                     class="rounded poster-thumbnail"
-                    style="object-fit: cover;"
+                    style="object-fit: cover; background-color: #f8f9fa; display: block;"
+                    @error="($event.target as HTMLImageElement).style.display='none'"
                  />
+                 <span v-if="!dauroh.poster || ((event: Event) => !(event.target as HTMLImageElement).complete && !(event.target as HTMLImageElement).naturalWidth)" class="text-muted small">N/A</span>
               </td>
               <td>{{ dauroh.Title }}</td>
               <td>{{ dauroh.Place || '-' }}</td>
               <td class="text-capitalize">{{ dauroh.Gender || 'Umum' }}</td>
               <td>{{ formatCurrency(dauroh.Price) }}</td>
               <td class="text-center">
-                 <NuxtLink :to="`/admin/dauroh/detail/${dauroh.sk}`" class="btn btn-link text-info p-1" title="Lihat/Edit Detail Lanjutan">
+                 <button class="btn btn-link text-info p-1"
+                         @click="openDetailModal(dauroh.sk)"
+                         :disabled="!dauroh.sk"
+                         :title="dauroh.sk ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
                   <i class="bi bi-search fs-5"></i>
-                </NuxtLink>
+                </button>
                 <button class="btn btn-link text-primary p-1" @click="openUpdateModal(dauroh)" title="Edit Info Dasar">
                   <i class="bi bi-pencil-square fs-5"></i>
                 </button>
@@ -53,12 +57,21 @@
                 </button>
               </td>
             </tr>
-             <tr v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length === 0">
+          </tbody>
+           <tbody v-else-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length === 0">
+             <tr>
                <td colspan="7" class="text-center text-muted py-4">
                  Belum ada data event dauroh.
                </td>
              </tr>
-          </tbody>
+           </tbody>
+           <tbody v-else>
+               <tr>
+                   <td colspan="7">
+                       <CommonLoadingSpinner />
+                   </td>
+               </tr>
+           </tbody>
         </table>
       </div>
     </div>
@@ -68,7 +81,7 @@
     v-if="showFormModal"
     :show="showFormModal"
     :is-editing="isEditing"
-    :Dauroh="selectedDauroh"
+    :dauroh="selectedDauroh ?? undefined"
     @close="closeFormModal"
     @save="handleSave"
   />
@@ -76,106 +89,121 @@
   <AdminDeleteConfirmationModal
     v-if="showDeleteModal"
     :show="showDeleteModal"
-    :item-name="selectedDauroh ? selectedDauroh.Title : ''"
+    :item-name="selectedDaurohForDelete ? selectedDaurohForDelete.Title : ''"
     @close="closeDeleteModal"
     @confirm="confirmDelete"
   />
+
+  <AdminDaurohDetailModal
+    v-if="showDetailModal"
+    :show="showDetailModal"
+    :daurohSk="selectedDaurohSk"
+    @close="closeDetailModal"
+    @updated="handleDetailUpdated"
+   />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useDaurohStore } from '@/stores/dauroh'
-import type { Dauroh } from '@/stores/dauroh' // Import interface Dauroh
+import { ref, onMounted } from 'vue';
+import { useDaurohStore } from '@/stores/dauroh';
+import type { Dauroh } from '@/stores/dauroh';
+import AdminDaurohDetailModal from '~/components/admin/DaurohDetailModal.vue';
+import Swal from 'sweetalert2';
 
-const daurohStore = useDaurohStore()
+const daurohStore = useDaurohStore();
 
-// State untuk modal form & delete
-const showFormModal = ref(false)
-const showDeleteModal = ref(false)
-const isEditing = ref(false)
-const selectedDauroh = ref<Partial<Dauroh> | null>(null) // Hanya perlu Partial untuk edit dasar
+const showFormModal = ref(false);
+const showDeleteModal = ref(false);
+const isEditing = ref(false);
+const selectedDauroh = ref<Partial<Dauroh> | null>(null);
+const selectedDaurohForDelete = ref<Dauroh | null>(null);
+const showDetailModal = ref(false);
+const selectedDaurohSk = ref<string | null>(null);
 
-// Fetch data saat komponen dimuat
 onMounted(() => {
-  if (daurohStore.adminTiketDauroh.length === 0) {
-    daurohStore.fetchAdminTiketDauroh();
-  }
-})
+  daurohStore.fetchAdminTiketDauroh();
+});
 
-// Fungsi format mata uang (tidak berubah)
 const formatCurrency = (value: number | null | undefined) => {
-  if (value === null || value === undefined || value === 0) return 'Gratis'
+  if (value === null || value === undefined || value === 0) return 'Gratis';
   return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
+    style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
   }).format(value);
-}
+};
 
-// --- Fungsi untuk Modal Form (Tambah/Edit Dasar) ---
+const openDetailModal = (sk: string | null) => {
+    console.log(`[TiketManager] openDetailModal called with sk: ${sk}`); // <-- LOG TAMBAHAN
+    if (sk) {
+        selectedDaurohSk.value = sk;
+        showDetailModal.value = true;
+    } else {
+        console.error("[TiketManager] Tidak bisa membuka detail, SK tidak valid."); // <-- LOG TAMBAHAN
+        Swal.fire('Error', 'SK event tidak valid untuk dilihat detailnya.', 'error');
+    }
+};
+const closeDetailModal = () => {
+    showDetailModal.value = false;
+    selectedDaurohSk.value = null;
+};
+const handleDetailUpdated = () => {
+  console.log('[TiketManager] Detail event di modal telah diperbarui (event received).'); // <-- LOG TAMBAHAN
+};
+
 const openAddModal = () => {
-  isEditing.value = false
-  selectedDauroh.value = null // Kosongkan data
-  showFormModal.value = true
-}
-
+  isEditing.value = false;
+  selectedDauroh.value = null;
+  showFormModal.value = true;
+};
 const openUpdateModal = (dauroh: Dauroh) => {
-  isEditing.value = true
-  // Salin hanya data dasar yang relevan untuk modal edit
-  selectedDauroh.value = {
-      sk: dauroh.sk,
-      Title: dauroh.Title,
-      Place: dauroh.Place,
-      Gender: dauroh.Gender,
-      Price: dauroh.Price,
-      // Tidak perlu menyalin Date atau poster ke modal dasar ini
-  }; // Tidak perlu type assertion jika pakai Partial<Dauroh>
-  showFormModal.value = true
-}
-
+  isEditing.value = true;
+  selectedDauroh.value = { sk: dauroh.sk, Title: dauroh.Title, Place: dauroh.Place, Gender: dauroh.Gender, Price: dauroh.Price };
+  showFormModal.value = true;
+};
 const closeFormModal = () => {
-  showFormModal.value = false
-  selectedDauroh.value = null
-}
-
-// Handler untuk event @save dari modal form (AdminDaurohFormModal)
-// Payload HANYA berisi data dasar
-const handleSave = async (payload: { daurohData: Omit<Dauroh, 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null }) => {
+  showFormModal.value = false;
+  selectedDauroh.value = null;
+};
+// Handler save dengan console.log tambahan
+const handleSave = async (payload: { daurohData: Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null }) => {
+  console.log('[TiketManager] handleSave called with payload:', payload); // <-- LOG TAMBAHAN
   let success = false;
-  if (isEditing.value && payload.daurohData.sk) {
-    // Panggil action update basic dari store
-    success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
-  } else {
-    // Panggil action add basic dari store
-    success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
+  try {
+      if (isEditing.value && payload.daurohData.sk) {
+          console.log('[TiketManager] Calling updateTiketDaurohBasic...'); // <-- LOG TAMBAHAN
+          success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
+      } else {
+          console.log('[TiketManager] Calling addTiketDaurohBasic...'); // <-- LOG TAMBAHAN
+          success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
+      }
+      console.log('[TiketManager] Store action returned success:', success); // <-- LOG TAMBAHAN
+  } catch (error) {
+      console.error('[TiketManager] Error occurred directly within handleSave before/during store call:', error); // <-- LOG TAMBAHAN
+      success = false;
+      Swal.fire('Error', 'Terjadi kesalahan saat memproses penyimpanan.', 'error');
   }
 
-  // Tutup modal jika berhasil (store sudah handle fetch ulang)
   if (success) {
+      console.log('[TiketManager] Closing form modal due to success.'); // <-- LOG TAMBAHAN
       closeFormModal();
+  } else {
+      console.log('[TiketManager] Form modal kept open due to failure.'); // <-- LOG TAMBAHAN
   }
-  // Jika gagal, toast error akan muncul dari store, modal tetap terbuka
-}
+};
 
-
-// --- Fungsi untuk Modal Delete (Tetap Sama) ---
 const openDeleteModal = (dauroh: Dauroh) => {
-  selectedDauroh.value = dauroh // Berisi Dauroh lengkap
-  showDeleteModal.value = true
-}
-
+  selectedDaurohForDelete.value = dauroh;
+  showDeleteModal.value = true;
+};
 const closeDeleteModal = () => {
-  showDeleteModal.value = false
-  selectedDauroh.value = null
-}
-
+  showDeleteModal.value = false;
+  selectedDaurohForDelete.value = null;
+};
 const confirmDelete = () => {
-  // Pastikan selectedDauroh memiliki id sebelum menghapus
-  if (selectedDauroh.value?.sk) {
-    daurohStore.deleteTiketDauroh(selectedDauroh.value.sk);
+  if (selectedDaurohForDelete.value?.sk) {
+    daurohStore.deleteTiketDauroh(selectedDaurohForDelete.value.sk);
   }
-  closeDeleteModal(); // Selalu tutup modal setelah konfirmasi
-}
+  closeDeleteModal();
+};
 </script>
 
 <style scoped>
@@ -206,5 +234,12 @@ const confirmDelete = () => {
       object-fit: cover;
       height: 60px;
       width: 40px;
+      border: 1px solid #dee2e6; /* Tambah border tipis */
+  }
+  /* Style untuk placeholder image jika src gagal load */
+  img[src$="placeholder-poster.png"] {
+      object-fit: contain; /* Agar placeholder tidak terdistorsi */
+      padding: 5px;
+      background-color: #f8f9fa; /* Warna background placeholder */
   }
 </style>

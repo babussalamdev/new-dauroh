@@ -87,7 +87,7 @@
 
 <script setup lang="ts">
 import { watch, reactive, computed } from 'vue';
-import type { Dauroh } from '@/stores/dauroh';
+import type { Dauroh, DaurohBasicData } from '@/stores/dauroh'; // Pastikan DaurohBasicData diimpor jika belum
 import { useDaurohStore } from '@/stores/dauroh';
 
 const props = defineProps<{
@@ -99,7 +99,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'save', payload: {
-    daurohData: Omit<Dauroh, 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>;
+    // Sesuaikan Omit jika Dauroh memiliki properti 'id' yang tidak ingin dikirim
+    daurohData: Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>;
     photoBase64: null;
   }): void;
 }>();
@@ -107,7 +108,7 @@ const emit = defineEmits<{
 const daurohStore = useDaurohStore();
 const isLoading = computed(() => daurohStore.loading.savingBasic);
 
-// state awal form
+// state awal form - Gunakan Uppercase
 const getInitialFormState = () => ({
   sk: '',
   Title: '',
@@ -136,8 +137,21 @@ const close = () => {
   if (!isLoading.value) emit('close');
 };
 
+// Fungsi save dengan console.log tambahan
 const save = () => {
-  if (isLoading.value) return;
+   console.log('Attempting to save from modal...'); // <-- LOG INI
+   if (isLoading.value) {
+       console.log('Save prevented: isLoading is true'); // <-- LOG INI
+       return;
+   }
+
+   // Validasi form HTML5
+   const formElement = document.getElementById('daurohBasicForm') as HTMLFormElement;
+   if (formElement && !formElement.checkValidity()) {
+       console.log('Save prevented: Form is invalid according to HTML5 validation.'); // <-- LOG INI
+       formElement.reportValidity(); // Tampilkan pesan validasi browser
+       return;
+   }
 
   const dataToEmit = {
     sk: props.isEditing ? formState.sk : null,
@@ -147,7 +161,9 @@ const save = () => {
     Price: formState.Price,
   };
 
-  emit('save', { daurohData: dataToEmit, photoBase64: null });
+  console.log('Emitting save event with payload:', dataToEmit); // <-- LOG INI
+  // Emit dengan type assertion untuk memastikan tipe sesuai
+  emit('save', { daurohData: dataToEmit as Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null });
 };
 </script>
 
