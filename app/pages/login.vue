@@ -71,15 +71,14 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-              <a href="#!" class="text-decoration-none small">Lupa password?</a>
-            </div>
+              <a href="#" @click.prevent="openForgotPasswordModal" class="text-decoration-none small">Lupa password?</a>
+              </div>
 
             <div class="d-grid gap-2">
               <button
                 type="submit"
                 class="btn btn-primary btn-lg"
-                :enable="loading"
-              >
+                :disabled="loading" >
                 <span
                   v-if="loading"
                   class="spinner-border spinner-border-sm me-2"
@@ -106,20 +105,29 @@
         </div>
       </div>
     </div>
-  </div>
+
+    <ModalsForgotPasswordModal :show="showForgotModal" @close="closeForgotPasswordModal" />
+    </div>
 </template>
 
 <script setup>
 import { ref, reactive } from "vue";
 import { useAuth } from "~/composables/useAuth";
+// Import modal component
+import ModalsForgotPasswordModal from '~/components/modals/ForgotPasswordModal.vue'; // Sesuaikan path jika perlu
 
 definePageMeta({ layout: "auth" });
 
 const { login, loading } = useAuth();
 
 const form = reactive({ email:'', password:'' })
-
 const showPassword = ref(false);
+
+// ==== State untuk modal Lupa Password ====
+const showForgotModal = ref(false);
+const openForgotPasswordModal = () => { showForgotModal.value = true; };
+const closeForgotPasswordModal = () => { showForgotModal.value = false; };
+// ==== Akhir State Modal ====
 
 function togglePasswordVisibility() {
   showPassword.value = !showPassword.value;
@@ -131,6 +139,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+/* Style tidak berubah, salin dari kode sebelumnya */
 .login-container {
   display: flex;
   min-height: 100vh;

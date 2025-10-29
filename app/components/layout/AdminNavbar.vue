@@ -14,7 +14,9 @@
             <i class="bi bi-person-circle fs-3"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end text-small shadow">
-            <li><a class="dropdown-item" href="#">Profil</a></li>
+            <li>
+              <NuxtLink class="dropdown-item" to="/admin/profile">Profil</NuxtLink> 
+              </li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a></li>
           </ul>
