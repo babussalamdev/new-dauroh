@@ -146,7 +146,7 @@ const handleUpdateProfile = async () => {
   profileError.value = null;
   try {
     // // Untuk bagian integrasi BE: Panggil API update profile user (misalnya endpoint /update-user-profile)
-    // const accessToken = localStorage.getItem("IdToken");
+    // const accessToken = useCookie('AccessToken').value; // <-- PERBAIKAN KONSISTENSI
     // await $apiBase.put('/update-user-profile', { // Ganti dengan endpoint yang benar
     //   name: profileForm.name,
     //   accessToken: accessToken // Sesuaikan payload
@@ -198,7 +198,7 @@ const handleChangePassword = async () => {
 
   try {
     // // Untuk bagian integrasi BE: Panggil API change password (endpoint sama dengan admin)
-    const accessToken = localStorage.getItem("AccessToken"); // Ambil AccessToken
+    const accessToken = useCookie('AccessToken').value; // <-- PERBAIKAN KONSISTENSI
     // if (!accessToken) {
     //   throw new Error('Autentikasi gagal, token tidak ditemukan.');
     // }
@@ -214,7 +214,7 @@ const handleChangePassword = async () => {
      console.log('Payload (simulasi):', {
        oldPassword: passwordForm.oldPassword,
        newPassword: passwordForm.newPassword,
-       accessToken: 'SIMULATED_ACCESS_TOKEN' // Ganti dengan token asli saat integrasi
+       accessToken: accessToken || 'SIMULATED_ACCESS_TOKEN' // Ganti dengan token asli saat integrasi
     });
     await new Promise(resolve => setTimeout(resolve, 1500));
     // --- Akhir Simulasi ---

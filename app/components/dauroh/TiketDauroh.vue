@@ -17,10 +17,9 @@
           <div class="d-flex card-container-flex">
              <div
               v-for="dauroh in chunk"
-              :key="dauroh.id || dauroh.Title"
-              class="dauroh-card-wrapper"
+              :key="dauroh.sk || dauroh.Title" class="dauroh-card-wrapper"
             >
-              <NuxtLink :to="'/dauroh/' + dauroh.id" class="text-decoration-none d-block h-100">
+              <NuxtLink :to="'/dauroh/' + dauroh.sk" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                     <img :src="dauroh.poster" class="card-img-top" :alt="dauroh.Title" />

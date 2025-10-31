@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'; // Import onMounted
+import { ref, computed, onMounted, watch } from 'vue'; // Import watch
 import { useDaurohStore } from '~/stores/dauroh';
 import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
@@ -73,14 +73,18 @@ const daurohStore = useDaurohStore();
 const userStore = useUserStore();
 const { isLoggedIn } = useAuth();
 
-const daurohId = route.params.id ? parseInt(route.params.id) : null;
+// ============ PERBAIKAN DI SINI ============
+// Ambil 'id' dari param (yang sebenarnya adalah 'sk') sebagai string
+const daurohSk = route.params.id ? String(route.params.id) : null;
 
 // Ambil data detail dauroh dari state publik (tiketDauroh)
 const dauroh = computed(() => {
-  if (!daurohId) return null;
-  // Gunakan state tiketDauroh untuk mencari detailnya
-  return daurohStore.tiketDauroh.find(d => d.id === daurohId);
+  if (!daurohSk) return null;
+  // Cari berdasarkan 'sk' (lowercase)
+  return daurohStore.tiketDauroh.find(d => d.sk === daurohSk);
 });
+// ============ AKHIR PERBAIKAN ============
+
 
 // Panggil fetch data publik saat komponen dimuat,
 // Store akan handle jika data sudah ada

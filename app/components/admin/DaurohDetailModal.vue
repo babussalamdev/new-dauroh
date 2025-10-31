@@ -19,22 +19,24 @@
                   <h6 class="mb-0 fw-semibold">Informasi Dasar</h6>
                 </div>
                 <div class="card-body p-3">
+                  
                   <dl class="row mb-0 fs-sm">
-                    <dt class="col-sm-4">SK</dt>
-                    <dd class="col-sm-8">{{ eventData?.sk }}</dd>
+                    <dt class="col-4 text-truncate">SK</dt>
+                    <dd class="col-8">{{ eventData?.sk }}</dd>
 
-                    <dt class="col-sm-4">Judul</dt>
-                    <dd class="col-sm-8">{{ eventData?.Title }}</dd>
+                    <dt class="col-4 text-truncate">Judul</dt>
+                    <dd class="col-8">{{ eventData?.Title }}</dd>
 
-                    <dt class="col-sm-4">Tempat</dt>
-                    <dd class="col-sm-8">{{ eventData?.Place || '-' }}</dd>
+                    <dt class="col-4 text-truncate">Tempat</dt>
+                    <dd class="col-8">{{ eventData?.Place || '-' }}</dd>
 
-                    <dt class="col-sm-4">Target</dt>
-                    <dd class="col-sm-8 text-capitalize">{{ eventData?.Gender || 'Umum' }}</dd>
+                    <dt class="col-4 text-truncate">Target</dt>
+                    <dd class="col-8 text-capitalize">{{ eventData?.Gender || 'Umum' }}</dd>
 
-                    <dt class="col-sm-4">Harga</dt>
-                    <dd class="col-sm-8">{{ formatCurrency(eventData?.Price) }}</dd>
+                    <dt class="col-4 text-truncate">Harga</dt>
+                    <dd class="col-8">{{ formatCurrency(eventData?.Price) }}</dd>
                   </dl>
+                  
                   <button @click="openEditBasicModal" class="btn btn-outline-secondary btn-sm w-100 mt-3">
                     <i class="bi bi-pencil me-1"></i> Edit Info Dasar
                   </button>
@@ -120,8 +122,8 @@
 
                       <div class="col-12 col-sm-4">
                         <label :for="'date-modal-' + day.tempId" class="form-label small mb-1">Tanggal *</label>
-                        <input type="date" class="form-control form-control-sm" v-model="day.date" required />
-                      </div>
+                        <input :id="'date-modal-' + day.tempId" type="date" class="form-control form-control-sm" v-model="day.date" required />
+                        </div>
 
                       <div class="col-6 col-sm-3">
                         <label :for="'start-time-modal-' + day.tempId" class="form-label small mb-1">Mulai *</label>
@@ -134,13 +136,16 @@
                       </div>
 
                       <div class="col-12 col-sm-2 text-sm-end mt-2 mt-sm-0">
-                        <label class="form-label small mb-1 d-block d-sm-none">&nbsp;</label> <label class="form-label small mb-1 d-none d-sm-block">&nbsp;</label> <button
+                        <label class="form-label small mb-1 d-block d-sm-none">&nbsp;</label> <label class="form-label small mb-1 d-none d-sm-block">&nbsp;</label> 
+                        
+                        <button
                            type="button"
-                           class="btn btn-outline-danger btn-sm w-100 w-sm-auto"
+                           class="btn btn-outline-danger btn-sm"
                            @click="removeScheduleDay(index)"
                            title="Hapus Hari"
                          >
-                            <i class="bi bi-trash d-inline d-sm-none"></i> <span class="d-none d-sm-inline">Hapus</span> </button>
+                            <i class="bi bi-trash"></i>
+                        </button>
                       </div>
                     </div>
                     <div class="mt-3 pt-3 border-top text-end">
@@ -525,5 +530,13 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
 /* Tambahkan sedikit margin atas untuk form jadwal jika ada isinya */
 #scheduleFormModal > .schedule-day-row:first-child {
     margin-top: 0.5rem;
+}
+
+/* ================= PERBAIKAN CSS TAMBAHAN ================= */
+/* Memaksa label di Info Dasar agar tidak wrapping */
+.fs-sm dt.text-truncate {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 </style>

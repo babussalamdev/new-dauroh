@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia';
 import { useToastStore } from './toast';
 import { useNuxtApp } from '#app';
+// useCookie akan di-auto-import oleh Nuxt, jadi tidak perlu import manual
 
 // Interface DaurohDayDetail
 export interface DaurohDayDetail {
@@ -12,8 +13,8 @@ export interface DaurohDayDetail {
 
 // Interface Dauroh (menggunakan sk)
 export interface Dauroh {
-  sk: string | null; // Identifier utama dari API
-  id?: number | null; // Simpan juga ID jika ada dari GET, mungkin berguna? Opsional.
+  sk: string | null; // Identifier utama dari API (frontend pakai lowercase)
+  id?: number | null; 
   Title: string;
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
@@ -117,13 +118,12 @@ export const useDaurohStore = defineStore('dauroh', {
       try {
         const response = await $apiBase.get('/get-view?type=event');
         this.tiketDauroh = response.data.map((event: any): Dauroh => ({
-          sk: event.sk || null, // Ambil SK
-        //   id: Number(event.id) || undefined, // Ambil ID juga jika ada
+          sk: event.SK || event.sk || null, // Baca event.SK
           Title: event.Title || '',
           Gender: event.Gender || '',
           Date: event.Date || undefined,
-          Place: event.Place || '',
-          Price: Number(event.Price) || 0,
+          Place: event.Place || event.place || '', // Fallback place
+          Price: Number(event.Price || event.price) || 0, // Fallback price
           poster: event.poster || undefined,
           kuota: event.kuota ? Number(event.kuota) : undefined,
           description: event.description || undefined,
@@ -142,13 +142,12 @@ export const useDaurohStore = defineStore('dauroh', {
       try {
         const response = await $apiBase.get('/get-default?type=event');
         this.adminTiketDauroh = response.data.map((event: any): Dauroh => ({
-          sk: event.sk || null, // Ambil SK
-        //   id: Number(event.id) || undefined, // Ambil ID juga jika ada
+          sk: event.SK || event.sk || null, // Baca event.SK
           Title: event.Title || '',
           Gender: event.Gender || '',
           Date: event.Date || undefined,
-          Place: event.Place || '',
-          Price: Number(event.Price) || 0,
+          Place: event.Place || event.place || '', // Fallback place
+          Price: Number(event.Price || event.price) || 0, // Fallback price
           poster: event.poster || undefined,
           kuota: event.kuota ? Number(event.kuota) : undefined,
           description: event.description || undefined,
@@ -158,48 +157,70 @@ export const useDaurohStore = defineStore('dauroh', {
       finally { this.loading.adminTiketDauroh = false; }
     },
 
-    // Fetch Detail (GET /get-default?type=event&sk=...)
+    // ==========================================================
+    // PERBAIKAN LOGIKA FETCH DETAIL
+    // ==========================================================
     async fetchDaurohDetail(sk: string): Promise<Dauroh | null> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
+      
+      // PERBAIKAN 1: Cek cache DENGAN BENAR dan kembalikan jika ada
       const existing = this.adminTiketDauroh.find(d => d.sk === sk);
-      if (existing) { /* ... return cache ... */ }
+      // Cek apakah data di list sudah detail (punya 'description' atau 'pemateri')
+      // Jika ya, kembalikan saja. Jika tidak, kita fetch.
+      if (existing && existing.description) { 
+        this.currentDaurohDetail = existing; // Update state internal (opsional tapi bagus)
+        return existing; 
+      }
 
       this.loading.detail = true;
-      this.currentDaurohDetail = null;
+      // JANGAN reset this.currentDaurohDetail = null di sini, biarkan modal yg handle
       let result: Dauroh | null = null;
       try {
-        const response = await $apiBase.get(`/get-default?type=event&sk=${sk}`); // Ganti id dengan sk
+        const response = await $apiBase.get(`/get-default?type=event&sk=${sk}`); 
         const event = (Array.isArray(response.data) && response.data.length > 0) ? response.data[0] : response.data;
         if (event && typeof event === 'object' && !Array.isArray(event)) {
-          this.currentDaurohDetail = {
-            sk: event.sk || null,
-            // id: Number(event.id) || undefined,
+          
+          // PERBAIKAN 2: Simpan hasil ke 'result', JANGAN mutasi state list
+          result = {
+            sk: event.SK || event.sk || null, // Baca event.SK
             Title: event.Title || '',
             Gender: event.Gender || '',
             Date: event.Date || undefined,
-            Place: event.Place || '',
-            Price: Number(event.Price) || 0,
+            Place: event.Place || event.place || '', // Fallback place
+            Price: Number(event.Price || event.price) || 0, // Fallback price
             poster: event.poster || undefined,
             kuota: event.kuota ? Number(event.kuota) : undefined,
             description: event.description || undefined,
             pemateri: event.pemateri || undefined,
           };
-          result = this.currentDaurohDetail;
-          // Update cache
-          const index = this.adminTiketDauroh.findIndex(d => d.sk === sk);
+
+          // Simpan ke state detail (ini boleh)
+          this.currentDaurohDetail = result;
+          
+          // PERBAIKAN 3: HAPUS LOGIKA MUTASI ARRAY 'adminTiketDauroh'
+          /* const index = this.adminTiketDauroh.findIndex(d => d.sk === sk);
           if (index === -1 && this.currentDaurohDetail) { this.adminTiketDauroh.push(this.currentDaurohDetail); }
           else if (this.currentDaurohDetail) { this.adminTiketDauroh[index] = this.currentDaurohDetail; }
+          */
+          // ^^^ BAGIAN DI ATAS DIHAPUS/DIKOMENTARI ^^^
+
         } else { throw new Error('Event tidak ditemukan'); }
       } catch (error: any) { /* ... error handling ... */ }
-      finally { this.loading.detail = false; return result; }
+      finally { 
+        this.loading.detail = false; 
+        return result; // Kembalikan data yang di-fetch
+      }
     },
+    // ==========================================================
+    // AKHIR DARI PERBAIKAN FETCH DETAIL
+    // ==========================================================
 
     // Upload Photo (PUT /update-default?type=photo-event&sk=...)
     async uploadEventPhoto(eventSk: string, photoBase64: string): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      const accessTokenFromBody = localStorage.getItem('AccessToken'); // Gunakan AccessToken untuk body
+      const accessTokenFromBody = useCookie('AccessToken').value; 
       if (!accessTokenFromBody) { /* ... handle error ... */ return false; }
       if (!photoBase64 || !photoBase64.includes(',')) { /* ... handle error ... */ return false; }
 
@@ -209,12 +230,12 @@ export const useDaurohStore = defineStore('dauroh', {
       this.loading.uploadPhoto = true;
       let success = false;
       try {
-        await $apiBase.put(`/update-default?type=photo-event&sk=${eventSk}`, payload); // URL sudah pakai sk
+        await $apiBase.put(`/update-default?type=photo-event&sk=${eventSk}`, payload); 
         toastStore.showToast({ message: 'Poster berhasil diperbarui.', type: 'success' });
         success = true;
-        // Opsional: fetch ulang detail untuk URL poster baru
-        await this.fetchDaurohDetail(eventSk);
-      } catch (error: any) { /* ... error handling (cek Invalid Access Token) ... */ success = false; }
+        // PERBAIKAN: Refresh list admin, BUKAN detail
+        await this.fetchAdminTiketDauroh();
+      } catch (error: any) { /* ... error handling ... */ success = false; }
       finally { this.loading.uploadPhoto = false; return success; }
     },
 
@@ -222,59 +243,58 @@ export const useDaurohStore = defineStore('dauroh', {
     async addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, 'sk'>): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      const accessTokenFromBody = localStorage.getItem('AccessToken'); // Gunakan AccessToken untuk body
+      const accessTokenFromBody = useCookie('AccessToken').value; 
       if (!accessTokenFromBody) { /* ... handle error ... */ return false; }
 
       this.loading.savingBasic = true;
       let success = false;
       
-      // Payload POST sesuai Postman
-const payload: DaurohPostPayload = {
+      const payload: DaurohPostPayload = {
         Title: daurohData.Title,
-        Gender: daurohData.Gender || 'Umum', // Default ke Umum jika kosong
-        place: daurohData.Place || '', // lowercase
-        price: String(daurohData.Price || 0), // lowercase string, default 0 jika null/undefined
+        Gender: daurohData.Gender || 'Umum', 
+        place: daurohData.Place || '', // lowercase (sesuai API)
+        price: String(daurohData.Price || 0), // lowercase string (sesuai API)
         AccessToken: accessTokenFromBody,
       };
 
-      console.log('Store: addTiketDaurohBasic - Payload to send:', payload); // Debug payload
-
       try {
-        console.log('Store: addTiketDaurohBasic - Sending POST request...');
-        // Kirim request POST ke API
-        await $apiBase.post('/input-default?type=event', payload);
-        console.log('Store: addTiketDaurohBasic - API call successful.');
+        const response = await $apiBase.post('/input-default?type=event', payload);
+        const newEventData = response.data; 
 
-        toastStore.showToast({ message: 'Event baru berhasil ditambahkan.', type: 'success' });
-        success = true; // Set success ke true jika API call berhasil
+        if (newEventData && newEventData.SK) {
+            
+            const newEvent: Dauroh = {
+                sk: newEventData.SK, // Ambil SK (uppercase) dari respons
+                Title: newEventData.Title || daurohData.Title,
+                Gender: newEventData.Gender || daurohData.Gender || 'Umum',
+                Place: newEventData.place || daurohData.Place || '', // 'place' dari respons
+                Price: Number(newEventData.price || daurohData.Price) || 0, // 'price' dari respons
+            };
 
-        // Refresh list SETELAH sukses menambah data
-        try {
-            console.log('Store: addTiketDaurohBasic - Refreshing admin list...');
-            await this.fetchAdminTiketDauroh(); // Refresh list admin
-            console.log('Store: addTiketDaurohBasic - Admin list refreshed.');
-        } catch (refreshError: any) {
-            console.error('Store: addTiketDaurohBasic - Failed to refresh admin list after add:', refreshError);
-            // Tetap anggap sukses karena data sudah ditambahkan, beri warning saja
-            toastStore.showToast({ message: 'Event ditambahkan, tapi gagal refresh daftar.', type: 'info' });
+            this.adminTiketDauroh.unshift(newEvent); 
+            
+            toastStore.showToast({ message: 'Event baru berhasil ditambahkan.', type: 'success' });
+            success = true;
+            
+        } else {
+            console.error("API POST '/input-default' tidak mengembalikan 'SK' pada respons.");
+            toastStore.showToast({ message: 'Event ditambahkan, me-refresh daftar...', type: 'info' });
+            success = true; 
+            await this.fetchAdminTiketDauroh(); 
+            console.warn("PERINGATAN: 'GET /get-default?type=event' HARUS menyertakan 'SK' (uppercase) agar daftar berfungsi.");
         }
 
       } catch (error: any) {
-        // Tangani error dari API call POST
         console.error('Store: addTiketDaurohBasic - API call POST failed:', error);
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Gagal menambahkan event baru.';
-        console.error('Store: addTiketDaurohBasic - Error message:', errorMessage);
         toastStore.showToast({ message: `Error: ${errorMessage}`, type: 'danger' });
-        success = false; // Set success ke false jika API call gagal
+        success = false; 
 
       } finally {
-        // SELALU set loading state ke false di akhir, APAPUN YANG TERJADI
-        console.log('Store: addTiketDaurohBasic - Executing finally block...');
         this.loading.savingBasic = false;
-        console.log('Store: addTiketDaurohBasic - loading.savingBasic set to false.');
       }
 
-      return success; // Return status success akhir
+      return success;
     },
 
     // Update Basic Info (PUT /update-default?type=event&sk=...)
@@ -283,38 +303,38 @@ const payload: DaurohPostPayload = {
       const toastStore = useToastStore();
       const eventSk = daurohData.sk;
       if (!eventSk) { /* ... handle error SK null ... */ return false; }
-      const accessTokenFromBody = localStorage.getItem('AccessToken'); // Gunakan AccessToken untuk body
+      const accessTokenFromBody = useCookie('AccessToken').value; 
       if (!accessTokenFromBody) { /* ... handle error token null ... */ return false; }
 
       this.loading.savingBasic = true;
       const currentEvent = this.adminTiketDauroh.find(d => d.sk === eventSk);
-      const existingDate = currentEvent?.Date; // Ambil Date yang ada
+      const existingDate = currentEvent?.Date; 
 
-      // Payload PUT sesuai Postman
       const payload: DaurohPutPayload = {
-        sk: eventSk, // Sertakan SK di body (sesuai contoh kode sebelumnya, konfirmasi ke BE jika perlu)
+        sk: eventSk, 
         Title: daurohData.Title,
         Gender: daurohData.Gender || 'Umum',
-        Place: daurohData.Place || '', // Uppercase
-        Price: String(daurohData.Price ?? 0), // Uppercase string
-        Date: existingDate || {}, // Kirim Date yang ada atau objek kosong
+        Place: daurohData.Place || '', // Uppercase (sesuai API Update)
+        Price: String(daurohData.Price ?? 0), // Uppercase (sesuai API Update)
+        Date: existingDate || {}, 
         AccessToken: accessTokenFromBody,
       };
 
       let success = false;
       try {
-        await $apiBase.put(`/update-default?type=event&sk=${eventSk}`, payload); // Pakai SK di URL
+        await $apiBase.put(`/update-default?type=event&sk=${eventSk}`, payload); 
         toastStore.showToast({ message: `Info dasar Event SK ${eventSk} berhasil diperbarui.`, type: 'success' });
-        await this.fetchAdminTiketDauroh(); // Refresh list
-        // Update detail jika sedang dilihat
+        
+        // PERBAIKAN: Refresh list admin setelah update
+        await this.fetchAdminTiketDauroh(); 
+        
+        // (Opsional) Update currentDaurohDetail jika sedang dilihat
         if (this.currentDaurohDetail && this.currentDaurohDetail.sk === eventSk) {
-          Object.assign(this.currentDaurohDetail, {
-            Title: daurohData.Title, Gender: daurohData.Gender, Place: daurohData.Place, Price: daurohData.Price
-            // Date tidak diubah di sini
-          });
+            // Kita fetch ulang detailnya agar konsisten
+            await this.fetchDaurohDetail(eventSk);
         }
         success = true;
-      } catch (error: any) { /* ... error handling (cek Invalid Access Token) ... */ success = false; }
+      } catch (error: any) { /* ... error handling ... */ success = false; }
       finally { this.loading.savingBasic = false; return success; }
     },
 
@@ -322,7 +342,7 @@ const payload: DaurohPostPayload = {
     async updateDaurohSchedule(eventSk: string, scheduleData: DaurohSchedulePayload): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      const accessTokenFromBody = localStorage.getItem('AccessToken'); // Gunakan AccessToken untuk body
+      const accessTokenFromBody = useCookie('AccessToken').value; 
       if (!accessTokenFromBody) { /* ... handle error token null ... */ return false; }
 
       this.loading.savingSchedule = true;
@@ -330,48 +350,50 @@ const payload: DaurohPostPayload = {
       if (!currentData) { currentData = await this.fetchDaurohDetail(eventSk); }
       if (!currentData) { /* ... handle error data not found ... */ return false; }
 
-      // Payload PUT sesuai Postman, timpa Date
       const payload: DaurohPutPayload = {
-        sk: eventSk, // Sertakan SK di body (konfirmasi ke BE jika perlu)
+        sk: eventSk, 
         Title: currentData.Title,
         Gender: currentData.Gender,
-        Place: currentData.Place,
-        Price: String(currentData.Price ?? 0),
+        Place: currentData.Place, // Uppercase (sesuai API Update)
+        Price: String(currentData.Price ?? 0), // Uppercase (sesuai API Update)
         Date: scheduleData, // Jadwal baru
         AccessToken: accessTokenFromBody,
       };
 
       let success = false;
       try {
-        await $apiBase.put(`/update-default?type=event&sk=${eventSk}`, payload); // Pakai SK di URL
+        await $apiBase.put(`/update-default?type=event&sk=${eventSk}`, payload); 
         toastStore.showToast({ message: `Jadwal Event SK ${eventSk} berhasil diperbarui.`, type: 'success' });
-        await this.fetchAdminTiketDauroh(); // Refresh list
-        // Update detail jika sedang dilihat
+        
+        // PERBAIKAN: Refresh list admin setelah update
+        await this.fetchAdminTiketDauroh(); 
+        
+        // (Opsional) Update currentDaurohDetail jika sedang dilihat
         if (this.currentDaurohDetail && this.currentDaurohDetail.sk === eventSk) {
-          this.currentDaurohDetail.Date = scheduleData;
+            this.currentDaurohDetail.Date = scheduleData;
         }
         success = true;
-      } catch (error: any) { /* ... error handling (cek Invalid Access Token) ... */ success = false; }
+      } catch (error: any) { /* ... error handling ... */ success = false; }
       finally { this.loading.savingSchedule = false; return success; }
     },
 
-    // Delete Event (DELETE /delete-default?type=event&sk=...)
+    // Delete Event (DELETE /delete-default?pk=event&sk=...)
     async deleteTiketDauroh(sk: string) {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      const accessTokenFromBody = localStorage.getItem('AccessToken'); // Gunakan AccessToken untuk body
+      const accessTokenFromBody = useCookie('AccessToken').value; 
       if (!accessTokenFromBody) { /* ... handle error token null ... */ return; }
 
       try {
-        // Endpoint DELETE pakai SK di URL, AccessToken di body
-        await $apiBase.delete(`/delete-default?type=event&sk=${sk}`, {
-          data: { AccessToken: accessTokenFromBody } // Token di body
+        // Endpoint DELETE pakai pk=event (sesuai perbaikan sebelumnya)
+        await $apiBase.delete(`/delete-default?pk=event&sk=${sk}`, {
+          data: { AccessToken: accessTokenFromBody } 
         });
         toastStore.showToast({ message: `Event SK ${sk} berhasil dihapus.`, type: 'success' });
         // Hapus dari state
         this.adminTiketDauroh = this.adminTiketDauroh.filter(d => d.sk !== sk);
         this.tiketDauroh = this.tiketDauroh.filter(d => d.sk !== sk);
-      } catch (error: any) { /* ... error handling (cek Invalid Access Token) ... */ }
+      } catch (error: any) { /* ... error handling ... */ }
     },
   },
 });
