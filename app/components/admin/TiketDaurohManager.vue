@@ -132,12 +132,10 @@ const formatCurrency = (value: number | null | undefined) => {
 };
 
 const openDetailModal = (sk: string | null) => {
-    console.log(`[TiketManager] openDetailModal called with sk: ${sk}`); // <-- LOG TAMBAHAN
     if (sk) {
         selectedDaurohSk.value = sk;
         showDetailModal.value = true;
     } else {
-        console.error("[TiketManager] Tidak bisa membuka detail, SK tidak valid."); // <-- LOG TAMBAHAN
         Swal.fire('Error', 'SK event tidak valid untuk dilihat detailnya.', 'error');
     }
 };
@@ -146,7 +144,6 @@ const closeDetailModal = () => {
     selectedDaurohSk.value = null;
 };
 const handleDetailUpdated = () => {
-  console.log('[TiketManager] Detail event di modal telah diperbarui (event received).'); // <-- LOG TAMBAHAN
 };
 
 const openAddModal = () => {
@@ -165,28 +162,21 @@ const closeFormModal = () => {
 };
 // Handler save dengan console.log tambahan
 const handleSave = async (payload: { daurohData: Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null }) => {
-  console.log('[TiketManager] handleSave called with payload:', payload); // <-- LOG TAMBAHAN
   let success = false;
   try {
       if (isEditing.value && payload.daurohData.sk) {
-          console.log('[TiketManager] Calling updateTiketDaurohBasic...'); // <-- LOG TAMBAHAN
           success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
       } else {
-          console.log('[TiketManager] Calling addTiketDaurohBasic...'); // <-- LOG TAMBAHAN
           success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
       }
-      console.log('[TiketManager] Store action returned success:', success); // <-- LOG TAMBAHAN
   } catch (error) {
-      console.error('[TiketManager] Error occurred directly within handleSave before/during store call:', error); // <-- LOG TAMBAHAN
       success = false;
       Swal.fire('Error', 'Terjadi kesalahan saat memproses penyimpanan.', 'error');
   }
 
   if (success) {
-      console.log('[TiketManager] Closing form modal due to success.'); // <-- LOG TAMBAHAN
       closeFormModal();
   } else {
-      console.log('[TiketManager] Form modal kept open due to failure.'); // <-- LOG TAMBAHAN
   }
 };
 

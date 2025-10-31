@@ -137,11 +137,8 @@ const close = () => {
   if (!isLoading.value) emit('close');
 };
 
-// Fungsi save dengan console.log tambahan
 const save = () => {
-   console.log('Attempting to save from modal...'); // <-- LOG INI
    if (isLoading.value) {
-       console.log('Save prevented: isLoading is true'); // <-- LOG INI
        return;
    }
 
@@ -161,7 +158,6 @@ const save = () => {
     Price: formState.Price,
   };
 
-  console.log('Emitting save event with payload:', dataToEmit); // <-- LOG INI
   // Emit dengan type assertion untuk memastikan tipe sesuai
   emit('save', { daurohData: dataToEmit as Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null });
 };

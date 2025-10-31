@@ -9,7 +9,7 @@
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 mb-3 mb-md-0">
-              <img :src="dauroh?.poster || 'https://via.placeholder.com/300x450.png?text=No+Poster'" alt="Poster Dauroh" class="img-fluid rounded shadow-sm" />
+              <img :src="dauroh?.poster" alt="Poster Dauroh" class="img-fluid rounded shadow-sm" />
             </div>
             <div class="col-md-8">
 
