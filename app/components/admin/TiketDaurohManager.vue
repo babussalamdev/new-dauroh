@@ -107,7 +107,6 @@
 import { ref, onMounted } from 'vue';
 import { useDaurohStore } from '@/stores/dauroh';
 import type { Dauroh } from '@/stores/dauroh';
-import AdminDaurohDetailModal from '~/components/admin/DaurohDetailModal.vue';
 import Swal from 'sweetalert2';
 
 const daurohStore = useDaurohStore();

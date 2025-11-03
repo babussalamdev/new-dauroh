@@ -157,14 +157,12 @@ export const useDaurohStore = defineStore('dauroh', {
       finally { this.loading.adminTiketDauroh = false; }
     },
 
-    // ==========================================================
-    // PERBAIKAN LOGIKA FETCH DETAIL
-    // ==========================================================
+
     async fetchDaurohDetail(sk: string): Promise<Dauroh | null> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       
-      // PERBAIKAN 1: Cek cache DENGAN BENAR dan kembalikan jika ada
+      // Cek cache DENGAN BENAR dan kembalikan jika ada
       const existing = this.adminTiketDauroh.find(d => d.sk === sk);
       // Cek apakah data di list sudah detail (punya 'description' atau 'pemateri')
       // Jika ya, kembalikan saja. Jika tidak, kita fetch.
@@ -198,12 +196,6 @@ export const useDaurohStore = defineStore('dauroh', {
           // Simpan ke state detail (ini boleh)
           this.currentDaurohDetail = result;
           
-          // PERBAIKAN 3: HAPUS LOGIKA MUTASI ARRAY 'adminTiketDauroh'
-          /* const index = this.adminTiketDauroh.findIndex(d => d.sk === sk);
-          if (index === -1 && this.currentDaurohDetail) { this.adminTiketDauroh.push(this.currentDaurohDetail); }
-          else if (this.currentDaurohDetail) { this.adminTiketDauroh[index] = this.currentDaurohDetail; }
-          */
-          // ^^^ BAGIAN DI ATAS DIHAPUS/DIKOMENTARI ^^^
 
         } else { throw new Error('Event tidak ditemukan'); }
       } catch (error: any) { /* ... error handling ... */ }
@@ -212,10 +204,6 @@ export const useDaurohStore = defineStore('dauroh', {
         return result; // Kembalikan data yang di-fetch
       }
     },
-    // ==========================================================
-    // AKHIR DARI PERBAIKAN FETCH DETAIL
-    // ==========================================================
-
     // Upload Photo (PUT /update-default?type=photo-event&sk=...)
     async uploadEventPhoto(eventSk: string, photoBase64: string): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
@@ -252,8 +240,8 @@ export const useDaurohStore = defineStore('dauroh', {
       const payload: DaurohPostPayload = {
         Title: daurohData.Title,
         Gender: daurohData.Gender || 'Umum', 
-        place: daurohData.Place || '', // lowercase (sesuai API)
-        price: String(daurohData.Price || 0), // lowercase string (sesuai API)
+        place: daurohData.Place || '',
+        price: String(daurohData.Price || 0),
         AccessToken: accessTokenFromBody,
       };
 
@@ -264,7 +252,7 @@ export const useDaurohStore = defineStore('dauroh', {
         if (newEventData && newEventData.SK) {
             
             const newEvent: Dauroh = {
-                sk: newEventData.SK, // Ambil SK (uppercase) dari respons
+                sk: newEventData.SK, // Ambil SK dari respons
                 Title: newEventData.Title || daurohData.Title,
                 Gender: newEventData.Gender || daurohData.Gender || 'Umum',
                 Place: newEventData.place || daurohData.Place || '', // 'place' dari respons
@@ -314,8 +302,8 @@ export const useDaurohStore = defineStore('dauroh', {
         sk: eventSk, 
         Title: daurohData.Title,
         Gender: daurohData.Gender || 'Umum',
-        Place: daurohData.Place || '', // Uppercase (sesuai API Update)
-        Price: String(daurohData.Price ?? 0), // Uppercase (sesuai API Update)
+        Place: daurohData.Place || '',
+        Price: String(daurohData.Price ?? 0), 
         Date: existingDate || {}, 
         AccessToken: accessTokenFromBody,
       };
@@ -354,9 +342,9 @@ export const useDaurohStore = defineStore('dauroh', {
         sk: eventSk, 
         Title: currentData.Title,
         Gender: currentData.Gender,
-        Place: currentData.Place, // Uppercase (sesuai API Update)
-        Price: String(currentData.Price ?? 0), // Uppercase (sesuai API Update)
-        Date: scheduleData, // Jadwal baru
+        Place: currentData.Place,
+        Price: String(currentData.Price ?? 0), 
+        Date: scheduleData,
         AccessToken: accessTokenFromBody,
       };
 
@@ -365,7 +353,7 @@ export const useDaurohStore = defineStore('dauroh', {
         await $apiBase.put(`/update-default?type=event&sk=${eventSk}`, payload); 
         toastStore.showToast({ message: `Jadwal Event SK ${eventSk} berhasil diperbarui.`, type: 'success' });
         
-        // PERBAIKAN: Refresh list admin setelah update
+        // Refresh list admin
         await this.fetchAdminTiketDauroh(); 
         
         // (Opsional) Update currentDaurohDetail jika sedang dilihat
@@ -385,7 +373,7 @@ export const useDaurohStore = defineStore('dauroh', {
       if (!accessTokenFromBody) { /* ... handle error token null ... */ return; }
 
       try {
-        // Endpoint DELETE pakai pk=event (sesuai perbaikan sebelumnya)
+        // Endpoint DELETE pakai pk=event
         await $apiBase.delete(`/delete-default?pk=event&sk=${sk}`, {
           data: { AccessToken: accessTokenFromBody } 
         });

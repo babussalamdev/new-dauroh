@@ -77,12 +77,9 @@ const handleQrClick = () => {
 };
 
 const closeQrModal = () => (showQrModal.value = false);
-// Fungsi untuk InfoModal dihapus
-// const closeInfoModal = () => (showInfoModal.value = false);
 </script>
 
 <style scoped>
-/* CSS tidak perlu diubah */
 .hero-section {
   background: #ffffff;
   padding-top: 2rem;
