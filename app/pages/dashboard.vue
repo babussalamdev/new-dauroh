@@ -10,11 +10,11 @@
               </div>
               <div class="card-body">
                 <div v-if="userStore.getUpcomingDauroh.length > 0">
-                  <div v-for="movie in userStore.getUpcomingDauroh" :key="movie.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                    <img :src="movie.poster" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="movie.title">
+                  <div v-for="dauroh in userStore.getUpcomingDauroh" :key="dauroh.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <img :src="dauroh.Picture" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="dauroh.title">
                     <div class="ms-3 flex-grow-1">
-                      <h6 class="fw-bold mb-1">{{ movie.title }}</h6>
-                      <p class="text-muted mb-1 small">{{ movie.genre }}</p>
+                      <h6 class="fw-bold mb-1">{{ dauroh.title }}</h6>
+                      <p class="text-muted mb-1 small">{{ dauroh.genre }}</p>
                       <span class="badge bg-success">Terdaftar</span>
                     </div>
                     <button class="btn btn-primary btn-sm" @click="openQrModal">Lihat E-Tiket</button>
@@ -33,14 +33,14 @@
               </div>
               <div class="card-body">
                 <div v-if="userStore.getHistoryDauroh.length > 0">
-                  <div v-for="movie in userStore.getHistoryDauroh" :key="movie.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                    <img :src="movie.poster" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="movie.title">
+                  <div v-for="dauroh in userStore.getHistoryDauroh" :key="dauroh.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <img :src="dauroh.Picture" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="dauroh.title">
                     <div class="ms-3 flex-grow-1">
-                      <h6 class="fw-bold mb-1">{{ movie.title }}</h6>
-                      <p class="text-muted mb-1 small">{{ movie.genre }}</p>
+                      <h6 class="fw-bold mb-1">{{ dauroh.title }}</h6>
+                      <p class="text-muted mb-1 small">{{ dauroh.genre }}</p>
                       <span class="badge bg-secondary">Selesai</span>
                     </div>
-                    <button class="btn btn-outline-secondary btn-sm" @click="downloadCertificate(movie)">Unduh Sertifikat</button>
+                    <button class="btn btn-outline-secondary btn-sm" @click="downloadCertificate(dauroh)">Unduh Sertifikat</button>
                   </div>
                 </div>
                 <div v-else class="text-center text-muted py-3">

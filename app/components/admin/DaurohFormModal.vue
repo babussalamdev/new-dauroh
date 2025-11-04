@@ -100,7 +100,7 @@ const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'save', payload: {
     // Sesuaikan Omit jika Dauroh memiliki properti 'id' yang tidak ingin dikirim
-    daurohData: Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>;
+    daurohData: Omit<Dauroh, 'id' | 'Date' | 'Picture '>;
     photoBase64: null;
   }): void;
 }>();
@@ -159,7 +159,7 @@ const save = () => {
   };
 
   // Emit dengan type assertion untuk memastikan tipe sesuai
-  emit('save', { daurohData: dataToEmit as Omit<Dauroh, 'id' | 'Date' | 'poster' | 'kuota' | 'description' | 'pemateri'>, photoBase64: null });
+  emit('save', { daurohData: dataToEmit as Omit<Dauroh, 'id' | 'Date' | 'Picture'>, photoBase64: null });
 };
 </script>
 

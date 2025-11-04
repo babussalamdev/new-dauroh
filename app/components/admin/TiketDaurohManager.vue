@@ -163,7 +163,7 @@
   };
   // Handler save dengan console.log tambahan
   const handleSave = async (payload: {
-    daurohData: Omit<Dauroh, "id" | "Date" | "Picture" | "kuota" | "description" | "pemateri">;
+    daurohData: Omit<Dauroh, "id" | "Date" | "Picture" | "kuota" >;
     photoBase64: null;
   }) => {
     let success = false;

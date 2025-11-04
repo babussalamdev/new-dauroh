@@ -13,7 +13,7 @@ export interface DaurohDayDetail {
 
 // Interface Dauroh (menggunakan sk)
 export interface Dauroh {
-  sk: string | null; // Identifier utama dari API (frontend pakai lowercase)
+  sk: string | null;
   id?: number | null;
   Title: string;
   Gender: string;
@@ -21,9 +21,6 @@ export interface Dauroh {
   Place: string;
   Price: number;
   Picture?: string;
-  kuota?: number;
-  description?: string;
-  pemateri?: string;
 }
 
 // Interface payload spesifik untuk POST
@@ -125,9 +122,6 @@ export const useDaurohStore = defineStore("dauroh", {
             Place: event.Place || event.place || "", // Fallback place
             Price: Number(event.Price || event.price) || 0, // Fallback price
             Picture: event.Picture || undefined,
-            kuota: event.kuota ? Number(event.kuota) : undefined,
-            description: event.description || undefined,
-            pemateri: event.pemateri || undefined,
           })
         );
       } catch (error: any) {
@@ -154,9 +148,6 @@ export const useDaurohStore = defineStore("dauroh", {
             Place: event.Place || event.place || "", // Fallback place
             Price: Number(event.Price || event.price) || 0, // Fallback price
             Picture: event.Picture || undefined,
-            kuota: event.kuota ? Number(event.kuota) : undefined,
-            description: event.description || undefined,
-            pemateri: event.pemateri || undefined,
           })
         );
       } catch (error: any) {
@@ -172,13 +163,6 @@ export const useDaurohStore = defineStore("dauroh", {
 
       // Cek cache DENGAN BENAR dan kembalikan jika ada
       const existing = this.adminTiketDauroh.find((d) => d.sk === sk);
-      // Cek apakah data di list sudah detail (punya 'description' atau 'pemateri')
-      // Jika ya, kembalikan saja. Jika tidak, kita fetch.
-      if (existing && existing.description) {
-        this.currentDaurohDetail = existing; // Update state internal (opsional tapi bagus)
-        return existing;
-      }
-
       this.loading.detail = true;
       // JANGAN reset this.currentDaurohDetail = null di sini, biarkan modal yg handle
       let result: Dauroh | null = null;
@@ -195,9 +179,6 @@ export const useDaurohStore = defineStore("dauroh", {
             Place: event.Place || event.place || "", // Fallback place
             Price: Number(event.Price || event.price) || 0, // Fallback price
             Picture: event.Picture || undefined,
-            kuota: event.kuota ? Number(event.kuota) : undefined,
-            description: event.description || undefined,
-            pemateri: event.pemateri || undefined,
           };
 
           // Simpan ke state detail (ini boleh)

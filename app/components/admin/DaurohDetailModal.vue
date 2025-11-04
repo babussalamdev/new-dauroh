@@ -6,7 +6,7 @@
           <h5 class="modal-title">
             Detail Event: {{ eventData ? eventData.Title : 'Memuat...' }}
           </h5>
-          <button type="button" class="btn-close" @click="close" :disabled="isSavingPoster || isSavingSchedule || isConvertingPhoto"></button>
+          <button type="button" class="btn-close" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto"></button>
         </div>
 
         <div class="modal-body">
@@ -45,32 +45,32 @@
 
               <div class="card content-card shadow-sm">
                 <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-                  <h6 class="mb-0 fw-semibold">Poster Event</h6>
+                  <h6 class="mb-0 fw-semibold">Picture Event</h6>
                   <button
                     v-if="newPhotoBase64"
                     type="button"
                     class="btn btn-primary btn-sm"
-                    :disabled="isSavingPoster || isConvertingPhoto"
-                    @click="handlePosterSubmit"
+                    :disabled="isSavingPicture || isConvertingPhoto"
+                    @click="handlePictureSubmit"
                   >
-                    <span v-if="isSavingPoster" class="spinner-border spinner-border-sm me-1" />
-                    {{ isSavingPoster ? 'Menyimpan...' : 'Simpan Poster' }}
+                    <span v-if="isSavingPicture" class="spinner-border spinner-border-sm me-1" />
+                    {{ isSavingPicture ? 'Menyimpan...' : 'Simpan Picture' }}
                   </button>
                 </div>
                 <div class="card-body p-3 text-center">
-                  <div class="poster-container mb-2 d-inline-block mx-auto position-relative">
+                  <div class="Picture-container mb-2 d-inline-block mx-auto position-relative">
                     <img
                       v-if="previewUrl"
                       :src="previewUrl"
-                      alt="Preview Poster"
-                      class="img-fluid rounded shadow-sm poster-preview d-block mx-auto"
+                      alt="Preview Picture"
+                      class="img-fluid rounded shadow-sm Picture-preview d-block mx-auto"
                     />
                     <div
                       v-else
-                      class="poster-preview-placeholder d-flex flex-column justify-content-center align-items-center text-muted mx-auto"
+                      class="Picture-preview-placeholder d-flex flex-column justify-content-center align-items-center text-muted mx-auto"
                     >
                       <i class="bi bi-image fs-1"></i>
-                      <span>Belum ada poster</span>
+                      <span>Belum ada Picture</span>
                     </div>
 
                     <input
@@ -82,7 +82,7 @@
                       :id="'photoInputModal-' + (daurohSk || 'new')"
                     />
                     <label :for="'photoInputModal-' + (daurohSk || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
-                      <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Ganti Poster' : 'Pilih Poster' }}
+                      <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Ganti Picture' : 'Pilih Picture' }}
                     </label>
                   </div>
 
@@ -169,7 +169,7 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="close" :disabled="isSavingPoster || isSavingSchedule || isConvertingPhoto">Tutup</button>
+          <button type="button" class="btn btn-secondary" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto">Tutup</button>
         </div>
 
       </div>
@@ -212,7 +212,7 @@ const daurohStore = useDaurohStore();
 
 // State Internal Modal
 const loading = ref(false);
-const isSavingPoster = ref(false);
+const isSavingPicture = ref(false);
 const isSavingSchedule = ref(false);
 const eventData = ref<Dauroh | null>(null);
 const formState = reactive({ scheduleDays: [] as ScheduleDayForm[] });
@@ -227,7 +227,7 @@ let nextTempId = 0;
 
 // Fungsi Tutup Modal
 const close = () => {
-  if (!isSavingPoster.value && !isSavingSchedule.value && !isConvertingPhoto.value) {
+  if (!isSavingPicture.value && !isSavingSchedule.value && !isConvertingPhoto.value) {
     emit('close');
   } else {
     Swal.fire('Mohon tunggu', 'Sedang ada proses penyimpanan atau konversi.', 'warning');
@@ -251,7 +251,7 @@ watch(() => [props.show, props.daurohSk], async ([newShow, newSk]) => {
     photoError.value = null;
     formState.scheduleDays = [];
     nextTempId = 0;
-    isSavingPoster.value = false; // Reset status saving
+    isSavingPicture.value = false; // Reset status saving
     isSavingSchedule.value = false;
     isConvertingPhoto.value = false;
     showEditBasicModal.value = false; // Pastikan modal edit basic tertutup
@@ -264,7 +264,7 @@ watch(() => [props.show, props.daurohSk], async ([newShow, newSk]) => {
         eventData.value = await daurohStore.fetchDaurohDetail(newSk as string); // Fetch data baru
         if (eventData.value) {
             // Set preview & jadwal dari data baru
-            previewUrl.value = eventData.value.poster ? `${eventData.value.poster}?t=${Date.now()}` : null;
+            previewUrl.value = eventData.value.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null;
             if (eventData.value.Date && typeof eventData.value.Date === 'object') {
                 Object.values(eventData.value.Date).forEach((day) => {
                     if (day?.date && day?.start_time && day?.end_time) {
@@ -329,13 +329,13 @@ const handleScheduleSubmit = async () => {
     }
 };
 
-// --- Fungsi Poster ---
+// --- Fungsi Picture ---
 const handleFileChange = (e: Event) => {
   photoError.value = null;
   newPhotoBase64.value = null;
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) {
-      previewUrl.value = eventData.value?.poster ? `${eventData.value.poster}?t=${Date.now()}` : null;
+      previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null;
       if (fileInput.value) fileInput.value.value = ''; // Clear input file if selection cancelled
       return;
   }
@@ -373,7 +373,7 @@ const convertToWebP = (src: string) => {
         photoError.value = 'Kanvas tidak tersedia.';
         isConvertingPhoto.value = false;
         if (fileInput.value) fileInput.value.value = ''; // Clear input on error
-        previewUrl.value = eventData.value?.poster ? `${eventData.value.poster}?t=${Date.now()}` : null; // Revert preview
+        previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null; // Revert preview
         return;
     }
     // Logic resize (sama seperti sebelumnya)
@@ -392,7 +392,7 @@ const convertToWebP = (src: string) => {
       photoError.value = 'Gagal konversi ke WebP. Coba format lain.';
       newPhotoBase64.value = null;
       if (fileInput.value) fileInput.value.value = ''; // Clear input on error
-      previewUrl.value = eventData.value?.poster ? `${eventData.value.poster}?t=${Date.now()}` : null; // Revert preview
+      previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null; // Revert preview
     } finally {
       isConvertingPhoto.value = false;
     }
@@ -401,15 +401,15 @@ const convertToWebP = (src: string) => {
     photoError.value = 'Gagal memuat gambar.';
     isConvertingPhoto.value = false;
     if (fileInput.value) fileInput.value.value = ''; // Clear input on error
-    previewUrl.value = eventData.value?.poster ? `${eventData.value.poster}?t=${Date.now()}` : null; // Revert preview
+    previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null; // Revert preview
     newPhotoBase64.value = null;
   };
   img.src = src;
 };
 
-const handlePosterSubmit = async () => {
+const handlePictureSubmit = async () => {
   if (!props.daurohSk || !newPhotoBase64.value) return;
-  isSavingPoster.value = true;
+  isSavingPicture.value = true;
   try {
     const success = await daurohStore.uploadEventPhoto(props.daurohSk, newPhotoBase64.value);
     if (success) {
@@ -417,22 +417,22 @@ const handlePosterSubmit = async () => {
         const updatedData = await daurohStore.fetchDaurohDetail(props.daurohSk);
         if(updatedData) {
             eventData.value = updatedData; // Update data lokal
-            previewUrl.value = updatedData.poster ? `${updatedData.poster}?t=${Date.now()}` : null; // Update preview dgn URL baru
+            previewUrl.value = updatedData.Picture ? `${updatedData.Picture}?t=${Date.now()}` : null; // Update preview dgn URL baru
         } else {
              previewUrl.value = newPhotoBase64.value; // Fallback preview jika fetch gagal
         }
         newPhotoBase64.value = null; // Reset base64 baru
         if (fileInput.value) fileInput.value.value = ''; // Clear input file
-        Swal.fire('Berhasil', 'Poster berhasil diperbarui.', 'success');
+        Swal.fire('Berhasil', 'Picture berhasil diperbarui.', 'success');
         emit('updated'); // Beri tahu parent bahwa ada update
     } else {
-        throw new Error('Gagal menyimpan poster (store).');
+        throw new Error('Gagal menyimpan Picture (store).');
     }
   } catch (err: any) {
-    console.error("Error simpan poster:", err);
-    Swal.fire('Error', err.message || 'Gagal menyimpan poster.', 'error');
+    console.error("Error simpan Picture:", err);
+    Swal.fire('Error', err.message || 'Gagal menyimpan Picture.', 'error');
   } finally {
-    isSavingPoster.value = false;
+    isSavingPicture.value = false;
   }
 };
 
@@ -483,17 +483,17 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
 .fs-sm {
     font-size: 0.875rem;
 }
-.poster-container {
+.Picture-container {
   max-width: 100%;
   width: 280px;
 }
-.poster-preview {
+.Picture-preview {
   max-height: 380px;
   width: 100%;
   object-fit: contain;
   border: 1px solid #dee2e6;
 }
-.poster-preview-placeholder {
+.Picture-preview-placeholder {
   width: 100%;
   min-height: 250px;
   background: #f8f9fa;
