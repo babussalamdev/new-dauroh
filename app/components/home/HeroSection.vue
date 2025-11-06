@@ -48,10 +48,15 @@ const showQrModal = ref(false);
 
 const handleButtonClick = (path) => {
   if (!isLoggedIn.value) {
-    router.push('/login');
+    // * Ganti router.push dengan toast
+    toastStore.showToast({
+      message: 'Mohon login atau daftar terlebih dahulu.',
+      type: 'info' // Kamu bisa ganti jadi 'danger' kalau mau
+    });
     return;
   }
 
+  // Logika di bawah ini hanya berjalan jika user SUDAH login
   switch (path) {
     case '/qr':
       handleQrClick();

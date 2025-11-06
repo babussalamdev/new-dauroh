@@ -99,7 +99,7 @@ export const useDaurohStore = defineStore("dauroh", {
       return [...dataToSort].sort((a, b) => (b.sk ?? "").localeCompare(a.sk ?? ""));
     },
   },
-
+  
   actions: {
     setSearchQuery(query: string) {
       this.searchQuery = query;
@@ -109,7 +109,13 @@ export const useDaurohStore = defineStore("dauroh", {
     async fetchPublicTiketDauroh() {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      if (this.tiketDauroh.length > 0 && !this.loading.tiketDauroh) return;
+      
+      // * Logika guard-nya diubah
+      // Hentikan jika data SUDAH ADA atau SEDANG LOADING
+      if (this.tiketDauroh.length > 0 || this.loading.tiketDauroh) {
+        return;
+      }
+      
       this.loading.tiketDauroh = true;
       try {
         const response = await $apiBase.get("/get-view?type=event");
@@ -167,7 +173,7 @@ export const useDaurohStore = defineStore("dauroh", {
       // JANGAN reset this.currentDaurohDetail = null di sini, biarkan modal yg handle
       let result: Dauroh | null = null;
       try {
-        const response = await $apiBase.get(`/get-default?type=event&sk=${sk}`);
+        const response = await $apiBase.get(`/get-default?type=event&sk${sk}`);
         const event = Array.isArray(response.data) && response.data.length > 0 ? response.data[0] : response.data;
         if (event && typeof event === "object" && !Array.isArray(event)) {
           // PERBAIKAN 2: Simpan hasil ke 'result', JANGAN mutasi state list
@@ -266,7 +272,7 @@ export const useDaurohStore = defineStore("dauroh", {
           toastStore.showToast({ message: "Event ditambahkan, me-refresh daftar...", type: "info" });
           success = true;
           await this.fetchAdminTiketDauroh();
-          console.warn("PERINGATAN: 'GET /get-default?type=event' HARUS menyertakan 'SK' (uppercase) agar daftar berfungsi.");
+          console.warn("PERINGATAN: 'GET /get-default?type=event' HARUS menyertakan 'SK' agar daftar berfungsi.");
         }
       } catch (error: any) {
         console.error("Store: addTiketDaurohBasic - API call POST failed:", error);
@@ -317,7 +323,7 @@ export const useDaurohStore = defineStore("dauroh", {
 
         // (Opsional) Update currentDaurohDetail jika sedang dilihat
         if (this.currentDaurohDetail && this.currentDaurohDetail.sk === eventSk) {
-          // Kita fetch ulang detailnya agar konsisten
+          //   fetch ulang detailnya agar konsisten
           await this.fetchDaurohDetail(eventSk);
         }
         success = true;

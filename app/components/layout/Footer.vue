@@ -12,13 +12,7 @@
             <a href="#" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-whatsapp"></i></a>
             <a href="https://www.youtube.com/@BabussalamAsSunnah" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-youtube"></i></a>
             <a href="https://www.facebook.com/YayasanBabussalamAssunnah" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-telegram"></i></a>
           </div>
-        </div>
-
-        <div class="d-flex align-items-center gap-3">
-          <div class="gtranslate_wrapper"></div>
-          <button class="btn btn-outline-secondary rounded-circle btn-social"><i class="bi bi-sun"></i></button>
         </div>
         </div>
 

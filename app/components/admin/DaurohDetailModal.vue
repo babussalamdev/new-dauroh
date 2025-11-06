@@ -10,9 +10,11 @@
         </div>
 
         <div class="modal-body">
-          <CommonLoadingSpinner v-if="loading" class="my-5" />
+          <div v-if="!eventData" class="alert alert-warning text-center">
+            Data event tidak ditemukan.
+          </div>
 
-          <div v-else-if="eventData" class="row g-4">
+          <div v-if="eventData" class="row g-4">
             <div class="col-md-5 col-lg-4">
               <div class="card content-card shadow-sm mb-4">
                 <div class="card-header bg-light py-2">
@@ -64,6 +66,7 @@
                       :src="previewUrl"
                       alt="Preview Picture"
                       class="img-fluid rounded shadow-sm Picture-preview d-block mx-auto"
+                      @error="onImageError"
                     />
                     <div
                       v-else
@@ -79,9 +82,9 @@
                       accept="image/*"
                       @change="handleFileChange"
                       style="display: none;"
-                      :id="'photoInputModal-' + (daurohSk || 'new')"
+                      :id="'photoInputModal-' + (eventData?.sk || 'new')"
                     />
-                    <label :for="'photoInputModal-' + (daurohSk || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
+                    <label :for="'photoInputModal-' + (eventData?.sk || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
                       <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Ganti Picture' : 'Pilih Picture' }}
                     </label>
                   </div>
@@ -163,10 +166,7 @@
               </div>
             </div>
           </div>
-          <div v-else-if="!loading && !eventData" class="alert alert-warning text-center">
-            Event tidak ditemukan atau gagal dimuat.
           </div>
-        </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto">Tutup</button>
@@ -189,10 +189,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, nextTick } from 'vue';
+// * import 'computed'
+import { ref, reactive, watch, nextTick, computed } from 'vue';
 import { useDaurohStore } from '@/stores/dauroh';
 import Swal from 'sweetalert2';
-import type { Dauroh, DaurohDayDetail, DaurohBasicData } from '@/stores/dauroh'; // Import DaurohBasicData
+import type { Dauroh, DaurohDayDetail, DaurohBasicData } from '@/stores/dauroh';
+
+// * Ambil config runtime
+const config = useRuntimeConfig();
+const imgBaseUrl = ref(config.public.img || '');
 
 // Definisikan tipe untuk item jadwal di form
 interface ScheduleDayForm extends DaurohDayDetail {
@@ -202,19 +207,21 @@ interface ScheduleDayForm extends DaurohDayDetail {
 // Props
 const props = defineProps<{
   show: boolean;
-  daurohSk: string | null;
+  dauroh: Dauroh | null; // * Mengganti 'daurohSk' menjadi 'dauroh'
 }>();
 
 // Emits
-const emit = defineEmits(['close', 'updated']); // Tambahkan event 'updated'
+const emit = defineEmits(['close', 'updated']);
 
 const daurohStore = useDaurohStore();
 
 // State Internal Modal
-const loading = ref(false);
+// const loading = ref(false); // * Dihapus
 const isSavingPicture = ref(false);
 const isSavingSchedule = ref(false);
-const eventData = ref<Dauroh | null>(null);
+// const eventData = ref<Dauroh | null>(null); // * Diganti dengan computed
+const eventData = computed(() => props.dauroh); // * Data diambil dari props
+
 const formState = reactive({ scheduleDays: [] as ScheduleDayForm[] });
 const fileInput = ref<HTMLInputElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
@@ -224,6 +231,11 @@ const photoError = ref<string | null>(null);
 const isConvertingPhoto = ref(false);
 const showEditBasicModal = ref(false);
 let nextTempId = 0;
+
+const onImageError = (event: Event) => {
+  (event.target as HTMLImageElement).style.display = 'none';
+  previewUrl.value = null; 
+};
 
 // Fungsi Tutup Modal
 const close = () => {
@@ -240,61 +252,44 @@ const formatCurrency = (value?: number | null) =>
     ? 'Gratis'
     : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-// Fetch Data saat Modal Muncul/SK Berubah
-watch(() => [props.show, props.daurohSk], async ([newShow, newSk]) => {
-  if (newShow && newSk) {
-    loading.value = true;
-    // Reset semua state internal
-    eventData.value = null;
-    previewUrl.value = null;
+// * Mengganti watch fetch data dengan watch untuk populate form
+watch(() => props.show, (newShow) => {
+  if (newShow && props.dauroh) {
+    // Reset states
     newPhotoBase64.value = null;
     photoError.value = null;
-    formState.scheduleDays = [];
-    nextTempId = 0;
-    isSavingPicture.value = false; // Reset status saving
+    isSavingPicture.value = false;
     isSavingSchedule.value = false;
     isConvertingPhoto.value = false;
-    showEditBasicModal.value = false; // Pastikan modal edit basic tertutup
-    if (fileInput.value) fileInput.value.value = ''; // Reset input file
+    showEditBasicModal.value = false;
+    if (fileInput.value) fileInput.value.value = '';
 
+    // Set preview URL dari prop
+    previewUrl.value = props.dauroh.Picture 
+      ? `${imgBaseUrl.value}/${props.dauroh.sk}/${props.dauroh.Picture}.webp?t=${Date.now()}` 
+      : null;
 
-    await nextTick(); // Tunggu DOM update
-
-    try {
-        eventData.value = await daurohStore.fetchDaurohDetail(newSk as string); // Fetch data baru
-        if (eventData.value) {
-            // Set preview & jadwal dari data baru
-            previewUrl.value = eventData.value.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null;
-            if (eventData.value.Date && typeof eventData.value.Date === 'object') {
-                Object.values(eventData.value.Date).forEach((day) => {
-                    if (day?.date && day?.start_time && day?.end_time) {
-                    formState.scheduleDays.push({ tempId: nextTempId++, ...day });
-                    }
-                });
-                formState.scheduleDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            }
-        } else {
-            throw new Error(`Event dengan SK ${newSk} tidak ditemukan.`);
+    // Populate schedule dari prop
+    formState.scheduleDays = [];
+    nextTempId = 0;
+    if (props.dauroh.Date && typeof props.dauroh.Date === 'object') {
+      Object.values(props.dauroh.Date).forEach((day) => {
+        if (day?.date && day?.start_time && day?.end_time) {
+          formState.scheduleDays.push({ tempId: nextTempId++, ...day });
         }
-    } catch (error: any) {
-        console.error("Error fetching detail:", error);
-        Swal.fire('Error', error.message || `Gagal memuat detail event.`, 'error');
-        close(); // Tutup modal jika gagal
-    } finally {
-        loading.value = false;
+      });
+      formState.scheduleDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
-
-  } else if (!newShow) {
-    // Reset saat modal ditutup (opsional, tergantung behavior yg diinginkan)
-    eventData.value = null;
   }
 }, { immediate: true });
+
 
 // Fungsi Jadwal
 const addScheduleDay = () => formState.scheduleDays.push({ tempId: nextTempId++, date: '', start_time: '', end_time: '' });
 const removeScheduleDay = (index: number) => formState.scheduleDays.splice(index, 1);
 const handleScheduleSubmit = async () => {
-    if (!props.daurohSk) return;
+    // * Ambil SK dari eventData (computed)
+    if (!eventData.value?.sk) return; 
     if (formState.scheduleDays.some((d) => !d.date || !d.start_time || !d.end_time))
         return Swal.fire('Error', 'Semua kolom jadwal (Tanggal, Mulai, Selesai) wajib diisi.', 'error');
 
@@ -308,16 +303,16 @@ const handleScheduleSubmit = async () => {
     });
 
     try {
-        const ok = await daurohStore.updateDaurohSchedule(props.daurohSk, dateObject);
+        // Ambil SK dari eventData
+        const ok = await daurohStore.updateDaurohSchedule(eventData.value.sk, dateObject);
         if (ok) {
-            if (eventData.value) { // Update data lokal
+            if (eventData.value) { 
                 eventData.value.Date = dateObject;
-                 // Rebuild form state based on sorted data to maintain order and reassign tempId
                 formState.scheduleDays = sortedDays.map((d, i) => ({ ...d, tempId: i }));
-                nextTempId = sortedDays.length; // Update counter
+                nextTempId = sortedDays.length; 
             }
             Swal.fire('Berhasil', 'Jadwal berhasil disimpan.', 'success');
-            emit('updated'); // Beri tahu parent bahwa ada update
+            emit('updated'); 
         } else {
             throw new Error('Gagal menyimpan jadwal (store).');
         }
@@ -335,31 +330,32 @@ const handleFileChange = (e: Event) => {
   newPhotoBase64.value = null;
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) {
-      previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null;
-      if (fileInput.value) fileInput.value.value = ''; // Clear input file if selection cancelled
+      previewUrl.value = eventData.value?.Picture 
+        ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+        : null;
+      if (fileInput.value) fileInput.value.value = ''; 
       return;
   }
-  // Validasi (sama seperti sebelumnya)
   if (!file.type.startsWith('image/')) {
       photoError.value = 'File harus berupa gambar.';
-      if (fileInput.value) fileInput.value.value = ''; // Clear input if invalid
+      if (fileInput.value) fileInput.value.value = ''; 
       return;
   }
   if (file.size > 5 * 1024 * 1024) {
       photoError.value = 'Ukuran file maks 5MB.';
-      if (fileInput.value) fileInput.value.value = ''; // Clear input if invalid
+      if (fileInput.value) fileInput.value.value = ''; 
       return;
   }
 
   const reader = new FileReader();
   reader.onload = (ev) => {
     const base64 = ev.target?.result as string;
-    previewUrl.value = base64; // Show preview of selected file
+    previewUrl.value = base64; 
     convertToWebP(base64);
   };
   reader.onerror = () => {
       photoError.value = 'Gagal membaca file.';
-      if (fileInput.value) fileInput.value.value = ''; // Clear input on error
+      if (fileInput.value) fileInput.value.value = ''; 
   };
   reader.readAsDataURL(file);
 };
@@ -372,11 +368,12 @@ const convertToWebP = (src: string) => {
     if (!ctx || !canvas.value) {
         photoError.value = 'Kanvas tidak tersedia.';
         isConvertingPhoto.value = false;
-        if (fileInput.value) fileInput.value.value = ''; // Clear input on error
-        previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null; // Revert preview
+        if (fileInput.value) fileInput.value.value = ''; 
+        previewUrl.value = eventData.value?.Picture 
+          ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+          : null; 
         return;
     }
-    // Logic resize (sama seperti sebelumnya)
     const MAX_WIDTH = 800;
     let { naturalWidth: w, naturalHeight: h } = img;
     if (w > MAX_WIDTH) { const r = MAX_WIDTH / w; w = MAX_WIDTH; h *= r; }
@@ -386,13 +383,15 @@ const convertToWebP = (src: string) => {
     try {
       const webpData = canvas.value.toDataURL('image/webp', 0.8);
       if (!webpData || webpData === 'data:,') throw new Error('Gagal konversi WebP: data kosong.');
-      newPhotoBase64.value = webpData; // Simpan hasil konversi
+      newPhotoBase64.value = webpData; 
     } catch (err: any) {
       console.error("Gagal konversi ke WebP:", err);
       photoError.value = 'Gagal konversi ke WebP. Coba format lain.';
       newPhotoBase64.value = null;
-      if (fileInput.value) fileInput.value.value = ''; // Clear input on error
-      previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null; // Revert preview
+      if (fileInput.value) fileInput.value.value = ''; 
+      previewUrl.value = eventData.value?.Picture 
+        ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+        : null; 
     } finally {
       isConvertingPhoto.value = false;
     }
@@ -400,31 +399,37 @@ const convertToWebP = (src: string) => {
   img.onerror = () => {
     photoError.value = 'Gagal memuat gambar.';
     isConvertingPhoto.value = false;
-    if (fileInput.value) fileInput.value.value = ''; // Clear input on error
-    previewUrl.value = eventData.value?.Picture ? `${eventData.value.Picture}?t=${Date.now()}` : null; // Revert preview
+    if (fileInput.value) fileInput.value.value = ''; 
+    previewUrl.value = eventData.value?.Picture 
+      ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+      : null; 
     newPhotoBase64.value = null;
   };
   img.src = src;
 };
 
 const handlePictureSubmit = async () => {
-  if (!props.daurohSk || !newPhotoBase64.value) return;
+  // Ambil SK dari eventData
+  if (!eventData.value?.sk || !newPhotoBase64.value) return; 
   isSavingPicture.value = true;
   try {
-    const success = await daurohStore.uploadEventPhoto(props.daurohSk, newPhotoBase64.value);
+    // Ambil SK dari eventData
+    const success = await daurohStore.uploadEventPhoto(eventData.value.sk, newPhotoBase64.value);
     if (success) {
-        // Fetch ulang data penting untuk update UI di modal detail
-        const updatedData = await daurohStore.fetchDaurohDetail(props.daurohSk);
+        // Ambil SK dari eventData
+        const updatedData = await daurohStore.fetchDaurohDetail(eventData.value.sk);
+        
+        // tidak bisa update eventData (karena computed), tapi bisa update previewUrl
         if(updatedData) {
-            eventData.value = updatedData; // Update data lokal
-            previewUrl.value = updatedData.Picture ? `${updatedData.Picture}?t=${Date.now()}` : null; // Update preview dgn URL baru
+            previewUrl.value = updatedData.Picture ? `${imgBaseUrl.value}/${updatedData.sk}/${updatedData.Picture}.webp?t=${Date.now()}` : null; // Update preview dgn URL baru
         } else {
-             previewUrl.value = newPhotoBase64.value; // Fallback preview jika fetch gagal
+             previewUrl.value = newPhotoBase64.value; 
         }
-        newPhotoBase64.value = null; // Reset base64 baru
-        if (fileInput.value) fileInput.value.value = ''; // Clear input file
+        
+        newPhotoBase64.value = null; 
+        if (fileInput.value) fileInput.value.value = ''; 
         Swal.fire('Berhasil', 'Picture berhasil diperbarui.', 'success');
-        emit('updated'); // Beri tahu parent bahwa ada update
+        emit('updated'); 
     } else {
         throw new Error('Gagal menyimpan Picture (store).');
     }
@@ -440,41 +445,34 @@ const handlePictureSubmit = async () => {
 const openEditBasicModal = () => (showEditBasicModal.value = true);
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, photoBase64: null }) => {
-  if (!payload.daurohData.sk || payload.daurohData.sk !== props.daurohSk) {
+  if (!payload.daurohData.sk || payload.daurohData.sk !== eventData.value?.sk) {
     return Swal.fire('Error', 'SK tidak valid atau tidak cocok.', 'error');
   }
 
-  // Gunakan state loading dari modal detail
-  loading.value = true; // Atau gunakan state loading sendiri jika perlu
+  // tidak punya state 'loading' internal lagi, tapi bisa pakai 'isSavingSchedule'
+  isSavingSchedule.value = true; 
   const success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
 
   if (success) {
     closeEditBasicModal();
-    // Refresh data di modal detail *setelah* modal edit basic ditutup
-    const updatedData = await daurohStore.fetchDaurohDetail(payload.daurohData.sk);
-    if (updatedData) {
-      eventData.value = updatedData; // Update data di modal detail
-    }
+    //  tidak bisa update eventData.value, tapi bisa emit 'updated'
+    // Parent (TiketDaurohManager) akan fetch ulang dan mengirim prop baru
+    emit('updated');
     Swal.fire('Berhasil', 'Informasi dasar berhasil diperbarui.', 'success');
-    emit('updated'); // Beri tahu parent bahwa ada update
-  } else {
-    // Error sudah ditangani di store, modal edit basic tidak ditutup
-    // Swal.fire('Error', 'Gagal memperbarui info dasar.', 'error');
   }
-  loading.value = false;
+  isSavingSchedule.value = false;
 };
 
 </script>
 
 <style scoped>
-/* Style dipertahankan dari [sk].vue, tidak ada style baru */
 .modal-body {
   max-height: 75vh;
 }
 .content-card {
   border: none;
   border-radius: 0.75rem;
-  /* box-shadow: 0 4px 12px rgba(0,0,0,0.05); */ /* Opsional: bisa dihidupkan jika perlu */
+  /* box-shadow: 0 4px 12px rgba(0,0,0,0.05); */ 
 }
 .card-header {
   background-color: #f8f9fa;
@@ -505,35 +503,29 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
   color: #6c757d;
   padding: 0.1rem 0.4rem;
   background-color: #e9ecef !important;
-  /* Posisi absolut relatif terhadap .schedule-day-row */
-  top: -1px; /* Sedikit ke atas border */
-  left: -1px; /* Sedikit ke kiri border */
-  border-bottom-right-radius: 0.25rem !important; /* lengkungan di kanan bawah */
-  border-top-left-radius: 0.5rem !important; /* lengkungan dari parent */
+  top: -1px; 
+  left: -1px; 
+  border-bottom-right-radius: 0.25rem !important; 
+  border-top-left-radius: 0.5rem !important; 
 }
 .schedule-day-row {
     background-color: #fff;
-    padding-top: 1.5rem !important; /* Beri ruang lebih untuk label hari */
+    padding-top: 1.5rem !important; 
 }
 
-/* Penyesuaian responsif untuk kolom jadwal */
 @media (max-width: 575.98px) {
   .schedule-day-row .text-sm-end {
     text-align: left !important;
   }
-  /* Pastikan tombol hapus tidak terlalu mepet di mobile */
    .schedule-day-row .btn-outline-danger {
        margin-top: 0.5rem;
    }
 }
 
-/* Tambahkan sedikit margin atas untuk form jadwal jika ada isinya */
 #scheduleFormModal > .schedule-day-row:first-child {
     margin-top: 0.5rem;
 }
 
-/* ================= PERBAIKAN CSS TAMBAHAN ================= */
-/* Memaksa label di Info Dasar agar tidak wrapping */
 .fs-sm dt.text-truncate {
   white-space: nowrap !important;
   overflow: hidden !important;

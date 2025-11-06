@@ -14,7 +14,7 @@
           <thead class="table-light">
             <tr>
               <th scope="col" style="width: 5%">SK</th>
-              <th scope="col" style="width: 10%">Picture</th>
+              <th scope="col" style="width: 10%" class="text-center">Picture</th>
               <th scope="col">Judul Event</th>
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
@@ -25,20 +25,17 @@
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
             <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.sk || dauroh.Title">
               <th scope="row">{{ dauroh.sk }}</th>
-              <td>
+              <td class="text-center">
                 <img
-                  :src="dauroh.Picture ? `${dauroh.Picture}?t=${Date.now()}` : ''"
+                  :src="dauroh.Picture ? `${imgBaseUrl}/${dauroh.sk}/${dauroh.Picture}.webp?t=${Date.now()}` : ''"
                   :alt="dauroh.Picture ? dauroh.Title : 'Tidak ada Picture'"
-                  width="40"
-                  height="60"
+                  width="30"
+                  height="45"
                   class="rounded Picture-thumbnail"
-                  style="object-fit: cover; background-color: #f8f9fa; display: block"
+                  style="object-fit: cover; background-color: #f8f9fa; display: inline-block; vertical-align: middle;"
                   @error="($event.target as HTMLImageElement).style.display = 'none'" />
                 <span
-                  v-if="
-                    !dauroh.Picture ||
-                    ((event: Event) => !(event.target as HTMLImageElement).complete && !(event.target as HTMLImageElement).naturalWidth)
-                  "
+                  v-if="!dauroh.Picture"
                   class="text-muted small">
                   N/A
                 </span>
@@ -50,7 +47,7 @@
               <td class="text-center">
                 <button
                   class="btn btn-link text-info p-1"
-                  @click="openDetailModal(dauroh.sk)"
+                  @click="openDetailModal(dauroh)"
                   :disabled="!dauroh.sk"
                   :title="dauroh.sk ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
                   <i class="bi bi-search fs-5"></i>
@@ -97,9 +94,9 @@
     @confirm="confirmDelete" />
 
   <AdminDaurohDetailModal
-    v-if="showDetailModal"
+    vif="showDetailModal"
     :show="showDetailModal"
-    :daurohSk="selectedDaurohSk"
+    :dauroh="selectedDaurohForDetail" 
     @close="closeDetailModal"
     @updated="handleDetailUpdated" />
 </template>
@@ -110,6 +107,10 @@
   import type { Dauroh } from "@/stores/dauroh";
   import Swal from "sweetalert2";
 
+  // Ambil config runtime
+  const config = useRuntimeConfig();
+  const imgBaseUrl = ref(config.public.img || ''); // Simpan base URL
+
   const daurohStore = useDaurohStore();
 
   const showFormModal = ref(false);
@@ -118,7 +119,7 @@
   const selectedDauroh = ref<Partial<Dauroh> | null>(null);
   const selectedDaurohForDelete = ref<Dauroh | null>(null);
   const showDetailModal = ref(false);
-  const selectedDaurohSk = ref<string | null>(null);
+  const selectedDaurohForDetail = ref<Dauroh | null>(null); 
 
   onMounted(() => {
     daurohStore.fetchAdminTiketDauroh();
@@ -133,19 +134,24 @@
     }).format(value);
   };
 
-  const openDetailModal = (sk: string | null) => {
-    if (sk) {
-      selectedDaurohSk.value = sk;
+  // * Memperbaiki sintaks TypeScript di sini
+  const openDetailModal = (dauroh: Dauroh | null) => {
+    if (dauroh && dauroh.sk) {
+      selectedDaurohForDetail.value = dauroh; // Simpan objek dauroh utuh
       showDetailModal.value = true;
     } else {
       Swal.fire("Error", "SK event tidak valid untuk dilihat detailnya.", "error");
     }
   };
+  
   const closeDetailModal = () => {
     showDetailModal.value = false;
-    selectedDaurohSk.value = null;
+    selectedDaurohForDetail.value = null; 
   };
-  const handleDetailUpdated = () => {};
+  
+  const handleDetailUpdated = () => {
+    daurohStore.fetchAdminTiketDauroh();
+  };
 
   const openAddModal = () => {
     isEditing.value = false;
@@ -161,7 +167,7 @@
     showFormModal.value = false;
     selectedDauroh.value = null;
   };
-  // Handler save dengan console.log tambahan
+  
   const handleSave = async (payload: {
     daurohData: Omit<Dauroh, "id" | "Date" | "Picture" | "kuota" >;
     photoBase64: null;
@@ -201,14 +207,6 @@
 </script>
 
 <style scoped>
-  /* Styling tidak berubah */
-  .fs-sm {
-    font-size: 0.875rem;
-  }
-  .table-sm th,
-  .table-sm td {
-    padding: 0.4rem;
-  }
   .btn-link {
     text-decoration: none;
     border: none;
@@ -228,14 +226,13 @@
   }
   .Picture-thumbnail {
     object-fit: cover;
-    height: 60px;
-    width: 40px;
-    border: 1px solid #dee2e6; /* Tambah border tipis */
+    height: 45px;
+    width: 30px;
+    border: 1px solid #dee2e6;
   }
-  /* Style untuk placeholder image jika src gagal load */
   img[src$="placeholder-Picture.png"] {
-    object-fit: contain; /* Agar placeholder tidak terdistorsi */
+    object-fit: contain;
     padding: 5px;
-    background-color: #f8f9fa; /* Warna background placeholder */
+    background-color: #f8f9fa;
   }
 </style>

@@ -9,7 +9,17 @@
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 mb-3 mb-md-0">
-              <img :src="dauroh?.Picture" alt="Picture Dauroh" class="img-fluid rounded shadow-sm" />
+              <img 
+                v-if="dauroh?.Picture"
+                :src="`${imgBaseUrl}/${dauroh.sk}/${dauroh.Picture}.webp`" 
+                alt="Picture Dauroh" 
+                class="img-fluid rounded shadow-sm"
+                @error="($event.target as HTMLImageElement).style.display = 'none'"
+              />
+              <div v-else class="Picture-preview-placeholder d-flex flex-column justify-content-center align-items-center text-muted mx-auto">
+                <i class="bi bi-image fs-1"></i>
+                <span>Picture Dauroh</span>
+              </div>
             </div>
             <div class="col-md-8">
 
@@ -22,7 +32,7 @@
               <div class="detail-section mb-3">
                 <h6 class="fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Jadwal & Tempat</h6>
                 <ul class="list-unstyled ps-4">
-                  <li v-for="(day, key, index) in dauroh?.Date" :key="key" class="mb-2">
+                  <li v-for="(day, index) in sortedSchedule" :key="index" class="mb-2">
                     <strong>Hari ke-{{ index + 1 }}</strong>
                     <ul class="list-unstyled ps-3">
                       <li><small><strong>Tanggal:</strong> {{ day.date }}</small></li>
@@ -56,7 +66,13 @@
 </template>
 
 <script setup lang="ts">
-import type { Dauroh } from '~/stores/dauroh'
+// [REVISI TANGGAL] 1. Import `computed`
+import { computed, ref } from 'vue' // [REVISI GAMBAR] 1. Import ref
+import type { Dauroh, DaurohDayDetail } from '~/stores/dauroh'
+
+// [REVISI GAMBAR] 2. Ambil config runtime
+const config = useRuntimeConfig();
+const imgBaseUrl = ref(config.public.img || '');
 
 const props = defineProps<{
   show: boolean
@@ -68,11 +84,33 @@ const emit = defineEmits<{
   (e: 'register', val: Dauroh | undefined): void
 }>()
 
+// [REVISI TANGGAL] 2. Buat computed property untuk mengurutkan jadwal
+const sortedSchedule = computed(() => {
+  if (!props.dauroh?.Date || typeof props.dauroh.Date !== 'object') {
+    return [];
+  }
+  // Ubah object { day_1: {...}, day_2: {...} } menjadi array [{...}, {...}]
+  const scheduleArray = Object.values(props.dauroh.Date) as DaurohDayDetail[];
+  
+  // Urutkan array berdasarkan tanggal
+  return scheduleArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+});
+
+
 const close = () => emit('close')
 const register = () => emit('register', props.dauroh)
 </script>
 
 <style scoped>
+/* [REVISI GAMBAR] 3. Tambahkan style untuk placeholder (opsional) */
+.Picture-preview-placeholder {
+  width: 100%;
+  aspect-ratio: 2 / 3; /* Sesuaikan dengan rasio gambar Anda */
+  background: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 0.5rem;
+}
+
 .modal {
   background-color: rgba(0, 0, 0, 0.5);
 }

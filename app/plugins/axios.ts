@@ -28,7 +28,7 @@ export default defineNuxtPlugin(() => {
                 
                 // Cek jika error adalah 401 (Unauthorized) dan request ini belum pernah dicoba ulang
                 if (error.response?.status === 401 && !originalRequest._retry) {
-                    originalRequest._retry = true // Tandai bahwa kita sudah mencoba ulang
+                    originalRequest._retry = true // Tandai bahwa   sudah mencoba ulang
                     
                     const refreshToken = localStorage.getItem('RefreshToken') // Ambil refresh token
                     

@@ -11,7 +11,8 @@
         <div v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" :key="chunkIndex" :class="['carousel-item', { active: chunkIndex === 0 }]">
           <div class="d-flex card-container-flex">
             <div v-for="dauroh in chunk" :key="dauroh.sk || dauroh.Title" class="dauroh-card-wrapper">
-              <NuxtLink :to="'/dauroh/' + dauroh.sk" class="text-decoration-none d-block h-100">
+              
+              <a :href="'/dauroh/' + dauroh.sk" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                     <img :src="`${imgUrl}/${dauroh.sk}/${dauroh.Picture}.webp`" class="card-img-top" :alt="dauroh.Title" />
@@ -22,12 +23,16 @@
                     <small class="text-muted mb-1">{{ dauroh.date || dauroh.genre }}</small>
                     <small v-if="dauroh.kuota" class="text-muted mb-2">Kuota: {{ dauroh.kuota }}</small>
                     <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
-                      <button class="btn btn-sm btn-outline-primary rounded-pill w-100" @click.prevent="openDetailModal(dauroh)">Detail</button>
-                      <button class="btn btn-sm btn-primary rounded-pill w-100" @click.prevent="handleRegisterClick(dauroh)">Daftar</button>
+                      
+                      <button class="btn btn-sm btn-outline-primary rounded-pill w-100" @click.prevent.stop="openDetailModal(dauroh)">Detail</button>
+                      
+                      <button class="btn btn-sm btn-primary rounded-pill w-100" @click.prevent.stop="handleRegisterClick(dauroh)">Daftar</button>
+                    
                     </div>
                   </div>
                 </div>
-              </NuxtLink>
+              </a>
+
             </div>
           </div>
         </div>
@@ -76,6 +81,9 @@
     </div>
 
     <ModalsDaurohDetailModal :show="showDetailModal" :dauroh="selectedDauroh" @close="closeDetailModal" @register="handleRegisterFromDetail" />
+    
+    <ModalsDaurohImageModal :show="showImageModal" :dauroh="selectedDauroh" @close="closeImageModal" />
+
     <ModalsDaurohRegistrationModal
       :show="showRegistrationModal"
       :dauroh="selectedDauroh"
@@ -86,15 +94,19 @@
 </template>
 
 <script setup>
-  // Script setup remains the same
   import { ref, onMounted } from "vue";
   import { useDaurohStore } from "~/stores/dauroh";
   import { useUserStore } from "~/stores/user";
+  import { useToastStore } from '~/stores/toast'; // * 1. Import toast store
   import { useAuth } from "~/composables/useAuth";
+
+  // Import modal gambar baru
+  import ModalsDaurohImageModal from '~/components/modals/DaurohImageModal.vue';
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
   const userStore = useUserStore();
+  const toastStore = useToastStore(); // * 2. Inisialisasi store
   const { isLoggedIn } = useAuth();
   const router = useRouter();
 
@@ -105,6 +117,7 @@
   onMounted(() => {
     // load env value
     imgUrl.value = config.public.img;
+    // Panggil fetch data
     daurohStore.fetchPublicTiketDauroh();
   });
 
@@ -112,9 +125,18 @@
   const showDetailModal = ref(false);
   const showRegistrationModal = ref(false);
   const showQrModal = ref(false);
-  onMounted(() => {
-    daurohStore.fetchPublicTiketDauroh();
-  });
+
+  // State dan handler untuk modal gambar baru
+  const showImageModal = ref(false);
+  const openImageModal = (dauroh) => {
+    selectedDauroh.value = dauroh;
+    showImageModal.value = true;
+  };
+  const closeImageModal = () => {
+    showImageModal.value = false;
+  };
+  // --- Akhir Revisi Modal Gambar ---
+
   const openDetailModal = (dauroh) => {
     selectedDauroh.value = dauroh;
     showDetailModal.value = true;
@@ -128,14 +150,20 @@
       handleRegisterClick(dauroh);
     }, 200);
   };
+  
   const handleRegisterClick = (dauroh) => {
     if (!isLoggedIn.value) {
-      router.push("/login");
+      // * 3. Ganti router.push dengan toast
+      toastStore.showToast({
+        message: 'Mohon login atau daftar terlebih dahulu.',
+        type: 'info'
+      });
     } else {
       selectedDauroh.value = dauroh;
       showRegistrationModal.value = true;
     }
   };
+
   const closeRegistrationModal = () => {
     showRegistrationModal.value = false;
   };
@@ -150,62 +178,45 @@
 </script>
 
 <style scoped>
+  /* Style tidak berubah */
   .carousel {
     position: relative;
-    /* Tambahkan sedikit padding horizontal di carousel utama */
-    /* Ini memberi ruang 'aman' di tepi untuk tombol */
-    padding-left: 50px; /* Lebar tombol + sedikit margin */
-    padding-right: 50px; /* Lebar tombol + sedikit margin */
+    padding-left: 50px;
+    padding-right: 50px;
   }
-
   .carousel-inner {
-    padding: 1rem 0; /* Minimal vertical padding, HAPUS padding horizontal di sini */
+    padding: 1rem 0;
   }
-
-  /* Container for flex items within each carousel item */
   .card-container-flex {
     display: flex;
-    gap: 1rem; /* Space between cards */
-    /* Hapus padding horizontal di sini, karena sudah diatur di .carousel */
+    gap: 1rem;
     padding: 0;
   }
-
-  /* Wrapper for each card link to control width */
   .dauroh-card-wrapper {
-    flex: 0 0 auto; /* Prevent flex item from growing/shrinking */
-    /* Kita kurangi sedikit lebarnya dari perhitungan sebelumnya */
-    width: calc(50% - 0.75rem); /* Sedikit lebih kecil dari 0.5rem gap */
-    margin-bottom: 1rem; /* Vertical spacing */
+    flex: 0 0 auto;
+    width: calc(50% - 0.75rem);
+    margin-bottom: 1rem;
   }
-
-  /* Adjust card width based on breakpoints, juga dikurangi sedikit */
   @media (min-width: 576px) {
-    /* Tetap 2 kartu */
     .dauroh-card-wrapper {
       width: calc(50% - 0.75rem);
     }
   }
   @media (min-width: 768px) {
-    /* Medium screens (md) - 3 cards */
     .dauroh-card-wrapper {
-      /* (100% / 3) - (gap * (n-1) / n ) */
-      width: calc(33.333% - (1rem * 2 / 3) - 4px); /* Kurangi beberapa pixel lagi */
+      width: calc(33.333% - (1rem * 2 / 3) - 4px);
     }
   }
   @media (min-width: 992px) {
-    /* Large screens (lg) - 4 cards */
     .dauroh-card-wrapper {
-      /* (100% / 4) - (gap * (n-1) / n ) */
-      width: calc(25% - (1rem * 3 / 4) - 4px); /* Kurangi beberapa pixel lagi */
+      width: calc(25% - (1rem * 3 / 4) - 4px);
     }
   }
-
-  /* Controls (posisikan di area padding .carousel) */
   .carousel-control-prev,
   .carousel-control-next {
-    width: 40px; /* Sedikit lebih kecil? */
-    height: 40px; /* Sedikit lebih kecil? */
-    background-color: rgba(0, 0, 0, 0.4); /* Sedikit lebih gelap agar terlihat */
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.4);
     border-radius: 50%;
     opacity: 0.7;
     transition: opacity 0.3s ease;
@@ -213,38 +224,29 @@
     transform: translateY(-50%);
     position: absolute;
     z-index: 10;
-    /* Posisikan di dalam padding .carousel */
-    left: 5px; /* Jarak dari tepi kiri .carousel */
+    left: 5px;
   }
   .carousel-control-next {
     left: auto;
-    right: 5px; /* Jarak dari tepi kanan .carousel */
+    right: 5px;
   }
-
   @media (max-width: 991.98px) {
-    /* Sembunyikan tombol di bawah lg */
     .carousel-control-prev,
     .carousel-control-next {
       display: none;
     }
     .carousel {
-      /* Hapus padding jika tombol hilang */
       padding-left: 0;
       padding-right: 0;
     }
     .card-container-flex {
-      padding: 0 1rem; /* Kembalikan padding container jika tombol hilang */
+      padding: 0 1rem;
     }
   }
-
   .carousel-control-prev-icon,
   .carousel-control-next-icon {
-    /* Tidak perlu filter invert jika background tombol sudah gelap */
-    background-size: 60%; /* Kecilkan ikon panah */
+    background-size: 60%;
   }
-
-  /* Sisa style lainnya (card, overlay, skeleton, dll) tetap sama */
-  /* ... */
   .card.dauroh-card {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
@@ -278,7 +280,6 @@
     font-size: 0.8rem;
     padding: 0.25rem 0.75rem;
   }
-  /* Style skeleton disesuaikan */
   .skeleton-container .dauroh-card-wrapper {
     width: calc(50% - 0.75rem);
   }

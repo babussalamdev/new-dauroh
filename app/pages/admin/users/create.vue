@@ -25,7 +25,7 @@
             </div>
             <div class="col-md-6">
               <label for="password" class="form-label">Password</label>
-              <input type="password" class="form-control" id="password" v-model="form.password" required>
+              <input type="password" class="form-control" id="password" v-model="form.password" required minlength="6">
             </div>
             <div class="col-md-6">
               <label for="role" class="form-label">Role</label>
@@ -37,8 +37,11 @@
             </div>
           </div>
           <div class="mt-4 text-end">
-            <NuxtLink to="/admin/users" class="btn btn-secondary me-2">Batal</NuxtLink>
-            <button type="submit" class="btn btn-primary">Simpan User</button>
+            <NuxtLink to="/admin/users" class="btn btn-secondary me-2" :class="{ disabled: store.loading }">Batal</NuxtLink>
+            <button type="submit" class="btn btn-primary" :disabled="store.loading">
+              <span v-if="store.loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              {{ store.loading ? 'Menyimpan...' : 'Simpan User' }}
+            </button>
           </div>
         </form>
       </div>
@@ -47,10 +50,10 @@
 </template>
 
 <script setup lang="ts">
-// Script tidak ada perubahan
 import { reactive } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import Swal from 'sweetalert2';
+import { useAdminUserStore } from '~/stores/adminUser'; // * Import store
+import { useRouter } from 'vue-router'; // * Import router
 
 definePageMeta({
   layout: 'admin',
@@ -61,23 +64,36 @@ definePageMeta({
     }
   }
 });
-const router = useRouter();
-const form = reactive({ name: '', email: '', password: '', role: 'user' });
-const handleSubmit = () => {
-  console.log('Data user baru:', form);
-  Swal.fire({
-    title: 'Berhasil!',
-    text: 'Simulasi penambahan user baru berhasil.',
-    icon: 'success',
-    timer: 2000,
-    showConfirmButton: false,
-  }).then(() => {
+
+const store = useAdminUserStore(); // *
+const router = useRouter(); // *
+
+const form = reactive({ 
+  name: '', 
+  email: '', 
+  password: '', 
+  role: 'user' 
+});
+
+const handleSubmit = async () => {
+  // * Ganti simulasi dengan call ke store
+  const success = await store.addAccount(form);
+  
+  if (success) {
+    // Reset form (opsional, karena   pindah halaman)
+    form.name = '';
+    form.email = '';
+    form.password = '';
+    form.role = 'user';
+    // Pindah ke halaman index
     router.push('/admin/users');
-  });
+  }
+  // Pesan error/sukses sudah dihandle di dalam store
 };
 </script>
 
 <style scoped>
+/* Style dari file aslimu */
 .content-card { 
     border: 1px solid #e2e8f0; 
     border-radius: 0.75rem; 
@@ -98,5 +114,5 @@ const handleSubmit = () => {
 .breadcrumb a { 
     text-decoration: none; 
     color: var(--bs-secondary-color); 
-    }
+}
 </style>
