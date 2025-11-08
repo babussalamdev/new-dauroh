@@ -51,10 +51,7 @@
                   <NuxtLink :to="`/admin/users/edit/${user.email}`" class="btn btn-link text-primary p-1" title="Edit">
                     <i class="bi bi-pencil-square fs-5"></i>
                   </NuxtLink>
-                  <button class="btn btn-link text-danger p-1" title="Hapus" @click="handleDelete(user)">
-                    <i class="bi bi-trash fs-5"></i>
-                  </button>
-                </td>
+                  </td>
               </tr>
               
               <tr v-if="!store.loading && store.users.length === 0">
@@ -109,7 +106,6 @@
 import { onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
-import type { AuthUser } from '~/types/auth';
 
 definePageMeta({
   layout: 'admin',
@@ -129,11 +125,6 @@ onMounted(() => {
   store.getListaccount(); 
 });
 
-// * Hapus state lokal,   pakai store
-// const users = ref<User[]>([]);
-// const showDeleteModal = ref(false);
-// const selectedUser = ref<User | null>(null);
-
 // * Implementasi getRoleBadge
 const getRoleBadge = (role: string) => {
   switch (role) {
@@ -147,17 +138,8 @@ const getRoleBadge = (role: string) => {
   }
 };
 
-// * Buat handler hapus baru
-const handleDelete = async (user: AuthUser) => {
-  if (user.email) {
-    await store.deleteAccount(user.email);
-  }
-};
+// * Fungsi handleDelete dihapus dari sini
 
-// Hapus fungsi-fungsi modal yang lama
-// const openDeleteModal = (user: User) => { selectedUser.value = user; showDeleteModal.value = true; };
-// const closeDeleteModal = () => { showDeleteModal.value = false; };
-// const confirmDelete = () => { if (!selectedUser.value) return; console.log('Hapus user ID:', selectedUser.value.id); closeDeleteModal(); };
 </script>
 
 <style scoped>

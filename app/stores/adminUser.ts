@@ -2,27 +2,25 @@
 
 import { defineStore } from "pinia";
 import Swal from "sweetalert2";
-import type { AuthUser } from '~/types/auth'; //   gunakan tipe AuthUser yang sudah ada
+import type { AuthUser } from '~/types/auth'; // Menggunakan tipe AuthUser yang sudah ada
+import { useNuxtApp } from "#app"; // Import useNuxtApp untuk $apiBase
 
-// Definisikan tipe User yang akan   gunakan di store
-//   tambahkan properti 'password' opsional untuk form
+// Tipe untuk form data, diambil dari create.vue (name, email, password, role)
 type UserFormData = Partial<AuthUser> & {
   password?: string;
-  // Tambahkan properti lain dari API /list-account jika ada (cth: sk, user_id, dll)
-  // Untuk saat ini   asumsikan email adalah ID unik
 };
 
 export const useAdminUserStore = defineStore("adminUser", {
   state: () => ({
-    users: [] as AuthUser[],
+    users: [] as AuthUser[], // Mengganti 'account' menjadi 'users' agar sesuai dengan file index.vue Anda
     loading: false,
     search: "",
-    perPage: 10, // Kamu bisa sesuaikan
+    perPage: 5, // Menggunakan 5 seperti contoh referensi UKS
     currentPage: 1,
   }),
 
   getters: {
-    // Getter ini hanya pakai state, jadi arrow function tidak masalah
+    // Getter ini memfilter state.users berdasarkan state.search
     filteredData(state): AuthUser[] {
       if (!state.search) {
         return state.users;
@@ -34,77 +32,64 @@ export const useAdminUserStore = defineStore("adminUser", {
       );
     },
     
-    // * Getter ini mengakses getter lain (filteredData).
-    // Jadi,   HARUS pakai function biasa dan `this`.
+    // Getter ini (dan di bawahnya) perlu 'this' untuk mengakses getter 'filteredData'
     totalItems(): number {
-      return this.filteredData.length; // Gunakan `this.filteredData`
+      return this.filteredData.length;
     },
 
-    // * Getter ini mengakses state (perPage) dan getter lain (totalItems).
-    // Harus pakai function biasa dan `this`.
     totalPages(): number {
-      // Akses totalItems lewat `this` dan state.perPage lewat `this`
       return Math.ceil(this.totalItems / this.perPage) || 1;
     },
 
-    // * Getter ini mengakses state (currentPage, perPage) dan getter (filteredData).
-    // Harus pakai function biasa dan `this`.
     paginatedData(): AuthUser[] {
       const start = (this.currentPage - 1) * this.perPage;
-      // Akses filteredData dan state.perPage lewat `this`
       return this.filteredData.slice(start, start + this.perPage);
     },
   },
 
   actions: {
-    // Aksi ganti halaman dari contohmu
+    // Aksi untuk ganti halaman
     changePage(page: number) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page;
       }
     },
 
-    // Aksi ambil data /list-account
+    // Aksi untuk mengambil data user (GET /list-account)
     async getListaccount() {
-      if (this.users.length > 0 && !this.loading) return; // Jangan fetch ulang jika sudah ada
+      // Guard agar tidak fetch ulang jika data sudah ada
+      if (this.users.length > 0 && !this.loading) return; 
       
       this.loading = true;
       const { $apiBase } = useNuxtApp();
-      const toastStore = useToastStore(); // Gunakan toastStore dari dauroh
       
       try {
         const res = await $apiBase.get("list-account");
-        // Asumsikan res.data adalah array of users
-        //   sesuaikan dengan tipe AuthUser
-        this.users = res.data.map((user: any): AuthUser => ({
-          name: user.name || user.username || 'N/A',
-          email: user.email,
-          role: user.role || 'user',
-          email_verified: user.email_verified || false,
-          // tambahkan properti lain jika ada dari API
-        }));
+        
+        // Diambil dari contoh referensi UKS (langsung assign)
+        // Ini berasumsi API mengembalikan array yang sesuai dengan tipe AuthUser[]
+        this.users = res.data; 
+
       } catch (error: any) {
-        toastStore.showToast({
-          message: `Gagal memuat daftar user: ${error.message}`,
-          type: "danger",
-        });
+        console.error("Gagal memuat daftar user:", error.message);
+        // Tampilkan error di console, tidak menggunakan toast
       } finally {
         this.loading = false;
       }
     },
 
-    // Aksi untuk tambah user baru (dipakai di create.vue)
+    // Aksi untuk tambah user baru (POST /signup-account?type=user-admin)
+    // Disesuaikan dengan form di 'create.vue', bukan 'inputAccount' dari UKS
     async addAccount(formData: UserFormData) {
       this.loading = true;
       const { $apiBase } = useNuxtApp();
-      const toastStore = useToastStore();
 
       try {
-        //   gunakan endpoint dari contohmu: signup-account?type=user-admin
+        // Menggunakan endpoint yang Anda berikan
         const res = await $apiBase.post(`signup-account?type=user-admin`, formData);
         
         if (res.data) {
-          // Tambahkan user baru ke state agar reaktif
+          // Tambahkan user baru ke awal array agar langsung terlihat
           this.users.unshift(res.data);
         }
         
@@ -114,7 +99,7 @@ export const useAdminUserStore = defineStore("adminUser", {
           showConfirmButton: false,
           timer: 1500,
         });
-        return true; // Berhasil
+        return true; // Mengembalikan status sukses
 
       } catch (error: any) {
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Gagal menambahkan user baru.";
@@ -123,67 +108,11 @@ export const useAdminUserStore = defineStore("adminUser", {
           title: "Gagal Menyimpan",
           text: errorMessage,
         });
-        return false; // Gagal
+        return false; // Mengembalikan status gagal
         
       } finally {
         this.loading = false;
       }
     },
-
-    // Aksi untuk hapus user
-    async deleteAccount(email: string) {
-      // Tampilkan konfirmasi dulu
-      const result = await Swal.fire({
-        title: 'Anda yakin?',
-        text: `Ingin menghapus user dengan email: ${email}?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal'
-      });
-
-      if (!result.isConfirmed) {
-        return false; // Batal
-      }
-
-      // Lanjutkan hapus jika dikonfirmasi
-      this.loading = true;
-      const { $apiBase } = useNuxtApp();
-      const toastStore = useToastStore();
-      const accessToken = useCookie("AccessToken").value; // Ambil token untuk auth
-
-      try {
-        // Endpoint ini spekulatif, sesuaikan dengan API-mu
-        // Mungkin: /delete-account?email=... atau /delete-account/user_id
-        await $apiBase.delete(`/delete-account?email=${email}`, {
-          data: { AccessToken: accessToken }, // Kirim token jika diperlukan
-        });
-
-        // Hapus user dari state
-        this.users = this.users.filter(user => user.email !== email);
-        
-        toastStore.showToast({
-          message: "User berhasil dihapus.",
-          type: "success",
-        });
-        return true; // Berhasil
-
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.error || error.message || "Gagal menghapus user.";
-        toastStore.showToast({
-          message: errorMessage,
-          type: "danger",
-        });
-        return false; // Gagal
-      
-      } finally {
-        this.loading = false;
-      }
-    },
-    
-    // bisa tambahkan updateAccount di sini
-    // async updateAccount(formData: UserFormData) { ... }
   },
 });

@@ -1,3 +1,5 @@
+// app/data/adminMenu.ts
+
 interface MenuItem {
   to: string;
   icon?: string;
@@ -23,6 +25,8 @@ export const dropdownMenuItems: DropdownMenu[] = [
     text: 'Manajemen Konten',
     items: [
       { to: '/admin', text: 'Tiket Dauroh' },
+      // --- TAMBAHKAN BARIS INI ---
+      { to: '/admin/booths', text: 'Pengajuan Booth' },
     ]
   },
   {
