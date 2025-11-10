@@ -94,7 +94,7 @@
     @confirm="confirmDelete" />
 
   <AdminDaurohDetailModal
-    vif="showDetailModal"
+    v-if="showDetailModal"
     :show="showDetailModal"
     :dauroh="selectedDaurohForDetail" 
     @close="closeDetailModal"

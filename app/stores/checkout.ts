@@ -1,5 +1,3 @@
-// app/stores/checkout.ts
-
 import { defineStore } from 'pinia';
 import type { Dauroh } from '~/stores/dauroh';
 import { useStorage } from '@vueuse/core';
@@ -11,7 +9,7 @@ interface Participant {
   gender: string;
 }
 
-// Tipe untuk detail transaksi (hasil palsu dari API)
+// Tipe untuk detail transaksi
 interface TransactionDetails {
   vaNumber: string;
   amount: number;

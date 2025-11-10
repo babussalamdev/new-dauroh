@@ -79,6 +79,15 @@ import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+// import logo bank
+import bniLogo from '~/assets/img/bank/bni.png';
+import briLogo from '~/assets/img/bank/bri.png';
+import bsiLogo from '~/assets/img/bank/bsi.png';
+import cimbLogo from '~/assets/img/bank/cimb.png';
+import danamonLogo from '~/assets/img/bank/danamon.png';
+import mandiriLogo from '~/assets/img/bank/mandiri.png';
+import permataLogo from '~/assets/img/bank/permata.png';
+import qrisLogo from '~/assets/img/bank/qris.png';
 
 definePageMeta({
   layout: 'checkout',
@@ -102,14 +111,14 @@ onMounted(() => {
 // Helper untuk menampilkan logo bank
 const paymentLogoUrl = computed(() => {
   const logos: { [key: string]: string } = {
-    'BNI': '\assets\img\bank\bni.png',
-    'BRI': 'app\assets\img\bank\bri.png',
-    'BSI': 'app\assets\img\bank\bsi.png',
-    'CIMB': 'app\assets\img\bank\cimb.png',
-    'DANAMON': 'app\assets\img\bank\danamon.png',
-    'MANDIRI': 'app\assets\img\bank\mandiri.png',
-    'PERMATA': 'app\assets\img\bank\permata.png',
-    'QRIS': 'app\assets\img\bank\qris.png',
+    'BNI': bniLogo,
+    'BRI': briLogo,
+    'BSI': bsiLogo,
+    'CIMB': cimbLogo,
+    'DANAMON': danamonLogo,
+    'MANDIRI': mandiriLogo,
+    'PERMATA': permataLogo,
+    'QRIS': qrisLogo,
   };
   return store.paymentMethod ? logos[store.paymentMethod] : null;
 });
@@ -138,7 +147,7 @@ const handlePay = async () => {
   loading.value = true;
   error.value = null;
   try {
-    // Panggil action di store (yang di dalamnya ada API palsu)
+    // Panggil action di store
     await store.createPayment();
     // Arahkan ke halaman instruksi
     router.push('/checkout/instructions');

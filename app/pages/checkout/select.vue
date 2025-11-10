@@ -8,49 +8,49 @@
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'BNI' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="BNI" class="form-check-input">
-              <img src="\assets\img\bank\bni.png" alt="BNI">
+              <img src="/assets/img/bank/bni.png" alt="BNI">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'BRI' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="BRI" class="form-check-input">
-              <img src="\assets\img\bank\bri.png" alt="BRI">
+              <img src="/assets/img/bank/bri.png" alt="BRI">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'BSI' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="BSI" class="form-check-input">
-              <img src="\assets\img\bank\bsi.png" alt="BSI">
+              <img src="/assets/img/bank/bsi.png" alt="BSI">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'CIMB' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="CIMB" class="form-check-input">
-              <img src="\assets\img\bank\cimb.png" alt="CIMB Niaga">
+              <img src="/assets/img/bank/cimb.png" alt="CIMB Niaga">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'DANAMON' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="DANAMON" class="form-check-input">
-              <img src="\assets\img\bank\danamon.png" alt="Danamon">
+              <img src="/assets/img/bank/danamon.png" alt="Danamon">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'MANDIRI' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="MANDIRI" class="form-check-input">
-              <img src="\assets\img\bank\mandiri.png" alt="Mandiri">
+              <img src="/assets/img/bank/mandiri.png" alt="Mandiri">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'PERMATA' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="PERMATA" class="form-check-input">
-              <img src="\assets\img\bank\permata.png" alt="PermataBank">
+              <img src="/assets/img/bank/permata.png" alt="PermataBank">
             </label>
           </div>
           <div class="col-6 col-md-4">
             <label class="payment-method-label" :class="{ active: selectedMethod === 'QRIS' }">
               <input type="radio" name="paymentMethod" v-model="selectedMethod" value="QRIS" class="form-check-input">
-              <img src="\assets\img\bank\qris.png" alt="QRIS">
+              <img src="/assets/img/bank/qris.png" alt="QRIS">
             </label>
           </div>
         </div>

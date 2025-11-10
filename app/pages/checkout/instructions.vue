@@ -73,8 +73,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
-import { onBeforeRouteLeave, useRouter } from 'vue-router'; // <-- 1. IMPORT onBeforeRouteLeave
-import Swal from 'sweetalert2'; // <-- 2. IMPORT SweetAlert2
+import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 
 definePageMeta({
   layout: 'checkout',
