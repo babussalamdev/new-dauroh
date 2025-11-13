@@ -66,11 +66,11 @@
 </template>
 
 <script setup lang="ts">
-// [REVISI TANGGAL] 1. Import `computed`
-import { computed, ref } from 'vue' // [REVISI GAMBAR] 1. Import ref
+// 1. Import `computed`
+import { computed, ref } from 'vue' // 1. Import ref
 import type { Dauroh, DaurohDayDetail } from '~/stores/dauroh'
 
-// [REVISI GAMBAR] 2. Ambil config runtime
+// 2. Ambil config runtime
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 
@@ -84,7 +84,7 @@ const emit = defineEmits<{
   (e: 'register', val: Dauroh | undefined): void
 }>()
 
-// [REVISI TANGGAL] 2. Buat computed property untuk mengurutkan jadwal
+// 2. Buat computed property untuk mengurutkan jadwal
 const sortedSchedule = computed(() => {
   if (!props.dauroh?.Date || typeof props.dauroh.Date !== 'object') {
     return [];
@@ -102,7 +102,7 @@ const register = () => emit('register', props.dauroh)
 </script>
 
 <style scoped>
-/* [REVISI GAMBAR] 3. Tambahkan style untuk placeholder (opsional) */
+/* 3. Tambahkan style untuk placeholder (opsional) */
 .Picture-preview-placeholder {
   width: 100%;
   aspect-ratio: 2 / 3; /* Sesuaikan dengan rasio gambar Anda */

@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import { useBoothStore } from '~/stores/booth'; // Import store baru kita
+import { useBoothStore } from '~/stores/booth'; // Import store baru
 
 // Setup halaman admin (layout, middleware, judul)
 definePageMeta({

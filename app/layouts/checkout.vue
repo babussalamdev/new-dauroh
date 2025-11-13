@@ -22,10 +22,7 @@
 </template>
 
 <script setup lang="ts">
-// REVISI DI SINI:
-// Kita tidak perlu import useAuth atau useRouter lagi
-// karena tombol Logout dan logikanya sudah dihapus.
-// Komponen ini sekarang jadi murni layout 'dumb' component.
+
 </script>
 
 <style scoped>

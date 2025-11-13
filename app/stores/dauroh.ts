@@ -1,8 +1,6 @@
-// app/stores/dauroh.ts
 import { defineStore } from "pinia";
 import { useToastStore } from "./toast";
 import { useNuxtApp } from "#app";
-// useCookie akan di-auto-import oleh Nuxt, jadi tidak perlu import manual
 
 // Interface DaurohDayDetail
 export interface DaurohDayDetail {
@@ -67,14 +65,15 @@ export const useDaurohStore = defineStore("dauroh", {
       detail: false,
       savingBasic: false,
       savingSchedule: false,
+      detailPublic: false, 
     },
     tiketDauroh: [] as Dauroh[],
     adminTiketDauroh: [] as Dauroh[],
     currentDaurohDetail: null as Dauroh | null,
+    currentPublicDaurohDetail: null as Dauroh | null,
   }),
 
   getters: {
-    // Filter tiket publik
     filteredTiketDauroh: (state): Dauroh[] => {
       const sourceData = state.tiketDauroh || [];
       if (!state.searchQuery) return sourceData;
@@ -109,8 +108,6 @@ export const useDaurohStore = defineStore("dauroh", {
     async fetchPublicTiketDauroh() {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      
-      // * Logika guard-nya diubah
       // Hentikan jika data SUDAH ADA atau SEDANG LOADING
       if (this.tiketDauroh.length > 0 || this.loading.tiketDauroh) {
         return;
@@ -131,14 +128,56 @@ export const useDaurohStore = defineStore("dauroh", {
           })
         );
       } catch (error: any) {
-        /* ... error handling ... */
       } finally {
         this.loading.tiketDauroh = false;
+      }
+    },
+    // Aksi baru untuk mengambil detail dauroh publik spesifik
+    async fetchPublicDaurohDetail(sk: string): Promise<Dauroh | null> {
+      const { $apiBase } = useNuxtApp();
+      const toastStore = useToastStore();
+
+      this.loading.detailPublic = true;
+      this.currentPublicDaurohDetail = null;
+      let result: Dauroh | null = null;
+      
+      try {
+        // Panggil endpoint /get-view dengan SK
+        const response = await $apiBase.get(`/get-view?type=event&sk=${sk}`);
+        const event = Array.isArray(response.data) && response.data.length > 0 
+          ? response.data[0] 
+          : (typeof response.data === 'object' && !Array.isArray(response.data) ? response.data : null);
+
+        if (event) {
+          result = {
+            sk: event.SK || event.sk || null,
+            Title: event.Title || "",
+            Gender: event.Gender || "",
+            Date: event.Date || undefined,
+            Place: event.Place || event.place || "",
+            Price: Number(event.Price || event.price) || 0,
+            Picture: event.Picture || undefined,
+          };
+          this.currentPublicDaurohDetail = result;
+        } else {
+          throw new Error("Event tidak ditemukan");
+        }
+      } catch (error: any) {
+        console.error("Store: fetchPublicDaurohDetail failed:", error);
+        toastStore.showToast({
+          message: error.message || "Gagal mengambil detail event.",
+          type: "danger",
+        });
+        result = null;
+      } finally {
+        this.loading.detailPublic = false;
+        return result; // Kembalikan data yang di-fetch
       }
     },
 
     // Fetch Admin Data (GET /get-default)
     async fetchAdminTiketDauroh() {
+      // ... (kode asli tidak berubah)
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       if (this.loading.adminTiketDauroh) return;
@@ -167,16 +206,15 @@ export const useDaurohStore = defineStore("dauroh", {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
 
-      // Cek cache DENGAN BENAR dan kembalikan jika ada
+      // Cek cache
       const existing = this.adminTiketDauroh.find((d) => d.sk === sk);
       this.loading.detail = true;
-      // JANGAN reset this.currentDaurohDetail = null di sini, biarkan modal yg handle
       let result: Dauroh | null = null;
       try {
         const response = await $apiBase.get(`/get-default?type=event&sk${sk}`);
         const event = Array.isArray(response.data) && response.data.length > 0 ? response.data[0] : response.data;
         if (event && typeof event === "object" && !Array.isArray(event)) {
-          // PERBAIKAN 2: Simpan hasil ke 'result', JANGAN mutasi state list
+          // Simpan hasil ke 'result', JANGAN mutasi state list
           result = {
             sk: event.SK || event.sk || null, // Baca event.SK
             Title: event.Title || "",
@@ -187,7 +225,7 @@ export const useDaurohStore = defineStore("dauroh", {
             Picture: event.Picture || undefined,
           };
 
-          // Simpan ke state detail (ini boleh)
+          // Simpan ke state detail
           this.currentDaurohDetail = result;
         } else {
           throw new Error("Event tidak ditemukan");
@@ -199,6 +237,7 @@ export const useDaurohStore = defineStore("dauroh", {
         return result; // Kembalikan data yang di-fetch
       }
     },
+    // ... (Sisa actions tidak berubah)
     // Upload Photo (PUT /update-default?type=photo-event&sk=...)
     async uploadEventPhoto(eventSk: string, photoBase64: string): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
@@ -320,8 +359,6 @@ export const useDaurohStore = defineStore("dauroh", {
 
         // PERBAIKAN: Refresh list admin setelah update
         await this.fetchAdminTiketDauroh();
-
-        // (Opsional) Update currentDaurohDetail jika sedang dilihat
         if (this.currentDaurohDetail && this.currentDaurohDetail.sk === eventSk) {
           //   fetch ulang detailnya agar konsisten
           await this.fetchDaurohDetail(eventSk);
@@ -403,7 +440,6 @@ export const useDaurohStore = defineStore("dauroh", {
         this.adminTiketDauroh = this.adminTiketDauroh.filter((d) => d.sk !== sk);
         this.tiketDauroh = this.tiketDauroh.filter((d) => d.sk !== sk);
       } catch (error: any) {
-        /* ... error handling ... */
       }
     },
   },

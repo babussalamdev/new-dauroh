@@ -18,7 +18,7 @@ interface TransactionDetails {
 }
 
 export const useCheckoutStore = defineStore('checkout', {
-  // Kita gunakan sessionStorage agar data tidak hilang jika user me-refresh halaman
+  // gunakan sessionStorage agar data tidak hilang jika user me-refresh halaman
   // di tengah-tengah proses checkout.
   state: () => ({
     dauroh: useStorage<Dauroh | null>('checkout_dauroh', null, sessionStorage),
@@ -53,7 +53,7 @@ export const useCheckoutStore = defineStore('checkout', {
 
     // 3. Dipanggil (disimulasikan) saat user klik "Bayar" di halaman 'summary'
     async createPayment() {
-      // Di sinilah kita akan memanggil API untuk membuat transaksi
+      // API untuk membuat transaksi
       // const { $apiBase } = useNuxtApp();
       // const response = await $apiBase.post('/api/create-payment', {
       //   daurohId: this.dauroh?.sk,

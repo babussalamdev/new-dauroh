@@ -1,7 +1,6 @@
-// app/pages/dauroh/[id].vue
 <template>
   <div class="container py-5">
-     <CommonLoadingSpinner v-if="daurohStore.loading.tiketDauroh && !dauroh" />
+     <CommonLoadingSpinner v-if="daurohStore.loading.detailPublic && !dauroh" />
 
     <div v-else-if="dauroh" class="row justify-content-center">
       <div class="col-lg-8">
@@ -33,7 +32,7 @@
         </div>
       </div>
     </div>
-     <div v-else-if="!daurohStore.loading.tiketDauroh && !dauroh" class="text-center">
+     <div v-else-if="!daurohStore.loading.detailPublic && !dauroh" class="text-center">
       <h2>Dauroh tidak ditemukan</h2>
       <p>Maaf, kami tidak dapat menemukan detail untuk dauroh yang Anda cari.</p>
       <NuxtLink to="/" class="btn btn-secondary">Kembali ke Beranda</NuxtLink>
@@ -66,39 +65,26 @@ const daurohStore = useDaurohStore();
 const userStore = useUserStore();
 const { isLoggedIn } = useAuth();
 
-// ============ PERBAIKAN DI SINI ============
-// Ambil 'id' dari param (yang sebenarnya adalah 'sk') sebagai string
 const daurohSk = route.params.id ? String(route.params.id) : null;
 
-// Ambil data detail dauroh dari state publik (tiketDauroh)
-const dauroh = computed(() => {
-  if (!daurohSk) return null;
-  // Cari berdasarkan 'sk' (lowercase)
-  return daurohStore.tiketDauroh.find(d => d.sk === daurohSk);
-});
-// ============ AKHIR PERBAIKAN ============
-
-
-// Panggil fetch data publik saat komponen dimuat,
-// Store akan handle jika data sudah ada
+const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 onMounted(() => {
-  daurohStore.fetchPublicTiketDauroh();
+  if (daurohSk) {
+    daurohStore.fetchPublicDaurohDetail(daurohSk);
+  }
 });
-
- // Update judul halaman setelah data dauroh didapatkan
  watch(dauroh, (newDauroh) => {
      useHead({
          title: newDauroh ? newDauroh.Title : 'Detail Dauroh',
      });
- }, { immediate: true }); // immediate agar langsung set judul awal
-
+ }, { immediate: true });
 const showRegistrationModal = ref(false);
 const showQrModal = ref(false);
 
 const handleRegisterClick = () => {
   if (!isLoggedIn.value) {
     router.push('/login');
-  } else if (dauroh.value) { // Pastikan dauroh ada sebelum membuka modal
+  } else if (dauroh.value) {
     showRegistrationModal.value = true;
   }
 };

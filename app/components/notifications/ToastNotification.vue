@@ -26,11 +26,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'; // [REVISI 3] Import `computed`
+import { computed } from 'vue'; // Import `computed`
 import { useToastStore } from '~/stores/toast';
 const toastStore = useToastStore();
 
-// [REVISI 4] Buat computed property untuk menentukan class icon
+//  Buat computed property untuk menentukan class icon
 const iconClass = computed(() => {
   switch (toastStore.type) {
     case 'success':
@@ -49,7 +49,7 @@ const iconClass = computed(() => {
 .toast-container {
   z-index: 1100;
 }
-/* [REVISI 5] Style tambahan agar icon dan body rapi */
+/* Style tambahan agar icon dan body rapi */
 .toast-body {
   flex-grow: 1; /* Pastikan body pesan mengisi ruang */
 }

@@ -169,7 +169,7 @@
   };
   
   const handleSave = async (payload: {
-    daurohData: Omit<Dauroh, "id" | "Date" | "Picture" | "kuota" >;
+    daurohData: Omit<Dauroh, "id" | "Date" | "Picture" >;
     photoBase64: null;
   }) => {
     let success = false;

@@ -56,12 +56,27 @@
           </div>
         </div>
 
-        <div class="d-grid mt-4">
-          <button class="btn btn-primary" @click="handleDone">
-            Saya Sudah Bayar
-          </button>
+        <div class="mt-4">
+          <div v-if="paymentStatus === 'pending'" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0 fw-bold">Menunggu Pembayaran...</p>
+            <p class="text-muted small">Kami akan mengecek status pembayaran Anda secara otomatis.</p>
+          </div>
+
+          <div v-if="paymentStatus === 'success'" class="alert alert-success text-center">
+            <h5 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Pembayaran Berhasil!</h5>
+            <p class="mb-0">Anda akan diarahkan ke dashboard.</p>
+          </div>
+
+          <div v-if="paymentStatus === 'expired'" class="alert alert-danger text-center">
+            <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
+            <p class="mb-0">Waktu pembayaran telah berakhir. Silakan ulangi pendaftaran.</p>
+            <button class="btn btn-danger mt-2" @click="router.push('/')">Kembali ke Beranda</button>
+          </div>
         </div>
-      </div>
+        </div>
     </div>
 
     <a href="httpsa://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
@@ -71,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
@@ -86,6 +101,13 @@ const router = useRouter(); // <-- 3. Pastikan useRouter di-instance
 const countdown = ref('23:59:59');
 let timerInterval: NodeJS.Timeout | null = null;
 
+// State untuk status pembayaran
+const paymentStatus = ref<'pending' | 'success' | 'expired'>('pending');
+// Timer untuk simulasi
+let simulationTimer: NodeJS.Timeout | null = null;
+// Variabel untuk interval polling (jika nanti dipakai)
+let pollingInterval: NodeJS.Timeout | null = null;
+
 // Guard: Pastikan user datang dari halaman summary
 onMounted(() => {
   if (!store.transactionDetails) {
@@ -93,14 +115,75 @@ onMounted(() => {
     return;
   }
   startTimer(store.transactionDetails.expiryTime);
+  
+  // Memulai pengecekan status
+  startPaymentPolling();
 });
 
-// Hentikan timer saat komponen dihancurkan
+// Hentikan timer & polling saat komponen dihancurkan
 onUnmounted(() => {
-  if (timerInterval) {
-    clearInterval(timerInterval);
+  if (timerInterval) clearInterval(timerInterval);
+  // Hentikan simulasi / polling
+  if (simulationTimer) clearTimeout(simulationTimer);
+  if (pollingInterval) clearInterval(pollingInterval);
+});
+
+const startPaymentPolling = () => {
+  // Di sini nanti bisa pakai setInterval untuk memanggil API
+  // const { $apiBase } = useNuxtApp();
+  // pollingInterval = setInterval(async () => {
+  //   try {
+  //     const response = await $apiBase.get(`/api/check-payment/${store.transactionDetails?.vaNumber}`);
+  //     if (response.data.status === 'PAID') {
+  //       paymentStatus.value = 'success';
+  //       clearInterval(pollingInterval!);
+  //     }
+  //   } catch (err) {
+  //     console.error("Gagal polling status:", err);
+  //   }
+  // }, 5000); // Cek tiap 5 detik
+
+  // --- MULAI SIMULASI (Hapus ini nanti) ---
+  console.log("Memulai simulasi pengecekan pembayaran...");
+  simulationTimer = setTimeout(() => {
+    // Hanya ubah status jika masih 'pending' (belum expired atau success)
+    if (paymentStatus.value === 'pending') {
+      console.log("Simulasi: Pembayaran Diterima!");
+      paymentStatus.value = 'success';
+    }
+  }, 10000); // Asumsikan pembayaran berhasil setelah 10 detik
+  // --- AKHIR SIMULASI ---
+};
+
+// Watcher untuk bereaksi terhadap perubahan status
+watch(paymentStatus, (newStatus) => {
+  if (newStatus === 'success') {
+    // Hentikan timer & polling
+    if (timerInterval) clearInterval(timerInterval);
+    if (simulationTimer) clearTimeout(simulationTimer);
+    if (pollingInterval) clearInterval(pollingInterval);
+
+    // Tampilkan notifikasi sukses
+    Swal.fire({
+      title: 'Pembayaran Berhasil!',
+      text: 'Pendaftaran Anda telah dikonfirmasi. Anda akan diarahkan ke dashboard.',
+      icon: 'success',
+      timer: 3000,
+      showConfirmButton: false,
+    }).then(() => {
+      // Pindahkan logic `handleDone` ke sini
+      store.clearCheckout();
+      router.push('/dashboard');
+    });
+  } else if (newStatus === 'expired') {
+     // Hentikan timer & polling
+    if (timerInterval) clearInterval(timerInterval);
+    if (simulationTimer) clearTimeout(simulationTimer);
+    if (pollingInterval) clearInterval(pollingInterval);
+    // Swal.fire('Waktu Habis', 'Waktu pembayaran telah berakhir.', 'error');
   }
 });
+
 
 // Helper untuk menampilkan logo bank
 const paymentLogoUrl = computed(() => {
@@ -129,6 +212,10 @@ const startTimer = (expiryTime: number) => {
     if (distance < 0) {
       clearInterval(timerInterval!);
       countdown.value = "Waktu Habis";
+      // set status jika expired
+      if (paymentStatus.value === 'pending') {
+          paymentStatus.value = 'expired';
+      }
       return;
     }
 
@@ -142,15 +229,13 @@ const startTimer = (expiryTime: number) => {
       String(seconds).padStart(2, '0');
   }, 1000);
 };
-
-// Fungsi klik "Saya Sudah Bayar"
-const handleDone = () => {
-  store.clearCheckout();
-  router.push('/dashboard');
-};
-
-// --- 4. TAMBAHKAN LOGIC BARU INI ---
 onBeforeRouteLeave((to, from, next) => {
+  // Izinkan navigasi jika sudah sukses atau tujuannya ke dashboard
+  if (paymentStatus.value === 'success' || to.path === '/dashboard') {
+    next();
+    return;
+  }
+  
   // Jika user mengklik "Saya Sudah Bayar" (tujuannya ke '/dashboard')
   // biarkan dia pergi.
   if (to.path === '/dashboard') {

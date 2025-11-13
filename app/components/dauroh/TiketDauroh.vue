@@ -21,7 +21,7 @@
                   <div class="card-body d-flex flex-column p-3">
                     <h6 class="card-title fw-bold text-dark">{{ dauroh.Title }}</h6>
                     <small class="text-muted mb-1">{{ dauroh.date || dauroh.genre }}</small>
-                    <small v-if="dauroh.kuota" class="text-muted mb-2">Kuota: {{ dauroh.kuota }}</small>
+                    
                     <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
                       
                       <button class="btn btn-sm btn-outline-primary rounded-pill w-100" @click.prevent.stop="openDetailModal(dauroh)">Detail</button>
@@ -54,18 +54,14 @@
 <script setup>
   import { ref, onMounted } from "vue";
   import { useDaurohStore } from "~/stores/dauroh";
-  // import { useUserStore } from "~/stores/user"; // Kita tidak pakai ini lagi di sini
   import { useToastStore } from '~/stores/toast';
   import { useAuth } from "~/composables/useAuth";
   import { useCheckoutStore } from '~/stores/checkout'; // <-- IMPORT STORE BARU
 
-  // Import modal gambar baru
-  import ModalsDaurohImageModal from '~/components/modals/DaurohImageModal.vue';
-
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
   // const userStore = useUserStore(); // <-- Tidak dipakai lagi
-  const checkoutStore = useCheckoutStore(); // <-- INISIALISASI STORE BARU
+  const checkoutStore = useCheckoutStore();
   const toastStore = useToastStore();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
@@ -125,12 +121,10 @@
   const closeRegistrationModal = () => {
     showRegistrationModal.value = false;
   };
-
-  // --- INI BAGIAN UTAMA YANG DIREVISI ---
   const handleRegistrationSubmit = (registrationData) => {
     closeRegistrationModal();
 
-    // 1. Simpan data registrasi ke store checkout baru kita
+    // 1. Simpan data registrasi ke store checkout baru
     checkoutStore.startCheckout(registrationData);
 
     // 2. Arahkan user ke halaman pertama alur pembayaran
