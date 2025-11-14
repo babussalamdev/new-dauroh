@@ -88,6 +88,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
+import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
@@ -97,7 +98,8 @@ definePageMeta({
 useHead({ title: 'Instruksi Pembayaran' });
 
 const store = useCheckoutStore();
-const router = useRouter(); // <-- 3. Pastikan useRouter di-instance
+const userStore = useUserStore();
+const router = useRouter();
 const countdown = ref('23:59:59');
 let timerInterval: NodeJS.Timeout | null = null;
 
@@ -129,21 +131,6 @@ onUnmounted(() => {
 });
 
 const startPaymentPolling = () => {
-  // Di sini nanti bisa pakai setInterval untuk memanggil API
-  // const { $apiBase } = useNuxtApp();
-  // pollingInterval = setInterval(async () => {
-  //   try {
-  //     const response = await $apiBase.get(`/api/check-payment/${store.transactionDetails?.vaNumber}`);
-  //     if (response.data.status === 'PAID') {
-  //       paymentStatus.value = 'success';
-  //       clearInterval(pollingInterval!);
-  //     }
-  //   } catch (err) {
-  //     console.error("Gagal polling status:", err);
-  //   }
-  // }, 5000); // Cek tiap 5 detik
-
-  // --- MULAI SIMULASI (Hapus ini nanti) ---
   console.log("Memulai simulasi pengecekan pembayaran...");
   simulationTimer = setTimeout(() => {
     // Hanya ubah status jika masih 'pending' (belum expired atau success)
@@ -152,7 +139,6 @@ const startPaymentPolling = () => {
       paymentStatus.value = 'success';
     }
   }, 10000); // Asumsikan pembayaran berhasil setelah 10 detik
-  // --- AKHIR SIMULASI ---
 };
 
 // Watcher untuk bereaksi terhadap perubahan status
@@ -171,7 +157,19 @@ watch(paymentStatus, (newStatus) => {
       timer: 3000,
       showConfirmButton: false,
     }).then(() => {
-      // Pindahkan logic `handleDone` ke sini
+      
+      // Ambil data dari checkout store
+      const registrationData = {
+        dauroh: store.dauroh,
+        participants: store.participants,
+      };
+      
+      // Daftarkan dauroh ke user store agar muncul di dashboard
+      if (registrationData.dauroh && registrationData.participants) {
+         userStore.registerDauroh(registrationData as any); // (Cast ke 'any' jika TS rewel soal tipe Dauroh | null)
+      }
+
+      // Baru clear checkout dan pindah halaman
       store.clearCheckout();
       router.push('/dashboard');
     });
@@ -185,7 +183,7 @@ watch(paymentStatus, (newStatus) => {
 });
 
 
-// Helper untuk menampilkan logo bank
+// untuk menampilkan logo bank
 const paymentLogoUrl = computed(() => {
   const logos: { [key: string]: string } = {
     'BSI': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Bank_Syariah_Indonesia.svg/1280px-Bank_Syariah_Indonesia.svg.png',
@@ -229,6 +227,7 @@ const startTimer = (expiryTime: number) => {
       String(seconds).padStart(2, '0');
   }, 1000);
 };
+
 onBeforeRouteLeave((to, from, next) => {
   // Izinkan navigasi jika sudah sukses atau tujuannya ke dashboard
   if (paymentStatus.value === 'success' || to.path === '/dashboard') {
@@ -237,14 +236,13 @@ onBeforeRouteLeave((to, from, next) => {
   }
   
   // Jika user mengklik "Saya Sudah Bayar" (tujuannya ke '/dashboard')
-  // biarkan dia pergi.
   if (to.path === '/dashboard') {
     next(); // Lanjutkan navigasi
     return;
   }
 
   // Jika user mencoba pergi ke tempat LAIN (misal klik "Back" di browser)
-  // Tampilkan modal kustom
+  // Tampilkan modal
   Swal.fire({
     title: 'Anda yakin ingin membatalkan pembayaran?',
     text: "Instruksi pembayaran ini akan hangus jika Anda keluar.",
@@ -258,10 +256,9 @@ onBeforeRouteLeave((to, from, next) => {
     if (result.isConfirmed) {
       // Jika user klik "Ya, Batalkan"
       store.clearCheckout(); // Bersihkan data checkout
-      next(); // Izinkan user pergi
+      next();
     } else {
-      // Jika user klik "Tetap di Sini" (atau menutup modal)
-      next(false); // Batalkan navigasi, user tetap di halaman ini
+      next(false);
     }
   });
 });

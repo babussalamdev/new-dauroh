@@ -3,10 +3,13 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Pindai QR Code</h5>
+          <h5 class="modal-title">{{ ticket?.dauroh?.Title || 'E-Tiket Anda' }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body text-center">
+          <p class="fw-bold fs-5 mb-1">
+            {{ ticket?.participant?.name || 'Peserta' }}
+          </p>
           <p>Tunjukkan kode ini ke panitia di pintu masuk.</p>
           <img src="/assets/img/dauroh1.jpg" alt="Sample QR Code" class="img-fluid rounded">
         </div>
@@ -22,6 +25,7 @@
 <script setup>
 defineProps({
   show: { type: Boolean, required: true },
+  ticket: { type: Object, default: null } // <-- REVISI: Terima 'ticket'
 });
 
 const emit = defineEmits(['close']);

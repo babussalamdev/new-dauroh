@@ -45,24 +45,19 @@
       @close="closeRegistrationModal"
       @submit="handleRegistrationSubmit"
     />
-    <ModalsQrCodeModal
-      v-if="showQrModal"
-      :show="showQrModal"
-      @close="closeQrModal"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'; // Import watch
 import { useDaurohStore } from '~/stores/dauroh';
-import { useUserStore } from '~/stores/user';
+import { useCheckoutStore } from '~/stores/checkout';
 import { useAuth } from '~/composables/useAuth';
 
 const route = useRoute();
 const router = useRouter();
 const daurohStore = useDaurohStore();
-const userStore = useUserStore();
+const checkoutStore = useCheckoutStore();
 const { isLoggedIn } = useAuth();
 
 const daurohSk = route.params.id ? String(route.params.id) : null;
@@ -79,7 +74,6 @@ onMounted(() => {
      });
  }, { immediate: true });
 const showRegistrationModal = ref(false);
-const showQrModal = ref(false);
 
 const handleRegisterClick = () => {
   if (!isLoggedIn.value) {
@@ -95,12 +89,12 @@ const closeRegistrationModal = () => {
 
 const handleRegistrationSubmit = (registrationData) => {
   closeRegistrationModal();
-  userStore.registerDauroh(registrationData);
-  showQrModal.value = true;
-};
 
-const closeQrModal = () => {
-  showQrModal.value = false;
+  // 1. Simpan data registrasi ke store checkout baru
+  checkoutStore.startCheckout(registrationData);
+
+  // 2. Arahkan user ke halaman pertama alur pembayaran
+  router.push('/checkout/select');
 };
 
  // Helper currency formatter

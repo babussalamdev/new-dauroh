@@ -9,15 +9,23 @@
                 <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Dauroh yang Akan Datang</h5>
               </div>
               <div class="card-body">
-                <div v-if="userStore.getUpcomingDauroh.length > 0">
-                  <div v-for="dauroh in userStore.getUpcomingDauroh" :key="dauroh.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                    <img :src="dauroh.Picture" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="dauroh.title">
+                <div v-if="userStore.getUpcomingTickets.length > 0">
+                  <div v-for="(ticket, index) in userStore.getUpcomingTickets" :key="index" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <img 
+                      :src="ticket.dauroh.Picture ? `${imgBaseUrl}/${ticket.dauroh.sk}/${ticket.dauroh.Picture}.webp` : ''" 
+                      class="rounded shadow-sm" 
+                      style="width: 70px; height: 100px; object-fit: cover;" 
+                      :alt="ticket.dauroh.Title"
+                    >
                     <div class="ms-3 flex-grow-1">
-                      <h6 class="fw-bold mb-1">{{ dauroh.title }}</h6>
-                      <p class="text-muted mb-1 small">{{ dauroh.genre }}</p>
+                      <h6 class="fw-bold mb-1">{{ ticket.dauroh.Title }}</h6>
+                      
+                      <p class="text-primary fw-bold mb-1 small">Atas Nama: {{ ticket.participant.name }}</p>
+                      
+                      <p class="text-muted mb-1 small">{{ ticket.dauroh.Gender }}</p>
                       <span class="badge bg-success">Terdaftar</span>
                     </div>
-                    <button class="btn btn-primary btn-sm" @click="openQrModal">Lihat E-Tiket</button>
+                    <button class="btn btn-primary btn-sm" @click="openQrModal(ticket)">Lihat E-Tiket</button>
                   </div>
                 </div>
                 <div v-else class="text-center text-muted py-4">
@@ -32,15 +40,16 @@
                 <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Riwayat Dauroh</h5>
               </div>
               <div class="card-body">
-                <div v-if="userStore.getHistoryDauroh.length > 0">
-                  <div v-for="dauroh in userStore.getHistoryDauroh" :key="dauroh.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                    <img :src="dauroh.Picture" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="dauroh.title">
+                <div v-if="userStore.getHistoryTickets.length > 0">
+                  <div v-for="ticket in userStore.getHistoryTickets" :key="ticket.id" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <img :src="ticket.dauroh.Picture ? `${imgBaseUrl}/${ticket.dauroh.sk}/${ticket.dauroh.Picture}.webp` : ''" class="rounded shadow-sm" style="width: 70px; height: 100px; object-fit: cover;" :alt="ticket.dauroh.Title">
                     <div class="ms-3 flex-grow-1">
-                      <h6 class="fw-bold mb-1">{{ dauroh.title }}</h6>
-                      <p class="text-muted mb-1 small">{{ dauroh.genre }}</p>
+                      <h6 class="fw-bold mb-1">{{ ticket.dauroh.Title }}</h6>
+                      <p class="text-primary fw-bold mb-1 small">Atas Nama: {{ ticket.participant.name }}</p>
+                      <p class="text-muted mb-1 small">{{ ticket.dauroh.Gender }}</p>
                       <span class="badge bg-secondary">Selesai</span>
                     </div>
-                    <button class="btn btn-outline-secondary btn-sm" @click="downloadCertificate(dauroh)">Unduh Sertifikat</button>
+                    <button class="btn btn-outline-secondary btn-sm" @click="downloadCertificate(ticket.dauroh)">Unduh Sertifikat</button>
                   </div>
                 </div>
                 <div v-else class="text-center text-muted py-3">
@@ -87,7 +96,7 @@
       </div>
     </div>
     
-    <ModalsQrCodeModal :show="showQrModal" @close="closeQrModal" />
+    <ModalsQrCodeModal :show="showQrModal" :ticket="selectedTicket" @close="closeQrModal" />
   </div>
 </template>
 
@@ -97,12 +106,26 @@ import { useUserStore } from '~/stores/user';
 import Swal from 'sweetalert2';
 import { useAuth } from '~/composables/useAuth';
 
+// 10. REVISI: Ambil config untuk base URL gambar
+const config = useRuntimeConfig();
+const imgBaseUrl = ref(config.public.img || '');
+
 const { user, isLoggedIn, userName, userEmail } = useAuth();
 const userStore = useUserStore();
 
 const showQrModal = ref(false);
-const openQrModal = () => (showQrModal.value = true);
-const closeQrModal = () => (showQrModal.value = false);
+const selectedTicket = ref(null); // <-- REVISI: Simpan data tiket yg dipilih
+
+// 11. REVISI: Terima data tiket
+const openQrModal = (ticket) => {
+  selectedTicket.value = ticket; // <-- REVISI
+  showQrModal.value = true;
+};
+const closeQrModal = () => {
+  showQrModal.value = false;
+  selectedTicket.value = null; // <-- REVISI
+};
+
 
 // untuk bagian integrasi be nya: Properti ini akan mengambil data dari 'user' object
 const joinedDate = computed(() => {
@@ -114,7 +137,7 @@ const joinedDate = computed(() => {
 const downloadCertificate = (dauroh) => {
   Swal.fire({
     title: 'Fitur Segera Hadir',
-    text: `Fitur unduh sertifikat untuk "${dauroh.title}" sedang dalam pengembangan.`,
+    text: `Fitur unduh sertifikat untuk "${dauroh.Title}" sedang dalam pengembangan.`, // <-- REVISI: dauroh.title -> dauroh.Title
     icon: 'info',
     confirmButtonText: 'Mengerti'
   });
