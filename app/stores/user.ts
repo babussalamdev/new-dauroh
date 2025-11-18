@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import type { Dauroh } from '~/stores/dauroh';
 import { useToastStore } from './toast';
 
-// 1. REVISI: Definisikan tipe Peserta dan Tiket
+// 1. Definisikan tipe Peserta dan Tiket
 interface Participant {
   name: string;
   email?: string;
@@ -16,20 +16,20 @@ interface UserTicket {
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    // 2. REVISI: Ubah nama state dari dauroh -> tickets
+    // 2. Ubah nama state dari dauroh -> tickets
     upcomingTickets: [] as UserTicket[],
     historyTickets: [] as UserTicket[],
     isLoading: false,
   }),
   
   getters: {
-    // 3. REVISI: Ubah nama getter
+    // 3. Ubah nama getter
     getUpcomingTickets: (state) => state.upcomingTickets,
     getHistoryTickets: (state) => state.historyTickets,
   },
 
   actions: {
-    // 4. REVISI: Ubah logika registerDauroh
+    // 4. Ubah logika registerDauroh
     registerDauroh(registrationData: { dauroh: Dauroh, participants: Participant[] }) {
       const { dauroh, participants } = registrationData;
       const toastStore = useToastStore();

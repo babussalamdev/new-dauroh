@@ -21,11 +21,13 @@
               class="form-control" 
               id="voucher" 
               placeholder="Masukkan kode voucher" 
-              v-model="voucherCode" 
+              v-model="store.voucherCode" 
               :disabled="loading"
+              @keyup.enter="applyVoucher"
             >
             <button class="btn btn-outline-secondary" type="button" @click="applyVoucher" :disabled="loading">
-              Submit
+              <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span v-else>Submit</span>
             </button>
           </div>
         </div>
@@ -41,14 +43,15 @@
             Biaya Pendaftaran - {{ store.dauroh?.Title }} ({{ store.participants?.length }} tiket)
             <span>{{ formatCurrency(store.totalAmount) }}</span>
           </li>
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            Diskon
-            <span>{{ formatCurrency(discountAmount) }}</span>
+          
+          <li v-if="store.discountAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 text-danger">
+            Diskon ({{ store.voucherCode }})
+            <span>- {{ formatCurrency(store.discountAmount) }}</span>
           </li>
+          
           <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light fw-bold">
             TOTAL
-            <span>{{ formatCurrency(store.totalAmount - discountAmount) }}</span>
-          </li>
+            <span>{{ formatCurrency(store.finalAmount) }}</span> </li>
         </ul>
 
         <div v-if="error" class="alert alert-danger small p-2 mt-3">
@@ -68,8 +71,7 @@
       </div>
     </div>
 
-    <a href="httpsa://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
-      <i class="bi bi-whatsapp me-1"></i> Whatsapp
+    <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab"> <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
   </div>
 </template>
@@ -79,6 +81,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import { useNuxtApp } from '#app'; // <-- Import useNuxtApp
+
 // import logo bank
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
@@ -96,10 +100,12 @@ useHead({ title: 'Ringkasan Pembayaran' });
 
 const store = useCheckoutStore();
 const router = useRouter();
+const { $apiBase } = useNuxtApp();
 const loading = ref(false);
 const error = ref<string | null>(null);
-const voucherCode = ref('');
-const discountAmount = ref(0);
+
+// const voucherCode = ref('');
+// const discountAmount = ref(0);
 
 // Guard: Pastikan user sudah memilih metode
 onMounted(() => {
@@ -132,25 +138,58 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-// Fungsi voucher (hanya UI)
-const applyVoucher = () => {
+const applyVoucher = async () => {
   error.value = null;
-  if (voucherCode.value === 'DISKON10K') {
-    discountAmount.value = 10000;
-  } else {
-    discountAmount.value = 0;
+  loading.value = true;
+  
+  if (!store.voucherCode) {
+    store.setVoucher(null, 0); // Jika kode dikosongkan, reset diskon
+    loading.value = false;
+    return;
+  }
+// dummy
+  try {
+    // const response = await $apiBase.post('/validate-voucher', { 
+    //   code: store.voucherCode, // Ambil dari store
+    //   totalAmount: store.totalAmount // Kirim total harga asli
+    // });
+
+    // // Backend akan balikin jumlah diskon (misal: { discountAmount: 100000 })
+    // const newDiscountAmount = response.data.discountAmount;
+    // store.setVoucher(store.voucherCode, newDiscountAmount); // Simpan ke state
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulasi loading
+    let newDiscountAmount = 0;
+    if (store.voucherCode.toUpperCase() === 'DAUROH20') {
+      // Hitung diskon 20%
+      newDiscountAmount = store.totalAmount * 0.20;
+    } else {
+       error.value = 'Kode voucher tidak valid';
+    }
+    // Simpan hasilnya ke state (walaupun 0)
+    store.setVoucher(store.voucherCode, newDiscountAmount);
+
+
+  } catch (err: any) {
+    store.setVoucher(store.voucherCode, 0); // Reset diskon kalo gagal
+    error.value = err.response?.data?.message || 'Kode voucher tidak valid';
+  } finally {
+    loading.value = false;
   }
 };
 
-// Fungsi klik "Bayar"
 const handlePay = async () => {
   loading.value = true;
   error.value = null;
   try {
     // Panggil action di store
-    await store.createPayment();
-    // Arahkan ke halaman instruksi
-    router.push('/checkout/instructions');
+    const success = await store.createPayment();
+    
+    if (success) {
+      // Arahkan ke halaman instruksi
+      router.push('/checkout/instructions');
+    } else {
+      throw new Error('Gagal membuat transaksi.');
+    }
 
   } catch (err: any) {
     error.value = err.message || 'Gagal memproses pembayaran.';

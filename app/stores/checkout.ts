@@ -1,6 +1,9 @@
+// app/stores/checkout.ts
+
 import { defineStore } from 'pinia';
 import type { Dauroh } from '~/stores/dauroh';
 import { useStorage } from '@vueuse/core';
+import { useNuxtApp } from '#app'; // <-- Import useNuxtApp
 
 // Tipe data untuk satu peserta dari modal
 interface Participant {
@@ -18,13 +21,13 @@ interface TransactionDetails {
 }
 
 export const useCheckoutStore = defineStore('checkout', {
-  // gunakan sessionStorage agar data tidak hilang jika user me-refresh halaman
-  // di tengah-tengah proses checkout.
   state: () => ({
     dauroh: useStorage<Dauroh | null>('checkout_dauroh', null, sessionStorage),
     participants: useStorage<Participant[]>('checkout_participants', [], sessionStorage),
     paymentMethod: useStorage<string | null>('checkout_payment_method', null, sessionStorage),
     transactionDetails: useStorage<TransactionDetails | null>('checkout_transaction', null, sessionStorage),
+    voucherCode: useStorage<string | null>('checkout_voucher_code', null, sessionStorage),
+    discountAmount: useStorage<number>('checkout_discount_amount', 0, sessionStorage),
   }),
 
   getters: {
@@ -35,6 +38,11 @@ export const useCheckoutStore = defineStore('checkout', {
       }
       return (state.dauroh.Price || 0) * state.participants.length;
     },
+    finalAmount(state): number {
+      const total = (state.dauroh?.Price || 0) * state.participants.length;
+      const final = total - state.discountAmount;
+      return final < 0 ? 0 : final; // Pastikan total tidak minus
+    },
   },
 
   actions: {
@@ -44,27 +52,47 @@ export const useCheckoutStore = defineStore('checkout', {
       this.participants = registrationData.participants;
       this.paymentMethod = null;
       this.transactionDetails = null;
+      this.voucherCode = null; // Reset voucher saat memulai checkout baru
+      this.discountAmount = 0;
+      // --- AKHIR ---
     },
 
     // 2. Dipanggil saat user memilih bank di halaman 'select'
     setPaymentMethod(method: string) {
       this.paymentMethod = method;
     },
+    // Aksi untuk menyimpan hasil validasi voucher
+    setVoucher(code: string | null, amount: number) {
+      this.voucherCode = code;
+      this.discountAmount = amount;
+    },
 
-    // 3. Dipanggil (disimulasikan) saat user klik "Bayar" di halaman 'summary'
+    // 3. Dipanggil saat user klik "Bayar" di halaman 'summary'
     async createPayment() {
-      // API untuk membuat transaksi
       // const { $apiBase } = useNuxtApp();
+      
+      // // UNCOMMENT INI UNTUK INTEGRASI BACKEND
       // const response = await $apiBase.post('/api/create-payment', {
       //   daurohId: this.dauroh?.sk,
       //   participants: this.participants,
       //   paymentMethod: this.paymentMethod,
+      //   voucherCode: this.voucherCode, // <-- Kirim voucher code
+      //   finalAmount: this.finalAmount   // <-- Kirim total akhir
       // });
-      
-      // SIMULASI: Anggaplah API mengembalikan data ini
+      // this.transactionDetails = response.data;
+      // return true;
+      console.log("Membuat pembayaran dengan detail:", {
+        daurohId: this.dauroh?.sk,
+        paymentMethod: this.paymentMethod,
+        voucherCode: this.voucherCode,
+        totalAmount: this.totalAmount,
+        discountAmount: this.discountAmount,
+        finalAmount: this.finalAmount,
+      });
+
       this.transactionDetails = {
         vaNumber: '9888442365281', // Nomor VA palsu
-        amount: this.totalAmount,
+        amount: this.finalAmount, // <-- PENTING: GANTI DARI totalAmount ke finalAmount
         paymentMethod: this.paymentMethod || 'BSI',
         expiryTime: Date.now() + 24 * 60 * 60 * 1000 // 24 jam dari sekarang
       };
@@ -78,6 +106,8 @@ export const useCheckoutStore = defineStore('checkout', {
       this.participants = [];
       this.paymentMethod = null;
       this.transactionDetails = null;
+      this.voucherCode = null;
+      this.discountAmount = 0;
     }
   }
 });

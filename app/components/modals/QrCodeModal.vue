@@ -25,7 +25,7 @@
 <script setup>
 defineProps({
   show: { type: Boolean, required: true },
-  ticket: { type: Object, default: null } // <-- REVISI: Terima 'ticket'
+  ticket: { type: Object, default: null }
 });
 
 const emit = defineEmits(['close']);

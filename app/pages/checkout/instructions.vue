@@ -79,7 +79,7 @@
         </div>
     </div>
 
-    <a href="httpsa://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
+    <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
       <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
   </div>
@@ -121,8 +121,6 @@ onMounted(() => {
   // Memulai pengecekan status
   startPaymentPolling();
 });
-
-// Hentikan timer & polling saat komponen dihancurkan
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
   // Hentikan simulasi / polling

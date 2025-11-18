@@ -106,7 +106,7 @@ import { useUserStore } from '~/stores/user';
 import Swal from 'sweetalert2';
 import { useAuth } from '~/composables/useAuth';
 
-// 10. REVISI: Ambil config untuk base URL gambar
+// 10. Ambil config untuk base URL gambar
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 
@@ -114,22 +114,22 @@ const { user, isLoggedIn, userName, userEmail } = useAuth();
 const userStore = useUserStore();
 
 const showQrModal = ref(false);
-const selectedTicket = ref(null); // <-- REVISI: Simpan data tiket yg dipilih
+const selectedTicket = ref(null);
 
-// 11. REVISI: Terima data tiket
+// 11. Terima data tiket
 const openQrModal = (ticket) => {
-  selectedTicket.value = ticket; // <-- REVISI
+  selectedTicket.value = ticket;
   showQrModal.value = true;
 };
 const closeQrModal = () => {
   showQrModal.value = false;
-  selectedTicket.value = null; // <-- REVISI
+  selectedTicket.value = null;
 };
 
 
 // untuk bagian integrasi be nya: Properti ini akan mengambil data dari 'user' object
 const joinedDate = computed(() => {
-  // Anda perlu menambahkan properti `joined_date` atau sejenisnya pada data user dari backend
+  // menambahkan properti `joined_date` atau sejenisnya pada data user dari backend
   // Contoh: return new Date(user.value?.joined_date).toLocaleDateString('id-ID');
   return user.value?.joined_date || 'Tanggal tidak tersedia';
 });
@@ -137,7 +137,7 @@ const joinedDate = computed(() => {
 const downloadCertificate = (dauroh) => {
   Swal.fire({
     title: 'Fitur Segera Hadir',
-    text: `Fitur unduh sertifikat untuk "${dauroh.Title}" sedang dalam pengembangan.`, // <-- REVISI: dauroh.title -> dauroh.Title
+    text: `Fitur unduh sertifikat untuk "${dauroh.Title}" sedang dalam pengembangan.`,
     icon: 'info',
     confirmButtonText: 'Mengerti'
   });

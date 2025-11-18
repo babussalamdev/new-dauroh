@@ -83,7 +83,7 @@ const handleRegister = () => {
   }
 
   // --- SIMULASI REGISTRASI BERHASIL ---
-  // Nantinya, di sini Anda akan memanggil API backend
+  //di sini Anda akan memanggil API backend
   console.log('Data Pendaftaran:', form);
 
   Swal.fire({

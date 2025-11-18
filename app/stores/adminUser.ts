@@ -89,7 +89,7 @@ export const useAdminUserStore = defineStore("adminUser", {
         const res = await $apiBase.post(`signup-account?type=user-admin`, formData);
         
         if (res.data) {
-          // Tambahkan user baru ke awal array agar langsung terlihat
+          // user baru ke awal array agar langsung terlihat
           this.users.unshift(res.data);
         }
         

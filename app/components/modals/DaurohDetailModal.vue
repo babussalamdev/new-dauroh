@@ -102,7 +102,7 @@ const register = () => emit('register', props.dauroh)
 </script>
 
 <style scoped>
-/* 3. Tambahkan style untuk placeholder (opsional) */
+/* 3. style untuk placeholder (opsional) */
 .Picture-preview-placeholder {
   width: 100%;
   aspect-ratio: 2 / 3; /* Sesuaikan dengan rasio gambar Anda */

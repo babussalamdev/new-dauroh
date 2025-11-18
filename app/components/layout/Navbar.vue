@@ -88,7 +88,7 @@ import { useAuth } from '~/composables/useAuth'
 const isScrolled = ref(false)
 const { user, logout, isLoggedIn, isAdmin } = useAuth()
 
-// tambahkan computed username biar kebaca di template
+// computed username biar kebaca di template
 const userName = computed(() => user.value?.name || '')
 
 const handleScroll = () => {

@@ -95,8 +95,8 @@ definePageMeta({
 });
 
 const router = useRouter();
-const { user, getUser } = useAuth(); // Tambahkan getUser
-const { $apiBase } = useNuxtApp(); // Tambahkan ini
+const { user, getUser } = useAuth();
+const { $apiBase } = useNuxtApp(); 
 
 // Profile Form State
 const profileForm = reactive({

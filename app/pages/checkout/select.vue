@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <a href="httpsa://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
+    <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
       <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
   </div>
@@ -100,7 +100,7 @@ const handleSelect = () => {
   }
 };
 
-// --- 4. TAMBAHKAN LOGIC BARU INI ---
+// --- 4. LOGIC BARU ---
 onBeforeRouteLeave((to, from, next) => {
   // Jika user mengklik "Pilih" (tujuannya ke '/checkout/summary')
   // biarkan dia pergi.
