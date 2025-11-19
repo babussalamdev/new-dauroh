@@ -10,8 +10,8 @@ export interface Voucher {
   SK: string; // Kode unik voucher
   Status: 'UNUSED' | 'USED'; // Statusnya
   Expired: string; // Tanggal kadaluwarsa (string)
-  DiscountType: 'PERCENT' | 'FIXED'; // Tipe diskon
-  DiscountValue: number; // Nilai diskonnya (misal: 20 untuk 20% atau 50000 untuk 50rb)
+  DiscountType: 'PERCENT' | 'FIXED'; // Tipe di skon
+  DiscountValue: number; // Nilai di skonnya (misal: 20 untuk 20% atau 50000 untuk 50rb)
   UsedBy?: string; // Email yang menggunakan (opsional)
 }
 
@@ -111,14 +111,14 @@ export const useVoucherStore = defineStore('voucher', {
     },
 
     // Mirip `deleteItem` di referensi lu
-    async deleteVoucher(sk: string) {
+    async deleteVoucher( sk: string) {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
 
       // Konfirmasi dulu
       const result = await Swal.fire({
         title: 'Anda yakin?',
-        text: `Voucher "${sk}" akan dihapus permanen!`,
+        text: `Voucher "${ sk}" akan dihapus permanen!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -128,14 +128,14 @@ export const useVoucherStore = defineStore('voucher', {
 
       if (result.isConfirmed) {
         try {
-          // await $apiBase.delete(`/admin/vouchers/${sk}`);
+          // await $apiBase.delete(`/admin/vouchers/${ sk}`);
 
           // --- SIMULASI (HAPUS JIKA API SUDAH READY) ---
           await new Promise(resolve => setTimeout(resolve, 500));
           // --- AKHIR SIMULASI ---
 
           // Hapus dari state
-          this.vouchers = this.vouchers.filter(v => v.SK !== sk);
+          this.vouchers = this.vouchers.filter(v => v.SK !==  sk);
           toastStore.showToast({ message: 'Voucher berhasil dihapus.', type: 'success' });
 
         } catch (error: any) {

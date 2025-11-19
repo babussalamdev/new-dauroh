@@ -6,63 +6,41 @@
         <img 
           v-if="paymentLogoUrl" 
           :src="paymentLogoUrl || ''" 
-          :alt="store.paymentMethod || 'Logo Pembayaran'" 
+          :alt="store.transactionDetails?.paymentMethod || 'Bank'" 
           class="payment-logo-summary mb-3"
         >
         
-        <p class="text-muted">Jumlah yang harus dibayar</p>
-        <h2 class="fw-bold mb-3">{{ formatCurrency(store.transactionDetails?.amount || 0) }}</h2>
+        <p class="text-muted mb-1">Jumlah yang harus dibayar</p>
+        <h2 class="fw-bold mb-3 text-primary">{{ formatCurrency(store.transactionDetails?.amount || 0) }}</h2>
 
-        <div class="countdown-timer mb-4">
-          <i class="bi bi-clock"></i>
-          Selesaikan pembayaran dalam: <strong>{{ countdown }}</strong>
+        <div class="countdown-timer mb-4 badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
+          <i class="bi bi-clock me-1"></i>
+          Selesaikan dalam: <strong>{{ countdown }}</strong>
         </div>
 
-        <ul class="nav nav-tabs justify-content-center mb-3" id="paymentTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="mobile-tab" data-bs-toggle="tab" data-bs-target="#mobile-pane" type="button" role="tab" aria-controls="mobile-pane" aria-selected="true">Mobile</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="atm-tab" data-bs-toggle="tab" data-bs-target="#atm-pane" type="button" role="tab" aria-controls="atm-pane" aria-selected="false">ATM</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="net-tab" data-bs-toggle="tab" data-bs-target="#net-pane" type="button" role="tab" aria-controls="net-pane" aria-selected="false">BSI Net</button>
-          </li>
-        </ul>
+        <hr class="my-4">
 
-        <div class="tab-content text-start p-3 border rounded" id="paymentTabContent">
-          <div class="tab-pane fade show active" id="mobile-pane" role="tabpanel" aria-labelledby="mobile-tab" tabindex="0">
-            <h6>Nomor Virtual Account (No Bayar):</h6>
-            <div class="alert alert-light fw-bold fs-5 text-center">
-              {{ store.transactionDetails?.vaNumber || 'XXXX-XXXX-XXXX' }}
-            </div>
-            
-            <ol class="list-group list-group-numbered list-group-flush fs-sm">
-              <li class="list-group-item">Buka Aplikasi BSI Mobile.</li>
-              <li class="list-group-item">Pilih Menu <strong>Pembayaran</strong>.</li>
-              <li class="list-group-item">Pilih menu <strong>E-commerce</strong>.</li>
-              <li class="list-group-item">Pilih merchant <strong>"DOKU"</strong> (atau nama merchant Anda).</li>
-              <li class="list-group-item">Pilih Nomor Rekening.</li>
-              <li class="list-group-item">Masukkan No Bayar: <strong>{{ store.transactionDetails?.vaNumber }}</strong> (No Bayar adalah Nomor VA TANPA 4 digit pertama).</li>
-              <li class="list-group-item">Masukkan PIN BSI Mobile.</li>
-              <li class="list-group-item">Transaksi selesai.</li>
-            </ol>
-          </div>
-          <div class="tab-pane fade" id="atm-pane" role="tabpanel" aria-labelledby="atm-tab" tabindex="0">
-            <p class="text-muted p-3 text-center">Instruksi pembayaran via ATM akan muncul di sini.</p>
-          </div>
-          <div class="tab-pane fade" id="net-pane" role="tabpanel" aria-labelledby="net-tab" tabindex="0">
-            <p class="text-muted p-3 text-center">Instruksi pembayaran via BSI Net akan muncul di sini.</p>
+        <div class="text-start">
+          <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
+          
+          <component 
+            :is="currentBankComponent" 
+            v-if="currentBankComponent"
+            :vaNumber="store.transactionDetails?.vaNumber || 'ERROR'"
+            :amount="store.transactionDetails?.amount || 0"
+          />
+          
+          <div v-else class="alert alert-warning text-center">
+            Instruksi untuk bank <strong>{{ store.transactionDetails?.paymentMethod }}</strong> belum tersedia.
+            <br>Silakan gunakan No. VA: <strong>{{ store.transactionDetails?.vaNumber }}</strong>
           </div>
         </div>
 
-        <div class="mt-4">
-          <div v-if="paymentStatus === 'pending'" class="text-center">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2 mb-0 fw-bold">Menunggu Pembayaran...</p>
-            <p class="text-muted small">Kami akan mengecek status pembayaran Anda secara otomatis.</p>
+        <div class="mt-5 pt-3 border-top">
+           <div v-if="paymentStatus === 'pending'" class="text-center">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-2 text-muted small">Menunggu pembayaran...</span>
+            <p class="text-muted small mt-1">Halaman ini akan otomatis terupdate setelah pembayaran berhasil.</p>
           </div>
 
           <div v-if="paymentStatus === 'success'" class="alert alert-success text-center">
@@ -76,139 +54,142 @@
             <button class="btn btn-danger mt-2" @click="router.push('/')">Kembali ke Beranda</button>
           </div>
         </div>
-        </div>
-    </div>
 
+      </div>
+    </div>
+    
     <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
       <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
+
+    <BankPaymentReceipt ref="receiptRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, defineAsyncComponent } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-definePageMeta({
-  layout: 'checkout',
-});
+// Import Logo
+import bniLogo from '~/assets/img/bank/bni.png';
+import briLogo from '~/assets/img/bank/bri.png';
+import bsiLogo from '~/assets/img/bank/bsi.png';
+import cimbLogo from '~/assets/img/bank/cimb.png';
+import danamonLogo from '~/assets/img/bank/danamon.png';
+import mandiriLogo from '~/assets/img/bank/mandiri.png';
+import permataLogo from '~/assets/img/bank/permata.png';
+import qrisLogo from '~/assets/img/bank/qris.png';
+
+definePageMeta({ layout: 'checkout' });
 useHead({ title: 'Instruksi Pembayaran' });
 
 const store = useCheckoutStore();
 const userStore = useUserStore();
 const router = useRouter();
-const countdown = ref('23:59:59');
-let timerInterval: NodeJS.Timeout | null = null;
 
-// State untuk status pembayaran
+// --- STATE DEFINITIONS ---
 const paymentStatus = ref<'pending' | 'success' | 'expired'>('pending');
-// Timer untuk simulasi
+const countdown = ref('23:59:59');
+const receiptRef = ref(null); // Referensi ke komponen receipt
+let timerInterval: NodeJS.Timeout | null = null;
 let simulationTimer: NodeJS.Timeout | null = null;
-// Variabel untuk interval polling (jika nanti dipakai)
 let pollingInterval: NodeJS.Timeout | null = null;
 
-// Guard: Pastikan user datang dari halaman summary
+// --- DYNAMIC COMPONENTS ---
+const BankComponents: any = {
+  'BNI': defineAsyncComponent(() => import('~/components/bank/BNI.vue')),
+  'BRI': defineAsyncComponent(() => import('~/components/bank/BRI.vue')),
+  'BSI': defineAsyncComponent(() => import('~/components/bank/BSI.vue')),
+  'CIMB': defineAsyncComponent(() => import('~/components/bank/CIMB.vue')),
+  'DANAMON': defineAsyncComponent(() => import('~/components/bank/Danamon.vue')),
+  'MANDIRI': defineAsyncComponent(() => import('~/components/bank/Mandiri.vue')),
+  'PERMATA': defineAsyncComponent(() => import('~/components/bank/Permata.vue')),
+};
+
+const currentBankComponent = computed(() => {
+  const method = store.transactionDetails?.paymentMethod;
+  return method ? BankComponents[method] : null;
+});
+
+// --- LIFECYCLE HOOKS ---
 onMounted(() => {
   if (!store.transactionDetails) {
     router.replace('/checkout/summary');
     return;
   }
   startTimer(store.transactionDetails.expiryTime);
-  
-  // Memulai pengecekan status
   startPaymentPolling();
 });
+
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
-  // Hentikan simulasi / polling
   if (simulationTimer) clearTimeout(simulationTimer);
   if (pollingInterval) clearInterval(pollingInterval);
 });
 
+// --- LOGIC ---
 const startPaymentPolling = () => {
   console.log("Memulai simulasi pengecekan pembayaran...");
+  // Simulasi sukses setelah 10 detik
   simulationTimer = setTimeout(() => {
-    // Hanya ubah status jika masih 'pending' (belum expired atau success)
     if (paymentStatus.value === 'pending') {
-      console.log("Simulasi: Pembayaran Diterima!");
       paymentStatus.value = 'success';
     }
-  }, 10000); // Asumsikan pembayaran berhasil setelah 10 detik
+  }, 10000);
 };
 
-// Watcher untuk bereaksi terhadap perubahan status
 watch(paymentStatus, (newStatus) => {
   if (newStatus === 'success') {
-    // Hentikan timer & polling
+    // Stop semua timer
     if (timerInterval) clearInterval(timerInterval);
     if (simulationTimer) clearTimeout(simulationTimer);
     if (pollingInterval) clearInterval(pollingInterval);
 
-    // Tampilkan notifikasi sukses
+    // Tampilkan notifikasi sukses & tawaran download receipt
     Swal.fire({
       title: 'Pembayaran Berhasil!',
-      text: 'Pendaftaran Anda telah dikonfirmasi. Anda akan diarahkan ke dashboard.',
+      text: 'Download bukti pembayaran Anda sekarang?',
       icon: 'success',
-      timer: 3000,
-      showConfirmButton: false,
-    }).then(() => {
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Download PDF',
+      cancelButtonText: 'Nanti Saja',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Panggil fungsi download di dalam komponen anak
+        // @ts-ignore
+        receiptRef.value?.downloadPdf();
+      }
       
-      // Ambil data dari checkout store
+      // Simpan ke user store (sebagai tiket aktif)
       const registrationData = {
         dauroh: store.dauroh,
         participants: store.participants,
       };
-      
-      // Daftarkan dauroh ke user store agar muncul di dashboard
       if (registrationData.dauroh && registrationData.participants) {
-         userStore.registerDauroh(registrationData as any); // (Cast ke 'any' jika TS rewel soal tipe Dauroh | null)
+         userStore.registerDauroh(registrationData as any);
       }
-
-      // Baru clear checkout dan pindah halaman
-      store.clearCheckout();
-      router.push('/dashboard');
+      
+      // Beri jeda sedikit jika user download, baru redirect dan bersihkan data
+      setTimeout(() => {
+        store.clearCheckout();
+        router.push('/dashboard');
+      }, 1500);
     });
-  } else if (newStatus === 'expired') {
-     // Hentikan timer & polling
-    if (timerInterval) clearInterval(timerInterval);
-    if (simulationTimer) clearTimeout(simulationTimer);
-    if (pollingInterval) clearInterval(pollingInterval);
-    // Swal.fire('Waktu Habis', 'Waktu pembayaran telah berakhir.', 'error');
   }
 });
 
-
-// untuk menampilkan logo bank
-const paymentLogoUrl = computed(() => {
-  const logos: { [key: string]: string } = {
-    'BSI': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Bank_Syariah_Indonesia.svg/1280px-Bank_Syariah_Indonesia.svg.png',
-    'QRIS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Logo_QRIS.svg/1200px-Logo_QRIS.svg.png',
-  };
-  return store.paymentMethod ? logos[store.paymentMethod] : null;
-});
-
-// Format mata uang
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(value);
-};
-
-// Fungsi Countdown Timer
 const startTimer = (expiryTime: number) => {
   timerInterval = setInterval(() => {
     const now = Date.now();
     const distance = expiryTime - now;
 
     if (distance < 0) {
-      clearInterval(timerInterval!);
+      if (timerInterval) clearInterval(timerInterval);
       countdown.value = "Waktu Habis";
-      // set status jika expired
       if (paymentStatus.value === 'pending') {
           paymentStatus.value = 'expired';
       }
@@ -226,21 +207,24 @@ const startTimer = (expiryTime: number) => {
   }, 1000);
 };
 
+// Helper Logo & Currency
+const paymentLogoUrl = computed(() => {
+  const logos: { [key: string]: string } = { 'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo };
+  return store.transactionDetails?.paymentMethod ? logos[store.transactionDetails.paymentMethod] : null;
+});
+
+const formatCurrency = (val: number) => {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+};
+
+// Navigation Guard
 onBeforeRouteLeave((to, from, next) => {
-  // Izinkan navigasi jika sudah sukses atau tujuannya ke dashboard
+  // Izinkan jika sudah sukses atau mau ke dashboard
   if (paymentStatus.value === 'success' || to.path === '/dashboard') {
     next();
     return;
   }
   
-  // Jika user mengklik "Saya Sudah Bayar" (tujuannya ke '/dashboard')
-  if (to.path === '/dashboard') {
-    next(); // Lanjutkan navigasi
-    return;
-  }
-
-  // Jika user mencoba pergi ke tempat LAIN (misal klik "Back" di browser)
-  // Tampilkan modal
   Swal.fire({
     title: 'Anda yakin ingin membatalkan pembayaran?',
     text: "Instruksi pembayaran ini akan hangus jika Anda keluar.",
@@ -249,38 +233,18 @@ onBeforeRouteLeave((to, from, next) => {
     confirmButtonColor: '#d33',
     cancelButtonColor: '#3085d6',
     confirmButtonText: 'Ya, Batalkan',
-    cancelButtonText: 'Tetap di Sini' // Ganti jadi "Tetap di Sini"
+    cancelButtonText: 'Tetap di Sini'
   }).then((result) => {
     if (result.isConfirmed) {
-      // Jika user klik "Ya, Batalkan"
-      store.clearCheckout(); // Bersihkan data checkout
+      store.clearCheckout();
       next();
     } else {
       next(false);
     }
   });
 });
-
 </script>
 
 <style scoped>
-.payment-logo-summary {
-  max-height: 50px;
-  max-width: 150px;
-  object-fit: contain;
-}
-.countdown-timer {
-  font-size: 1.1rem;
-  color: var(--bs-danger);
-}
-.fs-sm {
-  font-size: 0.9rem;
-}
-.nav-tabs .nav-link {
-  color: var(--color-primary);
-}
-.nav-tabs .nav-link.active {
-  color: var(--bs-body-color);
-  font-weight: bold;
-}
+.payment-logo-summary { max-height: 60px; max-width: 180px; object-fit: contain; }
 </style>

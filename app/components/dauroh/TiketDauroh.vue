@@ -10,12 +10,12 @@
       <div class="carousel-inner">
         <div v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" :key="chunkIndex" :class="['carousel-item', { active: chunkIndex === 0 }]">
           <div class="d-flex card-container-flex">
-            <div v-for="dauroh in chunk" :key="dauroh.sk || dauroh.Title" class="dauroh-card-wrapper">
+            <div v-for="dauroh in chunk" :key="dauroh. SK || dauroh.Title" class="dauroh-card-wrapper">
               
-              <a :href="'/dauroh/' + dauroh.sk" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
+              <a :href="'/dauroh/' + dauroh. SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
-                    <img :src="`${imgUrl}/${dauroh.sk}/${dauroh.Picture}.webp`" class="card-img-top" :alt="dauroh.Title" />
+                    <img :src="`${imgUrl}/${dauroh. SK}/${dauroh.Picture}.webp`" class="card-img-top" :alt="dauroh.Title" />
                     <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
                   </div>
                   <div class="card-body d-flex flex-column p-3">

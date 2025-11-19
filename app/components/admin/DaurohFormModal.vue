@@ -110,7 +110,7 @@ const isLoading = computed(() => daurohStore.loading.savingBasic);
 
 // state awal form - Gunakan Uppercase
 const getInitialFormState = () => ({
-  sk: '',
+   sk: '',
   Title: '',
   Gender: '',
   Place: '',
@@ -124,7 +124,7 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     Object.assign(formState, getInitialFormState());
     if (props.isEditing && props.dauroh) {
-      formState.sk = props.dauroh.sk || '';
+      formState. sk = props.dauroh. SK || '';
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
       formState.Gender = props.dauroh.Gender || '';
@@ -151,7 +151,7 @@ const save = () => {
    }
 
   const dataToEmit = {
-    sk: props.isEditing ? formState.sk : null,
+     SK: props.isEditing ? formState. sk : null,
     Title: formState.Title,
     Gender: formState.Gender,
     Place: formState.Place,

@@ -20,6 +20,15 @@
               <label for="email" class="form-label">Email</label>
               <input type="email" id="email" v-model="form.email" class="form-control" placeholder="contoh: peserta@dauroh.com" required />
             </div>
+             <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" id="username" v-model="form.username" class="form-control" placeholder="Username unik" required />
+            </div>
+             <div class="mb-3">
+              <label for="phone" class="form-label">Nomor HP</label>
+              <input type="tel" id="phone" v-model="form.phone_number" class="form-control" placeholder="08..." required />
+            </div>
+
             <div class="mb-3">
               <label for="password" class="form-label">Password</label>
               <input type="password" v-model="form.password" id="password" placeholder="Masukkan password" class="form-control" required />
@@ -34,8 +43,9 @@
             </div>
 
             <div class="d-grid gap-2 mt-4">
-              <button type="submit" class="btn btn-primary btn-lg">
-                Daftar
+              <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
+                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {{ loading ? 'Memproses...' : 'Daftar' }}
               </button>
             </div>
             
@@ -55,7 +65,7 @@ import { reactive, ref } from 'vue';
 import Swal from 'sweetalert2';
 
 definePageMeta({
-  layout: 'auth' // Menggunakan layout yang sama dengan login
+  layout: 'auth'
 });
 
 useHead({
@@ -63,49 +73,69 @@ useHead({
 });
 
 const router = useRouter();
+const { $apiBase } = useNuxtApp(); // Pakai apiBase yang sudah ada interseptornya
 
 const form = reactive({
   name: '',
   email: '',
+  username: '', // Tambahan sesuai API
+  phone_number: '', // Tambahan sesuai API
   password: '',
   confirmPassword: ''
 });
 
 const error = ref(null);
+const loading = ref(false);
 
-const handleRegister = () => {
-  error.value = null; // Reset error setiap kali submit
-
-  // Validasi frontend sederhana
+const handleRegister = async () => {
+  error.value = null;
+  
+  // Validasi password
   if (form.password !== form.confirmPassword) {
     error.value = 'Password dan konfirmasi password tidak cocok.';
     return;
   }
 
-  // --- SIMULASI REGISTRASI BERHASIL ---
-  //di sini Anda akan memanggil API backend
-  console.log('Data Pendaftaran:', form);
+  loading.value = true;
 
-  Swal.fire({
-    title: 'Pendaftaran Berhasil!',
-    text: 'Anda akan diarahkan ke halaman login.',
-    icon: 'success',
-    timer: 2000,
-    showConfirmButton: false,
-  }).then(() => {
-    router.push('/login'); // Arahkan ke halaman login setelah berhasil
-  });
+  try {
+    // --- INTEGRASI API ---
+    const response = await $apiBase.post('/signup-account?type=user-client', {
+      email: form.email,
+      password: form.password,
+      name: form.name,
+      username: form.username,
+      phone_number: form.phone_number
+      // role TIDAK dikirim di sini, biarkan backend set default
+    });
+
+    // Jika sukses (biasanya axios lempar error kalau status != 2xx, jadi kalau sampai sini berarti sukses)
+    Swal.fire({
+      title: 'Pendaftaran Berhasil!',
+      text: 'Silakan login dengan akun baru Anda.',
+      icon: 'success',
+      timer: 2000,
+      showConfirmButton: false,
+    }).then(() => {
+      router.push('/login');
+    });
+
+  } catch (err) {
+    console.error(err);
+    // Ambil pesan error dari response backend jika ada
+    error.value = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan saat mendaftar.';
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
 <style scoped>
-/* Menggunakan style yang mirip dengan halaman login untuk konsistensi */
 .register-container {
   display: flex;
   min-height: 100vh;
   background: url('~/assets/img/city-rain.jpg') no-repeat center center/cover;
 }
-
 .register-overlay {
   display: flex;
   align-items: center;
@@ -115,31 +145,26 @@ const handleRegister = () => {
   padding: 2rem 1rem;
   background-color: rgba(0, 0, 0, 0.55);
 }
-
 .register-box {
   width: 100%;
   max-width: 480px;
 }
-
 .register-content {
   background-color: white;
   padding: 2.5rem;
   border-radius: 1rem;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
-
 .register-title {
   font-weight: 600;
   font-size: 1.8rem;
   color: #333;
 }
-
 .form-label {
   font-weight: 500;
   color: #555;
   margin-bottom: 0.25rem;
 }
-
 .form-control {
   padding: 0.75rem 1rem;
   font-size: 0.95rem;

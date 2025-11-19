@@ -73,7 +73,7 @@ export const useCheckoutStore = defineStore('checkout', {
       
       // // UNCOMMENT INI UNTUK INTEGRASI BACKEND
       // const response = await $apiBase.post('/api/create-payment', {
-      //   daurohId: this.dauroh?.sk,
+      //   daurohId: this.dauroh?. sk,
       //   participants: this.participants,
       //   paymentMethod: this.paymentMethod,
       //   voucherCode: this.voucherCode, // <-- Kirim voucher code
@@ -82,7 +82,7 @@ export const useCheckoutStore = defineStore('checkout', {
       // this.transactionDetails = response.data;
       // return true;
       console.log("Membuat pembayaran dengan detail:", {
-        daurohId: this.dauroh?.sk,
+        daurohId: this.dauroh?. SK,
         paymentMethod: this.paymentMethod,
         voucherCode: this.voucherCode,
         totalAmount: this.totalAmount,
@@ -92,7 +92,7 @@ export const useCheckoutStore = defineStore('checkout', {
 
       this.transactionDetails = {
         vaNumber: '9888442365281', // Nomor VA palsu
-        amount: this.finalAmount, // <-- PENTING: GANTI DARI totalAmount ke finalAmount
+        amount: this.finalAmount,
         paymentMethod: this.paymentMethod || 'BSI',
         expiryTime: Date.now() + 24 * 60 * 60 * 1000 // 24 jam dari sekarang
       };

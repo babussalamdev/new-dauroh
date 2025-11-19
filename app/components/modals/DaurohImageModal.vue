@@ -9,7 +9,7 @@
         <div class="modal-body text-center">
           <img 
             v-if="dauroh?.Picture"
-            :src="`${imgBaseUrl}/${dauroh.sk}/${dauroh.Picture}.webp`" 
+            :src="`${imgBaseUrl}/${dauroh. SK}/${dauroh.Picture}.webp`" 
             :alt="dauroh.Title" 
             class="img-fluid rounded"
             @error="($event.target as HTMLImageElement).style.display = 'none'"

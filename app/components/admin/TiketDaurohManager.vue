@@ -23,11 +23,11 @@
             </tr>
           </thead>
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
-            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.sk || dauroh.Title">
-              <th scope="row">{{ dauroh.sk }}</th>
+            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh. SK || dauroh.Title">
+              <th scope="row">{{ dauroh. SK }}</th>
               <td class="text-center">
                 <img
-                  :src="dauroh.Picture ? `${imgBaseUrl}/${dauroh.sk}/${dauroh.Picture}.webp?t=${Date.now()}` : ''"
+                  :src="dauroh.Picture ? `${imgBaseUrl}/${dauroh. SK}/${dauroh.Picture}.webp?t=${Date.now()}` : ''"
                   :alt="dauroh.Picture ? dauroh.Title : 'Tidak ada Picture'"
                   width="30"
                   height="45"
@@ -48,8 +48,8 @@
                 <button
                   class="btn btn-link text-info p-1"
                   @click="openDetailModal(dauroh)"
-                  :disabled="!dauroh.sk"
-                  :title="dauroh.sk ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
+                  :disabled="!dauroh. SK"
+                  :title="dauroh. SK ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
                   <i class="bi bi-search fs-5"></i>
                 </button>
                 <button class="btn btn-link text-primary p-1" @click="openUpdateModal(dauroh)" title="Edit Info Dasar">
@@ -136,7 +136,7 @@
 
   // * Memperbaiki sintaks TypeScript di sini
   const openDetailModal = (dauroh: Dauroh | null) => {
-    if (dauroh && dauroh.sk) {
+    if (dauroh && dauroh. SK) {
       selectedDaurohForDetail.value = dauroh; // Simpan objek dauroh utuh
       showDetailModal.value = true;
     } else {
@@ -160,7 +160,7 @@
   };
   const openUpdateModal = (dauroh: Dauroh) => {
     isEditing.value = true;
-    selectedDauroh.value = { sk: dauroh.sk, Title: dauroh.Title, Place: dauroh.Place, Gender: dauroh.Gender, Price: dauroh.Price };
+    selectedDauroh.value = {  SK: dauroh. SK, Title: dauroh.Title, Place: dauroh.Place, Gender: dauroh.Gender, Price: dauroh.Price };
     showFormModal.value = true;
   };
   const closeFormModal = () => {
@@ -174,7 +174,7 @@
   }) => {
     let success = false;
     try {
-      if (isEditing.value && payload.daurohData.sk) {
+      if (isEditing.value && payload.daurohData. SK) {
         success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
       } else {
         success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
@@ -199,8 +199,8 @@
     selectedDaurohForDelete.value = null;
   };
   const confirmDelete = () => {
-    if (selectedDaurohForDelete.value?.sk) {
-      daurohStore.deleteTiketDauroh(selectedDaurohForDelete.value.sk);
+    if (selectedDaurohForDelete.value?. SK) {
+      daurohStore.deleteTiketDauroh(selectedDaurohForDelete.value. SK);
     }
     closeDeleteModal();
   };

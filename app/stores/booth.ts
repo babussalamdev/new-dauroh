@@ -34,7 +34,7 @@ export const useBoothStore = defineStore("booth", {
     // Aksi untuk mengambil semua data pengajuan
     async fetchSubmissions() {
       // Sesuai permintaan: tidak ada data dummy,
-      // jadi jika data sudah ada, bisa fetch ulang (atau skip jika Anda mau)
+      // jadi jika data sudah ada, bisa fetch ulang (atau  skip jika Anda mau)
       // if (this.submissions.length > 0) return;
 
       this.loading = true;

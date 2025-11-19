@@ -23,6 +23,16 @@
               <label for="email" class="form-label">Alamat Email</label>
               <input type="email" class="form-control" id="email" v-model="form.email" required>
             </div>
+
+            <div class="col-md-6">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="username" v-model="form.username" required placeholder="Username unik">
+            </div>
+            <div class="col-md-6">
+              <label for="phone" class="form-label">Nomor Telepon</label>
+              <input type="tel" class="form-control" id="phone" v-model="form.phone_number" required placeholder="08...">
+            </div>
+
             <div class="col-md-6">
               <label for="password" class="form-label">Password</label>
               <input type="password" class="form-control" id="password" v-model="form.password" required minlength="6">
@@ -36,6 +46,7 @@
               </select>
             </div>
           </div>
+          
           <div class="mt-4 text-end">
             <NuxtLink to="/admin/users" class="btn btn-secondary me-2" :class="{ disabled: store.loading }">Batal</NuxtLink>
             <button type="submit" class="btn btn-primary" :disabled="store.loading">
@@ -52,8 +63,8 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import { useAdminUserStore } from '~/stores/adminUser'; // * Import store
-import { useRouter } from 'vue-router'; // * Import router
+import { useAdminUserStore } from '~/stores/adminUser';
+import { useRouter } from 'vue-router';
 
 definePageMeta({
   layout: 'admin',
@@ -65,35 +76,39 @@ definePageMeta({
   }
 });
 
-const store = useAdminUserStore(); // *
-const router = useRouter(); // *
+const store = useAdminUserStore();
+const router = useRouter();
 
+// Menambahkan username dan phone_number ke state form
 const form = reactive({ 
   name: '', 
   email: '', 
+  username: '',     // Baru
+  phone_number: '', // Baru
   password: '', 
   role: 'user' 
 });
 
 const handleSubmit = async () => {
-  // * Ganti simulasi dengan call ke store
+  // Kirim data form yang sudah lengkap ke store
   const success = await store.addAccount(form);
   
   if (success) {
-    // Reset form (opsional, karena   pindah halaman)
+    // Reset form
     form.name = '';
     form.email = '';
+    form.username = '';
+    form.phone_number = '';
     form.password = '';
     form.role = 'user';
+    
     // Pindah ke halaman index
     router.push('/admin/users');
   }
-  // Pesan error/sukses sudah dihandle di dalam store
 };
 </script>
 
 <style scoped>
-/* Style dari file aslimu */
 .content-card { 
     border: 1px solid #e2e8f0; 
     border-radius: 0.75rem; 

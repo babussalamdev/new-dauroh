@@ -11,7 +11,7 @@
             <div class="col-md-4 mb-3 mb-md-0">
               <img 
                 v-if="dauroh?.Picture"
-                :src="`${imgBaseUrl}/${dauroh.sk}/${dauroh.Picture}.webp`" 
+                :src="`${imgBaseUrl}/${dauroh. SK}/${dauroh.Picture}.webp`" 
                 alt="Picture Dauroh" 
                 class="img-fluid rounded shadow-sm"
                 @error="($event.target as HTMLImageElement).style.display = 'none'"

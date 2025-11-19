@@ -25,7 +25,7 @@
               <tr>
                 <th>Kode Voucher</th>
                 <th>Status</th>
-                <th>Diskon</th>
+                <th>Di skon</th>
                 <th>Tgl Kadaluwarsa</th>
                 <th>Dipakai Oleh</th>
                 <th class="text-center">Aksi</th>
@@ -96,7 +96,7 @@ onMounted(() => {
   store.fetchVouchers();
 });
 
-// Helper untuk format diskon
+// Helper untuk format di skon
 const formatDiscount = (v: Voucher) => {
   if (v.DiscountType === 'PERCENT') {
     return `${v.DiscountValue}%`;

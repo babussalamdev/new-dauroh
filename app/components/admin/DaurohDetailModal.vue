@@ -24,7 +24,7 @@
                   
                   <dl class="row mb-0 fs-sm">
                     <dt class="col-4 text-truncate">SK</dt>
-                    <dd class="col-8">{{ eventData?.sk }}</dd>
+                    <dd class="col-8">{{ eventData?. SK }}</dd>
 
                     <dt class="col-4 text-truncate">Judul</dt>
                     <dd class="col-8">{{ eventData?.Title }}</dd>
@@ -82,9 +82,9 @@
                       accept="image/*"
                       @change="handleFileChange"
                       style="display: none;"
-                      :id="'photoInputModal-' + (eventData?.sk || 'new')"
+                      :id="'photoInputModal-' + (eventData?. SK || 'new')"
                     />
-                    <label :for="'photoInputModal-' + (eventData?.sk || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
+                    <label :for="'photoInputModal-' + (eventData?. SK || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
                       <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Ganti Picture' : 'Pilih Picture' }}
                     </label>
                   </div>
@@ -266,7 +266,7 @@ watch(() => props.show, (newShow) => {
 
     // Set preview URL dari prop
     previewUrl.value = props.dauroh.Picture 
-      ? `${imgBaseUrl.value}/${props.dauroh.sk}/${props.dauroh.Picture}.webp?t=${Date.now()}` 
+      ? `${imgBaseUrl.value}/${props.dauroh. SK}/${props.dauroh.Picture}.webp?t=${Date.now()}` 
       : null;
 
     // Populate schedule dari prop
@@ -289,7 +289,7 @@ const addScheduleDay = () => formState.scheduleDays.push({ tempId: nextTempId++,
 const removeScheduleDay = (index: number) => formState.scheduleDays.splice(index, 1);
 const handleScheduleSubmit = async () => {
     // * Ambil SK dari eventData (computed)
-    if (!eventData.value?.sk) return; 
+    if (!eventData.value?. SK) return; 
     if (formState.scheduleDays.some((d) => !d.date || !d.start_time || !d.end_time))
         return Swal.fire('Error', 'Semua kolom jadwal (Tanggal, Mulai, Selesai) wajib diisi.', 'error');
 
@@ -304,7 +304,7 @@ const handleScheduleSubmit = async () => {
 
     try {
         // Ambil SK dari eventData
-        const ok = await daurohStore.updateDaurohSchedule(eventData.value.sk, dateObject);
+        const ok = await daurohStore.updateDaurohSchedule(eventData.value. SK, dateObject);
         if (ok) {
             if (eventData.value) { 
                 eventData.value.Date = dateObject;
@@ -331,7 +331,7 @@ const handleFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) {
       previewUrl.value = eventData.value?.Picture 
-        ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+        ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
         : null;
       if (fileInput.value) fileInput.value.value = ''; 
       return;
@@ -370,7 +370,7 @@ const convertToWebP = (src: string) => {
         isConvertingPhoto.value = false;
         if (fileInput.value) fileInput.value.value = ''; 
         previewUrl.value = eventData.value?.Picture 
-          ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+          ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
           : null; 
         return;
     }
@@ -390,7 +390,7 @@ const convertToWebP = (src: string) => {
       newPhotoBase64.value = null;
       if (fileInput.value) fileInput.value.value = ''; 
       previewUrl.value = eventData.value?.Picture 
-        ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+        ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
         : null; 
     } finally {
       isConvertingPhoto.value = false;
@@ -401,7 +401,7 @@ const convertToWebP = (src: string) => {
     isConvertingPhoto.value = false;
     if (fileInput.value) fileInput.value.value = ''; 
     previewUrl.value = eventData.value?.Picture 
-      ? `${imgBaseUrl.value}/${eventData.value.sk}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+      ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
       : null; 
     newPhotoBase64.value = null;
   };
@@ -410,18 +410,18 @@ const convertToWebP = (src: string) => {
 
 const handlePictureSubmit = async () => {
   // Ambil SK dari eventData
-  if (!eventData.value?.sk || !newPhotoBase64.value) return; 
+  if (!eventData.value?. SK || !newPhotoBase64.value) return; 
   isSavingPicture.value = true;
   try {
     // Ambil SK dari eventData
-    const success = await daurohStore.uploadEventPhoto(eventData.value.sk, newPhotoBase64.value);
+    const success = await daurohStore.uploadEventPhoto(eventData.value. SK, newPhotoBase64.value);
     if (success) {
         // Ambil SK dari eventData
-        const updatedData = await daurohStore.fetchDaurohDetail(eventData.value.sk);
+        const updatedData = await daurohStore.fetchDaurohDetail(eventData.value. SK);
         
         // tidak bisa update eventData (karena computed), tapi bisa update previewUrl
         if(updatedData) {
-            previewUrl.value = updatedData.Picture ? `${imgBaseUrl.value}/${updatedData.sk}/${updatedData.Picture}.webp?t=${Date.now()}` : null; // Update preview dgn URL baru
+            previewUrl.value = updatedData.Picture ? `${imgBaseUrl.value}/${updatedData. SK}/${updatedData.Picture}.webp?t=${Date.now()}` : null; // Update preview dgn URL baru
         } else {
              previewUrl.value = newPhotoBase64.value; 
         }
@@ -445,7 +445,7 @@ const handlePictureSubmit = async () => {
 const openEditBasicModal = () => (showEditBasicModal.value = true);
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, photoBase64: null }) => {
-  if (!payload.daurohData.sk || payload.daurohData.sk !== eventData.value?.sk) {
+  if (!payload.daurohData. sk || payload.daurohData. sk !== eventData.value?. SK) {
     return Swal.fire('Error', 'SK tidak valid atau tidak cocok.', 'error');
   }
 

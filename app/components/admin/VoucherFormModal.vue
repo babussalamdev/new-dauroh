@@ -17,7 +17,7 @@
               </div>
 
               <div class="col-12">
-                <label for="discountType" class="form-label">Tipe Diskon *</label>
+                <label for="discountType" class="form-label">Tipe Di skon *</label>
                 <select class="form-select" id="discountType" v-model="formState.discountType" required>
                   <option value="PERCENT">Persentase (%)</option>
                   <option value="FIXED">Potongan Tetap (Rp)</option>
@@ -25,7 +25,7 @@
               </div>
               
               <div class="col-12">
-                <label for="discountValue" class="form-label">Nilai Diskon *</label>
+                <label for="discountValue" class="form-label">Nilai Di skon *</label>
                 <input type="number" class="form-control" id="discountValue" v-model.number="formState.discountValue" min="1" required>
                 <small v-if="formState.discountType === 'PERCENT'" class="text-muted">Masukkan angka saja. Cth: 20 (untuk 20%)</small>
                 <small v-else class="text-muted">Masukkan nominal potongan. Cth: 50000 (untuk Rp 50.000)</small>

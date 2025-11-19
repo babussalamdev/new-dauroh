@@ -45,13 +45,14 @@
           </li>
           
           <li v-if="store.discountAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 text-danger">
-            Diskon ({{ store.voucherCode }})
+            Di skon ({{ store.voucherCode }})
             <span>- {{ formatCurrency(store.discountAmount) }}</span>
           </li>
           
           <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light fw-bold">
             TOTAL
-            <span>{{ formatCurrency(store.finalAmount) }}</span> </li>
+            <span>{{ formatCurrency(store.finalAmount) }}</span>
+          </li>
         </ul>
 
         <div v-if="error" class="alert alert-danger small p-2 mt-3">
@@ -71,7 +72,8 @@
       </div>
     </div>
 
-    <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab"> <i class="bi bi-whatsapp me-1"></i> Whatsapp
+    <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
+      <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
   </div>
 </template>
@@ -81,9 +83,9 @@ import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
-import { useNuxtApp } from '#app'; // <-- Import useNuxtApp
+import { useNuxtApp } from '#app'; 
 
-// import logo bank
+// Import logo bank
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -104,17 +106,13 @@ const { $apiBase } = useNuxtApp();
 const loading = ref(false);
 const error = ref<string | null>(null);
 
-// const voucherCode = ref('');
-// const discountAmount = ref(0);
-
-// Guard: Pastikan user sudah memilih metode
 onMounted(() => {
   if (!store.paymentMethod) {
     router.replace('/checkout/select');
   }
 });
 
-// Helper untuk menampilkan logo bank
+// Helper Logo
 const paymentLogoUrl = computed(() => {
   const logos: { [key: string]: string } = {
     'BNI': bniLogo,
@@ -129,63 +127,91 @@ const paymentLogoUrl = computed(() => {
   return store.paymentMethod ? logos[store.paymentMethod] : null;
 });
 
-// Format mata uang
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(value);
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 };
 
+// --- [REVISI] LOGIKA DISKON DI FRONTEND ---
 const applyVoucher = async () => {
   error.value = null;
   loading.value = true;
   
-  if (!store.voucherCode) {
-    store.setVoucher(null, 0); // Jika kode dikosongkan, reset diskon
+  const code = store.voucherCode;
+
+  if (!code) {
+    store.setVoucher(null, 0);
     loading.value = false;
     return;
   }
-// dummy
+
   try {
-    // const response = await $apiBase.post('/validate-voucher', { 
-    //   code: store.voucherCode, // Ambil dari store
-    //   totalAmount: store.totalAmount // Kirim total harga asli
-    // });
+    // OPSI A: Ambil Data Voucher dari API (Recommended)
+    // Kita minta info vouchernya ke Backend, tapi KITA (Frontend) yang ngitung.
+    // const response = await $apiBase.get(`/vouchers/check?code=${code}`);
+    // const voucherData = response.data; // misal: { type: 'PERCENT', value: 20 }
 
-    // // Backend akan balikin jumlah diskon (misal: { discountAmount: 100000 })
-    // const newDiscountAmount = response.data.discountAmount;
-    // store.setVoucher(store.voucherCode, newDiscountAmount); // Simpan ke state
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulasi loading
-    let newDiscountAmount = 0;
-    if (store.voucherCode.toUpperCase() === 'DAUROH20') {
-      // Hitung diskon 20%
-      newDiscountAmount = store.totalAmount * 0.20;
-    } else {
-       error.value = 'Kode voucher tidak valid';
+    // OPSI B: Simulasi Data Voucher (Kalo Backend belum ada)
+    // Anggap ini data yang didapat dari database
+    const mockVoucherDatabase = [
+      { code: 'DAUROH20', type: 'PERCENT', value: 20 },     // Di skon 20%
+      { code: 'HEMAT50',  type: 'FIXED',   value: 50000 },  // Potongan 50rb
+      { code: 'GRATIS01', type: 'FIXED',   value: 1000000 } // Gratis (Potongan 1jt)
+    ];
+
+    // Simulasi delay API
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Cari voucher yang cocok
+    const validVoucher = mockVoucherDatabase.find(v => v.code === code.toUpperCase());
+
+    if (!validVoucher) {
+      throw new Error('Kode voucher tidak ditemukan');
     }
-    // Simpan hasilnya ke state (walaupun 0)
-    store.setVoucher(store.voucherCode, newDiscountAmount);
 
+    // --- LOGIKA PERHITUNGAN ---
+    let calculatedDiscount = 0;
+
+    if (validVoucher.type === 'PERCENT') {
+      // Hitung Persen: Total * (Nilai / 100)
+      calculatedDiscount = store.totalAmount * (validVoucher.value / 100);
+    } else if (validVoucher.type === 'FIXED') {
+      // Potongan Tetap
+      calculatedDiscount = validVoucher.value;
+    }
+
+    // Validasi: Di skon gak boleh lebih gede dari total harga
+    if (calculatedDiscount > store.totalAmount) {
+      calculatedDiscount = store.totalAmount;
+    }
+
+    // Simpan hasil hitungan Frontend ke State
+    store.setVoucher(code, calculatedDiscount);
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Voucher Berhasil!',
+      text: `Anda mendapatkan potongan ${formatCurrency(calculatedDiscount)}`,
+      timer: 1500,
+      showConfirmButton: false
+    });
 
   } catch (err: any) {
-    store.setVoucher(store.voucherCode, 0); // Reset diskon kalo gagal
-    error.value = err.response?.data?.message || 'Kode voucher tidak valid';
+    store.setVoucher(code, 0); // Reset jika gagal
+    error.value = err.message || 'Kode voucher tidak valid';
   } finally {
     loading.value = false;
   }
 };
+// --- AKHIR LOGIKA DISKON ---
 
 const handlePay = async () => {
   loading.value = true;
   error.value = null;
   try {
-    // Panggil action di store
+    // Saat createPayment, store akan mengirim 'finalAmount' yang sudah didi skon
     const success = await store.createPayment();
     
     if (success) {
-      // Arahkan ke halaman instruksi
       router.push('/checkout/instructions');
     } else {
       throw new Error('Gagal membuat transaksi.');
@@ -199,37 +225,29 @@ const handlePay = async () => {
 };
 
 onBeforeRouteLeave((to, from, next) => {
-  // Jika user mengklik tombol "Bayar" (tujuannya ke '/checkout/instructions')
-  // atau user klik "Kembali" (tujuannya ke '/checkout/select')
-  // biarkan dia pergi.
   if (to.path === '/checkout/instructions' || to.path === '/checkout/select') {
-    next(); // Lanjutkan navigasi
+    next(); 
     return;
   }
-
-  // Jika user mencoba pergi ke tempat LAIN (misal klik "Back" di browser)
-  // Tampilkan modal kustom
+  
   Swal.fire({
     title: 'Anda yakin ingin membatalkan pembayaran?',
     text: "Data yang sudah Anda isi akan hilang jika Anda keluar.",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#d33', // Merah untuk "Ya, Batalkan"
-    cancelButtonColor: '#3085d6', // Biru untuk "Lanjut Bayar"
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
     confirmButtonText: 'Ya, Batalkan',
-    cancelButtonText: 'Lanjut Bayar' // Ini adalah tombol "Batal" dari SweetAlert
+    cancelButtonText: 'Lanjut Bayar'
   }).then((result) => {
     if (result.isConfirmed) {
-      // Jika user klik "Ya, Batalkan"
-      store.clearCheckout(); // Bersihkan data checkout
-      next(); // Izinkan user pergi
+      store.clearCheckout();
+      next();
     } else {
-      // Jika user klik "Lanjut Bayar" (atau menutup modal)
-      next(false); // Batalkan navigasi, user tetap di halaman ini
+      next(false);
     }
   });
 });
-
 </script>
 
 <style scoped>
