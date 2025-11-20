@@ -13,7 +13,7 @@
         <p class="text-muted mb-1">Jumlah yang harus dibayar</p>
         <h2 class="fw-bold mb-3 text-primary">{{ formatCurrency(store.transactionDetails?.amount || 0) }}</h2>
 
-        <div class="countdown-timer mb-4 badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
+        <div v-if="paymentStatus === 'pending'" class="countdown-timer mb-4 badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
           <i class="bi bi-clock me-1"></i>
           Selesaikan dalam: <strong>{{ countdown }}</strong>
         </div>
@@ -21,40 +21,40 @@
         <hr class="my-4">
 
         <div class="text-start">
-          <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
-          
-          <component 
-            :is="currentBankComponent" 
-            v-if="currentBankComponent"
-            :vaNumber="store.transactionDetails?.vaNumber || 'ERROR'"
-            :amount="store.transactionDetails?.amount || 0"
-          />
-          
-          <div v-else class="alert alert-warning text-center">
-            Instruksi untuk bank <strong>{{ store.transactionDetails?.paymentMethod }}</strong> belum tersedia.
-            <br>Silakan gunakan No. VA: <strong>{{ store.transactionDetails?.vaNumber }}</strong>
+          <div v-if="paymentStatus === 'pending'">
+             <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
+             <component 
+              :is="currentBankComponent" 
+              v-if="currentBankComponent"
+              :vaNumber="store.transactionDetails?.vaNumber || 'ERROR'"
+              :amount="store.transactionDetails?.amount || 0"
+            />
+            <div v-else class="alert alert-warning text-center">
+              Gunakan No. VA: <strong>{{ store.transactionDetails?.vaNumber }}</strong>
+            </div>
           </div>
+         
+          <div class="mt-4 pt-2 border-top">
+             <div v-if="paymentStatus === 'pending'" class="text-center">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+              <span class="ms-2 text-muted small">Menunggu pembayaran otomatis...</span>
+            </div>
+
+            <div v-if="paymentStatus === 'success'" class="alert alert-success text-center">
+              <h5 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Pembayaran Berhasil!</h5>
+              <p class="mb-2">Terima kasih, pendaftaran Anda telah dikonfirmasi.</p>
+              <button class="btn btn-primary w-100" @click="goToDashboard">
+                Selesai & Ke Dashboard
+              </button>
+            </div>
+
+            <div v-if="paymentStatus === 'expired'" class="alert alert-danger text-center">
+              <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
+              <button class="btn btn-danger mt-2" @click="router.push('/')">Kembali ke Beranda</button>
+            </div>
+          </div>
+
         </div>
-
-        <div class="mt-5 pt-3 border-top">
-           <div v-if="paymentStatus === 'pending'" class="text-center">
-            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-            <span class="ms-2 text-muted small">Menunggu pembayaran...</span>
-            <p class="text-muted small mt-1">Halaman ini akan otomatis terupdate setelah pembayaran berhasil.</p>
-          </div>
-
-          <div v-if="paymentStatus === 'success'" class="alert alert-success text-center">
-            <h5 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Pembayaran Berhasil!</h5>
-            <p class="mb-0">Anda akan diarahkan ke dashboard.</p>
-          </div>
-
-          <div v-if="paymentStatus === 'expired'" class="alert alert-danger text-center">
-            <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
-            <p class="mb-0">Waktu pembayaran telah berakhir. Silakan ulangi pendaftaran.</p>
-            <button class="btn btn-danger mt-2" @click="router.push('/')">Kembali ke Beranda</button>
-          </div>
-        </div>
-
       </div>
     </div>
     
@@ -62,7 +62,11 @@
       <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
 
-    <BankPaymentReceipt ref="receiptRef" />
+    <ModalsQrCodeModal 
+      :show="showQrModal" 
+      :ticket="newlyCreatedTicket" 
+      @close="handleCloseQr" 
+    />
   </div>
 </template>
 
@@ -73,7 +77,7 @@ import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-// Import Logo
+// Import Logo Bank
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -90,15 +94,16 @@ const store = useCheckoutStore();
 const userStore = useUserStore();
 const router = useRouter();
 
-// --- STATE DEFINITIONS ---
+// State
 const paymentStatus = ref<'pending' | 'success' | 'expired'>('pending');
 const countdown = ref('23:59:59');
-const receiptRef = ref(null); // Referensi ke komponen receipt
+const showQrModal = ref(false);
+
+// Timer refs
 let timerInterval: NodeJS.Timeout | null = null;
 let simulationTimer: NodeJS.Timeout | null = null;
-let pollingInterval: NodeJS.Timeout | null = null;
 
-// --- DYNAMIC COMPONENTS ---
+// Dynamic Bank Components
 const BankComponents: any = {
   'BNI': defineAsyncComponent(() => import('~/components/bank/BNI.vue')),
   'BRI': defineAsyncComponent(() => import('~/components/bank/BRI.vue')),
@@ -114,126 +119,109 @@ const currentBankComponent = computed(() => {
   return method ? BankComponents[method] : null;
 });
 
-// --- LIFECYCLE HOOKS ---
+// Computed ticket object untuk modal QR
+const newlyCreatedTicket = computed(() => {
+  if (!store.dauroh || !store.participants.length) return undefined;
+  
+  return {
+    dauroh: store.dauroh,
+    participant: store.participants[0] 
+  };
+});
+
 onMounted(() => {
   if (!store.transactionDetails) {
     router.replace('/checkout/summary');
     return;
   }
   startTimer(store.transactionDetails.expiryTime);
-  startPaymentPolling();
+  startPaymentSimulation();
 });
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
   if (simulationTimer) clearTimeout(simulationTimer);
-  if (pollingInterval) clearInterval(pollingInterval);
 });
 
-// --- LOGIC ---
-const startPaymentPolling = () => {
-  console.log("Memulai simulasi pengecekan pembayaran...");
-  // Simulasi sukses setelah 10 detik
+const startPaymentSimulation = () => {
+  // Simulasi sukses bayar dalam 5 detik
   simulationTimer = setTimeout(() => {
     if (paymentStatus.value === 'pending') {
       paymentStatus.value = 'success';
     }
-  }, 10000);
+  }, 5000);
 };
 
+// Watcher: Jika sukses, daftarkan user dan buka QR Modal
 watch(paymentStatus, (newStatus) => {
   if (newStatus === 'success') {
-    // Stop semua timer
     if (timerInterval) clearInterval(timerInterval);
-    if (simulationTimer) clearTimeout(simulationTimer);
-    if (pollingInterval) clearInterval(pollingInterval);
+    
+    // 1. Simpan ke user store (Create Ticket)
+    const registrationData = {
+      dauroh: store.dauroh!,
+      participants: store.participants,
+    };
+    userStore.registerDauroh(registrationData);
 
-    // Tampilkan notifikasi sukses & tawaran download receipt
-    Swal.fire({
-      title: 'Pembayaran Berhasil!',
-      text: 'Download bukti pembayaran Anda sekarang?',
-      icon: 'success',
-      showCancelButton: true,
-      confirmButtonText: 'Ya, Download PDF',
-      cancelButtonText: 'Nanti Saja',
-      allowOutsideClick: false
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Panggil fungsi download di dalam komponen anak
-        // @ts-ignore
-        receiptRef.value?.downloadPdf();
-      }
-      
-      // Simpan ke user store (sebagai tiket aktif)
-      const registrationData = {
-        dauroh: store.dauroh,
-        participants: store.participants,
-      };
-      if (registrationData.dauroh && registrationData.participants) {
-         userStore.registerDauroh(registrationData as any);
-      }
-      
-      // Beri jeda sedikit jika user download, baru redirect dan bersihkan data
-      setTimeout(() => {
-        store.clearCheckout();
-        router.push('/dashboard');
-      }, 1500);
-    });
+    // 2. Tampilkan Modal QR Code secara langsung
+    // Beri delay sedikit agar transisi UI enak dilihat
+    setTimeout(() => {
+      showQrModal.value = true;
+    }, 500);
   }
 });
 
+// Saat modal ditutup, langsung ke dashboard
+const handleCloseQr = () => {
+  showQrModal.value = false;
+  goToDashboard();
+};
+
+const goToDashboard = () => {
+  store.clearCheckout();
+  router.push('/dashboard');
+};
+
+// --- Timer & Formatters ---
 const startTimer = (expiryTime: number) => {
   timerInterval = setInterval(() => {
     const now = Date.now();
     const distance = expiryTime - now;
-
     if (distance < 0) {
       if (timerInterval) clearInterval(timerInterval);
       countdown.value = "Waktu Habis";
-      if (paymentStatus.value === 'pending') {
-          paymentStatus.value = 'expired';
-      }
+      if (paymentStatus.value === 'pending') paymentStatus.value = 'expired';
       return;
     }
-
     const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-    countdown.value = 
-      String(hours).padStart(2, '0') + ":" + 
-      String(minutes).padStart(2, '0') + ":" + 
-      String(seconds).padStart(2, '0');
+    countdown.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }, 1000);
 };
 
-// Helper Logo & Currency
 const paymentLogoUrl = computed(() => {
   const logos: { [key: string]: string } = { 'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo };
   return store.transactionDetails?.paymentMethod ? logos[store.transactionDetails.paymentMethod] : null;
 });
 
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
-};
+const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 
 // Navigation Guard
 onBeforeRouteLeave((to, from, next) => {
-  // Izinkan jika sudah sukses atau mau ke dashboard
   if (paymentStatus.value === 'success' || to.path === '/dashboard') {
     next();
     return;
   }
-  
   Swal.fire({
-    title: 'Anda yakin ingin membatalkan pembayaran?',
-    text: "Instruksi pembayaran ini akan hangus jika Anda keluar.",
+    title: 'Batalkan Pembayaran?',
+    text: "Anda akan kehilangan sesi pembayaran ini.",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Ya, Batalkan',
-    cancelButtonText: 'Tetap di Sini'
+    confirmButtonText: 'Ya, Keluar',
+    cancelButtonText: 'Lanjut Bayar'
   }).then((result) => {
     if (result.isConfirmed) {
       store.clearCheckout();

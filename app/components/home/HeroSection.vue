@@ -26,15 +26,16 @@
       </div>
     </div>
 
-    <ModalsQrCodeModal :show="showQrModal" @close="closeQrModal" />
-
     </section>
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { useUserStore } from '~/stores/user';
 import { useToastStore } from '~/stores/toast';
+import { useAuth } from '~/composables/useAuth';
+import { useRouter } from 'vue-router';
+
+// Icons
 import QrCode from '~/components/icons/QrIcon.vue';
 import JadwalIcon from '~/components/icons/JadwalIcon.vue';
 import BoothIcon from '~/components/icons/BoothIcon.vue';
@@ -43,45 +44,41 @@ const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
 const toastStore = useToastStore();
 const router = useRouter();
-const showQrModal = ref(false);
-
 
 const handleButtonClick = (path) => {
+  // 1. Cek Login
   if (!isLoggedIn.value) {
-    // * Ganti router.push dengan toast
     toastStore.showToast({
       message: 'Mohon login atau daftar terlebih dahulu.',
-      type: 'info' // Kamu bisa ganti jadi 'danger' kalau mau
+      type: 'info'
     });
     return;
   }
 
-  // Logika di bawah ini hanya berjalan jika user SUDAH login
+  // 2. Routing Handler
   switch (path) {
     case '/qr':
-      handleQrClick();
+      // Cek apakah user punya tiket aktif (Upcoming)
+      if (userStore.getUpcomingTickets.length > 0) {
+        // Arahkan ke dashboard tempat QR berada
+        router.push('/dashboard');
+      } else {
+        toastStore.showToast({
+          message: 'Anda belum memiliki tiket dauroh aktif.',
+          type: 'info'
+        });
+      }
       break;
+      
     case '/jadwal':
       router.push('/jadwal');
       break;
+      
     case '/sewa-booth':
       router.push('/sewa-booth');
       break;
   }
 };
-
-const handleQrClick = () => {
-  if (userStore.upcomingDauroh.length > 0) {
-    showQrModal.value = true;
-  } else {
-    toastStore.showToast({
-      message: 'Anda belum terdaftar pada dauroh manapun untuk menampilkan QR Code.',
-      type: 'info'
-    });
-  }
-};
-
-const closeQrModal = () => (showQrModal.value = false);
 </script>
 
 <style scoped>

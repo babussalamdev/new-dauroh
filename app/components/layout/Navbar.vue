@@ -1,82 +1,94 @@
 <template>
   <nav 
-    class="fixed-navbar navbar navbar-expand-lg py-3 sticky-top"
+    class="fixed-navbar navbar navbar-expand navbar-light py-3 sticky-top"
     :class="{ 'scrolled': isScrolled }"
   >
     <div class="container">
       <NuxtLink class="navbar-brand fw-bold text-dark-custom" to="/">
         <img src="/assets/img/Logo-Mahad.png" alt="Dauroh Tickets Logo" style="height: 40px;" class="me-2">
-        <span class="fs-4">Dauroh</span> <span class="fs-4 text-primary"></span>
+        <span class="fs-4 d-none d-sm-inline">Dauroh</span>
       </NuxtLink>
 
-      <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="d-flex align-items-center d-none d-lg-flex">
-        <ul class="navbar-nav flex-row me-3 align-items-center">
-          
-          <template v-if="isLoggedIn">
-            <li class="nav-item me-3">
-              <NuxtLink class="nav-link text-dark-custom" to="/"><i class="bi bi-house-fill me-1"></i> Home</NuxtLink>
-            </li>
-            <li class="nav-item me-3">
-              <NuxtLink v-if="isAdmin" class="nav-link text-dark-custom" to="/admin">Dashboard</NuxtLink>
-              <NuxtLink v-else class="nav-link text-dark-custom" to="/dashboard">Dashboard</NuxtLink>
-            </li>
-            <li class="nav-item">
-              <span class="navbar-text text-dark-custom me-3">Halo, {{ userName }}</span>
-            </li>
-            <li class="nav-item">
-              <button @click="handleLogout" class="btn btn-danger rounded-pill btn-sm">Logout</button>
-            </li>
-          </template>
+      <div class="d-flex align-items-center ms-auto">
+        
+        <template v-if="isLoggedIn">
+          <span class="navbar-text text-dark-custom me-3 fw-medium">
+            Halo, {{ userName }}
+          </span>
+        </template>
 
-          <template v-else>
-            <li class="nav-item">
-              <NuxtLink class="nav-link text-dark-custom" to="/login">Login</NuxtLink>
-            </li>
-             <li class="nav-item ms-3">
-              <NuxtLink to="/register" class="btn btn-primary rounded-pill">Buat akun</NuxtLink>
-            </li>
-          </template>
-        </ul>
+        <button 
+          class="navbar-toggler d-block border-1 shadow-none p-0" 
+          type="button" 
+          data-bs-toggle="offcanvas" 
+          data-bs-target="#offcanvasNavbar" 
+          aria-controls="offcanvasNavbar"
+        >
+          <i class="navbar-toggler-icon"></i>
+        </button>
+
       </div>
     </div>
   </nav>
 
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+      <h5 class="offcanvas-title fw-bold" id="offcanvasNavbarLabel">Menu</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
-      <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+    <div class="offcanvas-body d-flex flex-column">
+      
+      <ul class="navbar-nav justify-content-start flex-grow-1 pe-3">
         
+        <li class="nav-item mb-2">
+          <NuxtLink class="nav-link" to="/" active-class="active">
+            <i class="bi bi-house-door me-2"></i>Home
+          </NuxtLink>
+        </li>
+
         <template v-if="isLoggedIn">
-          <li class="nav-item">
-            <NuxtLink class="nav-link active" aria-current="page" to="/"><i class="bi bi-house-fill me-1"></i>Home</NuxtLink>
+          <li class="nav-item mb-2">
+            <NuxtLink v-if="isAdmin" class="nav-link" to="/admin" active-class="active">
+              <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+            </NuxtLink>
+            <NuxtLink v-else class="nav-link" to="/dashboard" active-class="active">
+              <i class="bi bi-grid me-2"></i>Dashboard
+            </NuxtLink>
           </li>
-          <li class="nav-item">
-            <NuxtLink v-if="isAdmin" class="nav-link" to="/admin">Dashboard</NuxtLink>
-            <NuxtLink v-else class="nav-link" to="/dashboard">Dashboard</NuxtLink>
+
+          <li class="nav-item mb-2" v-if="!isAdmin">
+            <NuxtLink class="nav-link" to="/riwayat-pendaftaran" active-class="active">
+              <i class="bi bi-clock-history me-2"></i>Riwayat Pendaftaran
+            </NuxtLink>
           </li>
-           <li class="nav-item mt-3">
-            <button @click="handleLogout" class="btn btn-danger rounded-pill w-100">Logout</button>
+
+          <li class="nav-item mb-2">
+            <NuxtLink class="nav-link" to="/profile/edit" active-class="active">
+              <i class="bi bi-person-circle me-2"></i>Profil Saya
+            </NuxtLink>
           </li>
+
+          <li class="nav-item mt-auto">
+             <hr class="my-3">
+             <button @click="handleLogout" class="btn btn-danger w-100 rounded-pill">
+              <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </button>
+          </li>
+
         </template>
 
         <template v-else>
-          <li class="nav-item">
-            <NuxtLink class="nav-link active" aria-current="page" to="/">Beranda</NuxtLink>
+          <li class="nav-item mb-2">
+            <NuxtLink class="nav-link" to="/login" active-class="active">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            </NuxtLink>
           </li>
-          <li class="nav-item">
-            <NuxtLink class="nav-link" to="/login">Login</NuxtLink>
-          </li>
-           <li class="nav-item mt-3">
-            <NuxtLink to="/register" class="btn btn-primary rounded-pill w-100">Buat akun</NuxtLink>
+           <li class="nav-item mt-2">
+            <NuxtLink to="/register" class="btn btn-primary w-100 rounded-pill">Buat Akun</NuxtLink>
           </li>
         </template>
       </ul>
+
     </div>
   </div>
 </template>
@@ -88,8 +100,7 @@ import { useAuth } from '~/composables/useAuth'
 const isScrolled = ref(false)
 const { user, logout, isLoggedIn, isAdmin } = useAuth()
 
-// computed username biar kebaca di template
-const userName = computed(() => user.value?.name || '')
+const userName = computed(() => user.value?.name || 'User')
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
@@ -126,13 +137,13 @@ onBeforeUnmount(() => {
 }
 .nav-link {
   font-weight: 500;
-  color: #333 !important;
+  color: #333;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
-.nav-link:hover {
-  color: var(--color-primary) !important;
-}
-.me-auto {
-  margin-right: auto;
+.nav-link:hover, .nav-link.active {
+  color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.05);
 }
 </style>
-

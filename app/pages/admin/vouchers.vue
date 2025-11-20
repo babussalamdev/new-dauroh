@@ -25,7 +25,7 @@
               <tr>
                 <th>Kode Voucher</th>
                 <th>Status</th>
-                <th>Di skon</th>
+                <th>Diskon</th>
                 <th>Tgl Kadaluwarsa</th>
                 <th>Dipakai Oleh</th>
                 <th class="text-center">Aksi</th>

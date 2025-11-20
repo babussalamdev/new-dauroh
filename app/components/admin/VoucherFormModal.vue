@@ -10,14 +10,26 @@
         <div class="modal-body">
           <form @submit.prevent="save" id="voucherGenerateForm">
             <div class="row g-3">
+              
               <div class="col-12">
                 <label for="quantity" class="form-label">Jumlah Voucher *</label>
-                <input type="number" class="form-control" id="quantity" v-model.number="formState.quantity" min="1" max="100" required>
-                <small class="text-muted">Berapa banyak kode unik yang ingin dibuat (Maks 100).</small>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  id="quantity" 
+                  v-model.number="formState.quantity" 
+                  min="1" 
+                  max="100" 
+                  placeholder="Contoh: 50"
+                  required
+                >
+                <div class="form-text">
+                  Sistem akan membuatkan kode unik secara otomatis sebanyak jumlah ini (Maks 100).
+                </div>
               </div>
 
               <div class="col-12">
-                <label for="discountType" class="form-label">Tipe Di skon *</label>
+                <label for="discountType" class="form-label">Tipe Diskon *</label>
                 <select class="form-select" id="discountType" v-model="formState.discountType" required>
                   <option value="PERCENT">Persentase (%)</option>
                   <option value="FIXED">Potongan Tetap (Rp)</option>
@@ -25,7 +37,7 @@
               </div>
               
               <div class="col-12">
-                <label for="discountValue" class="form-label">Nilai Di skon *</label>
+                <label for="discountValue" class="form-label">Nilai Diskon *</label>
                 <input type="number" class="form-control" id="discountValue" v-model.number="formState.discountValue" min="1" required>
                 <small v-if="formState.discountType === 'PERCENT'" class="text-muted">Masukkan angka saja. Cth: 20 (untuk 20%)</small>
                 <small v-else class="text-muted">Masukkan nominal potongan. Cth: 50000 (untuk Rp 50.000)</small>
@@ -65,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue';
+import { reactive, computed, watch } from 'vue';
 import { useVoucherStore } from '@/stores/voucher';
 import type { GenerateVoucherPayload } from '@/stores/voucher';
 
@@ -75,15 +87,22 @@ const store = useVoucherStore();
 
 // State awal form
 const getInitialFormState = (): GenerateVoucherPayload => ({
-  quantity: 1,
+  quantity: 1, // Default 1 voucher
   discountType: 'PERCENT',
   discountValue: 10,
-  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!, // Default 30 hari
+  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!, // Default 30 hari dari skrg
 });
 
 const formState = reactive(getInitialFormState());
 
-// Untuk setting 'min' di input tanggal
+// Reset form tiap kali modal dibuka
+watch(() => props.show, (isOpen) => {
+  if (isOpen) {
+    Object.assign(formState, getInitialFormState());
+  }
+});
+
+// Untuk setting 'min' di input tanggal (hari ini)
 const todayDate = computed(() => new Date().toISOString().split('T')[0]);
 
 const close = () => {
@@ -99,7 +118,6 @@ const save = async () => {
 
   const success = await store.generateVouchers(formState);
   if (success) {
-    Object.assign(formState, getInitialFormState()); // Reset form
     close();
   }
 };

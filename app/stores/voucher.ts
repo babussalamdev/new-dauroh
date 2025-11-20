@@ -3,21 +3,21 @@
 import { defineStore } from 'pinia';
 import { useNuxtApp } from '#app';
 import Swal from 'sweetalert2';
-import { useToastStore } from './toast'; // Asumsi lu punya toast store
+import { useToastStore } from './toast';
 
 // Tipe data untuk 1 voucher
 export interface Voucher {
   SK: string; // Kode unik voucher
   Status: 'UNUSED' | 'USED'; // Statusnya
   Expired: string; // Tanggal kadaluwarsa (string)
-  DiscountType: 'PERCENT' | 'FIXED'; // Tipe di skon
-  DiscountValue: number; // Nilai di skonnya (misal: 20 untuk 20% atau 50000 untuk 50rb)
+  DiscountType: 'PERCENT' | 'FIXED'; // Tipe diskon
+  DiscountValue: number; // Nilai diskonnya (misal: 20 untuk 20% atau 50000 untuk 50rb)
   UsedBy?: string; // Email yang menggunakan (opsional)
 }
 
 // Tipe data untuk form generate
 export interface GenerateVoucherPayload {
-  quantity: number;
+  quantity: number; // <-- Tambahan: Jumlah voucher yang mau dibuat
   discountType: 'PERCENT' | 'FIXED';
   discountValue: number;
   expiresAt: string; // Format YYYY-MM-DD
@@ -38,7 +38,6 @@ export const useVoucherStore = defineStore('voucher', {
   },
 
   actions: {
-    // Mirip `changeUnit` di referensi lu
     async fetchVouchers() {
       this.loading = true;
       const { $apiBase } = useNuxtApp();
@@ -47,9 +46,8 @@ export const useVoucherStore = defineStore('voucher', {
         // const response = await $apiBase.get('/admin/vouchers');
         // this.vouchers = response.data;
         
-        // dummy
+        // --- SIMULASI DATA DUMMY ---
         await new Promise(resolve => setTimeout(resolve, 500));
-        // isi data dummy biar keliatan di tabel
         if (this.vouchers.length === 0) {
            this.vouchers = [
              { SK: 'ABC123', Status: 'USED', Expired: '2025-12-31', DiscountType: 'PERCENT', DiscountValue: 20, UsedBy: 'user@example.com' },
@@ -69,35 +67,38 @@ export const useVoucherStore = defineStore('voucher', {
       }
     },
 
-    // Mirip `submitInput` di referensi lu
     async generateVouchers(payload: GenerateVoucherPayload) {
       this.loadingGenerate = true;
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
 
       try {
-        // // Panggil API untuk men-generate voucher
+        // // Panggil API untuk men-generate voucher massal
         // const response = await $apiBase.post('/admin/vouchers/generate', payload);
         // // 'response.data' harusnya adalah array berisi voucher-voucher baru
-        // this.vouchers.unshift(...response.data); // Tambah voucher baru ke atas list
+        // this.vouchers.unshift(...response.data); 
 
-        // --- SIMULASI (HAPUS JIKA API SUDAH READY) ---
+        // --- SIMULASI GENERATE MASSAL ---
         await new Promise(resolve => setTimeout(resolve, 1000));
         const newVouchers: Voucher[] = [];
+        
+        // Loop sesuai quantity yang diminta
         for (let i = 0; i < payload.quantity; i++) {
           newVouchers.push({
-            SK: `NEW-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            // Generate random code: misal "VOU-XK9Z"
+            SK: `VOU-${Math.random().toString(36).substring(2, 6).toUpperCase()}${Math.floor(Math.random() * 100)}`,
             Status: 'UNUSED',
             Expired: payload.expiresAt,
             DiscountType: payload.discountType,
             DiscountValue: payload.discountValue,
           });
         }
-        this.vouchers.unshift(...newVouchers); // Tambah di awal array
+        
+        this.vouchers.unshift(...newVouchers); // Tambah semua ke state
         // --- AKHIR SIMULASI ---
         
         toastStore.showToast({
-          message: `${payload.quantity} voucher baru berhasil dibuat!`,
+          message: `Berhasil membuat ${payload.quantity} voucher baru!`,
           type: 'success',
         });
         return true; // Sukses
@@ -110,15 +111,13 @@ export const useVoucherStore = defineStore('voucher', {
       }
     },
 
-    // Mirip `deleteItem` di referensi lu
-    async deleteVoucher( sk: string) {
-      const { $apiBase } = useNuxtApp();
+    async deleteVoucher(sk: string) {
       const toastStore = useToastStore();
 
       // Konfirmasi dulu
       const result = await Swal.fire({
-        title: 'Anda yakin?',
-        text: `Voucher "${ sk}" akan dihapus permanen!`,
+        title: 'Hapus Voucher?',
+        text: `Kode "${sk}" akan dihapus permanen!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -128,14 +127,11 @@ export const useVoucherStore = defineStore('voucher', {
 
       if (result.isConfirmed) {
         try {
-          // await $apiBase.delete(`/admin/vouchers/${ sk}`);
-
-          // --- SIMULASI (HAPUS JIKA API SUDAH READY) ---
-          await new Promise(resolve => setTimeout(resolve, 500));
-          // --- AKHIR SIMULASI ---
+          // await $apiBase.delete(`/admin/vouchers/${sk}`);
+          await new Promise(resolve => setTimeout(resolve, 300)); // Simulasi
 
           // Hapus dari state
-          this.vouchers = this.vouchers.filter(v => v.SK !==  sk);
+          this.vouchers = this.vouchers.filter(v => v.SK !== sk);
           toastStore.showToast({ message: 'Voucher berhasil dihapus.', type: 'success' });
 
         } catch (error: any) {

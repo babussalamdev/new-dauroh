@@ -12,13 +12,7 @@
             <div class="row g-3">
               <div class="col-12">
                 <label for="daurohTitleModal" class="form-label">Nama Event *</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="daurohTitleModal"
-                  v-model="formState.Title"
-                  required
-                >
+                <input type="text" class="form-control" id="daurohTitleModal" v-model="formState.Title" required>
               </div>
 
               <div class="col-md-6">
@@ -34,47 +28,30 @@
 
               <div class="col-md-6">
                 <label for="daurohPlaceModal" class="form-label">Tempat</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="daurohPlaceModal"
-                  v-model="formState.Place"
-                  placeholder="cth: Masjid Babussalam"
-                >
+                <input type="text" class="form-control" id="daurohPlaceModal" v-model="formState.Place" placeholder="cth: Masjid Babussalam">
               </div>
 
               <div class="col-12">
                 <label for="daurohPriceModal" class="form-label">Harga Tiket</label>
                 <div class="input-group">
                   <span class="input-group-text">Rp</span>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="daurohPriceModal"
-                    v-model.number="formState.Price"
-                    placeholder="0 (Gratis)"
-                    min="0"
-                  >
+                  <input type="number" class="form-control" id="daurohPriceModal" v-model.number="formState.Price" placeholder="0 (Gratis)" min="0">
                 </div>
               </div>
+              
+              <div class="col-md-6">
+                <label for="daurohQuotaModal" class="form-label">Kuota Peserta</label>
+                <input type="number" class="form-control" id="daurohQuotaModal" v-model.number="formState.Quota" placeholder="0 (Tak Terbatas)" min="0">
+              </div>
+
             </div>
           </form>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="close">Batal</button>
-          <button
-            type="submit"
-            form="daurohBasicForm"
-            class="btn btn-primary"
-            :disabled="isLoading"
-          >
-            <span
-              v-if="isLoading"
-              class="spinner-border spinner-border-sm me-1"
-              role="status"
-              aria-hidden="true"
-            ></span>
+          <button type="submit" form="daurohBasicForm" class="btn btn-primary" :disabled="isLoading">
+            <span v-if="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             {{ isLoading ? 'Menyimpan...' : 'Simpan' }}
           </button>
         </div>
@@ -87,7 +64,7 @@
 
 <script setup lang="ts">
 import { watch, reactive, computed } from 'vue';
-import type { Dauroh, DaurohBasicData } from '@/stores/dauroh'; // Pastikan DaurohBasicData diimpor jika belum
+import type { Dauroh } from '@/stores/dauroh';
 import { useDaurohStore } from '@/stores/dauroh';
 
 const props = defineProps<{
@@ -99,8 +76,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'save', payload: {
-    // Sesuaikan Omit jika Dauroh memiliki properti 'id' yang tidak ingin dikirim
-    daurohData: Omit<Dauroh, 'id' | 'Date' | 'Picture '>;
+    daurohData: Omit<Dauroh, 'id' | 'Date' | 'Picture'>;
     photoBase64: null;
   }): void;
 }>();
@@ -108,27 +84,27 @@ const emit = defineEmits<{
 const daurohStore = useDaurohStore();
 const isLoading = computed(() => daurohStore.loading.savingBasic);
 
-// state awal form - Gunakan Uppercase
 const getInitialFormState = () => ({
-   sk: '',
+  sk: '',
   Title: '',
   Gender: '',
   Place: '',
   Price: 0,
+  Quota: 0, // Init quota
 });
 
 const formState = reactive(getInitialFormState());
 
-// reset form tiap kali modal kebuka
 watch(() => props.show, (newVal) => {
   if (newVal) {
     Object.assign(formState, getInitialFormState());
     if (props.isEditing && props.dauroh) {
-      formState. sk = props.dauroh. SK || '';
+      formState.sk = props.dauroh.SK || '';
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
       formState.Gender = props.dauroh.Gender || '';
       formState.Price = props.dauroh.Price || 0;
+      formState.Quota = props.dauroh.Quota || 0; // Load quota
     }
   }
 }, { immediate: true });
@@ -138,33 +114,28 @@ const close = () => {
 };
 
 const save = () => {
-   if (isLoading.value) {
-       return;
-   }
+   if (isLoading.value) return;
 
-   // Validasi form HTML5
    const formElement = document.getElementById('daurohBasicForm') as HTMLFormElement;
    if (formElement && !formElement.checkValidity()) {
-       console.log('Save prevented: Form is invalid according to HTML5 validation.'); // <-- LOG INI
-       formElement.reportValidity(); // Tampilkan pesan validasi browser
+       formElement.reportValidity();
        return;
    }
 
   const dataToEmit = {
-     SK: props.isEditing ? formState. sk : null,
+    sk: props.isEditing ? formState.sk : null,
     Title: formState.Title,
     Gender: formState.Gender,
     Place: formState.Place,
     Price: formState.Price,
+    Quota: formState.Quota,
   };
 
-  // Emit dengan type assertion untuk memastikan tipe sesuai
-  emit('save', { daurohData: dataToEmit as Omit<Dauroh, 'id' | 'Date' | 'Picture'>, photoBase64: null });
+  // Emit data
+  emit('save', { daurohData: dataToEmit as any, photoBase64: null });
 };
 </script>
 
 <style scoped>
-.modal {
-  background-color: rgba(0, 0, 0, 0.5);
-}
+.modal { background-color: rgba(0, 0, 0, 0.5); }
 </style>

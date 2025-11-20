@@ -1,63 +1,79 @@
 import { defineStore } from 'pinia';
+import { useStorage } from '@vueuse/core';
 import type { Dauroh } from '~/stores/dauroh';
 import { useToastStore } from './toast';
 
-// 1. Definisikan tipe Peserta dan Tiket
-interface Participant {
+// REVISI: Update tipe data peserta
+export interface Participant {
   name: string;
-  email?: string;
+  email?: string; // Optional, hanya wajib untuk peserta 1
   gender?: string;
+  age?: number;     // Baru: Usia
+  domicile?: string; // Baru: Domisili
+  qrCode?: string;
 }
 
-interface UserTicket {
+export interface UserTicket {
+  id: string;
+  date: string;
   dauroh: Dauroh;
-  participant: Participant;
+  participants: Participant[]; // Satu objek tiket menampung banyak peserta
+  status: 'Upcoming' | 'Selesai'; 
+  paymentStatus: 'Lunas' | 'Pending';
 }
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    // 2. Ubah nama state dari dauroh -> tickets
-    upcomingTickets: [] as UserTicket[],
-    historyTickets: [] as UserTicket[],
+    upcomingTickets: useStorage<UserTicket[]>('user_upcoming_tickets', [], sessionStorage),
+    historyTickets: useStorage<UserTicket[]>('user_history_tickets', [], sessionStorage),
     isLoading: false,
   }),
   
   getters: {
-    // 3. Ubah nama getter
     getUpcomingTickets: (state) => state.upcomingTickets,
     getHistoryTickets: (state) => state.historyTickets,
+    getAllTickets: (state) => [...state.upcomingTickets, ...state.historyTickets],
   },
 
   actions: {
-    // 4. Ubah logika registerDauroh
+    // REVISI: Logic tetap menerima array participants dalam satu objek registrationData
     registerDauroh(registrationData: { dauroh: Dauroh, participants: Participant[] }) {
       const { dauroh, participants } = registrationData;
       const toastStore = useToastStore();
-
-      // Hapus pengecekan 'isAlreadyRegistered' yang lama
       
       if (!dauroh || !participants || participants.length === 0) {
-        toastStore.showToast({
-          message: `Pendaftaran gagal: data tidak lengkap.`,
-          type: 'danger'
-        });
-        return; // Hentikan jika data aneh
+        toastStore.showToast({ message: `Pendaftaran gagal: data tidak lengkap.`, type: 'danger' });
+        return; 
       }
 
-      // Loop setiap peserta dan tambahkan sebagai tiket baru
-      participants.forEach(participant => {
-        const newTicket: UserTicket = {
-          dauroh: dauroh,
-          participant: participant
-        };
-        this.upcomingTickets.unshift(newTicket);
-      });
+     // jadikan 1 object"
+      const newTicket: UserTicket = {
+        id: `TRX-${Date.now()}`,
+        date: new Date().toISOString(),
+        dauroh: dauroh,
+        participants: participants, // Array peserta disimpan di dalam satu object
+        status: 'Upcoming',
+        paymentStatus: 'Lunas'
+      };
 
-      // Beri notifikasi sukses
+      this.upcomingTickets.unshift(newTicket);
+
       toastStore.showToast({
-        message: `Pendaftaran ${participants.length} tiket untuk "${dauroh.Title}" berhasil!`,
+        message: `Pendaftaran berhasil! ${participants.length} peserta terdaftar.`,
         type: 'success'
       });
     },
+
+    moveToHistory(ticketId: string) {
+      const index = this.upcomingTickets.findIndex(t => t.id === ticketId);
+      if (index !== -1) {
+        const ticket = this.upcomingTickets[index];
+        if (ticket) {
+          ticket.status = 'Selesai';
+          this.historyTickets.unshift(ticket);
+          this.upcomingTickets.splice(index, 1);
+        }
+      }
+    }
   }
 });

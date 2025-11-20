@@ -3,12 +3,16 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Form Pendaftaran: {{ dauroh?.title }}</h5>
+          <h5 class="modal-title">Form Pendaftaran: {{ dauroh?.Title }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body">
+          <div v-if="dauroh?.Quota && dauroh.Quota > 0" class="alert alert-info small py-2 mb-3">
+             Sisa Kuota: <strong>{{ dauroh.Quota }}</strong> Peserta
+          </div>
+
           <p class="text-muted">
-            Silakan isi data untuk setiap peserta. Anda dapat menambahkan lebih dari satu peserta.
+            Silakan isi data peserta. Email hanya diperlukan untuk peserta pertama (sebagai penanggung jawab).
           </p>
           <hr>
           
@@ -25,6 +29,7 @@
                   Hapus
                 </button>
               </div>
+              
               <div class="row g-2">
                 <div class="col-md-6 mb-2">
                   <label :for="'name-' + index" class="form-label small">Nama Lengkap</label>
@@ -32,27 +37,58 @@
                     :id="'name-' + index"
                     type="text" 
                     class="form-control" 
-                    placeholder="Nama Lengkap Peserta" 
+                    placeholder="Sesuai KTP" 
                     v-model="participant.name"
                     required >
                 </div>
-                <div class="col-md-6 mb-2">
-                  <label :for="'email-' + index" class="form-label small">Email</label>
+
+                <div class="col-md-6 mb-2" v-if="index === 0">
+                  <label :for="'email-' + index" class="form-label small">Email *</label>
                   <input 
                     :id="'email-' + index"
                     type="email" 
                     class="form-control" 
                     placeholder="email@contoh.com" 
                     v-model="participant.email"
-                    required >
+                    required 
+                  >
                 </div>
-                <div class="col-md-12 mb-2">
+                <div class="col-md-6 mb-2" v-else></div>
+
+                <div class="col-md-4 mb-2">
                    <label :for="'gender-' + index" class="form-label small">Jenis Kelamin</label>
-                  <select :id="'gender-' + index" class="form-select" v-model="participant.gender" required> <option value="" disabled>Pilih Ikhwan/Akhwat</option>
+                  <select :id="'gender-' + index" class="form-select" v-model="participant.gender" required> 
+                    <option value="" disabled>Pilih Ikhwan/Akhwat</option>
                     <option value="ikhwan">Ikhwan (Laki-laki)</option>
                     <option value="akhwat">Akhwat (Perempuan)</option>
                   </select>
                 </div>
+
+                <div class="col-md-4 mb-2">
+                  <label :for="'age-' + index" class="form-label small">Usia</label>
+                  <input 
+                    :id="'age-' + index"
+                    type="number" 
+                    class="form-control" 
+                    placeholder="Umur" 
+                    v-model="participant.age"
+                    required 
+                    min="5"
+                  >
+                </div>
+
+                <div class="col-md-4 mb-2">
+                  <label :for="'domicile-' + index" class="form-label small">Domisili</label>
+                  <input 
+                    :id="'domicile-' + index"
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Kota Tinggal" 
+                    v-model="participant.domicile"
+                    required 
+                  >
+                </div>
+
               </div>
             </div>
 
@@ -63,8 +99,9 @@
             <button type="submit" ref="submitButton" style="display: none;"></button>
           </form>
 
-          <div class="alert alert-info mt-4">
-            <strong>Total Tiket:</strong> {{ participants.length }}
+          <div class="alert alert-info mt-4 d-flex justify-content-between align-items-center">
+            <span><strong>Total Tiket:</strong> {{ participants.length }}</span>
+            <span><strong>Total Bayar:</strong> {{ formatCurrency((dauroh?.Price || 0) * participants.length) }}</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -87,10 +124,10 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'submit']);
 
-const form = ref(null); // ref untuk elemen form
-const submitButton = ref(null); // ref untuk tombol submit tersembunyi
+const form = ref(null); 
+const submitButton = ref(null); 
 
-const createParticipant = () => ({ name: '', email: '', gender: '' });
+const createParticipant = () => ({ name: '', email: '', gender: '', age: '', domicile: '' });
 const participants = ref([createParticipant()]);
 
 watch(() => props.show, (newValue) => {
@@ -113,25 +150,31 @@ const removeParticipant = (index) => {
 
 const close = () => emit('close');
 
-// PERUBAHAN LOGIKA VALIDASI
 const triggerSubmit = () => {
-  // Memicu klik pada tombol submit asli di dalam form
-  // Ini akan memicu validasi HTML5 bawaan browser
   submitButton.value.click();
 };
 
 const handleSubmit = () => {
-  // Fungsi ini sekarang hanya akan berjalan JIKA form sudah valid
+  // Salin email peserta pertama ke peserta lain di backend logic (sebelum dikirim)
+  const mainEmail = participants.value[0].email;
+  const finalParticipants = participants.value.map((p, i) => ({
+    ...p,
+    email: i === 0 ? p.email : mainEmail // Otomatis pakai email peserta 1
+  }));
+
   const registrationData = {
     dauroh: props.dauroh,
-    participants: participants.value,
+    participants: finalParticipants,
   };
   emit('submit', registrationData);
+};
+
+const formatCurrency = (val) => {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
 </script>
 
 <style scoped>
-/* CSS tidak berubah */
 .modal { background-color: rgba(0, 0, 0, 0.5); }
 .participant-form { background-color: #f8f9fa; }
 </style>
