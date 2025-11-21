@@ -111,13 +111,13 @@ export const useVoucherStore = defineStore('voucher', {
       }
     },
 
-    async deleteVoucher(sk: string) {
+    async deleteVoucher(SK: string) {
       const toastStore = useToastStore();
 
       // Konfirmasi dulu
       const result = await Swal.fire({
         title: 'Hapus Voucher?',
-        text: `Kode "${sk}" akan dihapus permanen!`,
+        text: `Kode "${SK}" akan dihapus permanen!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -131,7 +131,7 @@ export const useVoucherStore = defineStore('voucher', {
           await new Promise(resolve => setTimeout(resolve, 300)); // Simulasi
 
           // Hapus dari state
-          this.vouchers = this.vouchers.filter(v => v.SK !== sk);
+          this.vouchers = this.vouchers.filter(v => v.SK !== SK);
           toastStore.showToast({ message: 'Voucher berhasil dihapus.', type: 'success' });
 
         } catch (error: any) {

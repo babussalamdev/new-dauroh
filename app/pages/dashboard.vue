@@ -60,7 +60,7 @@
                     <tbody>
                       <tr v-for="(ticket, index) in upcomingTickets" :key="'row-'+index">
                         <td class="ps-4">
-                          <span class="font-monospace small text-muted">#{{ ticket.id.slice(-6) }}</span>
+                          <span class="font-monospace small text-muted">#{{ ticket.SK.slice(-6) }}</span>
                           <br>
                           <span class="badge bg-success">Lunas</span>
                         </td>
@@ -75,11 +75,13 @@
                         </td>
                         <td class="text-center">
                           <button 
-                            class="btn btn-primary btn-sm rounded-pill px-3" 
-                            @click="openQrModal(ticket)"
+                          class="btn btn-primary btn-sm rounded px-2 px-md-3 text-nowrap" 
+                          @click="openQrModal(ticket)"
+                          title="Lihat QR Code"
                           >
-                            <i class="bi bi-qr-code me-1"></i> Lihat QR
-                          </button>
+                          <i class="bi bi-qr-code"></i>
+                          <span class="d-none d-md-inline ms-1">Lihat QR</span>
+                        </button>
                         </td>
                       </tr>
                     </tbody>

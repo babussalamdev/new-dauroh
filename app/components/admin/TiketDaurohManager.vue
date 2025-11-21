@@ -1,4 +1,3 @@
-// app/components/admin/TiketDaurohManager.vue
 <template>
   <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
@@ -174,7 +173,8 @@
   }) => {
     let success = false;
     try {
-      if (isEditing.value && payload.daurohData. SK) {
+      // [REVISI] Perbaiki typo spasi dan gunakan SK (Kapital)
+      if (isEditing.value && payload.daurohData.SK) {
         success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
       } else {
         success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
@@ -186,7 +186,10 @@
 
     if (success) {
       closeFormModal();
+      // [REVISI] Tambahkan notifikasi Swal saat berhasil
+      Swal.fire('Berhasil', 'Data event berhasil diperbarui.', 'success');
     } else {
+      // Optional: Handle else
     }
   };
 

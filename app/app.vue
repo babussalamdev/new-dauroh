@@ -7,6 +7,9 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
 useHead({
   titleTemplate: '%s - Dauroh',
   meta: [
@@ -15,6 +18,41 @@ useHead({
   link: [
     { rel: 'icon', type: 'image/png', href: '/favicon.ico' }
   ]
+});
+
+// --- [GLOBAL FIX] Pembersihan Sisa Bootstrap ---
+const router = useRouter();
+
+// Fungsi untuk membersihkan efek samping Bootstrap (Scroll Lock & Backdrop)
+const cleanupBootstrapEffects = () => {
+  if (typeof document !== 'undefined') {
+    // 1. Hapus style yang mengunci scroll
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.body.removeAttribute('data-bs-overflow');
+    document.body.removeAttribute('data-bs-padding-right');
+    
+    // 2. Hapus class yang mungkin tertinggal
+    document.body.classList.remove('modal-open');
+    document.body.classList.remove('offcanvas-open');
+
+    // 3. Hapus elemen backdrop gelap yang mungkin "nyangkut"
+    const backdrops = document.querySelectorAll('.offcanvas-backdrop, .modal-backdrop');
+    backdrops.forEach(el => el.remove());
+  }
+};
+
+// Jalankan pembersihan setiap kali navigasi selesai
+router.afterEach(() => {
+  // Beri sedikit delay agar transisi selesai dulu, baru bersihkan
+  setTimeout(() => {
+    cleanupBootstrapEffects();
+  }, 300);
+});
+
+// Jalankan juga saat aplikasi pertama kali dimuat (untuk jaga-jaga)
+onMounted(() => {
+  cleanupBootstrapEffects();
 });
 </script>
 
@@ -51,5 +89,4 @@ body {
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
-
 </style>

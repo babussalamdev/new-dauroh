@@ -6,7 +6,7 @@ import { useToastStore } from "./toast";
 
 // Definisikan tipe data untuk satu pengajuan booth
 export interface BoothSubmission {
-  id: string; // Harus ada ID unik dari database
+  SK: string; // Harus ada ID unik dari database
   boothName: string;
   contactName: string;
   email: string;
@@ -60,12 +60,12 @@ export const useBoothStore = defineStore("booth", {
     },
 
     // Aksi untuk mengubah status pengajuan (Setujui/Tolak)
-    async updateSubmissionStatus(submissionId: string, newStatus: 'Disetujui' | 'Ditolak') {
+    async updateSubmissionStatus(submissionSK: string, newStatus: 'Disetujui' | 'Ditolak') {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       
       // Optimistic UI update
-      const submission = this.submissions.find(s => s.id === submissionId);
+      const submission = this.submissions.find(s => s.SK === submissionSK);
       if (!submission) return;
       
       const oldStatus = submission.status;

@@ -84,8 +84,9 @@ const emit = defineEmits<{
 const daurohStore = useDaurohStore();
 const isLoading = computed(() => daurohStore.loading.savingBasic);
 
+// [REVISI] Gunakan SK (Kapital) di form state awal
 const getInitialFormState = () => ({
-  sk: '',
+  SK: '', 
   Title: '',
   Gender: '',
   Place: '',
@@ -99,12 +100,13 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     Object.assign(formState, getInitialFormState());
     if (props.isEditing && props.dauroh) {
-      formState.sk = props.dauroh.SK || '';
+      // [REVISI] Ambil props.dauroh.SK
+      formState.SK = props.dauroh.SK || '';
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
       formState.Gender = props.dauroh.Gender || '';
       formState.Price = props.dauroh.Price || 0;
-      formState.Quota = props.dauroh.Quota || 0; // Load quota
+      formState.Quota = props.dauroh.Kuota || 0; // Load quota
     }
   }
 }, { immediate: true });
@@ -123,7 +125,8 @@ const save = () => {
    }
 
   const dataToEmit = {
-    sk: props.isEditing ? formState.sk : null,
+    // [REVISI] Gunakan SK (Kapital)
+    SK: props.isEditing ? formState.SK : null,
     Title: formState.Title,
     Gender: formState.Gender,
     Place: formState.Place,

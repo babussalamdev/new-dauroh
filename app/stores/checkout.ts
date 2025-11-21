@@ -73,7 +73,7 @@ export const useCheckoutStore = defineStore('checkout', {
       
       // // UNCOMMENT INI UNTUK INTEGRASI BACKEND
       // const response = await $apiBase.post('/api/create-payment', {
-      //   daurohId: this.dauroh?. sk,
+      //   daurohSK: this.dauroh?. SK,
       //   participants: this.participants,
       //   paymentMethod: this.paymentMethod,
       //   voucherCode: this.voucherCode, // <-- Kirim voucher code
@@ -82,7 +82,7 @@ export const useCheckoutStore = defineStore('checkout', {
       // this.transactionDetails = response.data;
       // return true;
       console.log("Membuat pembayaran dengan detail:", {
-        daurohId: this.dauroh?. SK,
+        daurohSK: this.dauroh?. SK,
         paymentMethod: this.paymentMethod,
         voucherCode: this.voucherCode,
         totalAmount: this.totalAmount,

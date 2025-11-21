@@ -31,7 +31,7 @@
     </div>
   </nav>
 
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" ref="offcanvasRef">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title fw-bold" id="offcanvasNavbarLabel">Menu</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -41,29 +41,29 @@
       <ul class="navbar-nav justify-content-start flex-grow-1 pe-3">
         
         <li class="nav-item mb-2">
-          <NuxtLink class="nav-link" to="/" active-class="active">
+          <NuxtLink class="nav-link" to="/" active-class="active" @click="closeOffcanvas">
             <i class="bi bi-house-door me-2"></i>Home
           </NuxtLink>
         </li>
 
         <template v-if="isLoggedIn">
           <li class="nav-item mb-2">
-            <NuxtLink v-if="isAdmin" class="nav-link" to="/admin" active-class="active">
+            <NuxtLink v-if="isAdmin" class="nav-link" to="/admin" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
             </NuxtLink>
-            <NuxtLink v-else class="nav-link" to="/dashboard" active-class="active">
+            <NuxtLink v-else class="nav-link" to="/dashboard" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-grid me-2"></i>Dashboard
             </NuxtLink>
           </li>
 
           <li class="nav-item mb-2" v-if="!isAdmin">
-            <NuxtLink class="nav-link" to="/riwayat-pendaftaran" active-class="active">
+            <NuxtLink class="nav-link" to="/riwayat-pendaftaran" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-clock-history me-2"></i>Riwayat Pendaftaran
             </NuxtLink>
           </li>
 
           <li class="nav-item mb-2">
-            <NuxtLink class="nav-link" to="/profile/edit" active-class="active">
+            <NuxtLink class="nav-link" to="/profile/edit" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-person-circle me-2"></i>Profil Saya
             </NuxtLink>
           </li>
@@ -79,12 +79,12 @@
 
         <template v-else>
           <li class="nav-item mb-2">
-            <NuxtLink class="nav-link" to="/login" active-class="active">
+            <NuxtLink class="nav-link" to="/login" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-box-arrow-in-right me-2"></i>Login
             </NuxtLink>
           </li>
            <li class="nav-item mt-2">
-            <NuxtLink to="/register" class="btn btn-primary w-100 rounded-pill">Buat Akun</NuxtLink>
+            <NuxtLink to="/register" class="btn btn-primary w-100 rounded-pill" @click="closeOffcanvas">Buat Akun</NuxtLink>
           </li>
         </template>
       </ul>
@@ -94,11 +94,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useAuth } from '~/composables/useAuth'
+import { useRouter } from 'vue-router'
 
 const isScrolled = ref(false)
 const { user, logout, isLoggedIn, isAdmin } = useAuth()
+const router = useRouter()
+const offcanvasRef = ref<HTMLElement | null>(null)
 
 const userName = computed(() => user.value?.name || 'User')
 
@@ -107,15 +110,51 @@ const handleScroll = () => {
 }
 
 const handleLogout = async () => {
+  closeOffcanvas()
   await logout()
 }
 
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-})
+// --- [LOGIKA BARU] Fix Scroll Issue ---
+const closeOffcanvas = () => {
+  // Cari elemen close button di dalam offcanvas dan klik secara virtual
+  // Ini cara paling aman agar Bootstrap membersihkan event-nya sendiri
+  const closeBtn = offcanvasRef.value?.querySelector('[data-bs-dismiss="offcanvas"]')
+  if (closeBtn) {
+    (closeBtn as HTMLElement).click()
+  }
+}
 
+// Pembersihan Paksa saat komponen dihancurkan (pindah layout)
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
+  
+  // Hapus backdrop sisa (jika ada)
+  const backdrops = document.querySelectorAll('.offcanvas-backdrop')
+  backdrops.forEach(backdrop => backdrop.remove())
+
+  // Hapus style overflow hidden dari body yang bikin nyangkut
+  document.body.style.overflow = ''
+  document.body.style.paddingRight = ''
+  document.body.removeAttribute('data-bs-overflow')
+  document.body.removeAttribute('data-bs-padding-right')
+})
+
+// Watch route change untuk memastikan menu tertutup
+watch(() => router.currentRoute.value.path, () => {
+  // Pastikan body bersih setiap ganti halaman
+  document.body.style.overflow = ''
+  document.body.style.paddingRight = ''
+  
+  // Hapus backdrop jika masih nyangkut
+  const backdrop = document.querySelector('.offcanvas-backdrop')
+  if (backdrop) {
+    backdrop.remove()
+  }
+})
+// --- Akhir Logika Baru ---
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
 })
 </script>
 

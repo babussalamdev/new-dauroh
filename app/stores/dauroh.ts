@@ -21,12 +21,12 @@ export interface Dauroh {
 }
 
 export interface DaurohBasicData {
-  sk?: string | null;
+  SK?: string | null; // [REVISI] Ubah dari sk ke SK agar konsisten
   Title: string;
   Gender: string;
   Place: string;
   Price: number;
-  Kuota: number; // Field Baru
+  Kuota: number; 
 }
 
 export interface DaurohSchedulePayload {
@@ -220,7 +220,7 @@ export const useDaurohStore = defineStore("dauroh", {
     },
 
     // Add Basic Info
-    async addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, "sk">): Promise<boolean> {
+    async addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, "SK">): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
       const accessTokenFromBody = useCookie("AccessToken").value;
@@ -272,7 +272,9 @@ export const useDaurohStore = defineStore("dauroh", {
     async updateTiketDaurohBasic(daurohData: DaurohBasicData): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      const eventSk = daurohData.sk;
+      
+      // [REVISI] Baca properti SK (Kapital) dari data yang dikirim
+      const eventSk = daurohData.SK; 
       if (!eventSk) return false;
       
       const accessTokenFromBody = useCookie("AccessToken").value;

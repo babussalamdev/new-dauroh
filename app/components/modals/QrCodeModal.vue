@@ -12,13 +12,23 @@
 
           <div v-for="(person, index) in participantList" :key="index" class="mb-4 pb-3 border-bottom last:border-0">
             
-            <div class="qr-container bg-light p-3 d-inline-block rounded mb-3">
+            <div class="qr-container bg-light p-3 d-inline-block rounded mb-2">
               <img 
-                :src="`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeData(person)}`" 
+                :src="getQrUrl(person, 300)" 
                 alt="QR Code" 
                 class="img-fluid"
                 style="width: 180px; height: 180px;"
               >
+            </div>
+
+            <div class="mb-3">
+              <button 
+                class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                @click="downloadQr(person)"
+                :disabled="isDownloading"
+              >
+                <i class="bi bi-download me-1"></i> Unduh QR
+              </button>
             </div>
 
             <h5 class="fw-bold mb-1">{{ person.name }}</h5>
@@ -42,41 +52,70 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
   show: boolean;
-  ticket: any; // Bisa dari store checkout atau dashboard
+  ticket: any; 
 }>();
 
 const emit = defineEmits(['close']);
+const isDownloading = ref(false);
 
-// Helper untuk menormalisasi data peserta (karena struktur dari Dashboard & Checkout beda)
 const participantList = computed(() => {
   if (!props.ticket) return [];
-  
-  // Kasus 1: Dari Dashboard (Ada array 'participants')
   if (props.ticket.participants && Array.isArray(props.ticket.participants)) {
     return props.ticket.participants;
   }
-  
-  // Kasus 2: Dari Checkout (Ada object 'participant' tunggal)
   if (props.ticket.participant) {
     return [props.ticket.participant];
   }
-
   return [];
 });
 
-// Helper encode data untuk QR
-const encodeData = (person: any) => {
+// Helper untuk generate URL
+const getQrUrl = (person: any, size = 300) => {
   const data = {
     id: props.ticket?.id || 'NEW',
     event: props.ticket?.dauroh?.Title,
     name: person.name,
     email: person.email
   };
-  return encodeURIComponent(JSON.stringify(data));
+  const encodedData = encodeURIComponent(JSON.stringify(data));
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedData}`;
+};
+
+// [BARU] Fungsi Download
+const downloadQr = async (person: any) => {
+  isDownloading.value = true;
+  try {
+    // 1. Ambil URL gambar (minta ukuran lebih besar 500x500 biar bagus saat diunduh)
+    const url = getQrUrl(person, 500);
+    
+    // 2. Fetch gambar sebagai Blob
+    const response = await fetch(url);
+    const blob = await response.blob();
+    
+    // 3. Buat URL objek sementara
+    const objectUrl = URL.createObjectURL(blob);
+    
+    // 4. Buat elemen <a> virtual untuk trigger download
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    // Nama file: Tiket-NamaPeserta.png
+    link.download = `Tiket-${person.name.replace(/\s+/g, '-')}.png`; 
+    document.body.appendChild(link);
+    link.click();
+    
+    // 5. Bersihkan
+    document.body.removeChild(link);
+    URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    console.error('Gagal mengunduh QR:', error);
+    alert('Maaf, terjadi kesalahan saat mengunduh QR Code.');
+  } finally {
+    isDownloading.value = false;
+  }
 };
 
 const close = () => emit('close');
@@ -90,7 +129,6 @@ const close = () => emit('close');
 .qr-container {
   border: 1px dashed #ccc;
 }
-/* Helper utility untuk border terakhir */
 .last\:border-0:last-child {
   border-bottom: none !important;
   padding-bottom: 0 !important;

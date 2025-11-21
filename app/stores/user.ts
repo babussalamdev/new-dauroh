@@ -14,7 +14,7 @@ export interface Participant {
 }
 
 export interface UserTicket {
-  id: string;
+  SK: string;
   date: string;
   dauroh: Dauroh;
   participants: Participant[]; // Satu objek tiket menampung banyak peserta
@@ -45,10 +45,8 @@ export const useUserStore = defineStore('user', {
         toastStore.showToast({ message: `Pendaftaran gagal: data tidak lengkap.`, type: 'danger' });
         return; 
       }
-
-     // jadikan 1 object"
       const newTicket: UserTicket = {
-        id: `TRX-${Date.now()}`,
+        SK: `TRX-${Date.now()}`,
         date: new Date().toISOString(),
         dauroh: dauroh,
         participants: participants, // Array peserta disimpan di dalam satu object
@@ -64,8 +62,8 @@ export const useUserStore = defineStore('user', {
       });
     },
 
-    moveToHistory(ticketId: string) {
-      const index = this.upcomingTickets.findIndex(t => t.id === ticketId);
+    moveToHistory(ticketSK: string) {
+      const index = this.upcomingTickets.findIndex(t => t.SK === ticketSK);
       if (index !== -1) {
         const ticket = this.upcomingTickets[index];
         if (ticket) {

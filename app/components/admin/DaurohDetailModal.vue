@@ -445,7 +445,8 @@ const handlePictureSubmit = async () => {
 const openEditBasicModal = () => (showEditBasicModal.value = true);
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, photoBase64: null }) => {
-  if (!payload.daurohData. sk || payload.daurohData. sk !== eventData.value?. SK) {
+  // [REVISI] Gunakan SK (Kapital)
+  if (!payload.daurohData.SK || payload.daurohData.SK !== eventData.value?.SK) {
     return Swal.fire('Error', 'SK tidak valid atau tidak cocok.', 'error');
   }
 

@@ -106,7 +106,9 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="close">Batal</button>
-          <button type="button" class="btn btn-primary" @click="triggerSubmit">Lanjutkan</button>
+          <button type="button" class="btn btn-primary" @click="triggerSubmit">
+            {{ isFree ? 'Daftar Sekarang' : 'Lanjutkan Pembayaran' }}
+          </button>
         </div>
       </div>
     </div>
@@ -115,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
   show: { type: Boolean, required: true },
@@ -129,6 +131,11 @@ const submitButton = ref(null);
 
 const createParticipant = () => ({ name: '', email: '', gender: '', age: '', domicile: '' });
 const participants = ref([createParticipant()]);
+
+// Cek apakah dauroh gratis
+const isFree = computed(() => {
+  return (props.dauroh?.Price || 0) === 0;
+});
 
 watch(() => props.show, (newValue) => {
   if (newValue) {
@@ -155,11 +162,10 @@ const triggerSubmit = () => {
 };
 
 const handleSubmit = () => {
-  // Salin email peserta pertama ke peserta lain di backend logic (sebelum dikirim)
   const mainEmail = participants.value[0].email;
   const finalParticipants = participants.value.map((p, i) => ({
     ...p,
-    email: i === 0 ? p.email : mainEmail // Otomatis pakai email peserta 1
+    email: i === 0 ? p.email : mainEmail 
   }));
 
   const registrationData = {

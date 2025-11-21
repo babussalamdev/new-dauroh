@@ -10,9 +10,9 @@
       <div class="carousel-inner">
         <div v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" :key="chunkIndex" :class="['carousel-item', { active: chunkIndex === 0 }]">
           <div class="d-flex card-container-flex">
-            <div v-for="dauroh in chunk" :key="dauroh. SK || dauroh.Title" class="dauroh-card-wrapper">
+            <div v-for="dauroh in chunk" :key="dauroh.SK || dauroh.Title" class="dauroh-card-wrapper">
               
-              <a :href="'/dauroh/' + dauroh. SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
+              <a :href="'/dauroh/' + dauroh.SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                     <img :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`" class="card-img-top" :alt="dauroh.Title" />
@@ -23,11 +23,8 @@
                     <small class="text-muted mb-1">{{ dauroh.date || dauroh.genre }}</small>
                     
                     <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
-                      
                       <button class="btn btn-sm btn-outline-primary rounded-pill w-100" @click.prevent.stop="openDetailModal(dauroh)">Detail</button>
-                      
                       <button class="btn btn-sm btn-primary rounded-pill w-100" @click.prevent.stop="handleRegisterClick(dauroh)">Daftar</button>
-                    
                     </div>
                   </div>
                 </div>
@@ -37,7 +34,7 @@
           </div>
         </div>
       </div>
-      </div>
+    </div>
 
     <ModalsDaurohDetailModal :show="showDetailModal" :dauroh="selectedDauroh" @close="closeDetailModal" @register="handleRegisterFromDetail" />
     <ModalsDaurohImageModal :show="showImageModal" :dauroh="selectedDauroh" @close="closeImageModal" />
@@ -48,7 +45,13 @@
       @close="closeRegistrationModal"
       @submit="handleRegistrationSubmit" />
     
-    </div>
+    <ModalsQrCodeModal 
+      :show="showQrModal" 
+      :ticket="newlyCreatedTicket" 
+      @close="handleCloseQr" 
+    />
+
+  </div>
 </template>
 
 <script setup>
@@ -56,19 +59,23 @@
   import { useDaurohStore } from "~/stores/dauroh";
   import { useToastStore } from '~/stores/toast';
   import { useAuth } from "~/composables/useAuth";
-  import { useCheckoutStore } from '~/stores/checkout'; // <-- IMPORT STORE BARU
+  import { useCheckoutStore } from '~/stores/checkout';
+  import { useUserStore } from '~/stores/user'; // [BARU] Import User Store
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
-  // const userStore = useUserStore(); // <-- Tidak dipakai lagi
+  const userStore = useUserStore(); // [BARU] Init User Store
   const checkoutStore = useCheckoutStore();
   const toastStore = useToastStore();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
 
   const imgUrl = ref("");
-
   const config = useRuntimeConfig();
+
+  // [BARU] State untuk QR Modal
+  const showQrModal = ref(false);
+  const newlyCreatedTicket = ref(null);
 
   onMounted(() => {
     imgUrl.value = config.public.img;
@@ -78,10 +85,8 @@
   const selectedDauroh = ref(null);
   const showDetailModal = ref(false);
   const showRegistrationModal = ref(false);
-  // const showQrModal = ref(false); // <-- Tidak dipakai lagi
-
-  // State dan handler untuk modal gambar baru
   const showImageModal = ref(false);
+
   const openImageModal = (dauroh) => {
     selectedDauroh.value = dauroh;
     showImageModal.value = true;
@@ -110,8 +115,7 @@
         message: 'Mohon login atau daftar terlebih dahulu.',
         type: 'info'
       });
-      // Opsional: arahkan ke login
-      // router.push('/login'); 
+      router.push('/login'); // Opsional: Redirect ke login
     } else {
       selectedDauroh.value = dauroh;
       showRegistrationModal.value = true;
@@ -121,25 +125,48 @@
   const closeRegistrationModal = () => {
     showRegistrationModal.value = false;
   };
+
+  // [REVISI UTAMA] Logic Pendaftaran di Halaman List
   const handleRegistrationSubmit = (registrationData) => {
     closeRegistrationModal();
 
-    // 1. Simpan data registrasi ke store checkout baru
-    checkoutStore.startCheckout(registrationData);
+    // Cek Harga
+    const price = Number(registrationData.dauroh.Price || 0);
 
-    // 2. Arahkan user ke halaman pertama alur pembayaran
-    router.push('/checkout/select');
+    if (price === 0) {
+      // === FLOW GRATIS ===
+      
+      // 1. Simpan tiket langsung ke store user
+      userStore.registerDauroh(registrationData);
 
-    // 3. Hapus logika lama yang langsung mendaftarkan & menampilkan QR
-    // userStore.registerDauroh(registrationData); // <-- HAPUS
-    // showQrModal.value = true; // <-- HAPUS
+      // 2. Siapkan data untuk QR Modal
+      newlyCreatedTicket.value = {
+        id: `TRX-${Date.now()}`, 
+        dauroh: registrationData.dauroh,
+        participants: registrationData.participants,
+      };
+
+      // 3. Tampilkan Modal QR
+      setTimeout(() => {
+         showQrModal.value = true;
+      }, 300);
+
+    } else {
+      // === FLOW BERBAYAR ===
+      checkoutStore.startCheckout(registrationData);
+      router.push('/checkout/select');
+    }
   };
   
-  // const closeQrModal = () => { ... }; // <-- HAPUS
+  // Handler saat tutup QR -> ke dashboard
+  const handleCloseQr = () => {
+    showQrModal.value = false;
+    router.push('/dashboard');
+  };
 </script>
 
 <style scoped>
-  /* Style tidak berubah */
+  /* Style tetap sama */
   .carousel {
     position: relative;
     padding-left: 50px;
@@ -240,27 +267,5 @@
   .card-body .btn {
     font-size: 0.8rem;
     padding: 0.25rem 0.75rem;
-  }
-  .skeleton-container .dauroh-card-wrapper {
-    width: calc(50% - 0.75rem);
-  }
-  @media (min-width: 768px) {
-    .skeleton-container .dauroh-card-wrapper {
-      width: calc(33.333% - (1rem * 2 / 3) - 4px);
-    }
-  }
-  @media (min-width: 992px) {
-    .skeleton-container .dauroh-card-wrapper {
-      width: calc(25% - (1rem * 3 / 4) - 4px);
-    }
-  }
-  .skeleton-container .card.dauroh-card {
-    height: 100%;
-  }
-  .placeholder {
-    background-color: #e9ecef;
-  }
-  .card-img-top.placeholder {
-    width: 100%;
   }
 </style>
