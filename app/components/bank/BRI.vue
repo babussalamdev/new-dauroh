@@ -110,15 +110,5 @@ const formatCurrency = (val: number) => {
 </script>
 
 <style scoped>
-.nav-pills .nav-link {
-  color: var(--bs-secondary);
-  border: 1px solid #dee2e6;
-  background-color: #fff;
-  margin-bottom: 5px;
-}
-.nav-pills .nav-link.active {
-  background-color: var(--color-primary);
-  color: #fff;
-  border-color: var(--color-primary);
-}
-</style>        
+@import url("~/assets/css/components/bank.css");
+</style>

@@ -26,18 +26,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-.breadcrumb {
-  background-color: transparent;
-  padding: 0;
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-.breadcrumb a {
-  text-decoration: none;
-  color: var(--bs-secondary-color);
-}
-.breadcrumb a:hover {
-  color: var(--bs-body-color);
-}
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
 </style>

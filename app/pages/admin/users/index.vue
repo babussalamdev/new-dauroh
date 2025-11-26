@@ -21,7 +21,7 @@
               @input="store.changePage(1)"
             >
           </div>
-          <NuxtLink to="/admin/users/create" class="btn btn-success btn-sm">
+          <NuxtLink to="/admin/users/create" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg me-1"></i>
             Tambah User Baru
           </NuxtLink>
@@ -31,7 +31,7 @@
         <CommonLoadingSpinner v-if="store.loading && store.users.length === 0" class="my-5" />
 
         <div v-else class="table-responsive">
-          <table class="table table-bordered table-hover align-middle fs-sm">
+          <table class="table table-bordered table-hover table-sm align-middle fs-sm">
             <thead class="table-light">
               <tr>
                 <th>Nama Lengkap</th>
@@ -143,60 +143,9 @@ const getRoleBadge = (role: string) => {
 </script>
 
 <style scoped>
-/* Style asli kamu (tidak diubah) */
-.fs-sm { 
-    font-size: 0.875rem; 
-}
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
 .btn-sm { 
     white-space: nowrap; 
-}
-.content-card { 
-    border: 1px solid #e2e8f0; 
-    border-radius: 0.75rem; 
-    box-shadow: none; 
-}
-.card-header { 
-    background-color: #fff; 
-    border-bottom: 1px solid #e2e8f0; 
-    padding: 1rem 1.25rem; 
-}
-.avatar { 
-    width: 32px; 
-    height: 32px; 
-    border-radius: 50%; 
-    background-color: var(--bs-primary-bg-subtle); 
-    color: var(--bs-primary); 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-weight: 600; 
-    text-transform: uppercase; 
-}
-.breadcrumb { 
-    background-color: transparent; 
-    padding: 0; 
-    margin: 0; 
-    font-size: 0.9rem; 
-    font-weight: 500; 
-}
-.breadcrumb a { 
-    text-decoration: none; 
-    color: var(--bs-secondary-color); 
-}
-
-/* * Style tambahan untuk tombol aksi di tabel */
-.btn-link {
-  text-decoration: none;
-  border: none;
-  background: none;
-  padding: 0.25rem;
-  line-height: 1;
-  font-size: 0.9rem;
-  vertical-align: middle;
-  margin: 0 0.15rem;
-}
-.btn-link:hover i,
-.btn-link:hover {
-  opacity: 0.7;
 }
 </style>

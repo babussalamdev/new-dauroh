@@ -3,13 +3,12 @@ import { useStorage } from '@vueuse/core';
 import type { Dauroh } from '~/stores/dauroh';
 import { useToastStore } from './toast';
 
-// REVISI: Update tipe data peserta
 export interface Participant {
   name: string;
   email?: string; // Optional, hanya wajib untuk peserta 1
   gender?: string;
-  age?: number;     // Baru: Usia
-  domicile?: string; // Baru: Domisili
+  age?: number;
+  domicile?: string;
   qrCode?: string;
 }
 
@@ -36,7 +35,7 @@ export const useUserStore = defineStore('user', {
   },
 
   actions: {
-    // REVISI: Logic tetap menerima array participants dalam satu objek registrationData
+    // Logic tetap menerima array participants dalam satu objek registrationData
     registerDauroh(registrationData: { dauroh: Dauroh, participants: Participant[] }) {
       const { dauroh, participants } = registrationData;
       const toastStore = useToastStore();

@@ -1,11 +1,11 @@
 <template>
-  <div class="login-container">
-    <div class="login-overlay">
-      <div class="login-box">
-        <div class="login-content">
+  <div class="auth-container">
+    <div class="auth-overlay">
+      <div class="auth-box">
+        <div class="auth-content">
           <div class="text-center mb-4">
             <img src="~/assets/img/Logo-Mahad.png" alt="Logo Dauroh" style="height: 60px;" class="mb-3">
-            <h1 class="login-title">Admin <span class="text-primary">SignIn</span></h1>
+            <h1 class="auth-title">Admin <span class="text-primary">SignIn</span></h1>
             <p class="text-muted small">Silakan masuk untuk melanjutkan</p>
           </div>
 
@@ -105,59 +105,5 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-/* Sama persis dengan login user */
-.login-container {
-  display: flex;
-  min-height: 100vh;
-  background: url("~/assets/img/city-rain.jpg") no-repeat center center/cover;
-}
-.login-overlay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  width: 100%;
-  padding: 2rem 1rem;
-  background-color: rgba(0, 0, 0, 0.55);
-}
-.login-box {
-  width: 80%;
-  max-width: 380px;
-}
-.login-content {
-  background-color: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-.login-title {
-  font-weight: 600;
-  font-size: 1.8rem;
-  color: #333;
-}
-.form-label {
-  font-weight: 500;
-  color: #555;
-  margin-bottom: 0.25rem;
-}
-.form-control {
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-}
-.password-wrapper {
-  position: relative;
-}
-.password-toggle-icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #6c757d;
-}
-.btn-lg {
-  padding-top: 0.7rem;
-  padding-bottom: 0.7rem;
-  font-size: 0.95rem;
-}
+@import url("~/assets/css/auth/style.css");
 </style>

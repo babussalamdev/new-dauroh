@@ -215,12 +215,10 @@ const emit = defineEmits(['close', 'updated']);
 
 const daurohStore = useDaurohStore();
 
-// State Internal Modal
-// const loading = ref(false); // * Dihapus
+
 const isSavingPicture = ref(false);
 const isSavingSchedule = ref(false);
-// const eventData = ref<Dauroh | null>(null); // * Diganti dengan computed
-const eventData = computed(() => props.dauroh); // * Data diambil dari props
+const eventData = computed(() => props.dauroh); 
 
 const formState = reactive({ scheduleDays: [] as ScheduleDayForm[] });
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -445,7 +443,6 @@ const handlePictureSubmit = async () => {
 const openEditBasicModal = () => (showEditBasicModal.value = true);
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, photoBase64: null }) => {
-  // [REVISI] Gunakan SK (Kapital)
   if (!payload.daurohData.SK || payload.daurohData.SK !== eventData.value?.SK) {
     return Swal.fire('Error', 'SK tidak valid atau tidak cocok.', 'error');
   }
@@ -467,18 +464,9 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
 </script>
 
 <style scoped>
-.modal-body {
-  max-height: 75vh;
-}
-.content-card {
-  border: none;
-  border-radius: 0.75rem;
-  /* box-shadow: 0 4px 12px rgba(0,0,0,0.05); */ 
-}
-.card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/components/modals.css");
+
 .fs-sm {
     font-size: 0.875rem;
 }
@@ -491,13 +479,6 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
   width: 100%;
   object-fit: contain;
   border: 1px solid #dee2e6;
-}
-.Picture-preview-placeholder {
-  width: 100%;
-  min-height: 250px;
-  background: #f8f9fa;
-  border: 1px dashed #dee2e6;
-  border-radius: 0.5rem;
 }
 .day-label {
   font-size: 0.7rem;

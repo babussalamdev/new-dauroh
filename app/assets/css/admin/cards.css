@@ -1,0 +1,24 @@
+.content-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+}
+.card-header { 
+    background-color: #fff; 
+    border-bottom: 1px solid #e2e8f0; 
+    padding: 1rem 1.25rem; 
+}
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.breadcrumb a {
+  text-decoration: none;
+  color: var(--bs-secondary-color);
+}
+.breadcrumb a:hover {
+  color: var(--bs-body-color);
+}

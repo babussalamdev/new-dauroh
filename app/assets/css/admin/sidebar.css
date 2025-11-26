@@ -1,0 +1,65 @@
+.admin-sidebar {
+  background-color: #212529;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 250px;
+  transition: transform 0.3s ease-in-out;
+  z-index: 1030;
+  border-right: 1px solid var(--bs-border-color);
+}
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.nav-category {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+.nav-link {
+  color: #adb5bd;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.nav-link:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.nav-link.router-link-exact-active {
+  color: #ffffff;
+  font-weight: 500;
+}
+.nav-link i {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+.nav-link .bi-chevron-down {
+  transition: transform 0.3s ease;
+}
+.nav-link:not(.collapsed) .bi-chevron-down {
+  transform: rotate(-180deg);
+}
+.sub-menu {
+  padding-left: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.sub-menu .nav-link {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+.sub-menu .nav-link.router-link-exact-active {
+  color: #ffffff;
+  font-weight: 700;
+  background-color: rgba(255, 255, 255, 0.1);
+}

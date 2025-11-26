@@ -2,7 +2,7 @@
   <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
       <h5 class="mb-0">Manajemen Event Dauroh</h5>
-      <button class="btn btn-success btn-sm" @click="openAddModal">
+      <button class="btn btn-primary btn-sm" @click="openAddModal">
         <i class="bi bi-plus-lg me-1"></i>
         Tambah Event
       </button>
@@ -133,10 +133,10 @@
     }).format(value);
   };
 
-  // * Memperbaiki sintaks TypeScript di sini
+
   const openDetailModal = (dauroh: Dauroh | null) => {
     if (dauroh && dauroh. SK) {
-      selectedDaurohForDetail.value = dauroh; // Simpan objek dauroh utuh
+      selectedDaurohForDetail.value = dauroh;
       showDetailModal.value = true;
     } else {
       Swal.fire("Error", "SK event tidak valid untuk dilihat detailnya.", "error");
@@ -173,7 +173,6 @@
   }) => {
     let success = false;
     try {
-      // [REVISI] Perbaiki typo spasi dan gunakan SK (Kapital)
       if (isEditing.value && payload.daurohData.SK) {
         success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
       } else {
@@ -186,10 +185,8 @@
 
     if (success) {
       closeFormModal();
-      // [REVISI] Tambahkan notifikasi Swal saat berhasil
       Swal.fire('Berhasil', 'Data event berhasil diperbarui.', 'success');
     } else {
-      // Optional: Handle else
     }
   };
 
@@ -210,20 +207,9 @@
 </script>
 
 <style scoped>
-  .btn-link {
-    text-decoration: none;
-    border: none;
-    background: none;
-    padding: 0.25rem;
-    line-height: 1;
-    font-size: 0.9rem;
-    vertical-align: middle;
-    margin: 0 0.15rem;
-  }
-  .btn-link:hover i,
-  .btn-link:hover {
-    opacity: 0.7;
-  }
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
+
   .text-capitalize {
     text-transform: capitalize;
   }

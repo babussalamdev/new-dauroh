@@ -102,21 +102,7 @@ const register = () => emit('register', props.dauroh)
 </script>
 
 <style scoped>
-/* 3. style untuk placeholder (opsional) */
-.Picture-preview-placeholder {
-  width: 100%;
-  aspect-ratio: 2 / 3; /* Sesuaikan dengan rasio gambar Anda */
-  background: #f8f9fa;
-  border: 1px dashed #dee2e6;
-  border-radius: 0.5rem;
-}
-
-.modal {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.modal-body {
-  font-size: 0.9rem;
-}
+@import url("~/assets/css/components/modals.css");
 .detail-section h6 {
   font-size: 1rem;
   border-bottom: 1px solid #eee;

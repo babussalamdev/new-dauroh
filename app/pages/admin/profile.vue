@@ -214,30 +214,6 @@ const handleChangePassword = async () => {
 </script>
 
 <style scoped>
-.content-card {
-  border: none;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-.card-header {
-  background-color: #fff;
-  border-bottom: 1px solid #eff2f5;
-  padding: 1rem 1.25rem;
-}
-.breadcrumb {
-  background-color: transparent;
-  padding: 0;
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-.breadcrumb a {
-  text-decoration: none;
-  color: var(--bs-secondary-color);
-}
-/* Menambahkan style agar tinggi kartu konsisten saat berdampingan */
-.row > [class*='col-'] > .card {
-  display: flex;
-  flex-direction: column;
-}
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
 </style>

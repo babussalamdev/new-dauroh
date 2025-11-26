@@ -109,25 +109,5 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.content-card { 
-    border: 1px solid #e2e8f0; 
-    border-radius: 0.75rem; 
-    box-shadow: none; 
-}
-.card-header { 
-    background-color: #fff; 
-    border-bottom: 1px solid #e2e8f0; 
-    padding: 1rem 1.25rem; 
-}
-.breadcrumb { 
-    background-color: transparent; 
-    padding: 0; 
-    margin: 0; 
-    font-size: 0.9rem; 
-    font-weight: 500; 
-}
-.breadcrumb a { 
-    text-decoration: none; 
-    color: var(--bs-secondary-color); 
-}
+@import url("~/assets/css/admin/cards.css");
 </style>

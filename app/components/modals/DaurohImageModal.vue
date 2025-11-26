@@ -49,18 +49,9 @@ const close = () => emit('close')
 </script>
 
 <style scoped>
-.modal {
-  background-color: rgba(0, 0, 0, 0.6);
-}
+@import url("~/assets/css/components/modals.css");
 .img-fluid {
-  max-height: 80vh; /* Batasi tinggi gambar agar pas di layar */
+  max-height: 50vh; /* Batasi tinggi gambar agar pas di layar */
 }
-.Picture-preview-placeholder {
-  width: 100%;
-  min-height: 300px;
-  aspect-ratio: 2 / 3;
-  background: #f8f9fa;
-  border: 1px dashed #dee2e6;
-  border-radius: 0.5rem;
-}
+
 </style>

@@ -125,8 +125,6 @@
   const closeRegistrationModal = () => {
     showRegistrationModal.value = false;
   };
-
-  // [REVISI UTAMA] Logic Pendaftaran di Halaman List
   const handleRegistrationSubmit = (registrationData) => {
     closeRegistrationModal();
 

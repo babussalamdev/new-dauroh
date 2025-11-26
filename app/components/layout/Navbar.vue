@@ -159,30 +159,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.fixed-navbar {
-  background-color: transparent !important;
-  box-shadow: none !important;
-  transition: all 0.3s ease;
-  z-index: 1000;
-}
-.fixed-navbar.scrolled {
-  background-color: transparent !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.navbar-brand {
-  font-family: 'Montserrat', sans-serif;
-}
-.nav-link {
-  font-weight: 500;
-  color: #333;
-  padding: 10px 15px;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-.nav-link:hover, .nav-link.active {
-  color: var(--color-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.05);
-}
+@import url("~/assets/css/layout/navbar.css");
 </style>

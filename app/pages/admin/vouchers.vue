@@ -20,7 +20,7 @@
         <CommonLoadingSpinner v-if="store.loading" class="my-5" />
 
         <div v-else-if="!store.loading && store.sortedVouchers.length > 0" class="table-responsive">
-          <table class="table table-bordered table-hover align-middle fs-sm">
+          <table class="table table-bordered table-hover table-sm align-middle fs-sm">
             <thead class="table-light">
               <tr>
                 <th>Kode Voucher</th>
@@ -44,7 +44,7 @@
                 <td>{{ v.UsedBy || '-' }}</td>
                 <td class="text-center">
                   <button 
-                    class="btn btn-danger btn-sm" 
+                    class="btn btn btn-link text-danger" 
                     title="Hapus"
                     @click="store.deleteVoucher(v.SK)">
                     <i class="bi bi-trash"></i>
@@ -109,10 +109,6 @@ const formatDiscount = (v: Voucher) => {
 </script>
 
 <style scoped>
-/* Style umum, sama seperti halaman admin lainnya */
-.fs-sm { font-size: 0.875rem; }
-.content-card { border: 1px solid #e2e8f0; border-radius: 0.75rem; box-shadow: none; }
-.card-header { background-color: #fff; border-bottom: 1px solid #e2e8f0; padding: 1rem 1.25rem; }
-.breadcrumb { background-color: transparent; padding: 0; margin: 0; font-size: 0.9rem; font-weight: 500; }
-.breadcrumb a { text-decoration: none; color: var(--bs-secondary-color); }
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
 </style>

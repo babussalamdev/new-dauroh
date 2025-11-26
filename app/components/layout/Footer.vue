@@ -33,18 +33,5 @@
 </script>
 
 <style scoped>
-.footer {
-  background-color: #F8FAFC;
-  border-top: 1px solid #e9ecef;
-}
-.footer a:hover {
-    color: var(--color-primary) !important;
-}
-.btn-social {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+@import url("~/assets/css/layout/footer.css");
 </style>

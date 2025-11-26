@@ -21,7 +21,7 @@
               <tr v-for="(ticket, index) in allTickets" :key="index">
                 <td>
                   <small class="text-muted d-block">{{ formatDate(ticket.date) }}</small>
-                  <small class="fw-bold text-primary">{{ ticket.id }}</small>
+                  <small class="fw-bold text-primary">{{ ticket.SK }}</small>
                 </td>
                 <td>
                   <span class="fw-bold">{{ ticket.dauroh.Title }}</span><br>
@@ -89,3 +89,6 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
 </script>
+<style scoped>
+@import url("~/assets/css/admin/tables.css");
+</style>

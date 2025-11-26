@@ -9,19 +9,19 @@ export interface DaurohDayDetail {
 }
 
 export interface Dauroh {
-  SK: string | null; // Pakai SK Kapital
+  SK: string | null;
   id?: number | null;
   Title: string;
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
-  Place: string; // Pakai P Kapital
-  Price: number; // Pakai P Kapital
-  Kuota: number; // Field Baru
+  Place: string;
+  Price: number;
+  Kuota: number;
   Picture?: string;
 }
 
 export interface DaurohBasicData {
-  SK?: string | null; // [REVISI] Ubah dari sk ke SK agar konsisten
+  SK?: string | null;
   Title: string;
   Gender: string;
   Place: string;
@@ -88,12 +88,12 @@ export const useDaurohStore = defineStore("dauroh", {
       try {
         const response = await $apiBase.get("/get-view?type=event");
         this.tiketDauroh = response.data.map((event: any): Dauroh => ({
-            SK: event.SK, // Hanya ambil SK kapital
+            SK: event.SK,
             Title: event.Title || "",
             Gender: event.Gender || "",
             Date: event.Date || undefined,
-            Place: event.Place || "", // Hanya ambil Place kapital
-            Price: Number(event.Price ?? 0), // Hanya ambil Price kapital
+            Place: event.Place || "",
+            Price: Number(event.Price ?? 0),
             Kuota: Number(event.Kuota ?? 0), // Mapping Kuota
             Picture: event.Picture || undefined,
         }));
@@ -272,8 +272,6 @@ export const useDaurohStore = defineStore("dauroh", {
     async updateTiketDaurohBasic(daurohData: DaurohBasicData): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      
-      // [REVISI] Baca properti SK (Kapital) dari data yang dikirim
       const eventSk = daurohData.SK; 
       if (!eventSk) return false;
       

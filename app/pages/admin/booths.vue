@@ -32,7 +32,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="sub in store.sortedSubmissions" :key="sub.id">
+              <tr v-for="sub in store.sortedSubmissions" :key="sub.SK">
                 <td>{{ sub.boothName }}</td>
                 <td>{{ sub.contactName }}</td>
                 <td>{{ sub.email }}</td>
@@ -45,13 +45,13 @@
                     <button 
                       class="btn btn-success btn-sm me-1" 
                       title="Setujui"
-                      @click="store.updateSubmissionStatus(sub.id, 'Disetujui')">
+                      @click="store.updateSubmissionStatus(sub.SK, 'Disetujui')">
                       <i class="bi bi-check-lg"></i>
                     </button>
                     <button 
                       class="btn btn-danger btn-sm" 
                       title="Tolak"
-                      @click="store.updateSubmissionStatus(sub.id, 'Ditolak')">
+                      @click="store.updateSubmissionStatus(sub.SK, 'Ditolak')">
                       <i class="bi bi-x-lg"></i>
                     </button>
                   </template>
@@ -114,32 +114,6 @@ const getStatusBadge = (status: string) => {
 </script>
 
 <style scoped>
-/* Menggunakan style yang sama dengan 'admin/users/index.vue' */
-.fs-sm { 
-    font-size: 0.875rem; 
-}
-.btn-sm { 
-    white-space: nowrap; 
-}
-.content-card { 
-    border: 1px solid #e2e8f0; 
-    border-radius: 0.75rem; 
-    box-shadow: none; 
-}
-.card-header { 
-    background-color: #fff; 
-    border-bottom: 1px solid #e2e8f0; 
-    padding: 1rem 1.25rem; 
-}
-.breadcrumb { 
-    background-color: transparent; 
-    padding: 0; 
-    margin: 0; 
-    font-size: 0.9rem; 
-    font-weight: 500; 
-}
-.breadcrumb a { 
-    text-decoration: none; 
-    color: var(--bs-secondary-color); 
-}
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
 </style>

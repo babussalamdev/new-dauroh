@@ -48,7 +48,7 @@
               </div>
               <div class="card-body p-0">
                 <div v-if="upcomingTickets.length > 0" class="table-responsive">
-                  <table class="table table-hover align-middle mb-0">
+                  <table class="table table-bordered table-hover table-sm align-middle fs-sm">
                     <thead class="table-light">
                       <tr>
                         <th class="ps-4">ID Transaksi</th>
@@ -66,7 +66,7 @@
                         </td>
                         <td>
                           <span class="fw-bold d-block text-truncate" style="max-width: 200px;">{{ ticket.dauroh.Title }}</span>
-                          <small class="text-muted">{{ formatCurrency(ticket.dauroh.Price) }}</small>
+                          <small class="text-muted">{{ formatCurrency(ticket.dauroh.Title) }}</small>
                         </td>
                         <td>
                           <div v-for="p in ticket.participants" :key="p.name" class="small fw-medium">
@@ -134,6 +134,7 @@ const formatCurrency = (val) => {
 </script>
 
 <style scoped>
+@import url("~/assets/css/admin/tables.css");
 .user-dashboard {
   min-height: calc(100vh - 56px);
 }

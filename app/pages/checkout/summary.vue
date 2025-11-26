@@ -131,7 +131,6 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 };
 
-// --- [REVISI] LOGIKA DISKON DI FRONTEND ---
 const applyVoucher = async () => {
   error.value = null;
   loading.value = true;

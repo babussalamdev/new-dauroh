@@ -100,3 +100,6 @@ const isUpcoming = (dateObj) => {
     }
 };
 </script>
+<style scoped>
+@import url("~/assets/css/admin/tables.css");
+</style>

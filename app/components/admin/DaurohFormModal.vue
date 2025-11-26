@@ -83,8 +83,6 @@ const emit = defineEmits<{
 
 const daurohStore = useDaurohStore();
 const isLoading = computed(() => daurohStore.loading.savingBasic);
-
-// [REVISI] Gunakan SK (Kapital) di form state awal
 const getInitialFormState = () => ({
   SK: '', 
   Title: '',
@@ -100,7 +98,6 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     Object.assign(formState, getInitialFormState());
     if (props.isEditing && props.dauroh) {
-      // [REVISI] Ambil props.dauroh.SK
       formState.SK = props.dauroh.SK || '';
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
@@ -125,7 +122,6 @@ const save = () => {
    }
 
   const dataToEmit = {
-    // [REVISI] Gunakan SK (Kapital)
     SK: props.isEditing ? formState.SK : null,
     Title: formState.Title,
     Gender: formState.Gender,

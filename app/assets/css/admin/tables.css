@@ -1,0 +1,6 @@
+.table-responsive { overflow-x: auto; }
+.table {
+  &.align-middle { vertical-align: middle; }
+  &.fs-sm { font-size: 0.875rem; }
+  th { font-weight: 600; color: #555; }
+}

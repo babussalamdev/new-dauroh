@@ -1,11 +1,11 @@
 <template>
-  <div class="register-container">
-    <div class="register-overlay">
-      <div class="register-box">
-        <div class="register-content">
+  <div class="auth-container">
+    <div class="auth-overlay">
+      <div class="auth-box">
+        <div class="auth-content">
           <div class="text-center mb-4">
             <img src="~/assets/img/Logo-Mahad.png" alt="Logo Dauroh" style="height: 60px;" class="mb-3">
-            <h1 class="register-title">
+            <h1 class="auth-title">
               Buat Akun Baru
             </h1>
             <p class="text-muted small">Daftar untuk menjadi peserta dauroh</p>
@@ -131,42 +131,5 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-.register-container {
-  display: flex;
-  min-height: 100vh;
-  background: url('~/assets/img/city-rain.jpg') no-repeat center center/cover;
-}
-.register-overlay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  width: 100%;
-  padding: 2rem 1rem;
-  background-color: rgba(0, 0, 0, 0.55);
-}
-.register-box {
-  width: 100%;
-  max-width: 480px;
-}
-.register-content {
-  background-color: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-}
-.register-title {
-  font-weight: 600;
-  font-size: 1.8rem;
-  color: #333;
-}
-.form-label {
-  font-weight: 500;
-  color: #555;
-  margin-bottom: 0.25rem;
-}
-.form-control {
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-}
+ @import url("~/assets/css/auth/style.css");
 </style>

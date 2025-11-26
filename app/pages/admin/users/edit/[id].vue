@@ -137,29 +137,11 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
+@import url("~/assets/css/admin/cards.css");
+@import url("~/assets/css/admin/tables.css");
 .page-title {
   font-size: 1.75rem;
   font-weight: 600;
   color: var(--color-primary);
-}
-.content-card {
-  border: none;
-  border-radius: 0.75rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-}
-.card-header {
-  background-color: #fff;
-  border-bottom: 1px solid #eff2f5;
-  padding: 1rem 1.25rem;
-}
-.breadcrumb {
-  background-color: transparent;
-  padding: 0;
-  margin: 0;
-  font-size: 0.875rem;
-}
-.breadcrumb a {
-  text-decoration: none;
-  color: var(--bs-secondary-color);
 }
 </style>
