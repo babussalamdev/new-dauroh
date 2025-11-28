@@ -1,5 +1,3 @@
-/* assets/css/auth/style.css */
-
 .auth-container {
   display: flex;
   min-height: 100vh;
@@ -18,7 +16,7 @@
 
 .auth-box {
   width: 80%;
-  max-width: 480px; /* Register pakai 480px, Login 380px. Kita ambil nilai tengah atau largest */
+  max-width: 480px; 
 }
 /* Note: Jika ingin lebar beda, nanti bisa di-override di file vue masing-masing */
 

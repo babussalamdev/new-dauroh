@@ -10,7 +10,7 @@
       <div class="carousel-inner">
         <div v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" :key="chunkIndex" :class="['carousel-item', { active: chunkIndex === 0 }]">
           <div class="d-flex card-container-flex">
-            <div v-for="dauroh in chunk" :key="dauroh.SK || dauroh.Title" class="dauroh-card-wrapper">
+            <div v-for="dauroh in chunk" :key="dauroh.SK" class="dauroh-card-wrapper">
               
               <a :href="'/dauroh/' + dauroh.SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
@@ -37,21 +37,10 @@
     </div>
 
     <ModalsDaurohDetailModal :show="showDetailModal" :dauroh="selectedDauroh" @close="closeDetailModal" @register="handleRegisterFromDetail" />
+    
     <ModalsDaurohImageModal :show="showImageModal" :dauroh="selectedDauroh" @close="closeImageModal" />
 
-    <ModalsDaurohRegistrationModal
-      :show="showRegistrationModal"
-      :dauroh="selectedDauroh"
-      @close="closeRegistrationModal"
-      @submit="handleRegistrationSubmit" />
-    
-    <ModalsQrCodeModal 
-      :show="showQrModal" 
-      :ticket="newlyCreatedTicket" 
-      @close="handleCloseQr" 
-    />
-
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -59,23 +48,16 @@
   import { useDaurohStore } from "~/stores/dauroh";
   import { useToastStore } from '~/stores/toast';
   import { useAuth } from "~/composables/useAuth";
-  import { useCheckoutStore } from '~/stores/checkout';
-  import { useUserStore } from '~/stores/user'; // [BARU] Import User Store
+  import { useRouter } from 'vue-router'; // Pastikan import router
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
-  const userStore = useUserStore(); // [BARU] Init User Store
-  const checkoutStore = useCheckoutStore();
   const toastStore = useToastStore();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
 
   const imgUrl = ref("");
   const config = useRuntimeConfig();
-
-  // [BARU] State untuk QR Modal
-  const showQrModal = ref(false);
-  const newlyCreatedTicket = ref(null);
 
   onMounted(() => {
     imgUrl.value = config.public.img;
@@ -84,7 +66,6 @@
 
   const selectedDauroh = ref(null);
   const showDetailModal = ref(false);
-  const showRegistrationModal = ref(false);
   const showImageModal = ref(false);
 
   const openImageModal = (dauroh) => {
@@ -102,69 +83,38 @@
   const closeDetailModal = () => {
     showDetailModal.value = false;
   };
+
   const handleRegisterFromDetail = (dauroh) => {
     closeDetailModal();
+    // Beri jeda sedikit agar modal tertutup smooth baru pindah halaman
     setTimeout(() => {
       handleRegisterClick(dauroh);
     }, 200);
   };
   
-  const handleRegisterClick = (dauroh) => {
+  // Logic Pindah Halaman
+  const handleRegisterClick = (daurohItem) => {
     if (!isLoggedIn.value) {
       toastStore.showToast({
         message: 'Mohon login atau daftar terlebih dahulu.',
         type: 'info'
       });
-      router.push('/login'); // Opsional: Redirect ke login
+      router.push('/login');
     } else {
-      selectedDauroh.value = dauroh;
-      showRegistrationModal.value = true;
+      // Cek validitas data SK
+      if (daurohItem && daurohItem.SK) {
+        // Redirect eksplisit menggunakan SK dari item yang diklik
+        router.push(`/dauroh/register/${daurohItem.SK}`);
+      } else {
+        console.error("Event Data Invalid:", daurohItem); // Debugging log
+        toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+      }
     }
-  };
-
-  const closeRegistrationModal = () => {
-    showRegistrationModal.value = false;
-  };
-  const handleRegistrationSubmit = (registrationData) => {
-    closeRegistrationModal();
-
-    // Cek Harga
-    const price = Number(registrationData.dauroh.Price || 0);
-
-    if (price === 0) {
-      // === FLOW GRATIS ===
-      
-      // 1. Simpan tiket langsung ke store user
-      userStore.registerDauroh(registrationData);
-
-      // 2. Siapkan data untuk QR Modal
-      newlyCreatedTicket.value = {
-        id: `TRX-${Date.now()}`, 
-        dauroh: registrationData.dauroh,
-        participants: registrationData.participants,
-      };
-
-      // 3. Tampilkan Modal QR
-      setTimeout(() => {
-         showQrModal.value = true;
-      }, 300);
-
-    } else {
-      // === FLOW BERBAYAR ===
-      checkoutStore.startCheckout(registrationData);
-      router.push('/checkout/select');
-    }
-  };
-  
-  // Handler saat tutup QR -> ke dashboard
-  const handleCloseQr = () => {
-    showQrModal.value = false;
-    router.push('/dashboard');
   };
 </script>
 
 <style scoped>
-  /* Style tetap sama */
+  /* Style tidak berubah */
   .carousel {
     position: relative;
     padding-left: 50px;

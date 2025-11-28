@@ -69,7 +69,7 @@ const checkoutStore = useCheckoutStore();
 const userStore = useUserStore(); // [PENTING] Init User Store
 const { isLoggedIn } = useAuth();
 
-const daurohSk = route.params.id ? String(route.params.id) : null;
+const daurohSK = route.params.id ? String(route.params.id) : null;
 
 // State untuk Modal QR (Gratis)
 const showQrModal = ref(false);
@@ -78,8 +78,8 @@ const newlyCreatedTicket = ref(null);
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
 onMounted(() => {
-  if (daurohSk) {
-    daurohStore.fetchPublicDaurohDetail(daurohSk);
+  if (daurohSK) {
+    daurohStore.fetchPublicDaurohDetail(daurohSK);
   }
 });
 
@@ -94,8 +94,8 @@ const showRegistrationModal = ref(false);
 const handleRegisterClick = () => {
   if (!isLoggedIn.value) {
     router.push('/login');
-  } else if (dauroh.value) {
-    showRegistrationModal.value = true;
+  } else if (dauroh.value && dauroh.value.SK) {
+    router.push(`/dauroh/register/${dauroh.value.SK}`);
   }
 };
 

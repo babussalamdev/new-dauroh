@@ -22,11 +22,11 @@
             </tr>
           </thead>
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
-            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh. SK || dauroh.Title">
-              <th scope="row">{{ dauroh. SK }}</th>
+            <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.SK || dauroh.Title">
+              <th scope="row">{{ dauroh.SK }}</th>
               <td class="text-center">
                 <img
-                  :src="dauroh.Picture ? `${imgBaseUrl}/${dauroh. SK}/${dauroh.Picture}.webp?t=${Date.now()}` : ''"
+                  :src="dauroh.Picture ? `${imgBaseUrl}/${dauroh.SK}/${dauroh.Picture}.webp?t=${Date.now()}` : ''"
                   :alt="dauroh.Picture ? dauroh.Title : 'Tidak ada Picture'"
                   width="30"
                   height="45"
@@ -47,8 +47,8 @@
                 <button
                   class="btn btn-link text-info p-1"
                   @click="openDetailModal(dauroh)"
-                  :disabled="!dauroh. SK"
-                  :title="dauroh. SK ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
+                  :disabled="!dauroh.SK"
+                  :title="dauroh.SK ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
                   <i class="bi bi-search fs-5"></i>
                 </button>
                 <button class="btn btn-link text-primary p-1" @click="openUpdateModal(dauroh)" title="Edit Info Dasar">
@@ -135,7 +135,7 @@
 
 
   const openDetailModal = (dauroh: Dauroh | null) => {
-    if (dauroh && dauroh. SK) {
+    if (dauroh && dauroh.SK) {
       selectedDaurohForDetail.value = dauroh;
       showDetailModal.value = true;
     } else {
@@ -157,11 +157,23 @@
     selectedDauroh.value = null;
     showFormModal.value = true;
   };
+
   const openUpdateModal = (dauroh: Dauroh) => {
     isEditing.value = true;
-    selectedDauroh.value = {  SK: dauroh. SK, Title: dauroh.Title, Place: dauroh.Place, Gender: dauroh.Gender, Price: dauroh.Price };
+    // [FIX] Menambahkan field Quota agar terisi saat modal dibuka
+    selectedDauroh.value = { 
+      SK: dauroh.SK, 
+      Title: dauroh.Title, 
+      Place: dauroh.Place, 
+      Gender: dauroh.Gender, 
+      Price: dauroh.Price,
+      Quota_Total: dauroh.Quota_Total,
+      Quota_Ikhwan: dauroh.Quota_Ikhwan,
+      Quota_Akhwat: dauroh.Quota_Akhwat
+    };
     showFormModal.value = true;
   };
+
   const closeFormModal = () => {
     showFormModal.value = false;
     selectedDauroh.value = null;
@@ -186,7 +198,6 @@
     if (success) {
       closeFormModal();
       Swal.fire('Berhasil', 'Data event berhasil diperbarui.', 'success');
-    } else {
     }
   };
 
@@ -199,8 +210,8 @@
     selectedDaurohForDelete.value = null;
   };
   const confirmDelete = () => {
-    if (selectedDaurohForDelete.value?. SK) {
-      daurohStore.deleteTiketDauroh(selectedDaurohForDelete.value. SK);
+    if (selectedDaurohForDelete.value?.SK) {
+      daurohStore.deleteTiketDauroh(selectedDaurohForDelete.value.SK);
     }
     closeDeleteModal();
   };

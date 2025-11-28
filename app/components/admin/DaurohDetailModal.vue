@@ -6,7 +6,7 @@
           <h5 class="modal-title">
             Detail Event: {{ eventData ? eventData.Title : 'Memuat...' }}
           </h5>
-          <button type="button" class="btn-close" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto"></button>
+          <button type="button" class="btn-close" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto || isSavingBasic"></button>
         </div>
 
         <div class="modal-body">
@@ -24,19 +24,23 @@
                   
                   <dl class="row mb-0 fs-sm">
                     <dt class="col-4 text-truncate">SK</dt>
-                    <dd class="col-8">{{ eventData?. SK }}</dd>
-
+                    <dd class="col-8">{{ eventData?.SK }}</dd>
                     <dt class="col-4 text-truncate">Judul</dt>
                     <dd class="col-8">{{ eventData?.Title }}</dd>
-
                     <dt class="col-4 text-truncate">Tempat</dt>
                     <dd class="col-8">{{ eventData?.Place || '-' }}</dd>
-
                     <dt class="col-4 text-truncate">Target</dt>
                     <dd class="col-8 text-capitalize">{{ eventData?.Gender || 'Umum' }}</dd>
-
                     <dt class="col-4 text-truncate">Harga</dt>
                     <dd class="col-8">{{ formatCurrency(eventData?.Price) }}</dd>
+                    <div class="col-12"><hr class="my-2"></div>
+                    
+                    <dt class="col-4 text-truncate">Total Kuota</dt>
+                    <dd class="col-8 fw-bold text-primary">{{ formatQuota(eventData?.Quota_Total) }}</dd>
+                    <dt class="col-4 text-truncate">Ikhwan</dt>
+                    <dd class="col-8">{{ formatQuota(eventData?.Quota_Ikhwan) }}</dd>
+                    <dt class="col-4 text-truncate">Akhwat</dt>
+                    <dd class="col-8">{{ formatQuota(eventData?.Quota_Akhwat) }}</dd>
                   </dl>
                   
                   <button @click="openEditBasicModal" class="btn btn-outline-secondary btn-sm w-100 mt-3">
@@ -82,9 +86,9 @@
                       accept="image/*"
                       @change="handleFileChange"
                       style="display: none;"
-                      :id="'photoInputModal-' + (eventData?. SK || 'new')"
+                      :id="'photoInputModal-' + (eventData?.SK || 'new')"
                     />
-                    <label :for="'photoInputModal-' + (eventData?. SK || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
+                    <label :for="'photoInputModal-' + (eventData?.SK || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
                       <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Ganti Picture' : 'Pilih Picture' }}
                     </label>
                   </div>
@@ -122,25 +126,19 @@
                       <span class="day-label position-absolute top-0 start-0 bg-light border rounded-bottom px-2 py-1 small">
                         Hari ke-{{ index + 1 }}
                       </span>
-
                       <div class="col-12 col-sm-4">
                         <label :for="'date-modal-' + day.tempId" class="form-label small mb-1">Tanggal *</label>
                         <input :id="'date-modal-' + day.tempId" type="date" class="form-control form-control-sm" v-model="day.date" required />
                         </div>
-
                       <div class="col-6 col-sm-3">
                         <label :for="'start-time-modal-' + day.tempId" class="form-label small mb-1">Mulai *</label>
                         <input :id="'start-time-modal-' + day.tempId" type="time" class="form-control form-control-sm" v-model="day.start_time" required />
                       </div>
-
                       <div class="col-6 col-sm-3">
                         <label :for="'end-time-modal-' + day.tempId" class="form-label small mb-1">Selesai *</label>
                         <input :id="'end-time-modal-' + day.tempId" type="time" class="form-control form-control-sm" v-model="day.end_time" required />
                       </div>
-
                       <div class="col-12 col-sm-2 text-sm-end mt-2 mt-sm-0">
-                        <label class="form-label small mb-1 d-block d-sm-none">&nbsp;</label> <label class="form-label small mb-1 d-none d-sm-block">&nbsp;</label> 
-                        
                         <button
                            type="button"
                            class="btn btn-outline-danger btn-sm"
@@ -169,7 +167,7 @@
           </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto">Tutup</button>
+          <button type="button" class="btn btn-secondary" @click="close" :disabled="isSavingPicture || isSavingSchedule || isConvertingPhoto || isSavingBasic">Tutup</button>
         </div>
 
       </div>
@@ -189,35 +187,35 @@
 </template>
 
 <script setup lang="ts">
-// * import 'computed'
-import { ref, reactive, watch, nextTick, computed } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import { useDaurohStore } from '@/stores/dauroh';
 import Swal from 'sweetalert2';
 import type { Dauroh, DaurohDayDetail, DaurohBasicData } from '@/stores/dauroh';
 
-// * Ambil config runtime
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 
-// Definisikan tipe untuk item jadwal di form
 interface ScheduleDayForm extends DaurohDayDetail {
   tempId: number;
 }
 
-// Props
 const props = defineProps<{
   show: boolean;
-  dauroh: Dauroh | null; // * Mengganti 'daurohSk' menjadi 'dauroh'
+  dauroh: Dauroh | null; 
 }>();
 
-// Emits
 const emit = defineEmits(['close', 'updated']);
 
 const daurohStore = useDaurohStore();
 
-
 const isSavingPicture = ref(false);
 const isSavingSchedule = ref(false);
+const isSavingBasic = ref(false); 
+
+const isConvertingPhoto = ref(false);
+const showEditBasicModal = ref(false);
+let nextTempId = 0;
+
 const eventData = computed(() => props.dauroh); 
 
 const formState = reactive({ scheduleDays: [] as ScheduleDayForm[] });
@@ -226,48 +224,46 @@ const canvas = ref<HTMLCanvasElement | null>(null);
 const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
-const isConvertingPhoto = ref(false);
-const showEditBasicModal = ref(false);
-let nextTempId = 0;
 
 const onImageError = (event: Event) => {
   (event.target as HTMLImageElement).style.display = 'none';
   previewUrl.value = null; 
 };
 
-// Fungsi Tutup Modal
 const close = () => {
-  if (!isSavingPicture.value && !isSavingSchedule.value && !isConvertingPhoto.value) {
+  if (!isSavingPicture.value && !isSavingSchedule.value && !isConvertingPhoto.value && !isSavingBasic.value) {
     emit('close');
   } else {
     Swal.fire('Mohon tunggu', 'Sedang ada proses penyimpanan atau konversi.', 'warning');
   }
 };
 
-// Format Mata Uang
 const formatCurrency = (value?: number | null) =>
   (value === null || value === undefined || value === 0)
     ? 'Gratis'
     : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-// * Mengganti watch fetch data dengan watch untuk populate form
+const formatQuota = (value?: number | null) => {
+  if (value === undefined || value === null || isNaN(Number(value))) return 'Non-Quota (Unlimited)';
+  if (value === 0) return 'Non-Quota (Unlimited)';
+  return `${value} Peserta`;
+};
+
 watch(() => props.show, (newShow) => {
   if (newShow && props.dauroh) {
-    // Reset states
     newPhotoBase64.value = null;
     photoError.value = null;
     isSavingPicture.value = false;
     isSavingSchedule.value = false;
+    isSavingBasic.value = false;
     isConvertingPhoto.value = false;
     showEditBasicModal.value = false;
     if (fileInput.value) fileInput.value.value = '';
 
-    // Set preview URL dari prop
     previewUrl.value = props.dauroh.Picture 
-      ? `${imgBaseUrl.value}/${props.dauroh. SK}/${props.dauroh.Picture}.webp?t=${Date.now()}` 
+      ? `${imgBaseUrl.value}/${props.dauroh.SK}/${props.dauroh.Picture}.webp?t=${Date.now()}` 
       : null;
 
-    // Populate schedule dari prop
     formState.scheduleDays = [];
     nextTempId = 0;
     if (props.dauroh.Date && typeof props.dauroh.Date === 'object') {
@@ -281,13 +277,11 @@ watch(() => props.show, (newShow) => {
   }
 }, { immediate: true });
 
-
-// Fungsi Jadwal
 const addScheduleDay = () => formState.scheduleDays.push({ tempId: nextTempId++, date: '', start_time: '', end_time: '' });
 const removeScheduleDay = (index: number) => formState.scheduleDays.splice(index, 1);
+
 const handleScheduleSubmit = async () => {
-    // * Ambil SK dari eventData (computed)
-    if (!eventData.value?. SK) return; 
+    if (!eventData.value?.SK) return; 
     if (formState.scheduleDays.some((d) => !d.date || !d.start_time || !d.end_time))
         return Swal.fire('Error', 'Semua kolom jadwal (Tanggal, Mulai, Selesai) wajib diisi.', 'error');
 
@@ -301,8 +295,7 @@ const handleScheduleSubmit = async () => {
     });
 
     try {
-        // Ambil SK dari eventData
-        const ok = await daurohStore.updateDaurohSchedule(eventData.value. SK, dateObject);
+        const ok = await daurohStore.updateDaurohSchedule(eventData.value.SK, dateObject);
         if (ok) {
             if (eventData.value) { 
                 eventData.value.Date = dateObject;
@@ -322,14 +315,13 @@ const handleScheduleSubmit = async () => {
     }
 };
 
-// --- Fungsi Picture ---
 const handleFileChange = (e: Event) => {
   photoError.value = null;
   newPhotoBase64.value = null;
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) {
       previewUrl.value = eventData.value?.Picture 
-        ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+        ? `${imgBaseUrl.value}/${eventData.value.SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
         : null;
       if (fileInput.value) fileInput.value.value = ''; 
       return;
@@ -368,7 +360,7 @@ const convertToWebP = (src: string) => {
         isConvertingPhoto.value = false;
         if (fileInput.value) fileInput.value.value = ''; 
         previewUrl.value = eventData.value?.Picture 
-          ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+          ? `${imgBaseUrl.value}/${eventData.value.SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
           : null; 
         return;
     }
@@ -388,7 +380,7 @@ const convertToWebP = (src: string) => {
       newPhotoBase64.value = null;
       if (fileInput.value) fileInput.value.value = ''; 
       previewUrl.value = eventData.value?.Picture 
-        ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+        ? `${imgBaseUrl.value}/${eventData.value.SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
         : null; 
     } finally {
       isConvertingPhoto.value = false;
@@ -399,7 +391,7 @@ const convertToWebP = (src: string) => {
     isConvertingPhoto.value = false;
     if (fileInput.value) fileInput.value.value = ''; 
     previewUrl.value = eventData.value?.Picture 
-      ? `${imgBaseUrl.value}/${eventData.value. SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
+      ? `${imgBaseUrl.value}/${eventData.value.SK}/${eventData.value.Picture}.webp?t=${Date.now()}` 
       : null; 
     newPhotoBase64.value = null;
   };
@@ -407,23 +399,17 @@ const convertToWebP = (src: string) => {
 };
 
 const handlePictureSubmit = async () => {
-  // Ambil SK dari eventData
-  if (!eventData.value?. SK || !newPhotoBase64.value) return; 
+  if (!eventData.value?.SK || !newPhotoBase64.value) return; 
   isSavingPicture.value = true;
   try {
-    // Ambil SK dari eventData
-    const success = await daurohStore.uploadEventPhoto(eventData.value. SK, newPhotoBase64.value);
+    const success = await daurohStore.uploadEventPhoto(eventData.value.SK, newPhotoBase64.value);
     if (success) {
-        // Ambil SK dari eventData
-        const updatedData = await daurohStore.fetchDaurohDetail(eventData.value. SK);
-        
-        // tidak bisa update eventData (karena computed), tapi bisa update previewUrl
+        const updatedData = await daurohStore.fetchDaurohDetail(eventData.value.SK);
         if(updatedData) {
-            previewUrl.value = updatedData.Picture ? `${imgBaseUrl.value}/${updatedData. SK}/${updatedData.Picture}.webp?t=${Date.now()}` : null; // Update preview dgn URL baru
+            previewUrl.value = updatedData.Picture ? `${imgBaseUrl.value}/${updatedData.SK}/${updatedData.Picture}.webp?t=${Date.now()}` : null;
         } else {
              previewUrl.value = newPhotoBase64.value; 
         }
-        
         newPhotoBase64.value = null; 
         if (fileInput.value) fileInput.value.value = ''; 
         Swal.fire('Berhasil', 'Picture berhasil diperbarui.', 'success');
@@ -439,78 +425,34 @@ const handlePictureSubmit = async () => {
   }
 };
 
-// --- Fungsi Modal Edit Info Dasar ---
 const openEditBasicModal = () => (showEditBasicModal.value = true);
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
+
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, photoBase64: null }) => {
   if (!payload.daurohData.SK || payload.daurohData.SK !== eventData.value?.SK) {
     return Swal.fire('Error', 'SK tidak valid atau tidak cocok.', 'error');
   }
 
-  // tidak punya state 'loading' internal lagi, tapi bisa pakai 'isSavingSchedule'
-  isSavingSchedule.value = true; 
+  isSavingBasic.value = true; 
   const success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
 
   if (success) {
     closeEditBasicModal();
-    //  tidak bisa update eventData.value, tapi bisa emit 'updated'
-    // Parent (TiketDaurohManager) akan fetch ulang dan mengirim prop baru
     emit('updated');
     Swal.fire('Berhasil', 'Informasi dasar berhasil diperbarui.', 'success');
   }
-  isSavingSchedule.value = false;
+  isSavingBasic.value = false;
 };
-
 </script>
 
 <style scoped>
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/components/modals.css");
-
-.fs-sm {
-    font-size: 0.875rem;
-}
-.Picture-container {
-  max-width: 100%;
-  width: 280px;
-}
-.Picture-preview {
-  max-height: 380px;
-  width: 100%;
-  object-fit: contain;
-  border: 1px solid #dee2e6;
-}
-.day-label {
-  font-size: 0.7rem;
-  color: #6c757d;
-  padding: 0.1rem 0.4rem;
-  background-color: #e9ecef !important;
-  top: -1px; 
-  left: -1px; 
-  border-bottom-right-radius: 0.25rem !important; 
-  border-top-left-radius: 0.5rem !important; 
-}
-.schedule-day-row {
-    background-color: #fff;
-    padding-top: 1.5rem !important; 
-}
-
-@media (max-width: 575.98px) {
-  .schedule-day-row .text-sm-end {
-    text-align: left !important;
-  }
-   .schedule-day-row .btn-outline-danger {
-       margin-top: 0.5rem;
-   }
-}
-
-#scheduleFormModal > .schedule-day-row:first-child {
-    margin-top: 0.5rem;
-}
-
-.fs-sm dt.text-truncate {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
+.fs-sm { font-size: 0.875rem; }
+.Picture-container { max-width: 100%; width: 280px; }
+.Picture-preview { max-height: 380px; width: 100%; object-fit: contain; border: 1px solid #dee2e6; }
+.day-label { font-size: 0.7rem; color: #6c757d; padding: 0.1rem 0.4rem; background-color: #e9ecef !important; top: -1px; left: -1px; border-bottom-right-radius: 0.25rem !important; border-top-left-radius: 0.5rem !important; }
+.schedule-day-row { background-color: #fff; padding-top: 1.5rem !important; }
+#scheduleFormModal > .schedule-day-row:first-child { margin-top: 0.5rem; }
+.fs-sm dt.text-truncate { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 </style>
