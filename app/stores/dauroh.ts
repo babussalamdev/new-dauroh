@@ -315,7 +315,7 @@ export const useDaurohStore = defineStore("dauroh", {
       const existingDate = currentEvent?.Date;
 
       const payload: any = {
-        SK: eventSK,
+        // SK dihilangkan dari body, karena sudah ada di URL params
         Title: daurohData.Title,
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price ?? 0),
@@ -361,22 +361,29 @@ export const useDaurohStore = defineStore("dauroh", {
       if (!accessTokenFromBody) return false;
 
       this.loading.savingSchedule = true;
+      
+      // 1. Ambil data existing untuk mengisi field lain (agar tidak hilang saat update)
       let currentData: Dauroh | null = this.adminTiketDauroh.find((d) => d.SK === eventSK) || null;
       if (!currentData) {
         currentData = await this.fetchDaurohDetail(eventSK);
       }
-      if (!currentData) return false;
+      if (!currentData) {
+         this.loading.savingSchedule = false;
+         return false;
+      }
 
+      // 2. Susun Payload
+      // [PERBAIKAN] Jangan sertakan 'SK' di body, cukup di URL query
       const payload: any = {
-        SK: eventSK,
         Title: currentData.Title,
         Place: currentData.Place,
-        Price: String(currentData.Price ?? 0),
-        Date: scheduleData,
+        Price: String(currentData.Price ?? 0), // Pastikan string sesuai contoh JSON
+        Date: scheduleData, // { day_1: {...}, day_2: {...} }
         AccessToken: accessTokenFromBody,
       };
 
-      const currentGender = currentData.Gender.toLowerCase();
+      // 3. Logic Quota (Sesuai existing data)
+      const currentGender = currentData.Gender?.toLowerCase() || 'umum';
       if (currentGender === 'ikhwan') {
           payload.Quota_Ikhwan = serializeQuota(currentData.Quota_Ikhwan);
       } else if (currentGender === 'akhwat') {
@@ -389,14 +396,22 @@ export const useDaurohStore = defineStore("dauroh", {
 
       let success = false;
       try {
-        await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
-        toastStore.showToast({ message: `Jadwal Event SK ${eventSK} berhasil diperbarui.`, type: "success" });
+        // [PERBAIKAN] Request PUT ke endpoint yang benar dengan payload yang sudah bersih dari 'SK'
+        const response = await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
+        
+        toastStore.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
+        
+        // Refresh data lokal
         await this.fetchAdminTiketDauroh();
         if (this.currentDaurohDetail && this.currentDaurohDetail.SK === eventSK) {
           this.currentDaurohDetail.Date = scheduleData;
         }
         success = true;
       } catch (error: any) {
+        // [PERBAIKAN] Tampilkan pesan error detail dari API
+        console.error("Error update schedule:", error);
+        const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Gagal menyimpan jadwal.";
+        toastStore.showToast({ message: `Gagal: ${msg}`, type: "danger" });
         success = false;
       } finally {
         this.loading.savingSchedule = false;

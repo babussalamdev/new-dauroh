@@ -172,10 +172,11 @@ watch(paymentStatus, (newStatus) => {
   }
 });
 
-// Saat modal ditutup, langsung ke dashboard
+// [PERBAIKAN DI SINI]
+// Saat modal ditutup, HANYA tutup modal (jangan redirect)
 const handleCloseQr = () => {
   showQrModal.value = false;
-  goToDashboard();
+  // goToDashboard(); <--- Baris ini dihapus agar tidak redirect otomatis
 };
 
 const goToDashboard = () => {

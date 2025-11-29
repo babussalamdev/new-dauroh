@@ -48,7 +48,7 @@
   import { useDaurohStore } from "~/stores/dauroh";
   import { useToastStore } from '~/stores/toast';
   import { useAuth } from "~/composables/useAuth";
-  import { useRouter } from 'vue-router'; // Pastikan import router
+  import { useRouter } from 'vue-router';
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
@@ -86,35 +86,40 @@
 
   const handleRegisterFromDetail = (dauroh) => {
     closeDetailModal();
-    // Beri jeda sedikit agar modal tertutup smooth baru pindah halaman
     setTimeout(() => {
       handleRegisterClick(dauroh);
     }, 200);
   };
   
-  // Logic Pindah Halaman
-  const handleRegisterClick = (daurohItem) => {
-    if (!isLoggedIn.value) {
-      toastStore.showToast({
-        message: 'Mohon login atau daftar terlebih dahulu.',
-        type: 'info'
-      });
-      router.push('/login');
+const handleRegisterClick = (daurohItem) => {
+  // 1. Cek Status Login
+  if (!isLoggedIn.value) {
+    toastStore.showToast({
+      message: 'Mohon login atau daftar terlebih dahulu.',
+      type: 'info'
+    });
+    
+    // [IMPROVEMENT] Kirim info event tujuan agar nanti bisa redirect balik (opsional)
+    // Pastikan menggunakan Backtick (`)
+    router.push({ 
+      path: '/login', 
+      query: { redirect: `/dauroh/register/${daurohItem?.SK || ''}` } 
+    });
+
+  } else {
+    // 2. Validasi Data
+    if (daurohItem && daurohItem.SK) {
+      // [FIX SINTAKS] Gunakan Backtick (`) di sini
+      router.push(`/dauroh/register/${daurohItem.SK}`);
     } else {
-      // Cek validitas data SK
-      if (daurohItem && daurohItem.SK) {
-        // Redirect eksplisit menggunakan SK dari item yang diklik
-        router.push(`/dauroh/register/${daurohItem.SK}`);
-      } else {
-        console.error("Event Data Invalid:", daurohItem); // Debugging log
-        toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
-      }
+      console.error("Event Data Invalid:", daurohItem);
+      toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
     }
-  };
+  }
+};
 </script>
 
 <style scoped>
-  /* Style tidak berubah */
   .carousel {
     position: relative;
     padding-left: 50px;
@@ -123,14 +128,26 @@
   .carousel-inner {
     padding: 1rem 0;
   }
+  
+  /* [PERBAIKAN] Tambahkan overflow-x: auto agar bisa discroll horizontal */
   .card-container-flex {
     display: flex;
     gap: 1rem;
     padding: 0;
+    overflow-x: auto;        /* Mengizinkan scroll horizontal */
+    scroll-behavior: smooth; /* Scroll jadi halus */
+    -webkit-overflow-scrolling: touch; /* Agar smooth di iOS */
+    scrollbar-width: none;   /* Sembunyikan scrollbar di Firefox */
+    padding-bottom: 10px;    /* Ruang untuk shadow agar tidak terpotong */
   }
+  /* Sembunyikan scrollbar di Chrome/Safari/Edge */
+  .card-container-flex::-webkit-scrollbar {
+    display: none;
+  }
+
   .dauroh-card-wrapper {
-    flex: 0 0 auto;
-    width: calc(50% - 0.75rem);
+    flex: 0 0 auto; /* Pastikan item tidak mengecil */
+    width: calc(50% - 0.75rem); /* Default mobile 50% */
     margin-bottom: 1rem;
   }
   @media (min-width: 576px) {
@@ -177,6 +194,7 @@
     }
     .card-container-flex {
       padding: 0 1rem;
+      padding-bottom: 10px;
     }
   }
   .carousel-control-prev-icon,

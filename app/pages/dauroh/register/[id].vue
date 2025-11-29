@@ -2,7 +2,7 @@
   <div class="container py-5">
     
     <div 
-      v-if="daurohStore.loading.detailPublic || (dauroh && dauroh.SK !== daurohSK)" 
+      v-if="daurohStore.loading.detailPublic || (dauroh && String(dauroh.SK) !== String(daurohSK))" 
       class="text-center py-5"
     >
       <div class="spinner-border text-primary" role="status"></div>
@@ -131,16 +131,20 @@
             </div>
 
             <div class="card shadow-sm border-0 mt-4">
-              <div class="card-body p-3 d-flex justify-content-between align-items-center">
-                <div>
+              <div class="card-body p-3 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+                <div class="w-100 w-sm-auto text-center text-sm-start">
                   <small class="text-muted d-block">Total Pembayaran</small>
                   <span class="fs-4 fw-bold text-primary">{{ formatCurrency(totalPrice) }}</span>
                 </div>
-                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-bold">
+                <button 
+                  type="submit" 
+                  class="btn btn-primary px-4 py-2 rounded-pill fw-bold w-100 w-sm-auto"
+                >
                   Lanjut Pembayaran <i class="bi bi-arrow-right ms-1"></i>
                 </button>
               </div>
             </div>
+            
           </form>
         </div>
 
@@ -177,7 +181,6 @@ const checkoutStore = useCheckoutStore();
 const userStore = useUserStore();
 const config = useRuntimeConfig();
 
-// [FIX] Konsistensi penamaan variable menjadi daurohSK
 const daurohSK = computed(() => String(route.params.id));
 
 const imgBaseUrl = ref(config.public.img || '');
@@ -189,12 +192,13 @@ const formState = reactive({
   participants: [] as any[]
 });
 
-// [FIX] Watch computed daurohSK agar reaktif
+// Watch computed daurohSK agar reaktif
 watch(daurohSK, async (newSk) => {
   if (newSk) {
     formState.qtyIkhwan = 0;
     formState.qtyAkhwat = 0;
     formState.participants = [];
+    // Pastikan fetch dilakukan
     await daurohStore.fetchPublicDaurohDetail(newSk);
   }
 }, { immediate: true });
