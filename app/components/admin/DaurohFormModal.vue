@@ -175,9 +175,12 @@ watch(() => props.show, (newVal) => {
       formState.SK = props.dauroh.SK || '';
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
-      formState.Gender = props.dauroh.Gender || '';
-      formState.Price = props.dauroh.Price || 0;
       
+      // [FIX] Normalisasi string Gender (misal: "akhwat" -> "Akhwat")
+      const rawGender = props.dauroh.Gender || '';
+      formState.Gender = rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase();
+      
+      formState.Price = props.dauroh.Price || 0;
       formState.Quota_Total = props.dauroh.Quota_Total || 0;
       formState.Quota_Ikhwan = props.dauroh.Quota_Ikhwan || 0;
       formState.Quota_Akhwat = props.dauroh.Quota_Akhwat || 0;

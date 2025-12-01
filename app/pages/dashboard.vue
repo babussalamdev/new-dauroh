@@ -54,7 +54,7 @@
                         <th class="ps-4">ID Transaksi</th>
                         <th>Event</th>
                         <th>Peserta</th>
-                        <th class="text-center">Aksi</th>
+                        <th class="text-center">Tiket</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -66,7 +66,7 @@
                         </td>
                         <td>
                           <span class="fw-bold d-block text-truncate" style="max-width: 200px;">{{ ticket.dauroh.Title }}</span>
-                          <small class="text-muted">{{ formatCurrency(ticket.dauroh.Title) }}</small>
+                          <small class="text-muted">{{ formatCurrency(ticket.dauroh.Price) }}</small>
                         </td>
                         <td>
                           <div v-for="p in ticket.participants" :key="p.name" class="small fw-medium">

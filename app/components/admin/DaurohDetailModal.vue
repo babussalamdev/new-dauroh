@@ -225,6 +225,51 @@ const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
 
+// Helper: Ubah "07.00 AM" -> "07:00" untuk Input HTML
+const convertToInputTime = (timeStr: string) => {
+  if (!timeStr) return '';
+  if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
+
+  const cleanStr = timeStr.replace('.', ':'); 
+  const parts = cleanStr.split(' ');
+  const time = parts[0] || '';
+  const modifier = parts[1] || '';
+
+  if (!time) return '';
+
+  const timeParts = time.split(':');
+  let hours = timeParts[0] || '00';
+  const minutes = timeParts[1] || '00';
+
+  if (hours === '12') hours = '00';
+  if (modifier === 'PM') {
+    const h = parseInt(hours, 10);
+    if (!isNaN(h)) hours = (h + 12).toString();
+  }
+
+  return `${hours.padStart(2, '0')}:${minutes}`;
+};
+
+// [BARU] Helper: Ubah "07:00" -> "07.00 AM" untuk API
+const convertFromInputTime = (timeStr: string) => {
+  if (!timeStr) return '';
+  
+  // Split dan ambil nilai dengan fallback '00' agar tidak undefined
+  const parts = timeStr.split(':');
+  const hourStr = parts[0] || '00';
+  const minStr = parts[1] || '00';
+
+  let hour = parseInt(hourStr, 10);
+  
+  const modifier = hour >= 12 ? 'PM' : 'AM';
+  if (hour > 12) hour -= 12;
+  if (hour === 0) hour = 12;
+
+  const padHour = hour.toString().padStart(2, '0');
+  // Gunakan minStr yang sudah aman
+  return `${padHour}.${minStr} ${modifier}`;
+};
+
 const onImageError = (event: Event) => {
   (event.target as HTMLImageElement).style.display = 'none';
   previewUrl.value = null; 
@@ -269,7 +314,12 @@ watch(() => props.show, (newShow) => {
     if (props.dauroh.Date && typeof props.dauroh.Date === 'object') {
       Object.values(props.dauroh.Date).forEach((day) => {
         if (day?.date && day?.start_time && day?.end_time) {
-          formState.scheduleDays.push({ tempId: nextTempId++, ...day });
+          formState.scheduleDays.push({ 
+            tempId: nextTempId++, 
+            ...day,
+            start_time: convertToInputTime(day.start_time),
+            end_time: convertToInputTime(day.end_time)
+          });
         }
       });
       formState.scheduleDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -291,7 +341,12 @@ const handleScheduleSubmit = async () => {
 
     sortedDays.forEach((d, i) => {
         const { tempId, ...dayData } = d;
-        dateObject[`day_${i + 1}`] = dayData;
+        // [MODIFIED] Kembalikan format waktu ke "07.00 AM" sebelum dikirim ke API
+        dateObject[`day_${i + 1}`] = {
+            ...dayData,
+            start_time: convertFromInputTime(dayData.start_time),
+            end_time: convertFromInputTime(dayData.end_time)
+        };
     });
 
     try {

@@ -11,7 +11,7 @@ export interface DaurohDayDetail {
 export interface Dauroh {
   SK: string | null;
   id?: number | null;
-  Title: string;
+  Title: string; // Capitalized
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
   Place: string;
@@ -24,7 +24,7 @@ export interface Dauroh {
 
 export interface DaurohBasicData {
   SK?: string | null;
-  Title: string;
+  Title: string; // Capitalized
   Gender: string;
   Place: string;
   Price: number;
@@ -49,6 +49,16 @@ const serializeQuota = (val: any): string => {
   const num = Number(val);
   if (isNaN(num) || num === 0 || !val) return 'non-quota';
   return String(num);
+};
+
+// [HELPER] Capitalize Title
+const capitalizeText = (text: string): string => {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 export const useDaurohStore = defineStore("dauroh", {
@@ -106,7 +116,7 @@ export const useDaurohStore = defineStore("dauroh", {
         const response = await $apiBase.get("/get-view?type=event");
         this.tiketDauroh = response.data.map((event: any): Dauroh => ({
             SK: event.SK,
-            Title: event.Title || "",
+            Title: capitalizeText(event.Title || ""),
             Gender: event.Gender || "",
             Date: event.Date || undefined,
             Place: event.Place || "",
@@ -132,14 +142,20 @@ export const useDaurohStore = defineStore("dauroh", {
       
       try {
         const response = await $apiBase.get(`/get-view?type=event&sk=${SK}`);
-        const event = Array.isArray(response.data) && response.data.length > 0 
-          ? response.data[0] 
-          : (typeof response.data === 'object' && !Array.isArray(response.data) ? response.data : null);
+        
+        let eventRaw = response.data;
+
+        if (Array.isArray(eventRaw)) {
+            const foundEvent = eventRaw.find((e: any) => String(e.SK) === String(SK));
+            eventRaw = foundEvent || eventRaw[0];
+        }
+        
+        const event = eventRaw;
 
         if (event) {
           result = {
             SK: event.SK,
-            Title: event.Title || "",
+            Title: capitalizeText(event.Title || ""),
             Gender: event.Gender || "",
             Date: event.Date || undefined,
             Place: event.Place || "",
@@ -154,6 +170,7 @@ export const useDaurohStore = defineStore("dauroh", {
           throw new Error("Event tidak ditemukan");
         }
       } catch (error: any) {
+        console.error("Error fetchPublicDaurohDetail:", error);
         toastStore.showToast({ message: error.message || "Gagal mengambil detail event.", type: "danger" });
         result = null;
       } finally {
@@ -170,7 +187,7 @@ export const useDaurohStore = defineStore("dauroh", {
         const response = await $apiBase.get("/get-default?type=event");
         this.adminTiketDauroh = response.data.map((event: any): Dauroh => ({
             SK: event.SK, 
-            Title: event.Title || "",
+            Title: capitalizeText(event.Title || ""),
             Gender: event.Gender || "",
             Date: event.Date || undefined,
             Place: event.Place || "", 
@@ -192,11 +209,19 @@ export const useDaurohStore = defineStore("dauroh", {
       let result: Dauroh | null = null;
       try {
         const response = await $apiBase.get(`/get-default?type=event&sk=${SK}`);
-        const event = Array.isArray(response.data) && response.data.length > 0 ? response.data[0] : response.data;
-        if (event && typeof event === "object" && !Array.isArray(event)) {
+        
+        let eventRaw = response.data;
+        if (Array.isArray(eventRaw)) {
+            const foundEvent = eventRaw.find((e: any) => String(e.SK) === String(SK));
+            eventRaw = foundEvent || eventRaw[0];
+        }
+        
+        const event = eventRaw;
+
+        if (event && typeof event === "object") {
           result = {
             SK: event.SK,
-            Title: event.Title || "",
+            Title: capitalizeText(event.Title || ""),
             Gender: event.Gender || "",
             Date: event.Date || undefined,
             Place: event.Place || "",
@@ -250,9 +275,10 @@ export const useDaurohStore = defineStore("dauroh", {
       this.loading.savingBasic = true;
       let success = false;
 
+      // [ADJUSTMENT] Gender sent as lowercase to match API sample ("akhwat")
       const payload: any = {
-        Title: daurohData.Title,
-        Gender: daurohData.Gender || "Umum",
+        Title: daurohData.Title, 
+        Gender: (daurohData.Gender || "Umum").toLowerCase(), // Force lowercase
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price || 0), 
         AccessToken: accessTokenFromBody,
@@ -276,7 +302,7 @@ export const useDaurohStore = defineStore("dauroh", {
         if (newEventData && newEventData.SK) {
           const newEvent: Dauroh = {
             SK: newEventData.SK,
-            Title: newEventData.Title || daurohData.Title,
+            Title: capitalizeText(newEventData.Title || daurohData.Title),
             Gender: newEventData.Gender || daurohData.Gender || "Umum",
             Place: newEventData.Place || daurohData.Place || "",
             Price: Number(newEventData.Price ?? daurohData.Price) || 0,
@@ -314,16 +340,23 @@ export const useDaurohStore = defineStore("dauroh", {
       const currentEvent = this.adminTiketDauroh.find((d) => d.SK === eventSK);
       const existingDate = currentEvent?.Date;
 
+      // [ADJUSTMENT] Prepare base payload. Title is sent as is.
       const payload: any = {
-        // SK dihilangkan dari body, karena sudah ada di URL params
         Title: daurohData.Title,
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price ?? 0),
-        Date: existingDate || {},
+        Date: existingDate || {}, // PUT requires Date
         AccessToken: accessTokenFromBody,
       };
 
+      // [ADJUSTMENT] Send ALL quota keys for PUT, defaulting to 'non-quota'
+      // Initialize all to 'non-quota'
+      payload.Quota_Ikhwan = 'non-quota';
+      payload.Quota_Akhwat = 'non-quota';
+      payload.Quota_Ikhwan_Akhwat = 'non-quota';
+
       const currentGender = daurohData.Gender.toLowerCase();
+      
       if (currentGender === 'ikhwan') {
           payload.Quota_Ikhwan = serializeQuota(daurohData.Quota_Ikhwan);
       } else if (currentGender === 'akhwat') {
@@ -362,7 +395,6 @@ export const useDaurohStore = defineStore("dauroh", {
 
       this.loading.savingSchedule = true;
       
-      // 1. Ambil data existing untuk mengisi field lain (agar tidak hilang saat update)
       let currentData: Dauroh | null = this.adminTiketDauroh.find((d) => d.SK === eventSK) || null;
       if (!currentData) {
         currentData = await this.fetchDaurohDetail(eventSK);
@@ -372,18 +404,22 @@ export const useDaurohStore = defineStore("dauroh", {
          return false;
       }
 
-      // 2. Susun Payload
-      // [PERBAIKAN] Jangan sertakan 'SK' di body, cukup di URL query
+      // [ADJUSTMENT] Susun Payload Update Schedule matching the PUT spec
       const payload: any = {
         Title: currentData.Title,
         Place: currentData.Place,
-        Price: String(currentData.Price ?? 0), // Pastikan string sesuai contoh JSON
-        Date: scheduleData, // { day_1: {...}, day_2: {...} }
+        Price: String(currentData.Price ?? 0), 
+        Date: scheduleData, 
         AccessToken: accessTokenFromBody,
       };
 
-      // 3. Logic Quota (Sesuai existing data)
+      // [ADJUSTMENT] Send ALL quota keys for PUT, defaulting to 'non-quota'
+      payload.Quota_Ikhwan = 'non-quota';
+      payload.Quota_Akhwat = 'non-quota';
+      payload.Quota_Ikhwan_Akhwat = 'non-quota';
+
       const currentGender = currentData.Gender?.toLowerCase() || 'umum';
+      
       if (currentGender === 'ikhwan') {
           payload.Quota_Ikhwan = serializeQuota(currentData.Quota_Ikhwan);
       } else if (currentGender === 'akhwat') {
@@ -396,19 +432,16 @@ export const useDaurohStore = defineStore("dauroh", {
 
       let success = false;
       try {
-        // [PERBAIKAN] Request PUT ke endpoint yang benar dengan payload yang sudah bersih dari 'SK'
         const response = await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
         
         toastStore.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
         
-        // Refresh data lokal
         await this.fetchAdminTiketDauroh();
         if (this.currentDaurohDetail && this.currentDaurohDetail.SK === eventSK) {
           this.currentDaurohDetail.Date = scheduleData;
         }
         success = true;
       } catch (error: any) {
-        // [PERBAIKAN] Tampilkan pesan error detail dari API
         console.error("Error update schedule:", error);
         const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Gagal menyimpan jadwal.";
         toastStore.showToast({ message: `Gagal: ${msg}`, type: "danger" });

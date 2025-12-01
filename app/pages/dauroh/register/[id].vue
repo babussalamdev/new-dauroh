@@ -108,13 +108,16 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label small">Nama Lengkap *</label>
-                    <input type="text" class="form-control" v-model="participant.name" required placeholder="Sesuai KTP">
+                    <input type="text" class="form-control" v-model="participant.name" required>
                   </div>
                   
                   <div class="col-md-6" v-if="index === 0">
                     <label class="form-label small">Email *</label>
                     <input type="email" class="form-control" v-model="participant.email" required placeholder="email@contoh.com">
-                    <small class="text-muted d-block" style="font-size: 0.7rem;">Tiket akan dikirim ke email ini.</small>
+                    <div class="form-text text-primary fst-italic" style="font-size: 0.75rem;">
+                      <i class="bi bi-info-circle me-1"></i>
+                      Tiket & info untuk <strong>semua peserta</strong> akan dikirim ke email ini.
+                    </div>
                   </div>
 
                   <div class="col-md-6">
@@ -229,9 +232,11 @@ const totalTickets = computed(() => formState.qtyIkhwan + formState.qtyAkhwat);
 const totalPrice = computed(() => (dauroh.value?.Price || 0) * totalTickets.value);
 const isMaxReached = computed(() => totalTickets.value >= 4);
 
+// [FIXED] Logika Sold Out diperbaiki agar masuk akal
 const isSoldOut = computed(() => {
     if(!dauroh.value) return false;
-    if (quotaInfo.value.total > 0 && quotaInfo.value.total <= 0) return true; 
+    // Jika ada total kuota (bukan unlimited) DAN sisa kuota total sudah 0
+    if (dauroh.value.Quota_Total > 0 && quotaInfo.value.total === 0) return true; 
     return false;
 });
 

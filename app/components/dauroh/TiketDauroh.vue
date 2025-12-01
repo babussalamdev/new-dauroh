@@ -6,16 +6,25 @@
       class="carousel slide carousel-dark"
       data-bs-ride="carousel"
       @mouseenter="isHovered = true"
-      @mouseleave="isHovered = false">
+      @mouseleave="isHovered = false"
+    >
       <div class="carousel-inner">
-        <div v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" :key="chunkIndex" :class="['carousel-item', { active: chunkIndex === 0 }]">
+        <div 
+          v-for="(chunk, chunkIndex) in daurohStore.tiketDaurohChunks" 
+          :key="chunkIndex" 
+          :class="['carousel-item', { active: chunkIndex === 0 }]"
+        >
           <div class="d-flex card-container-flex">
             <div v-for="dauroh in chunk" :key="dauroh.SK" class="dauroh-card-wrapper">
               
               <a :href="'/dauroh/' + dauroh.SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
-                    <img :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`" class="card-img-top" :alt="dauroh.Title" />
+                    <img 
+                      :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`" 
+                      class="card-img-top" 
+                      :alt="dauroh.Title" 
+                    />
                     <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
                   </div>
                   <div class="card-body d-flex flex-column p-3">
@@ -23,8 +32,18 @@
                     <small class="text-muted mb-1">{{ dauroh.date || dauroh.genre }}</small>
                     
                     <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
-                      <button class="btn btn-sm btn-outline-primary rounded-pill w-100" @click.prevent.stop="openDetailModal(dauroh)">Detail</button>
-                      <button class="btn btn-sm btn-primary rounded-pill w-100" @click.prevent.stop="handleRegisterClick(dauroh)">Daftar</button>
+                      <button 
+                        class="btn btn-sm btn-outline-primary rounded-pill w-100" 
+                        @click.prevent.stop="openDetailModal(dauroh)"
+                      >
+                        Detail
+                      </button>
+                      <button 
+                        class="btn btn-sm btn-primary rounded-pill w-100" 
+                        @click.prevent.stop="handleRegisterClick(dauroh)"
+                      >
+                        Daftar
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -34,13 +53,44 @@
           </div>
         </div>
       </div>
+
+      <button 
+        class="carousel-control-prev" 
+        type="button" 
+        data-bs-target="#tiketDauroh" 
+        data-bs-slide="prev"
+        v-show="isHovered && daurohStore.tiketDaurohChunks.length > 1"
+      >
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button 
+        class="carousel-control-next" 
+        type="button" 
+        data-bs-target="#tiketDauroh" 
+        data-bs-slide="next"
+        v-show="isHovered && daurohStore.tiketDaurohChunks.length > 1"
+      >
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+
     </div>
 
-    <ModalsDaurohDetailModal :show="showDetailModal" :dauroh="selectedDauroh" @close="closeDetailModal" @register="handleRegisterFromDetail" />
+    <ModalsDaurohDetailModal 
+      :show="showDetailModal" 
+      :dauroh="selectedDauroh" 
+      @close="closeDetailModal" 
+      @register="handleRegisterFromDetail" 
+    />
     
-    <ModalsDaurohImageModal :show="showImageModal" :dauroh="selectedDauroh" @close="closeImageModal" />
+    <ModalsDaurohImageModal 
+      :show="showImageModal" 
+      :dauroh="selectedDauroh" 
+      @close="closeImageModal" 
+    />
 
-    </div>
+  </div>
 </template>
 
 <script setup>
@@ -91,32 +141,30 @@
     }, 200);
   };
   
-const handleRegisterClick = (daurohItem) => {
-  // 1. Cek Status Login
-  if (!isLoggedIn.value) {
-    toastStore.showToast({
-      message: 'Mohon login atau daftar terlebih dahulu.',
-      type: 'info'
-    });
-    
-    // [IMPROVEMENT] Kirim info event tujuan agar nanti bisa redirect balik (opsional)
-    // Pastikan menggunakan Backtick (`)
-    router.push({ 
-      path: '/login', 
-      query: { redirect: `/dauroh/register/${daurohItem?.SK || ''}` } 
-    });
+  const handleRegisterClick = (daurohItem) => {
+    // 1. Cek Status Login
+    if (!isLoggedIn.value) {
+      toastStore.showToast({
+        message: 'Mohon login atau daftar terlebih dahulu.',
+        type: 'info'
+      });
+      
+      // Redirect ke login dengan query param agar bisa balik lagi (opsional)
+      router.push({ 
+        path: '/login', 
+        query: { redirect: `/dauroh/register/${daurohItem.SK || ''}` } 
+      });
 
-  } else {
-    // 2. Validasi Data
-    if (daurohItem && daurohItem.SK) {
-      // [FIX SINTAKS] Gunakan Backtick (`) di sini
-      router.push(`/dauroh/register/${daurohItem.SK}`);
     } else {
-      console.error("Event Data Invalid:", daurohItem);
-      toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+      // 2. Validasi Data
+      if (daurohItem && daurohItem.SK) {
+        router.push(`/dauroh/register/${daurohItem.SK}`);
+      } else {
+        console.error("Event Data Invalid:", daurohItem);
+        toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+      }
     }
-  }
-};
+  };
 </script>
 
 <style scoped>
@@ -129,25 +177,24 @@ const handleRegisterClick = (daurohItem) => {
     padding: 1rem 0;
   }
   
-  /* [PERBAIKAN] Tambahkan overflow-x: auto agar bisa discroll horizontal */
+  /* Scroll horizontal untuk Mobile */
   .card-container-flex {
     display: flex;
     gap: 1rem;
     padding: 0;
-    overflow-x: auto;        /* Mengizinkan scroll horizontal */
-    scroll-behavior: smooth; /* Scroll jadi halus */
-    -webkit-overflow-scrolling: touch; /* Agar smooth di iOS */
-    scrollbar-width: none;   /* Sembunyikan scrollbar di Firefox */
-    padding-bottom: 10px;    /* Ruang untuk shadow agar tidak terpotong */
+    overflow-x: auto;        
+    scroll-behavior: smooth; 
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;   
+    padding-bottom: 10px;    
   }
-  /* Sembunyikan scrollbar di Chrome/Safari/Edge */
   .card-container-flex::-webkit-scrollbar {
     display: none;
   }
 
   .dauroh-card-wrapper {
-    flex: 0 0 auto; /* Pastikan item tidak mengecil */
-    width: calc(50% - 0.75rem); /* Default mobile 50% */
+    flex: 0 0 auto; 
+    width: calc(50% - 0.75rem); /* Mobile: 2 item per row (digeser) */
     margin-bottom: 1rem;
   }
   @media (min-width: 576px) {
@@ -160,11 +207,17 @@ const handleRegisterClick = (daurohItem) => {
       width: calc(33.333% - (1rem * 2 / 3) - 4px);
     }
   }
+  /* Desktop: 4 item per slide */
   @media (min-width: 992px) {
     .dauroh-card-wrapper {
       width: calc(25% - (1rem * 3 / 4) - 4px);
     }
+    .card-container-flex {
+      justify-content: center;
+    }
   }
+
+  /* Styling Tombol Carousel (Prev/Next) */
   .carousel-control-prev,
   .carousel-control-next {
     width: 40px;
@@ -177,16 +230,18 @@ const handleRegisterClick = (daurohItem) => {
     transform: translateY(-50%);
     position: absolute;
     z-index: 10;
-    left: 5px;
+    left: 0px;
   }
   .carousel-control-next {
     left: auto;
     right: 5px;
   }
+  
+  /* Sembunyikan tombol navigasi di Mobile/Tablet (biar di-swipe/scroll aja) */
   @media (max-width: 991.98px) {
     .carousel-control-prev,
     .carousel-control-next {
-      display: none;
+      display: none !important; /* Force hide di mobile */
     }
     .carousel {
       padding-left: 0;
@@ -197,6 +252,7 @@ const handleRegisterClick = (daurohItem) => {
       padding-bottom: 10px;
     }
   }
+  
   .carousel-control-prev-icon,
   .carousel-control-next-icon {
     background-size: 60%;

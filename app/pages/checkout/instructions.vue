@@ -119,15 +119,18 @@ const currentBankComponent = computed(() => {
   return method ? BankComponents[method] : null;
 });
 
-// Computed ticket object untuk modal QR
+// --- [PERBAIKAN DISINI] ---
+// Kirim seluruh array 'participants', jangan cuma index [0]
 const newlyCreatedTicket = computed(() => {
   if (!store.dauroh || !store.participants.length) return undefined;
   
   return {
     dauroh: store.dauroh,
-    participant: store.participants[0] 
+    // Gunakan key 'participants' (plural) agar dideteksi sebagai array di modal
+    participants: store.participants 
   };
 });
+// --- [AKHIR PERBAIKAN] ---
 
 onMounted(() => {
   if (!store.transactionDetails) {
@@ -172,11 +175,9 @@ watch(paymentStatus, (newStatus) => {
   }
 });
 
-// [PERBAIKAN DI SINI]
-// Saat modal ditutup, HANYA tutup modal (jangan redirect)
+// Saat modal ditutup, HANYA tutup modal (jangan redirect otomatis)
 const handleCloseQr = () => {
   showQrModal.value = false;
-  // goToDashboard(); <--- Baris ini dihapus agar tidak redirect otomatis
 };
 
 const goToDashboard = () => {

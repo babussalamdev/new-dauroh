@@ -144,13 +144,10 @@ const applyVoucher = async () => {
   }
 
   try {
-    // OPSI A: Ambil Data Voucher dari API (Recommended)
-    // Kita minta info vouchernya ke Backend, tapi KITA (Frontend) yang ngitung.
     // const response = await $apiBase.get(`/vouchers/check?code=${code}`);
     // const voucherData = response.data; // misal: { type: 'PERCENT', value: 20 }
 
-    // OPSI B: Simulasi Data Voucher (Kalo Backend belum ada)
-    // Anggap ini data yang didapat dari database
+    // Simulasi Data Voucher
     const mockVoucherDatabase = [
       { code: 'DAUROH20', type: 'PERCENT', value: 20 },     // Di skon 20%
       { code: 'HEMAT50',  type: 'FIXED',   value: 50000 },  // Potongan 50rb
@@ -178,7 +175,7 @@ const applyVoucher = async () => {
       calculatedDiscount = validVoucher.value;
     }
 
-    // Validasi: Di skon gak boleh lebih gede dari total harga
+    // Validasi: Diskon gak boleh lebih gede dari total harga
     if (calculatedDiscount > store.totalAmount) {
       calculatedDiscount = store.totalAmount;
     }
