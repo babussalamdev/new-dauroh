@@ -5,61 +5,93 @@ import { useNuxtApp } from '#app';
 import Swal from 'sweetalert2';
 import { useToastStore } from './toast';
 
-// Tipe data untuk 1 voucher
+// Tipe data Voucher
 export interface Voucher {
-  SK: string; // Kode unik voucher
-  Status: 'UNUSED' | 'USED'; // Statusnya
-  Expired: string; // Tanggal kadaluwarsa (string)
-  DiscountType: 'PERCENT' | 'FIXED'; // Tipe diskon
-  DiscountValue: number; // Nilai diskonnya (misal: 20 untuk 20% atau 50000 untuk 50rb)
-  UsedBy?: string; // Email yang menggunakan (opsional)
+  SK: string;
+  Status: string;
+  Expired: string;
+  Diskon: number;
+  User: string;
 }
 
-// Tipe data untuk form generate
+// Tipe data Event untuk Dropdown
+export interface VoucherEvent {
+  SK: string;
+  Title: string;
+}
+
+// Payload untuk create voucher
 export interface GenerateVoucherPayload {
-  quantity: number; // <-- Tambahan: Jumlah voucher yang mau dibuat
-  discountType: 'PERCENT' | 'FIXED';
-  discountValue: number;
-  expiresAt: string; // Format YYYY-MM-DD
+  jumlah: number;
+  nominal: number;
+  hari: number;
 }
 
 export const useVoucherStore = defineStore('voucher', {
   state: () => ({
     vouchers: [] as Voucher[],
+    events: [] as VoucherEvent[], // State untuk menampung list event
+    selectedEventSK: '' as string, // State untuk event yang dipilih
     loading: false,
     loadingGenerate: false,
   }),
 
   getters: {
-    // Sortir data terbaru di atas
     sortedVouchers(state): Voucher[] {
-      return [...state.vouchers].sort((a, b) => b.SK.localeCompare(a.SK));
+      return [...state.vouchers];
     },
   },
 
   actions: {
+    // 1. Fetch List Event (Dipanggil saat load page)
+    async fetchEvents() {
+      const { $apiBase } = useNuxtApp();
+      try {
+        const response = await $apiBase.get('/get-voucher?type=load-event');
+        if (Array.isArray(response.data)) {
+          this.events = response.data.map((e: any) => ({
+            SK: e.SK,
+            Title: e.Title
+          }));
+        }
+      } catch (error) {
+        console.error("Gagal memuat event:", error);
+      }
+    },
+
+    // 2. Fetch Vouchers berdasarkan Event yang dipilih
     async fetchVouchers() {
+      // Jika belum pilih event, kosongkan data & return
+      if (!this.selectedEventSK) {
+        this.vouchers = [];
+        return;
+      }
+
       this.loading = true;
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
+      
       try {
-        // const response = await $apiBase.get('/admin/vouchers');
-        // this.vouchers = response.data;
+        // GET API dengan parameter eventSK sesuai request
+        const response = await $apiBase.get(`/get-voucher?type=load-voucher&eventSK=${this.selectedEventSK}`);
         
-        // --- SIMULASI DATA DUMMY ---
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (this.vouchers.length === 0) {
-           this.vouchers = [
-             { SK: 'ABC123', Status: 'USED', Expired: '2025-12-31', DiscountType: 'PERCENT', DiscountValue: 20, UsedBy: 'user@example.com' },
-             { SK: 'DEF456', Status: 'UNUSED', Expired: '2025-12-31', DiscountType: 'PERCENT', DiscountValue: 20 },
-             { SK: 'GHI789', Status: 'UNUSED', Expired: '2025-12-31', DiscountType: 'FIXED', DiscountValue: 50000 },
-           ];
+        if (Array.isArray(response.data)) {
+             this.vouchers = response.data.map((v: any) => ({
+                SK: v.SK,
+                Status: v.Status || 'inactive',
+                Expired: v.Expired || '-',
+                Diskon: Number(v.Nominal || v.Diskon || 0),
+                User: v.User || '-'
+             }));
+        } else {
+            this.vouchers = [];
         }
-        // --- AKHIR SIMULASI ---
 
       } catch (error: any) {
+        console.error("Fetch Voucher Error:", error);
+        this.vouchers = [];
         toastStore.showToast({
-          message: `Gagal memuat voucher: ${error.message}`,
+          message: `Gagal memuat voucher.`,
           type: 'danger',
         });
       } finally {
@@ -67,57 +99,66 @@ export const useVoucherStore = defineStore('voucher', {
       }
     },
 
+    // 3. Generate Voucher (FIXED: Kirim eventSK di BODY)
     async generateVouchers(payload: GenerateVoucherPayload) {
+      if (!this.selectedEventSK) {
+          Swal.fire('Error', 'Silakan pilih event terlebih dahulu.', 'warning');
+          return false;
+      }
+
       this.loadingGenerate = true;
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
+      
+      const accessToken = useCookie("AccessToken").value;
+      if (!accessToken) {
+         Swal.fire('Error', 'Sesi habis, silakan login ulang.', 'error');
+         this.loadingGenerate = false;
+         return false;
+      }
 
       try {
-        // // Panggil API untuk men-generate voucher massal
-        // const response = await $apiBase.post('/admin/vouchers/generate', payload);
-        // // 'response.data' harusnya adalah array berisi voucher-voucher baru
-        // this.vouchers.unshift(...response.data); 
+        // Payload Body sesuai Postman (eventSK masuk di body)
+        const apiPayload = {
+            Hari: String(payload.hari),
+            Nominal: String(payload.nominal),
+            Jumlah: String(payload.jumlah),
+            eventSK: this.selectedEventSK, // Wajib ada agar masuk ke event yang benar
+            AccessToken: accessToken
+        };
 
-        // --- SIMULASI GENERATE MASSAL ---
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newVouchers: Voucher[] = [];
-        
-        // Loop sesuai quantity yang diminta
-        for (let i = 0; i < payload.quantity; i++) {
-          newVouchers.push({
-            // Generate random code: misal "VOU-XK9Z"
-            SK: `VOU-${Math.random().toString(36).substring(2, 6).toUpperCase()}${Math.floor(Math.random() * 100)}`,
-            Status: 'UNUSED',
-            Expired: payload.expiresAt,
-            DiscountType: payload.discountType,
-            DiscountValue: payload.discountValue,
-          });
-        }
-        
-        this.vouchers.unshift(...newVouchers); // Tambah semua ke state
-        // --- AKHIR SIMULASI ---
+        await $apiBase.post('/create-voucher', apiPayload);
         
         toastStore.showToast({
-          message: `Berhasil membuat ${payload.quantity} voucher baru!`,
+          message: `Berhasil membuat ${payload.jumlah} voucher baru!`,
           type: 'success',
         });
-        return true; // Sukses
+        
+        // Refresh tabel otomatis setelah sukses
+        await this.fetchVouchers();
+        return true;
 
       } catch (error: any) {
-        Swal.fire('Gagal Membuat', error.message || 'Terjadi kesalahan', 'error');
-        return false; // Gagal
+        console.error("Create Voucher Error:", error);
+        const msg = error.response?.data?.message || error.message || 'Terjadi kesalahan';
+        Swal.fire('Gagal Membuat', msg, 'error');
+        return false;
       } finally {
         this.loadingGenerate = false;
       }
     },
 
-    async deleteVoucher(SK: string) {
+    // 4. Delete Voucher
+    async deleteVoucher(sk: string) {
+      const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
+      const accessToken = useCookie("AccessToken").value;
 
-      // Konfirmasi dulu
+      if (!accessToken) return;
+
       const result = await Swal.fire({
         title: 'Hapus Voucher?',
-        text: `Kode "${SK}" akan dihapus permanen!`,
+        text: `Kode "${sk}" akan dihapus permanen!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -127,15 +168,18 @@ export const useVoucherStore = defineStore('voucher', {
 
       if (result.isConfirmed) {
         try {
-          // await $apiBase.delete(`/admin/vouchers/${sk}`);
-          await new Promise(resolve => setTimeout(resolve, 300)); // Simulasi
+          // Sesuai request: delete-voucher?type=single&pk&sk=...
+          // pk dikirim kosong (&pk=&sk=...) atau cukup key-nya saja
+          await $apiBase.delete(`/delete-voucher?type=single&pk=&sk=${sk}`, {
+             data: { AccessToken: accessToken }
+          });
 
-          // Hapus dari state
-          this.vouchers = this.vouchers.filter(v => v.SK !== SK);
+          this.vouchers = this.vouchers.filter(v => v.SK !== sk);
           toastStore.showToast({ message: 'Voucher berhasil dihapus.', type: 'success' });
 
         } catch (error: any) {
-          Swal.fire('Gagal Menghapus', error.message || 'Terjadi kesalahan', 'error');
+           console.error("Delete Voucher Error:", error);
+           Swal.fire('Gagal Menghapus', 'Terjadi kesalahan saat menghapus.', 'error');
         }
       }
     },

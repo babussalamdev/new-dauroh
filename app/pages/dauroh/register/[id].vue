@@ -61,26 +61,36 @@
                   <div v-if="canShowIkhwan" class="d-flex justify-content-between align-items-center">
                     <div>
                       <span class="d-block fw-bold">Tiket Ikhwan</span>
-                      <small class="text-muted" v-if="quotaInfo.ikhwan > 0">Sisa: {{ quotaInfo.ikhwan }}</small>
-                      <small class="text-success" v-else>Tanpa Kuota</small>
+                      <small class="text-muted" v-if="typeof quotaInfo.ikhwan === 'number' && quotaInfo.ikhwan > 0">Sisa: {{ quotaInfo.ikhwan }}</small>
+                      <small class="text-success" v-else-if="quotaInfo.ikhwan === 'non-quota'">Tanpa Batas Kuota</small>
+                      <small class="text-danger" v-else>Habis</small>
                     </div>
                     <div class="input-group w-auto">
                       <button class="btn btn-sm btn-outline-secondary" @click="updateTicket('ikhwan', -1)" :disabled="formState.qtyIkhwan <= 0">-</button>
                       <input type="text" class="form-control form-control-sm text-center" style="width: 50px;" :value="formState.qtyIkhwan" readonly>
-                      <button class="btn btn-sm btn-outline-secondary" @click="updateTicket('ikhwan', 1)" :disabled="isMaxReached || (quotaInfo.ikhwan > 0 && formState.qtyIkhwan >= quotaInfo.ikhwan)">+</button>
+                      <button 
+                        class="btn btn-sm btn-outline-secondary" 
+                        @click="updateTicket('ikhwan', 1)" 
+                        :disabled="isMaxReached || (typeof quotaInfo.ikhwan === 'number' && quotaInfo.ikhwan !== 0 && formState.qtyIkhwan >= quotaInfo.ikhwan) || quotaInfo.ikhwan === 0"
+                      >+</button>
                     </div>
                   </div>
 
                   <div v-if="canShowAkhwat" class="d-flex justify-content-between align-items-center">
                      <div>
                       <span class="d-block fw-bold">Tiket Akhwat</span>
-                      <small class="text-muted" v-if="quotaInfo.akhwat > 0">Sisa: {{ quotaInfo.akhwat }}</small>
-                      <small class="text-success" v-else>Tanpa Kuota</small>
+                      <small class="text-muted" v-if="typeof quotaInfo.akhwat === 'number' && quotaInfo.akhwat > 0">Sisa: {{ quotaInfo.akhwat }}</small>
+                      <small class="text-success" v-else-if="quotaInfo.akhwat === 'non-quota'">Tanpa Batas Kuota</small>
+                      <small class="text-danger" v-else>Habis</small>
                     </div>
                     <div class="input-group w-auto">
                       <button class="btn btn-sm btn-outline-secondary" @click="updateTicket('akhwat', -1)" :disabled="formState.qtyAkhwat <= 0">-</button>
                       <input type="text" class="form-control form-control-sm text-center" style="width: 50px;" :value="formState.qtyAkhwat" readonly>
-                      <button class="btn btn-sm btn-outline-secondary" @click="updateTicket('akhwat', 1)" :disabled="isMaxReached || (quotaInfo.akhwat > 0 && formState.qtyAkhwat >= quotaInfo.akhwat)">+</button>
+                      <button 
+                        class="btn btn-sm btn-outline-secondary" 
+                        @click="updateTicket('akhwat', 1)" 
+                        :disabled="isMaxReached || (typeof quotaInfo.akhwat === 'number' && quotaInfo.akhwat !== 0 && formState.qtyAkhwat >= quotaInfo.akhwat) || quotaInfo.akhwat === 0"
+                      >+</button>
                     </div>
                   </div>
 
@@ -195,13 +205,11 @@ const formState = reactive({
   participants: [] as any[]
 });
 
-// Watch computed daurohSK agar reaktif
 watch(daurohSK, async (newSk) => {
   if (newSk) {
     formState.qtyIkhwan = 0;
     formState.qtyAkhwat = 0;
     formState.participants = [];
-    // Pastikan fetch dilakukan
     await daurohStore.fetchPublicDaurohDetail(newSk);
   }
 }, { immediate: true });
@@ -222,9 +230,9 @@ const canShowAkhwat = computed(() => {
 const quotaInfo = computed(() => {
   if (!dauroh.value) return { ikhwan: 0, akhwat: 0, total: 0 };
   return {
-    ikhwan: Number(dauroh.value.Quota_Ikhwan || 0),
-    akhwat: Number(dauroh.value.Quota_Akhwat || 0),
-    total: Number(dauroh.value.Quota_Total || 0)
+    ikhwan: dauroh.value.Quota_Ikhwan, // Bisa number atau 'non-quota'
+    akhwat: dauroh.value.Quota_Akhwat,
+    total: dauroh.value.Quota_Total
   };
 });
 
@@ -232,11 +240,15 @@ const totalTickets = computed(() => formState.qtyIkhwan + formState.qtyAkhwat);
 const totalPrice = computed(() => (dauroh.value?.Price || 0) * totalTickets.value);
 const isMaxReached = computed(() => totalTickets.value >= 4);
 
-// [FIXED] Logika Sold Out diperbaiki agar masuk akal
+// [REVISI] Logika Sold Out yang Benar
 const isSoldOut = computed(() => {
     if(!dauroh.value) return false;
-    // Jika ada total kuota (bukan unlimited) DAN sisa kuota total sudah 0
-    if (dauroh.value.Quota_Total > 0 && quotaInfo.value.total === 0) return true; 
+    // Jika 'non-quota' (Unlimited), berarti TIDAK sold out
+    if (dauroh.value.Quota_Total === 'non-quota') return false; 
+    
+    // Jika angka dan 0, berarti Sold Out
+    if (dauroh.value.Quota_Total === 0) return true; 
+    
     return false;
 });
 
@@ -247,11 +259,12 @@ const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
 
   if (type === 'ikhwan') {
     const newVal = formState.qtyIkhwan + change;
-    if (quotaInfo.value.ikhwan > 0 && newVal > quotaInfo.value.ikhwan) return;
+    // Jika Quota adalah number (bukan 'non-quota') dan melebihi sisa, return
+    if (typeof quotaInfo.value.ikhwan === 'number' && quotaInfo.value.ikhwan > 0 && newVal > quotaInfo.value.ikhwan) return;
     if (newVal >= 0) formState.qtyIkhwan = newVal;
   } else {
     const newVal = formState.qtyAkhwat + change;
-    if (quotaInfo.value.akhwat > 0 && newVal > quotaInfo.value.akhwat) return;
+    if (typeof quotaInfo.value.akhwat === 'number' && quotaInfo.value.akhwat > 0 && newVal > quotaInfo.value.akhwat) return;
     if (newVal >= 0) formState.qtyAkhwat = newVal;
   }
 
@@ -290,11 +303,10 @@ const formatCurrency = (val: number) => {
 const handleSubmit = () => {
   if (!dauroh.value) return;
 
-  // Copy email peserta pertama ke peserta lain (sebagai default jika backend mewajibkan)
   const mainEmail = formState.participants[0]?.email;
   const finalParticipants = formState.participants.map((p, i) => ({
     ...p,
-    email: (i === 0) ? p.email : mainEmail // Peserta 2-4 pakai email peserta 1
+    email: (i === 0) ? p.email : mainEmail
   }));
 
   const registrationData = {

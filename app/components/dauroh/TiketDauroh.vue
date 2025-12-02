@@ -148,12 +148,6 @@
         message: 'Mohon login atau daftar terlebih dahulu.',
         type: 'info'
       });
-      
-      // Redirect ke login dengan query param agar bisa balik lagi (opsional)
-      router.push({ 
-        path: '/login', 
-        query: { redirect: `/dauroh/register/${daurohItem.SK || ''}` } 
-      });
 
     } else {
       // 2. Validasi Data

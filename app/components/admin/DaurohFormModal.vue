@@ -48,42 +48,75 @@
               <div class="col-12">
                 <div class="card bg-light border-0">
                   <div class="card-body py-3">
-                    <h6 class="card-title mb-3 small fw-bold text-uppercase text-muted">Pengaturan Kuota (0 = Non-Quota/Unlimited)</h6>
+                    <h6 class="card-title mb-3 small fw-bold text-uppercase text-muted">Pengaturan Kuota</h6>
+                    <p class="text-muted text-xs mb-3">Check "Unlimited" untuk tanpa batas kuota. Masukkan "0" untuk kuota Habis.</p>
                     
                     <div class="row g-3">
                       <div class="col-12" v-if="!isIkhwanDisabled && !isAkhwatDisabled">
                         <label for="quotaTotal" class="form-label small fw-bold">Total Kuota (Global) *</label>
-                        <input type="number" class="form-control" id="quotaTotal" v-model.number="formState.Quota_Total" min="0" placeholder="0" required>
-                        <div class="form-text text-xs" v-if="formState.Quota_Total > 0">
-                          Sisa yang belum dialokasikan: <span :class="remainingQuota < 0 ? 'text-danger fw-bold' : 'text-success fw-bold'">{{ remainingQuota }}</span>
+                        <div class="input-group">
+                          <input 
+                            type="number" 
+                            class="form-control" 
+                            id="quotaTotal" 
+                            v-model.number="quotaValues.total" 
+                            min="0" 
+                            placeholder="0" 
+                            :disabled="isUnlimited.total"
+                            :class="{'is-invalid': isQuotaMismatch}"
+                            required
+                          >
+                          <div class="input-group-text bg-white">
+                            <input class="form-check-input mt-0" type="checkbox" v-model="isUnlimited.total" aria-label="Unlimited Checkbox">
+                            <span class="ms-2 small">Unlimited</span>
+                          </div>
+                        </div>
+                        <div class="form-text mt-1" v-if="showAllocationWarning">
+                           <span :class="remainingQuota === 0 ? 'text-success fw-bold' : 'text-danger fw-bold'">
+                             <i :class="remainingQuota === 0 ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-circle-fill'"></i>
+                             {{ allocationMessage }}
+                           </span>
                         </div>
                       </div>
 
                       <div class="col-6">
                         <label for="quotaIkhwan" class="form-label small">Kuota Ikhwan *</label>
-                        <input 
-                          type="number" 
-                          class="form-control" 
-                          id="quotaIkhwan" 
-                          v-model.number="formState.Quota_Ikhwan" 
-                          min="0" 
-                          :disabled="isIkhwanDisabled"
-                          :class="{'bg-secondary-subtle': isIkhwanDisabled}"
-                          required
-                        >
+                        <div class="input-group">
+                          <input 
+                            type="number" 
+                            class="form-control" 
+                            id="quotaIkhwan" 
+                            v-model.number="quotaValues.ikhwan" 
+                            min="0" 
+                            :disabled="isIkhwanDisabled || isUnlimited.ikhwan"
+                            :class="{'bg-secondary-subtle': isIkhwanDisabled}"
+                            required
+                          >
+                          <div class="input-group-text bg-white" v-if="!isIkhwanDisabled">
+                            <input class="form-check-input mt-0" type="checkbox" v-model="isUnlimited.ikhwan">
+                            <span class="ms-1 small" style="font-size: 0.7rem;">Unlim.</span>
+                          </div>
+                        </div>
                       </div>
+
                       <div class="col-6">
                         <label for="quotaAkhwat" class="form-label small">Kuota Akhwat *</label>
-                        <input 
-                          type="number" 
-                          class="form-control" 
-                          id="quotaAkhwat" 
-                          v-model.number="formState.Quota_Akhwat" 
-                          min="0" 
-                          :disabled="isAkhwatDisabled"
-                          :class="{'bg-secondary-subtle': isAkhwatDisabled}"
-                          required
-                        >
+                        <div class="input-group">
+                          <input 
+                            type="number" 
+                            class="form-control" 
+                            id="quotaAkhwat" 
+                            v-model.number="quotaValues.akhwat" 
+                            min="0" 
+                            :disabled="isAkhwatDisabled || isUnlimited.akhwat"
+                            :class="{'bg-secondary-subtle': isAkhwatDisabled}"
+                            required
+                          >
+                          <div class="input-group-text bg-white" v-if="!isAkhwatDisabled">
+                            <input class="form-check-input mt-0" type="checkbox" v-model="isUnlimited.akhwat">
+                            <span class="ms-1 small" style="font-size: 0.7rem;">Unlim.</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -97,7 +130,13 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="close">Batal</button>
-          <button type="submit" form="daurohBasicForm" class="btn btn-primary" :disabled="isLoading">
+          <button 
+            type="submit" 
+            form="daurohBasicForm" 
+            class="btn btn-primary" 
+            :disabled="isLoading || isQuotaMismatch"
+            :title="isQuotaMismatch ? 'Total kuota harus sama dengan jumlah Ikhwan + Akhwat' : ''"
+          >
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             {{ isLoading ? 'Menyimpan...' : 'Simpan' }}
           </button>
@@ -138,12 +177,23 @@ const getInitialFormState = () => ({
   Gender: '',
   Place: '',
   Price: 0,
-  Quota_Total: 0,
-  Quota_Ikhwan: 0,
-  Quota_Akhwat: 0,
 });
 
 const formState = reactive(getInitialFormState());
+
+// State untuk input angka
+const quotaValues = reactive({
+  total: 0,
+  ikhwan: 0,
+  akhwat: 0
+});
+
+// State untuk checkbox unlimited
+const isUnlimited = reactive({
+  total: false,
+  ikhwan: false,
+  akhwat: false
+});
 
 const isIkhwanDisabled = computed(() => {
   return formState.Gender === 'Akhwat'; 
@@ -153,37 +203,74 @@ const isAkhwatDisabled = computed(() => {
   return formState.Gender === 'Ikhwan'; 
 });
 
+// [BARU] Menghitung selisih kuota
 const remainingQuota = computed(() => {
-  if (formState.Quota_Total === 0) return 0;
-  return formState.Quota_Total - (formState.Quota_Ikhwan + formState.Quota_Akhwat);
+  return quotaValues.total - (quotaValues.ikhwan + quotaValues.akhwat);
+});
+
+// [BARU] Logika untuk memblokir tombol simpan
+// Hanya aktif jika Gender = Umum DAN Total tidak unlimited DAN Sub-kuota tidak unlimited
+const isQuotaMismatch = computed(() => {
+  if (formState.Gender !== 'Umum') return false; 
+  if (isUnlimited.total || isUnlimited.ikhwan || isUnlimited.akhwat) return false;
+  
+  return remainingQuota.value !== 0;
+});
+
+// [BARU] Helper untuk menampilkan pesan peringatan
+const showAllocationWarning = computed(() => {
+  return formState.Gender === 'Umum' && !isUnlimited.total && !isUnlimited.ikhwan && !isUnlimited.akhwat;
+});
+
+const allocationMessage = computed(() => {
+  if (remainingQuota.value === 0) return 'Alokasi Pas (Siap Simpan)';
+  if (remainingQuota.value > 0) return `Kurang ${remainingQuota.value} lagi`;
+  return `Kelebihan ${Math.abs(remainingQuota.value)}`;
 });
 
 const handleGenderChange = () => {
   if (formState.Gender === 'Ikhwan') {
-    formState.Quota_Akhwat = 0;
-    formState.Quota_Total = 0; // Reset total karena single gender tidak pakai total
+    quotaValues.akhwat = 0;
+    isUnlimited.akhwat = false;
+    quotaValues.total = 0; 
+    isUnlimited.total = false;
   } else if (formState.Gender === 'Akhwat') {
-    formState.Quota_Ikhwan = 0;
-    formState.Quota_Total = 0;
+    quotaValues.ikhwan = 0;
+    isUnlimited.ikhwan = false;
+    quotaValues.total = 0;
+    isUnlimited.total = false;
   }
 };
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
     Object.assign(formState, getInitialFormState());
+    
+    quotaValues.total = 0; quotaValues.ikhwan = 0; quotaValues.akhwat = 0;
+    isUnlimited.total = false; isUnlimited.ikhwan = false; isUnlimited.akhwat = false;
+
     if (props.isEditing && props.dauroh) {
       formState.SK = props.dauroh.SK || '';
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
       
-      // [FIX] Normalisasi string Gender (misal: "akhwat" -> "Akhwat")
       const rawGender = props.dauroh.Gender || '';
       formState.Gender = rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase();
       
       formState.Price = props.dauroh.Price || 0;
-      formState.Quota_Total = props.dauroh.Quota_Total || 0;
-      formState.Quota_Ikhwan = props.dauroh.Quota_Ikhwan || 0;
-      formState.Quota_Akhwat = props.dauroh.Quota_Akhwat || 0;
+
+      const qTotal = props.dauroh.Quota_Total;
+      const qIkhwan = props.dauroh.Quota_Ikhwan;
+      const qAkhwat = props.dauroh.Quota_Akhwat;
+
+      if (qTotal === 'non-quota') { isUnlimited.total = true; quotaValues.total = 0; }
+      else { isUnlimited.total = false; quotaValues.total = Number(qTotal) || 0; }
+
+      if (qIkhwan === 'non-quota') { isUnlimited.ikhwan = true; quotaValues.ikhwan = 0; }
+      else { isUnlimited.ikhwan = false; quotaValues.ikhwan = Number(qIkhwan) || 0; }
+
+      if (qAkhwat === 'non-quota') { isUnlimited.akhwat = true; quotaValues.akhwat = 0; }
+      else { isUnlimited.akhwat = false; quotaValues.akhwat = Number(qAkhwat) || 0; }
     }
   }
 }, { immediate: true });
@@ -195,22 +282,25 @@ const close = () => {
 const save = () => {
    if (isLoading.value) return;
 
+   // [SAFETY CHECK] Meskipun tombol disabled, kita tetap cek di sini untuk keamanan
+   if (isQuotaMismatch.value) {
+      Swal.fire({
+         icon: 'error',
+         title: 'Alokasi Kuota Salah',
+         text: `Total (${quotaValues.total}) harus sama dengan Ikhwan (${quotaValues.ikhwan}) + Akhwat (${quotaValues.akhwat}). ${allocationMessage.value}.`
+      });
+      return;
+   }
+
    const formElement = document.getElementById('daurohBasicForm') as HTMLFormElement;
-   // [INFO] Validasi required akan dicek di sini secara otomatis oleh browser
    if (formElement && !formElement.checkValidity()) {
        formElement.reportValidity();
        return;
    }
 
-   // Validasi Total hanya jika Umum
-   if (formState.Gender === 'Umum' && formState.Quota_Total > 0 && remainingQuota.value !== 0) {
-     Swal.fire({
-       icon: 'error',
-       title: 'Pembagian Kuota Tidak Sesuai',
-       text: `Total Kuota ditetapkan ${formState.Quota_Total}, tapi jumlah Ikhwan + Akhwat = ${formState.Quota_Ikhwan + formState.Quota_Akhwat}. Selisih: ${remainingQuota.value}. Harap sesuaikan.`
-     });
-     return;
-   }
+   const finalQuotaTotal = isUnlimited.total ? 'non-quota' : quotaValues.total;
+   const finalQuotaIkhwan = isUnlimited.ikhwan ? 'non-quota' : quotaValues.ikhwan;
+   const finalQuotaAkhwat = isUnlimited.akhwat ? 'non-quota' : quotaValues.akhwat;
 
   const dataToEmit = {
     SK: props.isEditing ? formState.SK : null,
@@ -218,9 +308,9 @@ const save = () => {
     Gender: formState.Gender,
     Place: formState.Place,
     Price: formState.Price,
-    Quota_Total: formState.Quota_Total,
-    Quota_Ikhwan: formState.Quota_Ikhwan,
-    Quota_Akhwat: formState.Quota_Akhwat,
+    Quota_Total: finalQuotaTotal,
+    Quota_Ikhwan: finalQuotaIkhwan,
+    Quota_Akhwat: finalQuotaAkhwat,
   };
 
   emit('save', { daurohData: dataToEmit as any, photoBase64: null });
@@ -228,7 +318,6 @@ const save = () => {
 </script>
 
 <style scoped>
-/* [FIX] Z-Index tinggi agar modal edit ada di paling depan */
 .modal { 
   background-color: rgba(0, 0, 0, 0.5); 
   z-index: 1060 !important; 
@@ -237,4 +326,14 @@ const save = () => {
   z-index: 1055 !important;
 }
 .text-xs { font-size: 0.75rem; margin-top: 0.25rem; }
+.input-group-text { padding: 0.375rem 0.5rem; }
+/* Style tambahan untuk form validasi */
+.is-invalid {
+  border-color: #dc3545;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
 </style>

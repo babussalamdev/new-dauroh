@@ -11,7 +11,7 @@
             <div class="col-md-4 mb-3 mb-md-0">
               <img 
                 v-if="dauroh?.Picture"
-                :src="`${imgBaseUrl}/${dauroh. SK}/${dauroh.Picture}.webp`" 
+                :src="`${imgBaseUrl}/${dauroh.SK}/${dauroh.Picture}.webp`" 
                 alt="Picture Dauroh" 
                 class="img-fluid rounded shadow-sm"
                 @error="($event.target as HTMLImageElement).style.display = 'none'"
@@ -28,6 +28,28 @@
                 <p class="ps-4 mb-0 text-capitalize">
                   <small>{{ dauroh.Gender }}</small>
                 </p>
+              </div>
+
+              <div class="detail-section mb-3">
+                <h6 class="fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i>Sisa Kuota</h6>
+                <ul class="list-unstyled ps-4 mb-0">
+                  <li v-if="showIkhwan" class="mb-1">
+                    <small>
+                      <strong>Ikhwan: </strong> 
+                      <span :class="getQuotaColor(dauroh?.Quota_Ikhwan)">
+                        {{ formatQuota(dauroh?.Quota_Ikhwan) }}
+                      </span>
+                    </small>
+                  </li>
+                  <li v-if="showAkhwat">
+                    <small>
+                      <strong>Akhwat:</strong> 
+                      <span :class="getQuotaColor(dauroh?.Quota_Akhwat)">
+                        {{ formatQuota(dauroh?.Quota_Akhwat) }}
+                      </span>
+                    </small>
+                  </li>
+                </ul>
               </div>
               <div class="detail-section mb-3">
                 <h6 class="fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Jadwal & Tempat</h6>
@@ -66,11 +88,9 @@
 </template>
 
 <script setup lang="ts">
-// 1. Import `computed`
-import { computed, ref } from 'vue' // 1. Import ref
+import { computed, ref } from 'vue'
 import type { Dauroh, DaurohDayDetail } from '~/stores/dauroh'
 
-// 2. Ambil config runtime
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 
@@ -84,18 +104,38 @@ const emit = defineEmits<{
   (e: 'register', val: Dauroh | undefined): void
 }>()
 
-// 2. Buat computed property untuk mengurutkan jadwal
 const sortedSchedule = computed(() => {
   if (!props.dauroh?.Date || typeof props.dauroh.Date !== 'object') {
     return [];
   }
-  // Ubah object { day_1: {...}, day_2: {...} } menjadi array [{...}, {...}]
   const scheduleArray = Object.values(props.dauroh.Date) as DaurohDayDetail[];
-  
-  // Urutkan array berdasarkan tanggal
   return scheduleArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 });
 
+// [BARU] Helpers untuk Logika Tampilan Kuota
+const showIkhwan = computed(() => {
+  if (!props.dauroh) return false;
+  const g = props.dauroh.Gender?.toLowerCase() || '';
+  return g.includes('ikhwan') || g.includes('umum');
+});
+
+const showAkhwat = computed(() => {
+  if (!props.dauroh) return false;
+  const g = props.dauroh.Gender?.toLowerCase() || '';
+  return g.includes('akhwat') || g.includes('umum');
+});
+
+const formatQuota = (val: number | 'non-quota' | undefined) => {
+  if (val === 'non-quota') return 'Tanpa Batas';
+  if (val === 0) return 'Habis';
+  return `${val} Tiket Tersedia`;
+};
+
+const getQuotaColor = (val: number | 'non-quota' | undefined) => {
+  if (val === 'non-quota') return 'text-success fw-bold';
+  if (val === 0) return 'text-danger fw-bold';
+  return 'text-dark';
+};
 
 const close = () => emit('close')
 const register = () => emit('register', props.dauroh)

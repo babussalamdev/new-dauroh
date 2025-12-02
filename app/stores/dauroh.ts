@@ -8,47 +8,52 @@ export interface DaurohDayDetail {
   end_time: string;
 }
 
+// [UPDATE] Tipe Quota sekarang bisa number atau string 'non-quota'
 export interface Dauroh {
   SK: string | null;
   id?: number | null;
-  Title: string; // Capitalized
+  Title: string; 
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
   Place: string;
   Price: number;
-  Quota_Ikhwan: number;
-  Quota_Akhwat: number;
-  Quota_Total: number; 
+  Quota_Ikhwan: number | 'non-quota';
+  Quota_Akhwat: number | 'non-quota';
+  Quota_Total: number | 'non-quota'; 
   Picture?: string;
 }
 
 export interface DaurohBasicData {
   SK?: string | null;
-  Title: string; // Capitalized
+  Title: string; 
   Gender: string;
   Place: string;
   Price: number;
-  Quota_Ikhwan: number;
-  Quota_Akhwat: number;
-  Quota_Total: number;
+  Quota_Ikhwan: number | 'non-quota';
+  Quota_Akhwat: number | 'non-quota';
+  Quota_Total: number | 'non-quota';
 }
 
 export interface DaurohSchedulePayload {
   [key: string]: DaurohDayDetail;
 }
 
-// [HELPER] API (String) -> Frontend (Number)
-const parseQuota = (val: any): number => {
-  if (!val || val === 'non-quota' || val === 'non quota') return 0;
+// [REVISI] Helper: API -> Frontend
+// "0" -> 0
+// "non-quota" -> "non-quota"
+const parseQuota = (val: any): number | 'non-quota' => {
+  if (val === 'non-quota' || val === 'non quota') return 'non-quota';
   const num = Number(val);
+  // Jika null/undefined/NaN, anggap 0 (Habis) agar aman
   return isNaN(num) ? 0 : num;
 };
 
-// [HELPER] Frontend (Number) -> API (String)
+// [REVISI] Helper: Frontend -> API
+// 0 -> "0"
+// "non-quota" -> "non-quota"
 const serializeQuota = (val: any): string => {
-  const num = Number(val);
-  if (isNaN(num) || num === 0 || !val) return 'non-quota';
-  return String(num);
+  if (val === 'non-quota') return 'non-quota';
+  return String(val);
 };
 
 // [HELPER] Capitalize Title
@@ -275,10 +280,9 @@ export const useDaurohStore = defineStore("dauroh", {
       this.loading.savingBasic = true;
       let success = false;
 
-      // [ADJUSTMENT] Gender sent as lowercase to match API sample ("akhwat")
       const payload: any = {
         Title: daurohData.Title, 
-        Gender: (daurohData.Gender || "Umum").toLowerCase(), // Force lowercase
+        Gender: (daurohData.Gender || "Umum").toLowerCase(), 
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price || 0), 
         AccessToken: accessTokenFromBody,
@@ -340,17 +344,16 @@ export const useDaurohStore = defineStore("dauroh", {
       const currentEvent = this.adminTiketDauroh.find((d) => d.SK === eventSK);
       const existingDate = currentEvent?.Date;
 
-      // [ADJUSTMENT] Prepare base payload. Title is sent as is.
       const payload: any = {
         Title: daurohData.Title,
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price ?? 0),
-        Date: existingDate || {}, // PUT requires Date
+        Date: existingDate || {}, 
         AccessToken: accessTokenFromBody,
       };
 
-      // [ADJUSTMENT] Send ALL quota keys for PUT, defaulting to 'non-quota'
-      // Initialize all to 'non-quota'
+      // Reset all quotas to 'non-quota' in payload default to avoid partial updates issues if BE behaves weirdly
+      // But we will override below
       payload.Quota_Ikhwan = 'non-quota';
       payload.Quota_Akhwat = 'non-quota';
       payload.Quota_Ikhwan_Akhwat = 'non-quota';
@@ -404,7 +407,6 @@ export const useDaurohStore = defineStore("dauroh", {
          return false;
       }
 
-      // [ADJUSTMENT] Susun Payload Update Schedule matching the PUT spec
       const payload: any = {
         Title: currentData.Title,
         Place: currentData.Place,
@@ -413,7 +415,6 @@ export const useDaurohStore = defineStore("dauroh", {
         AccessToken: accessTokenFromBody,
       };
 
-      // [ADJUSTMENT] Send ALL quota keys for PUT, defaulting to 'non-quota'
       payload.Quota_Ikhwan = 'non-quota';
       payload.Quota_Akhwat = 'non-quota';
       payload.Quota_Ikhwan_Akhwat = 'non-quota';

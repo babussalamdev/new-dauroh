@@ -225,7 +225,6 @@ const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
 
-// Helper: Ubah "07.00 AM" -> "07:00" untuk Input HTML
 const convertToInputTime = (timeStr: string) => {
   if (!timeStr) return '';
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
@@ -250,11 +249,8 @@ const convertToInputTime = (timeStr: string) => {
   return `${hours.padStart(2, '0')}:${minutes}`;
 };
 
-// [BARU] Helper: Ubah "07:00" -> "07.00 AM" untuk API
 const convertFromInputTime = (timeStr: string) => {
   if (!timeStr) return '';
-  
-  // Split dan ambil nilai dengan fallback '00' agar tidak undefined
   const parts = timeStr.split(':');
   const hourStr = parts[0] || '00';
   const minStr = parts[1] || '00';
@@ -266,7 +262,6 @@ const convertFromInputTime = (timeStr: string) => {
   if (hour === 0) hour = 12;
 
   const padHour = hour.toString().padStart(2, '0');
-  // Gunakan minStr yang sudah aman
   return `${padHour}.${minStr} ${modifier}`;
 };
 
@@ -288,9 +283,10 @@ const formatCurrency = (value?: number | null) =>
     ? 'Gratis'
     : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-const formatQuota = (value?: number | null) => {
-  if (value === undefined || value === null || isNaN(Number(value))) return 'Non-Quota (Unlimited)';
-  if (value === 0) return 'Non-Quota (Unlimited)';
+// [REVISI] Helper formatQuota untuk handle string 'non-quota'
+const formatQuota = (value?: number | string | null) => {
+  if (value === 'non-quota') return 'Unlimited';
+  if (value === undefined || value === null || isNaN(Number(value))) return 'Unlimited';
   return `${value} Peserta`;
 };
 
@@ -341,7 +337,6 @@ const handleScheduleSubmit = async () => {
 
     sortedDays.forEach((d, i) => {
         const { tempId, ...dayData } = d;
-        // [MODIFIED] Kembalikan format waktu ke "07.00 AM" sebelum dikirim ke API
         dateObject[`day_${i + 1}`] = {
             ...dayData,
             start_time: convertFromInputTime(dayData.start_time),
@@ -371,6 +366,7 @@ const handleScheduleSubmit = async () => {
 };
 
 const handleFileChange = (e: Event) => {
+  // ... (kode sama) ...
   photoError.value = null;
   newPhotoBase64.value = null;
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -406,6 +402,7 @@ const handleFileChange = (e: Event) => {
 };
 
 const convertToWebP = (src: string) => {
+  // ... (kode sama) ...
   isConvertingPhoto.value = true;
   const img = new Image();
   img.onload = () => {
