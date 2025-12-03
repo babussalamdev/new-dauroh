@@ -8,7 +8,6 @@ export interface DaurohDayDetail {
   end_time: string;
 }
 
-// [UPDATE] Tipe Quota sekarang bisa number atau string 'non-quota'
 export interface Dauroh {
   SK: string | null;
   id?: number | null;
@@ -38,25 +37,20 @@ export interface DaurohSchedulePayload {
   [key: string]: DaurohDayDetail;
 }
 
-// [REVISI] Helper: API -> Frontend
-// "0" -> 0
-// "non-quota" -> "non-quota"
+// Helper: API -> Frontend
 const parseQuota = (val: any): number | 'non-quota' => {
   if (val === 'non-quota' || val === 'non quota') return 'non-quota';
   const num = Number(val);
-  // Jika null/undefined/NaN, anggap 0 (Habis) agar aman
   return isNaN(num) ? 0 : num;
 };
 
-// [REVISI] Helper: Frontend -> API
-// 0 -> "0"
-// "non-quota" -> "non-quota"
+// Helper: Frontend -> API
 const serializeQuota = (val: any): string => {
   if (val === 'non-quota') return 'non-quota';
   return String(val);
 };
 
-// [HELPER] Capitalize Title
+// Helper: Capitalize Title
 const capitalizeText = (text: string): string => {
   if (!text) return "";
   return text
@@ -132,6 +126,7 @@ export const useDaurohStore = defineStore("dauroh", {
             Picture: event.Picture || undefined,
         }));
       } catch (error: any) {
+        // Silent error
       } finally {
         this.loading.tiketDauroh = false;
       }
@@ -203,6 +198,7 @@ export const useDaurohStore = defineStore("dauroh", {
             Picture: event.Picture || undefined,
         }));
       } catch (error: any) {
+        // Silent error
       } finally {
         this.loading.adminTiketDauroh = false;
       }
@@ -241,12 +237,14 @@ export const useDaurohStore = defineStore("dauroh", {
           throw new Error("Event tidak ditemukan");
         }
       } catch (error: any) {
+        // Silent error
       } finally {
         this.loading.detail = false;
         return result;
       }
     },
 
+    // --- REVISI: Perbaikan TS Error di sini ---
     async uploadEventPhoto(eventSK: string, photoBase64: string): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
@@ -259,12 +257,30 @@ export const useDaurohStore = defineStore("dauroh", {
       this.loading.uploadPhoto = true;
       let success = false;
       try {
-        await $apiBase.put(`/update-default?type=photo-event&sk=${eventSK}`, payload);
+        const response = await $apiBase.put(`/update-default?type=photo-event&sk=${eventSK}`, payload);
         toastStore.showToast({ message: "Picture berhasil diperbarui.", type: "success" });
         success = true;
-        await this.fetchAdminTiketDauroh();
+        
+        const index = this.adminTiketDauroh.findIndex(d => d.SK === eventSK);
+        if (index !== -1) {
+            if (response.data && response.data.Picture) {
+                 // [FIX] Amankan akses array dengan variabel target
+                 const target = this.adminTiketDauroh[index];
+                 if (target) {
+                    target.Picture = response.data.Picture;
+                 }
+            }
+            
+            if (this.currentDaurohDetail && this.currentDaurohDetail.SK === eventSK) {
+                if (response.data && response.data.Picture) {
+                    this.currentDaurohDetail.Picture = response.data.Picture;
+                }
+            }
+        }
+
       } catch (error: any) {
         success = false;
+        console.error(error);
       } finally {
         this.loading.uploadPhoto = false;
         return success;
@@ -304,8 +320,9 @@ export const useDaurohStore = defineStore("dauroh", {
         const newEventData = response.data;
 
         if (newEventData && newEventData.SK) {
+          // [FIX] Pastikan SK memiliki fallback null jika undefined dari API
           const newEvent: Dauroh = {
-            SK: newEventData.SK,
+            SK: newEventData.SK || null,
             Title: capitalizeText(newEventData.Title || daurohData.Title),
             Gender: newEventData.Gender || daurohData.Gender || "Umum",
             Place: newEventData.Place || daurohData.Place || "",
@@ -313,15 +330,15 @@ export const useDaurohStore = defineStore("dauroh", {
             Quota_Total: parseQuota(newEventData.Quota_Ikhwan_Akhwat ?? daurohData.Quota_Total),
             Quota_Ikhwan: parseQuota(newEventData.Quota_Ikhwan ?? daurohData.Quota_Ikhwan),
             Quota_Akhwat: parseQuota(newEventData.Quota_Akhwat ?? daurohData.Quota_Akhwat),
+            Picture: undefined, 
+            Date: {} 
           };
+
           this.adminTiketDauroh.unshift(newEvent);
+          
           toastStore.showToast({ message: "Event baru berhasil ditambahkan.", type: "success" });
           success = true;
-        } else {
-          toastStore.showToast({ message: "Event ditambahkan, me-refresh daftar...", type: "info" });
-          success = true;
-          await this.fetchAdminTiketDauroh();
-        }
+        } 
       } catch (error: any) {
         toastStore.showToast({ message: `Error: ${error.message}`, type: "danger" });
         success = false;
@@ -341,19 +358,17 @@ export const useDaurohStore = defineStore("dauroh", {
       if (!accessTokenFromBody) return false;
 
       this.loading.savingBasic = true;
-      const currentEvent = this.adminTiketDauroh.find((d) => d.SK === eventSK);
-      const existingDate = currentEvent?.Date;
+      const currentEventIndex = this.adminTiketDauroh.findIndex((d) => d.SK === eventSK);
+      const currentEvent = this.adminTiketDauroh[currentEventIndex];
 
       const payload: any = {
         Title: daurohData.Title,
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price ?? 0),
-        Date: existingDate || {}, 
+        Date: currentEvent?.Date || {}, 
         AccessToken: accessTokenFromBody,
       };
 
-      // Reset all quotas to 'non-quota' in payload default to avoid partial updates issues if BE behaves weirdly
-      // But we will override below
       payload.Quota_Ikhwan = 'non-quota';
       payload.Quota_Akhwat = 'non-quota';
       payload.Quota_Ikhwan_Akhwat = 'non-quota';
@@ -373,11 +388,36 @@ export const useDaurohStore = defineStore("dauroh", {
       let success = false;
       try {
         await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
-        toastStore.showToast({ message: `Info dasar Event SK ${eventSK} berhasil diperbarui.`, type: "success" });
-        await this.fetchAdminTiketDauroh();
-        if (this.currentDaurohDetail && this.currentDaurohDetail.SK === eventSK) {
-            await this.fetchDaurohDetail(eventSK);
+        
+        toastStore.showToast({ message: `Info dasar Event berhasil diperbarui.`, type: "success" });
+        
+        if (currentEventIndex !== -1) {
+            // [FIX] Amankan akses array dengan variabel target
+            const target = this.adminTiketDauroh[currentEventIndex];
+            if (target) {
+                target.Title = capitalizeText(daurohData.Title);
+                target.Place = daurohData.Place;
+                target.Price = daurohData.Price;
+                target.Gender = daurohData.Gender;
+                target.Quota_Total = daurohData.Quota_Total;
+                target.Quota_Ikhwan = daurohData.Quota_Ikhwan;
+                target.Quota_Akhwat = daurohData.Quota_Akhwat;
+            }
         }
+
+        if (this.currentDaurohDetail && this.currentDaurohDetail.SK === eventSK) {
+             this.currentDaurohDetail = {
+                ...this.currentDaurohDetail,
+                Title: capitalizeText(daurohData.Title),
+                Place: daurohData.Place,
+                Price: daurohData.Price,
+                Gender: daurohData.Gender,
+                Quota_Total: daurohData.Quota_Total,
+                Quota_Ikhwan: daurohData.Quota_Ikhwan,
+                Quota_Akhwat: daurohData.Quota_Akhwat
+             };
+        }
+
         success = true;
       } catch (error: any) {
         console.error("Update Basic Error:", error);
@@ -390,6 +430,7 @@ export const useDaurohStore = defineStore("dauroh", {
       }
     },
 
+    // --- REVISI: Perbaikan TS Error di sini ---
     async updateDaurohSchedule(eventSK: string, scheduleData: DaurohSchedulePayload): Promise<boolean> {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
@@ -398,10 +439,9 @@ export const useDaurohStore = defineStore("dauroh", {
 
       this.loading.savingSchedule = true;
       
-      let currentData: Dauroh | null = this.adminTiketDauroh.find((d) => d.SK === eventSK) || null;
-      if (!currentData) {
-        currentData = await this.fetchDaurohDetail(eventSK);
-      }
+      const currentEventIndex = this.adminTiketDauroh.findIndex((d) => d.SK === eventSK);
+      const currentData = this.adminTiketDauroh[currentEventIndex] || this.currentDaurohDetail;
+
       if (!currentData) {
          this.loading.savingSchedule = false;
          return false;
@@ -418,9 +458,7 @@ export const useDaurohStore = defineStore("dauroh", {
       payload.Quota_Ikhwan = 'non-quota';
       payload.Quota_Akhwat = 'non-quota';
       payload.Quota_Ikhwan_Akhwat = 'non-quota';
-
       const currentGender = currentData.Gender?.toLowerCase() || 'umum';
-      
       if (currentGender === 'ikhwan') {
           payload.Quota_Ikhwan = serializeQuota(currentData.Quota_Ikhwan);
       } else if (currentGender === 'akhwat') {
@@ -433,14 +471,20 @@ export const useDaurohStore = defineStore("dauroh", {
 
       let success = false;
       try {
-        const response = await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
-        
+        await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
         toastStore.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
         
-        await this.fetchAdminTiketDauroh();
+        if (currentEventIndex !== -1) {
+             // [FIX] Amankan akses array dengan variabel target
+             const target = this.adminTiketDauroh[currentEventIndex];
+             if (target) {
+                target.Date = scheduleData;
+             }
+        }
         if (this.currentDaurohDetail && this.currentDaurohDetail.SK === eventSK) {
           this.currentDaurohDetail.Date = scheduleData;
         }
+
         success = true;
       } catch (error: any) {
         console.error("Error update schedule:", error);
@@ -467,6 +511,7 @@ export const useDaurohStore = defineStore("dauroh", {
         this.adminTiketDauroh = this.adminTiketDauroh.filter((d) => d.SK !== SK);
         this.tiketDauroh = this.tiketDauroh.filter((d) => d.SK !== SK);
       } catch (error: any) {
+        // error handling
       }
     },
   },

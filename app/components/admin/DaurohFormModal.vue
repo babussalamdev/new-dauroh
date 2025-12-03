@@ -28,8 +28,7 @@
                   <option disabled value="">Pilih target peserta</option>
                   <option value="Ikhwan">Ikhwan</option>
                   <option value="Akhwat">Akhwat</option>
-                  <option value="Umum">Umum (Ikhwan & Akhwat)</option>
-                </select>
+                  <option value="Umum">Ikhwan, Akhwat</option> </select>
               </div>
 
               <div class="col-md-6">
@@ -49,10 +48,10 @@
                 <div class="card bg-light border-0">
                   <div class="card-body py-3">
                     <h6 class="card-title mb-3 small fw-bold text-uppercase text-muted">Pengaturan Kuota</h6>
-                    <p class="text-muted text-xs mb-3">Check "Unlimited" untuk tanpa batas kuota. Masukkan "0" untuk kuota Habis.</p>
+                    <p class="text-muted text-xs mb-3">Check "(Non-Quota)" untuk tanpa batas kuota. Minimal kuota 1 (tidak bisa 0).</p>
                     
                     <div class="row g-3">
-                      <div class="col-12" v-if="!isIkhwanDisabled && !isAkhwatDisabled">
+                      <div class="col-12" v-if="formState.Gender === 'Umum'">
                         <label for="quotaTotal" class="form-label small fw-bold">Total Kuota (Global) *</label>
                         <div class="input-group">
                           <input 
@@ -60,16 +59,16 @@
                             class="form-control" 
                             id="quotaTotal" 
                             v-model.number="quotaValues.total" 
-                            min="0" 
-                            placeholder="0" 
+                            min="1" 
+                            placeholder="1" 
                             :disabled="isUnlimited.total"
                             :class="{'is-invalid': isQuotaMismatch}"
+                            @input="validateMinOne('total')"
                             required
                           >
                           <div class="input-group-text bg-white">
                             <input class="form-check-input mt-0" type="checkbox" v-model="isUnlimited.total" aria-label="Unlimited Checkbox">
-                            <span class="ms-2 small">Unlimited</span>
-                          </div>
+                            <span class="ms-2 small">(Non-Quota)</span> </div>
                         </div>
                         <div class="form-text mt-1" v-if="showAllocationWarning">
                            <span :class="remainingQuota === 0 ? 'text-success fw-bold' : 'text-danger fw-bold'">
@@ -79,7 +78,7 @@
                         </div>
                       </div>
 
-                      <div class="col-6">
+                      <div class="col-6" v-if="formState.Gender === 'Ikhwan' || formState.Gender === 'Umum'">
                         <label for="quotaIkhwan" class="form-label small">Kuota Ikhwan *</label>
                         <div class="input-group">
                           <input 
@@ -87,19 +86,19 @@
                             class="form-control" 
                             id="quotaIkhwan" 
                             v-model.number="quotaValues.ikhwan" 
-                            min="0" 
-                            :disabled="isIkhwanDisabled || isUnlimited.ikhwan"
-                            :class="{'bg-secondary-subtle': isIkhwanDisabled}"
+                            min="1"
+                            :disabled="isUnlimited.ikhwan"
+                            @input="validateMinOne('ikhwan')"
                             required
                           >
-                          <div class="input-group-text bg-white" v-if="!isIkhwanDisabled">
+                          <div class="input-group-text bg-white">
                             <input class="form-check-input mt-0" type="checkbox" v-model="isUnlimited.ikhwan">
-                            <span class="ms-1 small" style="font-size: 0.7rem;">Unlim.</span>
+                            <span class="ms-1 small" style="font-size: 0.7rem;">(Non-Quota)</span>
                           </div>
                         </div>
                       </div>
 
-                      <div class="col-6">
+                      <div class="col-6" v-if="formState.Gender === 'Akhwat' || formState.Gender === 'Umum'">
                         <label for="quotaAkhwat" class="form-label small">Kuota Akhwat *</label>
                         <div class="input-group">
                           <input 
@@ -107,14 +106,14 @@
                             class="form-control" 
                             id="quotaAkhwat" 
                             v-model.number="quotaValues.akhwat" 
-                            min="0" 
-                            :disabled="isAkhwatDisabled || isUnlimited.akhwat"
-                            :class="{'bg-secondary-subtle': isAkhwatDisabled}"
+                            min="1"
+                            :disabled="isUnlimited.akhwat"
+                            @input="validateMinOne('akhwat')"
                             required
                           >
-                          <div class="input-group-text bg-white" v-if="!isAkhwatDisabled">
+                          <div class="input-group-text bg-white">
                             <input class="form-check-input mt-0" type="checkbox" v-model="isUnlimited.akhwat">
-                            <span class="ms-1 small" style="font-size: 0.7rem;">Unlim.</span>
+                            <span class="ms-1 small" style="font-size: 0.7rem;">(Non-Quota)</span>
                           </div>
                         </div>
                       </div>
@@ -195,21 +194,21 @@ const isUnlimited = reactive({
   akhwat: false
 });
 
-const isIkhwanDisabled = computed(() => {
-  return formState.Gender === 'Akhwat'; 
-});
+// Validasi Input: Tidak boleh 0 jika tidak unlimited
+const validateMinOne = (field: 'total' | 'ikhwan' | 'akhwat') => {
+    if (isUnlimited[field]) return; // Jika unlimited, ignore value
+    
+    if (quotaValues[field] === 0) {
+        quotaValues[field] = 1; // Paksa jadi 1 jika user ketik 0
+    }
+};
 
-const isAkhwatDisabled = computed(() => {
-  return formState.Gender === 'Ikhwan'; 
-});
-
-// [BARU] Menghitung selisih kuota
+// [BARU] Menghitung selisih kuota (Hanya berlaku jika Gender = Umum dan Total bukan unlimited)
 const remainingQuota = computed(() => {
   return quotaValues.total - (quotaValues.ikhwan + quotaValues.akhwat);
 });
 
-// [BARU] Logika untuk memblokir tombol simpan
-// Hanya aktif jika Gender = Umum DAN Total tidak unlimited DAN Sub-kuota tidak unlimited
+// Blokir simpan jika alokasi salah (Hanya untuk Umum)
 const isQuotaMismatch = computed(() => {
   if (formState.Gender !== 'Umum') return false; 
   if (isUnlimited.total || isUnlimited.ikhwan || isUnlimited.akhwat) return false;
@@ -217,7 +216,6 @@ const isQuotaMismatch = computed(() => {
   return remainingQuota.value !== 0;
 });
 
-// [BARU] Helper untuk menampilkan pesan peringatan
 const showAllocationWarning = computed(() => {
   return formState.Gender === 'Umum' && !isUnlimited.total && !isUnlimited.ikhwan && !isUnlimited.akhwat;
 });
@@ -229,17 +227,26 @@ const allocationMessage = computed(() => {
 });
 
 const handleGenderChange = () => {
-  if (formState.Gender === 'Ikhwan') {
-    quotaValues.akhwat = 0;
-    isUnlimited.akhwat = false;
-    quotaValues.total = 0; 
-    isUnlimited.total = false;
-  } else if (formState.Gender === 'Akhwat') {
-    quotaValues.ikhwan = 0;
-    isUnlimited.ikhwan = false;
-    quotaValues.total = 0;
-    isUnlimited.total = false;
-  }
+    // Reset nilai saat gender berubah agar bersih
+    if (formState.Gender === 'Ikhwan') {
+        quotaValues.akhwat = 0;
+        isUnlimited.akhwat = false;
+        quotaValues.total = 0; 
+        isUnlimited.total = false;
+        // Set default 1 jika 0
+        if (quotaValues.ikhwan === 0) quotaValues.ikhwan = 1;
+    } else if (formState.Gender === 'Akhwat') {
+        quotaValues.ikhwan = 0;
+        isUnlimited.ikhwan = false;
+        quotaValues.total = 0;
+        isUnlimited.total = false;
+        if (quotaValues.akhwat === 0) quotaValues.akhwat = 1;
+    } else {
+        // Umum
+        if (quotaValues.total === 0) quotaValues.total = 1;
+        if (quotaValues.ikhwan === 0) quotaValues.ikhwan = 1;
+        if (quotaValues.akhwat === 0) quotaValues.akhwat = 1;
+    }
 };
 
 watch(() => props.show, (newVal) => {
@@ -264,13 +271,18 @@ watch(() => props.show, (newVal) => {
       const qAkhwat = props.dauroh.Quota_Akhwat;
 
       if (qTotal === 'non-quota') { isUnlimited.total = true; quotaValues.total = 0; }
-      else { isUnlimited.total = false; quotaValues.total = Number(qTotal) || 0; }
+      else { isUnlimited.total = false; quotaValues.total = Number(qTotal) || 1; } // Default 1
 
       if (qIkhwan === 'non-quota') { isUnlimited.ikhwan = true; quotaValues.ikhwan = 0; }
-      else { isUnlimited.ikhwan = false; quotaValues.ikhwan = Number(qIkhwan) || 0; }
+      else { isUnlimited.ikhwan = false; quotaValues.ikhwan = Number(qIkhwan) || 1; }
 
       if (qAkhwat === 'non-quota') { isUnlimited.akhwat = true; quotaValues.akhwat = 0; }
-      else { isUnlimited.akhwat = false; quotaValues.akhwat = Number(qAkhwat) || 0; }
+      else { isUnlimited.akhwat = false; quotaValues.akhwat = Number(qAkhwat) || 1; }
+    } else {
+        // Jika Create Baru, set default 1
+        quotaValues.total = 1;
+        quotaValues.ikhwan = 1;
+        quotaValues.akhwat = 1;
     }
   }
 }, { immediate: true });
@@ -282,7 +294,6 @@ const close = () => {
 const save = () => {
    if (isLoading.value) return;
 
-   // [SAFETY CHECK] Meskipun tombol disabled, kita tetap cek di sini untuk keamanan
    if (isQuotaMismatch.value) {
       Swal.fire({
          icon: 'error',
@@ -330,7 +341,6 @@ const save = () => {
 /* Style tambahan untuk form validasi */
 .is-invalid {
   border-color: #dc3545;
-  padding-right: calc(1.5em + 0.75rem);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right calc(0.375em + 0.1875rem) center;

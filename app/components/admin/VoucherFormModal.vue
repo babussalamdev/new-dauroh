@@ -27,15 +27,21 @@
 
               <div class="col-12">
                 <label for="nominal" class="form-label">Nominal Potongan</label>
-                <input 
-                  type="number" 
-                  class="form-control" 
-                  id="nominal" 
-                  v-model.number="formState.nominal" 
-                  min="0" 
-                  placeholder="Contoh: 250000"
-                  required
-                >
+                <div class="input-group">
+                  <span class="input-group-text">Rp</span>
+                  <input 
+                    type="number" 
+                    class="form-control" 
+                    id="nominal" 
+                    v-model.number="formState.nominal" 
+                    min="0" 
+                    placeholder="Contoh: 250000"
+                    required
+                  >
+                </div>
+                <div class="form-text text-muted small">
+                  Diskon berupa potongan harga langsung (Fixed).
+                </div>
               </div>
 
               <div class="col-12">
@@ -126,5 +132,11 @@ const save = async () => {
 </script>
 
 <style scoped>
-.modal { background-color: rgba(0, 0, 0, 0.5); }
+.modal { 
+  background-color: rgba(0, 0, 0, 0.5); 
+  z-index: 1060 !important;
+}
+.modal-backdrop {
+  z-index: 1055 !important;
+}
 </style>

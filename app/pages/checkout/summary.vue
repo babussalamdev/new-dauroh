@@ -45,7 +45,7 @@
           </li>
           
           <li v-if="store.discountAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 text-danger">
-            Di skon ({{ store.voucherCode }})
+            Diskon ({{ store.voucherCode }})
             <span>- {{ formatCurrency(store.discountAmount) }}</span>
           </li>
           
@@ -131,6 +131,7 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 };
 
+// --- LOGIKA VOUCHER REAL API ---
 const applyVoucher = async () => {
   error.value = null;
   loading.value = true;
@@ -144,35 +145,29 @@ const applyVoucher = async () => {
   }
 
   try {
-    // const response = await $apiBase.get(`/vouchers/check?code=${code}`);
-    // const voucherData = response.data; // misal: { type: 'PERCENT', value: 20 }
+    //msh dummy endpoint
+    const response = await $apiBase.post('/check-voucher', {
+        code: code,
+        eventSK: store.dauroh?.SK,
+        totalAmount: store.totalAmount
+    });
 
-    // Simulasi Data Voucher
-    const mockVoucherDatabase = [
-      { code: 'DAUROH20', type: 'PERCENT', value: 20 },     // Di skon 20%
-      { code: 'HEMAT50',  type: 'FIXED',   value: 50000 },  // Potongan 50rb
-      { code: 'GRATIS01', type: 'FIXED',   value: 1000000 } // Gratis (Potongan 1jt)
-    ];
-
-    // Simulasi delay API
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Cari voucher yang cocok
-    const validVoucher = mockVoucherDatabase.find(v => v.code === code.toUpperCase());
-
-    if (!validVoucher) {
-      throw new Error('Kode voucher tidak ditemukan');
-    }
-
-    // --- LOGIKA PERHITUNGAN ---
+    const result = response.data;
+    
+    // Asumsi response backend mengembalikan 'amount' (nilai potongan langsung dalam Rupiah)
+    // atau 'value' (persentase) & 'type' (PERCENT/FIXED)
     let calculatedDiscount = 0;
 
-    if (validVoucher.type === 'PERCENT') {
-      // Hitung Persen: Total * (Nilai / 100)
-      calculatedDiscount = store.totalAmount * (validVoucher.value / 100);
-    } else if (validVoucher.type === 'FIXED') {
-      // Potongan Tetap
-      calculatedDiscount = validVoucher.value;
+    if (result.amount !== undefined) {
+        // Backend sudah menghitungkan nominal potongannya
+        calculatedDiscount = Number(result.amount);
+    } else if (result.type && result.value) {
+        // Jika backend mengembalikan raw data (tipe dan nilai)
+        if (result.type === 'PERCENT') {
+            calculatedDiscount = store.totalAmount * (result.value / 100);
+        } else if (result.type === 'FIXED') {
+            calculatedDiscount = Number(result.value);
+        }
     }
 
     // Validasi: Diskon gak boleh lebih gede dari total harga
@@ -180,7 +175,7 @@ const applyVoucher = async () => {
       calculatedDiscount = store.totalAmount;
     }
 
-    // Simpan hasil hitungan Frontend ke State
+    // Simpan hasil hitungan ke State
     store.setVoucher(code, calculatedDiscount);
     
     Swal.fire({
@@ -193,18 +188,18 @@ const applyVoucher = async () => {
 
   } catch (err: any) {
     store.setVoucher(code, 0); // Reset jika gagal
-    error.value = err.message || 'Kode voucher tidak valid';
+    error.value = err.response?.data?.message || err.message || 'Kode voucher tidak valid';
   } finally {
     loading.value = false;
   }
 };
-// --- AKHIR LOGIKA DISKON ---
+// --- AKHIR LOGIKA VOUCHER REAL ---
 
 const handlePay = async () => {
   loading.value = true;
   error.value = null;
   try {
-    // Saat createPayment, store akan mengirim 'finalAmount' yang sudah didi skon
+    // Saat createPayment, store akan mengirim 'finalAmount' yang sudah didiskon
     const success = await store.createPayment();
     
     if (success) {

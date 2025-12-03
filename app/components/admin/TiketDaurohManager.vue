@@ -18,8 +18,7 @@
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
               <th scope="col">Harga</th>
-              <th scope="col" class="text-center" style="width: 15%">Aksi</th>
-            </tr>
+              <th scope="col" class="text-center" style="width: 10%">Aksi</th> </tr>
           </thead>
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
             <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.SK || dauroh.Title">
@@ -41,18 +40,17 @@
               </td>
               <td>{{ dauroh.Title }}</td>
               <td>{{ dauroh.Place || "-" }}</td>
-              <td class="text-capitalize">{{ dauroh.Gender || "Umum" }}</td>
+              <td class="text-capitalize">
+                  {{ dauroh.Gender === 'Umum' ? 'Ikhwan, Akhwat' : (dauroh.Gender || "Ikhwan, Akhwat") }}
+              </td>
               <td>{{ formatCurrency(dauroh.Price) }}</td>
               <td class="text-center">
                 <button
                   class="btn btn-link text-info p-1"
                   @click="openDetailModal(dauroh)"
                   :disabled="!dauroh.SK"
-                  :title="dauroh.SK ? 'Lihat/Edit Detail Lanjutan' : 'Detail belum tersedia (SK kosong)'">
+                  :title="dauroh.SK ? 'Lihat Detail & Edit' : 'Detail belum tersedia'">
                   <i class="bi bi-search fs-5"></i>
-                </button>
-                <button class="btn btn-link text-primary p-1" @click="openUpdateModal(dauroh)" title="Edit Info Dasar">
-                  <i class="bi bi-pencil-square fs-5"></i>
                 </button>
                 <button class="btn btn-link text-danger p-1" @click="openDeleteModal(dauroh)" title="Hapus">
                   <i class="bi bi-trash fs-5"></i>
@@ -106,9 +104,8 @@
   import type { Dauroh } from "@/stores/dauroh";
   import Swal from "sweetalert2";
 
-  // Ambil config runtime
   const config = useRuntimeConfig();
-  const imgBaseUrl = ref(config.public.img || ''); // Simpan base URL
+  const imgBaseUrl = ref(config.public.img || '');
 
   const daurohStore = useDaurohStore();
 
@@ -148,29 +145,16 @@
     selectedDaurohForDetail.value = null; 
   };
   
+  // Handler jika ada update dari detail modal
+  // Karena state sudah diupdate di store secara langsung, kita tidak perlu fetch ulang
+  // Tapi bisa melakukan force update jika perlu (biasanya vue reactive handle ini)
   const handleDetailUpdated = () => {
-    daurohStore.fetchAdminTiketDauroh();
+    // daurohStore.fetchAdminTiketDauroh(); // DIHAPUS AGAR TIDAK GET ULANG
   };
 
   const openAddModal = () => {
     isEditing.value = false;
     selectedDauroh.value = null;
-    showFormModal.value = true;
-  };
-
-  const openUpdateModal = (dauroh: Dauroh) => {
-    isEditing.value = true;
-    // [FIX] Menambahkan field Quota agar terisi saat modal dibuka
-    selectedDauroh.value = { 
-      SK: dauroh.SK, 
-      Title: dauroh.Title, 
-      Place: dauroh.Place, 
-      Gender: dauroh.Gender, 
-      Price: dauroh.Price,
-      Quota_Total: dauroh.Quota_Total,
-      Quota_Ikhwan: dauroh.Quota_Ikhwan,
-      Quota_Akhwat: dauroh.Quota_Akhwat
-    };
     showFormModal.value = true;
   };
 
@@ -185,6 +169,7 @@
   }) => {
     let success = false;
     try {
+      // Disini payload sudah membawa data, store yang menghandle update local state
       if (isEditing.value && payload.daurohData.SK) {
         success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
       } else {
@@ -197,7 +182,7 @@
 
     if (success) {
       closeFormModal();
-      Swal.fire('Berhasil', 'Data event berhasil diperbarui.', 'success');
+      // Tidak perlu Swal lagi disini karena store sudah menampilkan toast/swal
     }
   };
 

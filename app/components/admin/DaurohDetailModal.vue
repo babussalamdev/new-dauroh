@@ -30,7 +30,9 @@
                     <dt class="col-4 text-truncate">Tempat</dt>
                     <dd class="col-8">{{ eventData?.Place || '-' }}</dd>
                     <dt class="col-4 text-truncate">Target</dt>
-                    <dd class="col-8 text-capitalize">{{ eventData?.Gender || 'Umum' }}</dd>
+                    <dd class="col-8 text-capitalize">
+                        {{ eventData?.Gender === 'Umum' ? 'Ikhwan, Akhwat' : eventData?.Gender }}
+                    </dd>
                     <dt class="col-4 text-truncate">Harga</dt>
                     <dd class="col-8">{{ formatCurrency(eventData?.Price) }}</dd>
                     <div class="col-12"><hr class="my-2"></div>
@@ -225,6 +227,8 @@ const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
 
+// ... (Logic convertToInputTime, convertFromInputTime, onImageError sama seperti file asli) ...
+
 const convertToInputTime = (timeStr: string) => {
   if (!timeStr) return '';
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
@@ -283,10 +287,10 @@ const formatCurrency = (value?: number | null) =>
     ? 'Gratis'
     : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-// [REVISI] Helper formatQuota untuk handle string 'non-quota'
+// Helper Label baru
 const formatQuota = (value?: number | string | null) => {
-  if (value === 'non-quota') return 'Unlimited';
-  if (value === undefined || value === null || isNaN(Number(value))) return 'Unlimited';
+  if (value === 'non-quota') return '(Non-Quota)';
+  if (value === undefined || value === null || isNaN(Number(value))) return '(Non-Quota)';
   return `${value} Peserta`;
 };
 
@@ -345,20 +349,13 @@ const handleScheduleSubmit = async () => {
     });
 
     try {
+        // Store will update state, no fetch needed
         const ok = await daurohStore.updateDaurohSchedule(eventData.value.SK, dateObject);
         if (ok) {
-            if (eventData.value) { 
-                eventData.value.Date = dateObject;
-                formState.scheduleDays = sortedDays.map((d, i) => ({ ...d, tempId: i }));
-                nextTempId = sortedDays.length; 
-            }
             Swal.fire('Berhasil', 'Jadwal berhasil disimpan.', 'success');
             emit('updated'); 
-        } else {
-            throw new Error('Gagal menyimpan jadwal (store).');
         }
     } catch (err: any) {
-        console.error("Error simpan jadwal:", err);
         Swal.fire('Error', err.message || 'Terjadi kesalahan saat menyimpan jadwal.', 'error');
     } finally {
         isSavingSchedule.value = false;
@@ -366,7 +363,6 @@ const handleScheduleSubmit = async () => {
 };
 
 const handleFileChange = (e: Event) => {
-  // ... (kode sama) ...
   photoError.value = null;
   newPhotoBase64.value = null;
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -402,7 +398,6 @@ const handleFileChange = (e: Event) => {
 };
 
 const convertToWebP = (src: string) => {
-  // ... (kode sama) ...
   isConvertingPhoto.value = true;
   const img = new Image();
   img.onload = () => {
@@ -454,30 +449,27 @@ const handlePictureSubmit = async () => {
   if (!eventData.value?.SK || !newPhotoBase64.value) return; 
   isSavingPicture.value = true;
   try {
+    // Store update state local, no fetch needed
     const success = await daurohStore.uploadEventPhoto(eventData.value.SK, newPhotoBase64.value);
     if (success) {
-        const updatedData = await daurohStore.fetchDaurohDetail(eventData.value.SK);
-        if(updatedData) {
-            previewUrl.value = updatedData.Picture ? `${imgBaseUrl.value}/${updatedData.SK}/${updatedData.Picture}.webp?t=${Date.now()}` : null;
-        } else {
-             previewUrl.value = newPhotoBase64.value; 
-        }
+        previewUrl.value = newPhotoBase64.value; 
         newPhotoBase64.value = null; 
         if (fileInput.value) fileInput.value.value = ''; 
-        Swal.fire('Berhasil', 'Picture berhasil diperbarui.', 'success');
         emit('updated'); 
-    } else {
-        throw new Error('Gagal menyimpan Picture (store).');
-    }
+    } 
   } catch (err: any) {
-    console.error("Error simpan Picture:", err);
     Swal.fire('Error', err.message || 'Gagal menyimpan Picture.', 'error');
   } finally {
     isSavingPicture.value = false;
   }
 };
 
-const openEditBasicModal = () => (showEditBasicModal.value = true);
+const openEditBasicModal = () => {
+    // Isi data untuk modal edit basic
+    if (eventData.value) {
+         showEditBasicModal.value = true;
+    }
+};
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
 
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, photoBase64: null }) => {
@@ -486,12 +478,12 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
   }
 
   isSavingBasic.value = true; 
+  // Store update state local, no fetch needed
   const success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
 
   if (success) {
     closeEditBasicModal();
     emit('updated');
-    Swal.fire('Berhasil', 'Informasi dasar berhasil diperbarui.', 'success');
   }
   isSavingBasic.value = false;
 };
