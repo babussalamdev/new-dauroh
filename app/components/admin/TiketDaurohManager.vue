@@ -41,7 +41,7 @@
               <td>{{ dauroh.Title }}</td>
               <td>{{ dauroh.Place || "-" }}</td>
               <td class="text-capitalize">
-                  {{ dauroh.Gender === 'Umum' ? 'Ikhwan, Akhwat' : (dauroh.Gender || "Ikhwan, Akhwat") }}
+                  {{ dauroh.Gender === 'ikhwan, akhwat' ? 'Umum' : dauroh.Gender}}
               </td>
               <td>{{ formatCurrency(dauroh.Price) }}</td>
               <td class="text-center">

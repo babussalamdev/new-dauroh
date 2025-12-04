@@ -298,7 +298,7 @@ export const useDaurohStore = defineStore("dauroh", {
 
       const payload: any = {
         Title: daurohData.Title, 
-        Gender: (daurohData.Gender || "Umum").toLowerCase(), 
+        Gender: (daurohData.Gender || "ikhwan, akhwat").toLowerCase(), 
         Place: daurohData.Place || "", 
         Price: String(daurohData.Price || 0), 
         AccessToken: accessTokenFromBody,
@@ -324,7 +324,7 @@ export const useDaurohStore = defineStore("dauroh", {
           const newEvent: Dauroh = {
             SK: newEventData.SK || null,
             Title: capitalizeText(newEventData.Title || daurohData.Title),
-            Gender: newEventData.Gender || daurohData.Gender || "Umum",
+            Gender: newEventData.Gender || daurohData.Gender || "ikhwan, akhwat",
             Place: newEventData.Place || daurohData.Place || "",
             Price: Number(newEventData.Price ?? daurohData.Price) || 0,
             Quota_Total: parseQuota(newEventData.Quota_Ikhwan_Akhwat ?? daurohData.Quota_Total),
@@ -458,7 +458,7 @@ export const useDaurohStore = defineStore("dauroh", {
       payload.Quota_Ikhwan = 'non-quota';
       payload.Quota_Akhwat = 'non-quota';
       payload.Quota_Ikhwan_Akhwat = 'non-quota';
-      const currentGender = currentData.Gender?.toLowerCase() || 'umum';
+      const currentGender = currentData.Gender?.toLowerCase() || 'ikhwan, akhwat';
       if (currentGender === 'ikhwan') {
           payload.Quota_Ikhwan = serializeQuota(currentData.Quota_Ikhwan);
       } else if (currentGender === 'akhwat') {

@@ -31,7 +31,7 @@
                     <dd class="col-8">{{ eventData?.Place || '-' }}</dd>
                     <dt class="col-4 text-truncate">Target</dt>
                     <dd class="col-8 text-capitalize">
-                        {{ eventData?.Gender === 'Umum' ? 'Ikhwan, Akhwat' : eventData?.Gender }}
+                        {{ eventData?.Gender === 'ikhwan, akhwat' }}
                     </dd>
                     <dt class="col-4 text-truncate">Harga</dt>
                     <dd class="col-8">{{ formatCurrency(eventData?.Price) }}</dd>
@@ -226,8 +226,6 @@ const canvas = ref<HTMLCanvasElement | null>(null);
 const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
-
-// ... (Logic convertToInputTime, convertFromInputTime, onImageError sama seperti file asli) ...
 
 const convertToInputTime = (timeStr: string) => {
   if (!timeStr) return '';

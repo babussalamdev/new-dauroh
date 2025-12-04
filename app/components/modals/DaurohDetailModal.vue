@@ -112,17 +112,17 @@ const sortedSchedule = computed(() => {
   return scheduleArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 });
 
-// [BARU] Helpers untuk Logika Tampilan Kuota
+// Helpers untuk Logika Tampilan Kuota
 const showIkhwan = computed(() => {
   if (!props.dauroh) return false;
   const g = props.dauroh.Gender?.toLowerCase() || '';
-  return g.includes('ikhwan') || g.includes('umum');
+  return g.includes('ikhwan') || g.includes('ikhwan, akhwat');
 });
 
 const showAkhwat = computed(() => {
   if (!props.dauroh) return false;
   const g = props.dauroh.Gender?.toLowerCase() || '';
-  return g.includes('akhwat') || g.includes('umum');
+  return g.includes('akhwat') || g.includes('ikhwan, akhwat');
 });
 
 const formatQuota = (val: number | 'non-quota' | undefined) => {

@@ -218,13 +218,13 @@ watch(daurohSK, async (newSk) => {
 const canShowIkhwan = computed(() => {
   if (!dauroh.value) return false;
   const g = dauroh.value.Gender?.toLowerCase() || '';
-  return g.includes('ikhwan') || g.includes('umum');
+  return g.includes('ikhwan') || g.includes('ikhwan, akhwat');
 });
 
 const canShowAkhwat = computed(() => {
   if (!dauroh.value) return false;
   const g = dauroh.value.Gender?.toLowerCase() || '';
-  return g.includes('akhwat') || g.includes('umum');
+  return g.includes('akhwat') || g.includes('ikhwan, akhwat');
 });
 
 const quotaInfo = computed(() => {

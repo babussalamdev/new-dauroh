@@ -73,13 +73,13 @@ useHead({
 });
 
 const router = useRouter();
-const { $apiBase } = useNuxtApp(); // Pakai apiBase yang sudah ada interseptornya
+const { $apiBase } = useNuxtApp();
 
 const form = reactive({
   name: '',
   email: '',
-  username: '', // Tambahan sesuai API
-  phone_number: '', // Tambahan sesuai API
+  username: '',
+  phone_number: '',
   password: '',
   confirmPassword: ''
 });
@@ -106,10 +106,7 @@ const handleRegister = async () => {
       name: form.name,
       username: form.username,
       phone_number: form.phone_number
-      // role TIDAK dikirim di sini, biarkan backend set default
     });
-
-    // Jika sukses (biasanya axios lempar error kalau status != 2xx, jadi kalau sampai sini berarti sukses)
     Swal.fire({
       title: 'Pendaftaran Berhasil!',
       text: 'Silakan login dengan akun baru Anda.',
@@ -122,7 +119,6 @@ const handleRegister = async () => {
 
   } catch (err) {
     console.error(err);
-    // Ambil pesan error dari response backend jika ada
     error.value = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan saat mendaftar.';
   } finally {
     loading.value = false;

@@ -3,8 +3,8 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Tambah Kupon</h5>
-          <button type="button" class="btn-close" @click="close" :disabled="store.loadingGenerate"></button>
+          <h5 class="modal-title">Tambah Vouchers</h5>
+          <button type="button" class="btn-close" @click="close" :disabled="store.loading"></button>
         </div>
 
         <div class="modal-body">
@@ -12,12 +12,12 @@
             <div class="row g-3">
               
               <div class="col-12">
-                <label for="jumlah" class="form-label">Jumlah Kupon</label>
+                <label for="jumlah" class="form-label">Jumlah Vouchers</label>
                 <input 
                   type="number" 
                   class="form-control" 
                   id="jumlah" 
-                  v-model.number="formState.jumlah" 
+                  v-model.number="store.form.jumlah" 
                   min="1" 
                   max="100" 
                   placeholder="Contoh: 5"
@@ -33,7 +33,7 @@
                     type="number" 
                     class="form-control" 
                     id="nominal" 
-                    v-model.number="formState.nominal" 
+                    v-model.number="store.form.nominal" 
                     min="0" 
                     placeholder="Contoh: 250000"
                     required
@@ -51,7 +51,7 @@
                     type="number" 
                     class="form-control" 
                     id="hari" 
-                    v-model.number="formState.hari" 
+                    v-model.number="store.form.hari" 
                     min="1" 
                     placeholder="Contoh: 14" 
                     required
@@ -65,20 +65,20 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="close" :disabled="store.loadingGenerate">Close</button>
+          <button type="button" class="btn btn-secondary" @click="close" :disabled="store.loading">Close</button>
           <button
             type="submit"
             form="voucherGenerateForm"
             class="btn btn-primary"
-            :disabled="store.loadingGenerate"
+            :disabled="store.loading"
           >
             <span
-              v-if="store.loadingGenerate"
+              v-if="store.loading"
               class="spinner-border spinner-border-sm me-1"
               role="status"
               aria-hidden="true"
             ></span>
-            {{ store.loadingGenerate ? 'Memproses...' : 'Submit' }}
+            {{ store.loading ? 'Memproses...' : 'Submit' }}
           </button>
         </div>
       </div>
@@ -89,32 +89,22 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { watch } from 'vue';
 import { useVoucherStore } from '@/stores/voucher';
-import type { GenerateVoucherPayload } from '@/stores/voucher';
 
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(['close']);
 const store = useVoucherStore();
 
-// State awal form sesuai requirement
-const getInitialFormState = (): GenerateVoucherPayload => ({
-  jumlah: 1,
-  nominal: 0,
-  hari: 14, // Default 14 hari
-});
-
-const formState = reactive(getInitialFormState());
-
-// Reset form tiap kali modal dibuka
+// Reset form di Store saat modal dibuka
 watch(() => props.show, (isOpen) => {
   if (isOpen) {
-    Object.assign(formState, getInitialFormState());
+    store.resetForm();
   }
 });
 
 const close = () => {
-  if (!store.loadingGenerate) emit('close');
+  if (!store.loading) emit('close');
 };
 
 const save = async () => {
@@ -124,7 +114,9 @@ const save = async () => {
        return;
    }
 
-  const success = await store.generateVouchers(formState);
+  // Panggil action store (tanpa parameter, karena data ambil dari state store.form)
+  const success = await store.inputVoucher();
+  
   if (success) {
     close();
   }
@@ -132,6 +124,9 @@ const save = async () => {
 </script>
 
 <style scoped>
+/* Menggunakan style asli */
+@import url("~/assets/css/components/modals.css");
+
 .modal { 
   background-color: rgba(0, 0, 0, 0.5); 
   z-index: 1060 !important;

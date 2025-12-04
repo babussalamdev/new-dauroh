@@ -28,7 +28,7 @@
                   <option disabled value="">Pilih target peserta</option>
                   <option value="Ikhwan">Ikhwan</option>
                   <option value="Akhwat">Akhwat</option>
-                  <option value="Umum">Ikhwan, Akhwat</option> </select>
+                  <option value="ikhwan, akhwat">Ikhwan, Akhwat</option> </select>
               </div>
 
               <div class="col-md-6">
@@ -51,7 +51,7 @@
                     <p class="text-muted text-xs mb-3">Check "(Non-Quota)" untuk tanpa batas kuota. Minimal kuota 1 (tidak bisa 0).</p>
                     
                     <div class="row g-3">
-                      <div class="col-12" v-if="formState.Gender === 'Umum'">
+                      <div class="col-12" v-if="formState.Gender === 'ikhwan, akhwat'">
                         <label for="quotaTotal" class="form-label small fw-bold">Total Kuota (Global) *</label>
                         <div class="input-group">
                           <input 
@@ -78,7 +78,7 @@
                         </div>
                       </div>
 
-                      <div class="col-6" v-if="formState.Gender === 'Ikhwan' || formState.Gender === 'Umum'">
+                      <div class="col-6" v-if="formState.Gender === 'Ikhwan' || formState.Gender === 'ikhwan, akhwat'">
                         <label for="quotaIkhwan" class="form-label small">Kuota Ikhwan *</label>
                         <div class="input-group">
                           <input 
@@ -98,7 +98,7 @@
                         </div>
                       </div>
 
-                      <div class="col-6" v-if="formState.Gender === 'Akhwat' || formState.Gender === 'Umum'">
+                      <div class="col-6" v-if="formState.Gender === 'Akhwat' || formState.Gender === 'ikhwan, akhwat'">
                         <label for="quotaAkhwat" class="form-label small">Kuota Akhwat *</label>
                         <div class="input-group">
                           <input 
@@ -203,23 +203,18 @@ const validateMinOne = (field: 'total' | 'ikhwan' | 'akhwat') => {
     }
 };
 
-// [BARU] Menghitung selisih kuota (Hanya berlaku jika Gender = Umum dan Total bukan unlimited)
 const remainingQuota = computed(() => {
   return quotaValues.total - (quotaValues.ikhwan + quotaValues.akhwat);
 });
-
-// Blokir simpan jika alokasi salah (Hanya untuk Umum)
 const isQuotaMismatch = computed(() => {
-  if (formState.Gender !== 'Umum') return false; 
+  if (formState.Gender !== 'ikhwan, akhwat') return false; 
   if (isUnlimited.total || isUnlimited.ikhwan || isUnlimited.akhwat) return false;
   
   return remainingQuota.value !== 0;
 });
-
 const showAllocationWarning = computed(() => {
-  return formState.Gender === 'Umum' && !isUnlimited.total && !isUnlimited.ikhwan && !isUnlimited.akhwat;
+  return formState.Gender === 'ikhwan, akhwat' && !isUnlimited.total && !isUnlimited.ikhwan && !isUnlimited.akhwat;
 });
-
 const allocationMessage = computed(() => {
   if (remainingQuota.value === 0) return 'Alokasi Pas (Siap Simpan)';
   if (remainingQuota.value > 0) return `Kurang ${remainingQuota.value} lagi`;
