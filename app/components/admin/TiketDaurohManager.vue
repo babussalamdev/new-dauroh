@@ -3,7 +3,7 @@
     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
       <h5 class="mb-0">Manajemen Event Dauroh</h5>
       <button class="btn btn-primary btn-sm" @click="openAddModal">
-        <i class="bi bi-plus-lg me-1"></i>
+        <i></i>
         Tambah Event
       </button>
     </div>
@@ -41,7 +41,7 @@
               <td>{{ dauroh.Title }}</td>
               <td>{{ dauroh.Place || "-" }}</td>
               <td class="text-capitalize">
-                  {{ dauroh.Gender === 'ikhwan, akhwat' ? 'Umum' : dauroh.Gender}}
+                  {{ dauroh.Gender}}
               </td>
               <td>{{ formatCurrency(dauroh.Price) }}</td>
               <td class="text-center">

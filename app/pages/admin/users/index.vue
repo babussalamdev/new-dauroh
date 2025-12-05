@@ -2,7 +2,7 @@
   <div>
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
+       <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
         <li class="breadcrumb-item active" aria-current="page">Manajemen User</li>
       </ol>
     </nav>

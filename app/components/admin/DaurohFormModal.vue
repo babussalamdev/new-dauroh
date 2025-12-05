@@ -28,7 +28,7 @@
                   <option disabled value="">Pilih target peserta</option>
                   <option value="Ikhwan">Ikhwan</option>
                   <option value="Akhwat">Akhwat</option>
-                  <option value="ikhwan, akhwat">Ikhwan, Akhwat</option> </select>
+                  <option value="ikhwan, akhwat">Ikhwan, Akhwat</option></select>
               </div>
 
               <div class="col-md-6">
@@ -256,8 +256,19 @@ watch(() => props.show, (newVal) => {
       formState.Title = props.dauroh.Title || '';
       formState.Place = props.dauroh.Place || '';
       
-      const rawGender = props.dauroh.Gender || '';
-      formState.Gender = rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase();
+      // --- [FIX] Normalisasi Gender untuk menyesuaikan dengan value di <option> ---
+      const rawGender = (props.dauroh.Gender || '').toLowerCase();
+      
+      if (rawGender.includes('ikhwan') && rawGender.includes('akhwat')) {
+          formState.Gender = 'ikhwan, akhwat'; // Value untuk Umum (sesuai <option>)
+      } else if (rawGender === 'ikhwan') {
+          formState.Gender = 'Ikhwan';
+      } else if (rawGender === 'akhwat') {
+          formState.Gender = 'Akhwat';
+      } else {
+          formState.Gender = '';
+      }
+      // --------------------------------------------------------------------------
       
       formState.Price = props.dauroh.Price || 0;
 
@@ -266,7 +277,7 @@ watch(() => props.show, (newVal) => {
       const qAkhwat = props.dauroh.Quota_Akhwat;
 
       if (qTotal === 'non-quota') { isUnlimited.total = true; quotaValues.total = 0; }
-      else { isUnlimited.total = false; quotaValues.total = Number(qTotal) || 1; } // Default 1
+      else { isUnlimited.total = false; quotaValues.total = Number(qTotal) || 1; } 
 
       if (qIkhwan === 'non-quota') { isUnlimited.ikhwan = true; quotaValues.ikhwan = 0; }
       else { isUnlimited.ikhwan = false; quotaValues.ikhwan = Number(qIkhwan) || 1; }

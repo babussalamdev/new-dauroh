@@ -31,18 +31,26 @@
                     <dd class="col-8">{{ eventData?.Place || '-' }}</dd>
                     <dt class="col-4 text-truncate">Target</dt>
                     <dd class="col-8 text-capitalize">
-                        {{ eventData?.Gender === 'ikhwan, akhwat' }}
+                        {{ eventData?.Gender === 'ikhwan, akhwat' ? 'Umum (Ikhwan & Akhwat)' : eventData?.Gender }}
                     </dd>
                     <dt class="col-4 text-truncate">Harga</dt>
                     <dd class="col-8">{{ formatCurrency(eventData?.Price) }}</dd>
                     <div class="col-12"><hr class="my-2"></div>
                     
-                    <dt class="col-4 text-truncate">Total Kuota</dt>
-                    <dd class="col-8 fw-bold text-primary">{{ formatQuota(eventData?.Quota_Total) }}</dd>
-                    <dt class="col-4 text-truncate">Ikhwan</dt>
-                    <dd class="col-8">{{ formatQuota(eventData?.Quota_Ikhwan) }}</dd>
-                    <dt class="col-4 text-truncate">Akhwat</dt>
-                    <dd class="col-8">{{ formatQuota(eventData?.Quota_Akhwat) }}</dd>
+                    <template v-if="showTotal">
+                        <dt class="col-4 text-truncate">Total Kuota</dt>
+                        <dd class="col-8 fw-bold text-primary">{{ formatQuota(eventData?.Quota_Total) }}</dd>
+                    </template>
+                    
+                    <template v-if="showIkhwan">
+                        <dt class="col-4 text-truncate">Ikhwan</dt>
+                        <dd class="col-8">{{ formatQuota(eventData?.Quota_Ikhwan) }}</dd>
+                    </template>
+
+                    <template v-if="showAkhwat">
+                        <dt class="col-4 text-truncate">Akhwat</dt>
+                        <dd class="col-8">{{ formatQuota(eventData?.Quota_Akhwat) }}</dd>
+                    </template>
                   </dl>
                   
                   <button @click="openEditBasicModal" class="btn btn-outline-secondary btn-sm w-100 mt-3">
@@ -219,6 +227,18 @@ const showEditBasicModal = ref(false);
 let nextTempId = 0;
 
 const eventData = computed(() => props.dauroh); 
+
+// [REVISI] Helpers untuk visibilitas kuota di UI Detail
+const showTotal = computed(() => eventData.value?.Gender?.toLowerCase().includes('ikhwan, akhwat'));
+const showIkhwan = computed(() => {
+    const g = eventData.value?.Gender?.toLowerCase() || '';
+    return g === 'ikhwan' || g.includes('ikhwan, akhwat');
+});
+const showAkhwat = computed(() => {
+    const g = eventData.value?.Gender?.toLowerCase() || '';
+    return g === 'akhwat' || g.includes('ikhwan, akhwat');
+});
+// [END REVISI]
 
 const formState = reactive({ scheduleDays: [] as ScheduleDayForm[] });
 const fileInput = ref<HTMLInputElement | null>(null);

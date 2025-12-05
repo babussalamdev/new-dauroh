@@ -1,6 +1,5 @@
 .admin-sidebar {
   background-color: #212529;
-  color: white;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -11,6 +10,7 @@
   transition: transform 0.3s ease-in-out;
   z-index: 1030;
   border-right: 1px solid var(--bs-border-color);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
 }
 .sidebar-header {
   padding: 1rem;
