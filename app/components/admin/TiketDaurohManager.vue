@@ -12,17 +12,22 @@
         <table class="table table-bordered table-hover table-sm align-middle fs-sm">
           <thead class="table-light">
             <tr>
-              <th scope="col" style="width: 5%">SK</th>
-              <th scope="col" style="width: 10%" class="text-center">Picture</th>
-              <th scope="col">Judul Event</th>
+              <th scope="col" style="width: 15%" class="text-center">Tanggal</th> 
+              <th scope="col" style="width: 5%" class="text-center">Picture</th>
+              <th scope="col" style="width: 25%">Judul Event</th>
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
               <th scope="col">Harga</th>
-              <th scope="col" class="text-center" style="width: 10%">Aksi</th> </tr>
+              <th scope="col" class="text-center" style="width: 8%">Aksi</th> 
+            </tr>
           </thead>
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
             <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.SK || dauroh.Title">
-              <th scope="row">{{ dauroh.SK }}</th>
+              
+              <th scope="row" class="fw-normal">
+                {{ formatEventDates(dauroh.Date) }}
+              </th>
+
               <td class="text-center">
                 <img
                   :src="dauroh.Picture ? `${imgBaseUrl}/${dauroh.SK}/${dauroh.Picture}.webp?t=${Date.now()}` : ''"
@@ -130,6 +135,21 @@
     }).format(value);
   };
 
+  // [REVISI] Helper function untuk format tanggal event
+  const formatEventDates = (dateObj: any) => {
+    if (!dateObj || typeof dateObj !== 'object' || Object.keys(dateObj).length === 0) {
+      return '-';
+    }
+    // Ambil value dari object Date, map ke properti .date, lalu filter yang kosong
+    const dates = Object.values(dateObj)
+      .map((day: any) => day.date)
+      .filter(Boolean);
+
+    if (dates.length === 0) return '-';
+
+    // Gabungkan tanggal dengan koma (contoh: "12/10/2024, 13/10/2024")
+    return dates.join(', ');
+  };
 
   const openDetailModal = (dauroh: Dauroh | null) => {
     if (dauroh && dauroh.SK) {
@@ -145,11 +165,8 @@
     selectedDaurohForDetail.value = null; 
   };
   
-  // Handler jika ada update dari detail modal
-  // Karena state sudah diupdate di store secara langsung, kita tidak perlu fetch ulang
-  // Tapi bisa melakukan force update jika perlu (biasanya vue reactive handle ini)
   const handleDetailUpdated = () => {
-    // daurohStore.fetchAdminTiketDauroh(); // DIHAPUS AGAR TIDAK GET ULANG
+    // State sudah diupdate di store, tidak perlu fetch ulang
   };
 
   const openAddModal = () => {
@@ -169,7 +186,6 @@
   }) => {
     let success = false;
     try {
-      // Disini payload sudah membawa data, store yang menghandle update local state
       if (isEditing.value && payload.daurohData.SK) {
         success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
       } else {
@@ -182,7 +198,6 @@
 
     if (success) {
       closeFormModal();
-      // Tidak perlu Swal lagi disini karena store sudah menampilkan toast/swal
     }
   };
 

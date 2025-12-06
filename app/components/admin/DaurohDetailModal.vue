@@ -23,8 +23,9 @@
                 <div class="card-body p-3">
                   
                   <dl class="row mb-0 fs-sm">
-                    <dt class="col-4 text-truncate">SK</dt>
-                    <dd class="col-8">{{ eventData?.SK }}</dd>
+                    <dt class="col-4 text-truncate">Tanggal</dt>
+                    <dd class="col-8">{{ formatEventDates(eventData?.Date) }}</dd>
+
                     <dt class="col-4 text-truncate">Judul</dt>
                     <dd class="col-8">{{ eventData?.Title }}</dd>
                     <dt class="col-4 text-truncate">Tempat</dt>
@@ -228,7 +229,6 @@ let nextTempId = 0;
 
 const eventData = computed(() => props.dauroh); 
 
-// [REVISI] Helpers untuk visibilitas kuota di UI Detail
 const showTotal = computed(() => eventData.value?.Gender?.toLowerCase().includes('ikhwan, akhwat'));
 const showIkhwan = computed(() => {
     const g = eventData.value?.Gender?.toLowerCase() || '';
@@ -238,7 +238,6 @@ const showAkhwat = computed(() => {
     const g = eventData.value?.Gender?.toLowerCase() || '';
     return g === 'akhwat' || g.includes('ikhwan, akhwat');
 });
-// [END REVISI]
 
 const formState = reactive({ scheduleDays: [] as ScheduleDayForm[] });
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -305,11 +304,63 @@ const formatCurrency = (value?: number | null) =>
     ? 'Gratis'
     : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-// Helper Label baru
 const formatQuota = (value?: number | string | null) => {
   if (value === 'non-quota') return '(Non-Quota)';
   if (value === undefined || value === null || isNaN(Number(value))) return '(Non-Quota)';
   return `${value} Peserta`;
+};
+
+// [REVISI FIX] Fungsi format tanggal dengan perbaikan type safety
+const formatEventDates = (dateObj: any) => {
+  if (!dateObj || typeof dateObj !== 'object') return '-';
+  
+  // Pastikan data valid string
+  const rawDates = Object.values(dateObj)
+    .map((d: any) => d?.date)
+    .filter((d: any) => typeof d === 'string' && d) as string[]; 
+
+  const uniqueDates = [...new Set(rawDates)].sort();
+
+  if (uniqueDates.length === 0) return '-';
+
+  // Helper parse YYYY-MM-DD (dengan fallback untuk menghindari error TS)
+  const parse = (s: string) => {
+    const parts = s.split('-');
+    return { 
+      y: parseInt(parts[0] || '0'), 
+      m: parseInt(parts[1] || '0') - 1, 
+      d: parseInt(parts[2] || '0') 
+    };
+  };
+
+  const parsed = uniqueDates.map(parse);
+  const first = parsed[0];
+  
+  // Tambahkan pengecekan 'first' agar TS tidak complain 'possibly undefined'
+  if (!first) return '-';
+
+  const sameMonthYear = parsed.every(d => d.y === first.y && d.m === first.m);
+
+  if (sameMonthYear) {
+     const days = parsed.map(d => d.d);
+     const min = Math.min(...days);
+     const max = Math.max(...days);
+     
+     const monthYear = new Date(first.y, first.m, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+     const isConsecutive = (max - min + 1) === days.length;
+
+     if (days.length > 1 && isConsecutive) {
+        return `${min}-${max} ${monthYear}`;
+     } else {
+        return `${days.join(', ')} ${monthYear}`;
+     }
+  }
+
+  return uniqueDates.map(s => {
+     const p = parse(s);
+     return new Date(p.y, p.m, p.d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  }).join(', ');
 };
 
 watch(() => props.show, (newShow) => {
