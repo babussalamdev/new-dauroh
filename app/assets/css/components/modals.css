@@ -12,3 +12,11 @@
 .modal-body {
   max-height: 50vh;
 }
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0.5rem; /* Kurangi margin modal di HP */
+  }
+  .modal-content {
+    border-radius: 0.5rem; /* Radius jangan kegedean */
+  }
+}

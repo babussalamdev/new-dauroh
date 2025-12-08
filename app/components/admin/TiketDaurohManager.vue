@@ -24,7 +24,7 @@
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">
             <tr v-for="dauroh in daurohStore.filteredAdminTiketDauroh" :key="dauroh.SK || dauroh.Title">
               
-              <th scope="row" class="fw-normal">
+              <th scope="row" class="fw-normal text-center">
                 {{ formatEventDates(dauroh.Date) }}
               </th>
 
@@ -135,20 +135,42 @@
     }).format(value);
   };
 
-  // [REVISI] Helper function untuk format tanggal event
   const formatEventDates = (dateObj: any) => {
-    if (!dateObj || typeof dateObj !== 'object' || Object.keys(dateObj).length === 0) {
-      return '-';
+    if (!dateObj || typeof dateObj !== 'object') return '-';
+    
+    // 1. Ambil array tanggal (string)
+    const rawDates = Object.values(dateObj)
+      .map((d: any) => d?.date)
+      .filter((d: any) => typeof d === 'string' && d) as string[]; 
+
+    // 2. Buat objek Date valid & urutkan
+    const validDates = rawDates
+      .map(dateStr => new Date(dateStr))
+      .filter(d => !isNaN(d.getTime())) // Hapus invalid date
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (validDates.length === 0) return '-';
+
+    const first = validDates[0]!;
+
+    // Helper formatting local (Indonesia)
+    const toDateStr = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const toMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+    // 3. Logic Rentang Tanggal
+    // Cek apakah semua tanggal ada di bulan dan tahun yang sama
+    const isSameMonthYear = validDates.every(d => d.getMonth() === first.getMonth() && d.getFullYear() === first.getFullYear());
+
+    if (isSameMonthYear) {
+       // Ambil angka harinya aja, lalu join pake koma
+       const days = validDates.map(d => d.getDate()); 
+       const monthYear = toMonthYear(first);
+
+       return `${days.join(', ')} ${monthYear}`;
     }
-    // Ambil value dari object Date, map ke properti .date, lalu filter yang kosong
-    const dates = Object.values(dateObj)
-      .map((day: any) => day.date)
-      .filter(Boolean);
 
-    if (dates.length === 0) return '-';
-
-    // Gabungkan tanggal dengan koma (contoh: "12/10/2024, 13/10/2024")
-    return dates.join(', ');
+    // Fallback: Jika beda bulan/tahun, tampilkan tanggal lengkap dipisah koma
+    return validDates.map(toDateStr).join(', ');
   };
 
   const openDetailModal = (dauroh: Dauroh | null) => {
@@ -166,7 +188,6 @@
   };
   
   const handleDetailUpdated = () => {
-    // State sudah diupdate di store, tidak perlu fetch ulang
   };
 
   const openAddModal = () => {

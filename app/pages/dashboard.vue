@@ -6,7 +6,7 @@
           
           <div class="col-lg-12">
             
-            <div class="card shadow-sm mb-4 border-0">
+            <div class="card h-100 border shadow-sm overflow-hidden">
               <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center"> 
                 <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Dauroh Aktif</h5>
                 <span class="badge bg-primary rounded-pill">{{ upcomingTickets.length }} Event</span>
@@ -15,20 +15,25 @@
                 <div v-if="upcomingTickets.length > 0" class="row g-3">
                   <div v-for="(ticket, index) in upcomingTickets" :key="'card-'+index" class="col-md-6 col-lg-4">
                     <div class="card h-100 border shadow-sm overflow-hidden">
-                      <div class="d-flex">
-                        <img 
-                          :src="ticket.dauroh.Picture ? `${imgBaseUrl}/${ticket.dauroh. SK}/${ticket.dauroh.Picture}.webp` : ''" 
-                          class="bg-light"
-                          style="width: 100px; object-fit: cover;" 
-                          :alt="ticket.dauroh.Title"
-                        >
-                        <div class="p-3 d-flex flex-column justify-content-center">
-                          <h6 class="fw-bold mb-1 text-truncate-2">{{ ticket.dauroh.Title }}</h6>
-                          <p class="text-muted mb-1 small"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
-                          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill w-auto align-self-start">
-                            Akan Datang
-                          </span>
-                        </div>
+                      <div class="d-flex flex-column flex-sm-row h-100">
+                      <NuxtImg 
+                      v-if="ticket.dauroh.Picture"
+                      :src="`${imgBaseUrl}/${ticket.dauroh.SK}/${ticket.dauroh.Picture}.webp`" 
+                      class="bg-light ticket-img"
+                      :alt="ticket.dauroh.Title"
+                      loading="lazy"
+                      format="webp"
+                      />
+                      <div v-else class="bg-light ticket-img d-flex align-items-center justify-content-center text-muted">
+                        <i class="bi bi-image"></i>
+                      </div>
+                    <div class="p-3 d-flex flex-column justify-content-center w-100">
+                      <h6 class="fw-bold mb-1 text-truncate-2">{{ ticket.dauroh.Title }}</h6>
+                      <p class="text-muted mb-1 small"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill w-auto align-self-start">
+                        Akan Datang
+                      </span>
+                    </div>
                       </div>
                     </div>
                   </div>
@@ -42,7 +47,7 @@
               </div>
             </div>
 
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm border-0 mt-4">
               <div class="card-header bg-white py-3">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
               </div>
@@ -143,5 +148,19 @@ const formatCurrency = (val) => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.ticket-img {
+  width: 100%;
+  height: 160px; /* Atur tinggi gambar di HP */
+  object-fit: cover;
+}
+
+/* Tampilan Tablet & Desktop (min-width: 576px): Gambar balik ke kiri */
+@media (min-width: 576px) {
+  .ticket-img {
+    width: 120px !important; /* Lebar fix di desktop */
+    height: 100% !important; /* Tinggi ngikutin konten */
+    min-height: 140px; /* Jaga-jaga biar gak gepeng kalau konten dikit */
+  }
 }
 </style>

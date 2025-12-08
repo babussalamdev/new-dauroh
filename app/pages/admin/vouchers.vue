@@ -133,12 +133,6 @@ const formatCurrency = (val: number) => {
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
 
-.table-primary {
-    --bs-table-bg: #009B4D;
-    --bs-table-color: #fff;
-    border-color: transparent;
-}
-
 .table > :not(caption) > * > * {
     border-bottom-width: 1px; 
 }

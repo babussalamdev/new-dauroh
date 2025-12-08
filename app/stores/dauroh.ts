@@ -2,13 +2,30 @@ import { defineStore } from "pinia";
 import { useToastStore } from "./toast";
 import { useNuxtApp, useCookie } from "#app";
 
-// --- Types ---
+// --- Interfaces & Types ---
+
+// 1. [BARU] Interface untuk Data Mentah dari API (Raw Response)
+// Ini kontrak mati sama Backend. Kalau backend ganti, ini yang diupdate.
+export interface ApiDaurohRaw {
+  SK: string;
+  Title: string;
+  Gender: string;
+  Date?: { [key: string]: DaurohDayDetail };
+  Place: string;
+  Price: number | string;
+  Quota_Ikhwan_Akhwat: number | string | null; // Nama field asli dari backend
+  Quota_Ikhwan: number | string | null;
+  Quota_Akhwat: number | string | null;
+  Picture?: string;
+}
+
 export interface DaurohDayDetail {
   date: string;
   start_time: string;
   end_time: string;
 }
 
+// 2. Interface Data Matang (Yang dipake di UI)
 export interface Dauroh {
   SK: string | null;
   id?: number | null;
@@ -39,13 +56,13 @@ export interface DaurohSchedulePayload {
 }
 
 // --- Helpers (Utility) ---
-const parseQuota = (val: any): number | 'non-quota' => {
+const parseQuota = (val: number | string | null | undefined): number | 'non-quota' => {
   if (val === 'non-quota' || val === 'non quota') return 'non-quota';
   const num = Number(val);
   return isNaN(num) ? 0 : num;
 };
 
-const serializeQuota = (val: any): string => {
+const serializeQuota = (val: number | string | 'non-quota'): string => {
   if (val === 'non-quota') return 'non-quota';
   return String(val);
 };
@@ -55,8 +72,8 @@ const capitalizeText = (text: string): string => {
   return text.toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
-// Mapper: Mengubah respon API mentah menjadi format interface Dauroh
-const mapApiToDauroh = (event: any): Dauroh => ({
+// Mapper: Mengubah data mentah (ApiDaurohRaw) ke format UI (Dauroh)
+const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
   SK: event.SK,
   Title: capitalizeText(event.Title || ""),
   Gender: event.Gender || "",
@@ -69,10 +86,8 @@ const mapApiToDauroh = (event: any): Dauroh => ({
   Picture: event.Picture || undefined,
 });
 
-// Payload Builder: Menyusun data untuk dikirim ke API (Add/Update)
-// [REVISI] Logika diperketat agar hanya mengirim field yang sesuai Gender
+// Payload Builder
 const createEventPayload = (data: DaurohBasicData, accessToken: string, existingDate: any = {}) => {
-  // Base Payload (Data yang selalu ada)
   const payload: any = {
     Title: data.Title,
     Gender: (data.Gender || "ikhwan, akhwat").toLowerCase(),
@@ -84,13 +99,10 @@ const createEventPayload = (data: DaurohBasicData, accessToken: string, existing
 
   const g = payload.Gender;
 
-  // Logic Seleksi Field Kuota
   if (g === 'ikhwan') {
     payload.Quota_Ikhwan = serializeQuota(data.Quota_Ikhwan);
-    
   } else if (g === 'akhwat') {
     payload.Quota_Akhwat = serializeQuota(data.Quota_Akhwat);
-    
   } else {
     payload.Quota_Ikhwan_Akhwat = serializeQuota(data.Quota_Total);
     payload.Quota_Ikhwan = serializeQuota(data.Quota_Ikhwan);
@@ -150,7 +162,8 @@ export const useDaurohStore = defineStore("dauroh", {
       this.loading.tiketDauroh = true;
       try {
         const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get("/get-view?type=event");
+        // Beri tahu TS kalau responnya array of ApiDaurohRaw
+        const res = await $apiBase.get<ApiDaurohRaw[]>("/get-view?type=event");
         this.tiketDauroh = Array.isArray(res.data) ? res.data.map(mapApiToDauroh) : [];
       } catch (error) { console.error(error); } 
       finally { this.loading.tiketDauroh = false; }
@@ -161,7 +174,7 @@ export const useDaurohStore = defineStore("dauroh", {
       this.loading.adminTiketDauroh = true;
       try {
         const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get("/get-default?type=event");
+        const res = await $apiBase.get<ApiDaurohRaw[]>("/get-default?type=event");
         this.adminTiketDauroh = Array.isArray(res.data) ? res.data.map(mapApiToDauroh) : [];
       } catch (error) { console.error(error); } 
       finally { this.loading.adminTiketDauroh = false; }
@@ -172,11 +185,14 @@ export const useDaurohStore = defineStore("dauroh", {
       this.currentPublicDaurohDetail = null;
       try {
         const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get(`/get-view?type=event&sk=${SK}`);
+        const res = await $apiBase.get<ApiDaurohRaw[] | ApiDaurohRaw>(`/get-view?type=event&sk=${SK}`);
         
-        let eventRaw = res.data;
-        if (Array.isArray(eventRaw)) {
-          eventRaw = eventRaw.find((e: any) => String(e.SK) === String(SK)) || eventRaw[0];
+        let eventRaw: ApiDaurohRaw | undefined;
+        // Handle jika API balikin array atau object tunggal
+        if (Array.isArray(res.data)) {
+          eventRaw = res.data.find((e) => String(e.SK) === String(SK)) || res.data[0];
+        } else {
+          eventRaw = res.data;
         }
 
         if (eventRaw) this.currentPublicDaurohDetail = mapApiToDauroh(eventRaw);
@@ -195,11 +211,13 @@ export const useDaurohStore = defineStore("dauroh", {
       this.currentDaurohDetail = null;
       try {
         const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get(`/get-default?type=event&sk=${SK}`);
+        const res = await $apiBase.get<ApiDaurohRaw[] | ApiDaurohRaw>(`/get-default?type=event&sk=${SK}`);
         
-        let eventRaw = res.data;
-        if (Array.isArray(eventRaw)) {
-          eventRaw = eventRaw.find((e: any) => String(e.SK) === String(SK)) || eventRaw[0];
+        let eventRaw: ApiDaurohRaw | undefined;
+        if (Array.isArray(res.data)) {
+          eventRaw = res.data.find((e) => String(e.SK) === String(SK)) || res.data[0];
+        } else {
+          eventRaw = res.data;
         }
 
         if (eventRaw) this.currentDaurohDetail = mapApiToDauroh(eventRaw);
@@ -210,7 +228,6 @@ export const useDaurohStore = defineStore("dauroh", {
     },
 
     // --- Modification Actions (Admin) ---
-
     async addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, "SK">): Promise<boolean> {
       const token = useCookie("AccessToken").value;
       if (!token) return false;
@@ -222,11 +239,23 @@ export const useDaurohStore = defineStore("dauroh", {
         const { $apiBase } = useNuxtApp();
         const payload = createEventPayload(daurohData, token); 
         
-        const res = await $apiBase.post("/input-default?type=event", payload);
+        const res = await $apiBase.post<ApiDaurohRaw>("/input-default?type=event", payload);
         const newEventData = res.data;
 
         if (newEventData && newEventData.SK) {
-          const mergedData = { ...daurohData, ...newEventData };
+          // Merge data input lokal + response server
+          const mergedData: ApiDaurohRaw = { 
+            ...newEventData,
+            // Pastikan field wajib ada (fallback ke input lokal)
+            Title: newEventData.Title || daurohData.Title,
+            Gender: newEventData.Gender || daurohData.Gender,
+            Place: newEventData.Place || daurohData.Place,
+            Price: newEventData.Price ?? daurohData.Price,
+            Quota_Ikhwan_Akhwat: newEventData.Quota_Ikhwan_Akhwat ?? serializeQuota(daurohData.Quota_Total),
+            Quota_Ikhwan: newEventData.Quota_Ikhwan ?? serializeQuota(daurohData.Quota_Ikhwan),
+            Quota_Akhwat: newEventData.Quota_Akhwat ?? serializeQuota(daurohData.Quota_Akhwat),
+          };
+          
           this.adminTiketDauroh.unshift(mapApiToDauroh(mergedData));
           
           toast.showToast({ message: "Event baru berhasil ditambahkan.", type: "success" });
@@ -234,7 +263,8 @@ export const useDaurohStore = defineStore("dauroh", {
         }
         return false;
       } catch (error: any) {
-        toast.showToast({ message: `Gagal: ${error.message}`, type: "danger" });
+        const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Gagal menambah event.";
+        toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
         return false;
       } finally {
         this.loading.savingBasic = false;
@@ -256,8 +286,9 @@ export const useDaurohStore = defineStore("dauroh", {
 
         await $apiBase.put(`/update-default?type=event&sk=${daurohData.SK}`, payload);
         
-        if (currentEvent) {
-          Object.assign(currentEvent, {
+        // Update Optimistic UI
+        const updateState = (target: Dauroh) => {
+          Object.assign(target, {
             Title: capitalizeText(daurohData.Title),
             Place: daurohData.Place,
             Price: daurohData.Price,
@@ -266,24 +297,16 @@ export const useDaurohStore = defineStore("dauroh", {
             Quota_Ikhwan: daurohData.Quota_Ikhwan,
             Quota_Akhwat: daurohData.Quota_Akhwat
           });
-        }
-        
-        if (this.currentDaurohDetail?.SK === daurohData.SK) {
-           Object.assign(this.currentDaurohDetail, {
-             Title: capitalizeText(daurohData.Title),
-             Place: daurohData.Place,
-             Price: daurohData.Price,
-             Gender: daurohData.Gender,
-             Quota_Total: daurohData.Quota_Total,
-             Quota_Ikhwan: daurohData.Quota_Ikhwan,
-             Quota_Akhwat: daurohData.Quota_Akhwat
-           });
-        }
+        };
+
+        if (currentEvent) updateState(currentEvent);
+        if (this.currentDaurohDetail?.SK === daurohData.SK) updateState(this.currentDaurohDetail);
 
         toast.showToast({ message: `Info dasar Event berhasil diperbarui.`, type: "success" });
         return true;
       } catch (error: any) {
-        toast.showToast({ message: `Gagal: ${error.message}`, type: "danger" });
+        const msg = error.response?.data?.message || error.response?.data?.error || error.message || "Gagal memperbarui event.";
+        toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
         return false;
       } finally {
         this.loading.savingBasic = false;
@@ -305,13 +328,16 @@ export const useDaurohStore = defineStore("dauroh", {
 
       try {
         const { $apiBase } = useNuxtApp();
-        const payload = createEventPayload(currentData as DaurohBasicData, token, scheduleData);
+        // Casting ke BasicData karena kita cuma butuh field dasarnya buat payload
+        const payload = createEventPayload(currentData as unknown as DaurohBasicData, token, scheduleData);
 
         await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
         
-        const target = this.adminTiketDauroh.find(d => d.SK === eventSK);
-        if (target) target.Date = scheduleData;
-        if (this.currentDaurohDetail?.SK === eventSK) this.currentDaurohDetail.Date = scheduleData;
+        const updateSchedule = (target: Dauroh) => { target.Date = scheduleData; };
+        
+        const targetAdmin = this.adminTiketDauroh.find(d => d.SK === eventSK);
+        if (targetAdmin) updateSchedule(targetAdmin);
+        if (this.currentDaurohDetail?.SK === eventSK) updateSchedule(this.currentDaurohDetail);
 
         toast.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
         return true;
@@ -336,12 +362,14 @@ export const useDaurohStore = defineStore("dauroh", {
         const base64Data = photoBase64.split(",")[1];
         const payload = { AccessToken: token, OldPicture: "", Picture: base64Data };
 
-        const res = await $apiBase.put(`/update-default?type=photo-event&sk=${eventSK}`, payload);
+        const res = await $apiBase.put<{ Picture: string }>(`/update-default?type=photo-event&sk=${eventSK}`, payload);
         const newPic = res.data?.Picture;
 
+        const updatePic = (target: Dauroh) => { if (newPic) target.Picture = newPic; };
+
         const target = this.adminTiketDauroh.find(d => d.SK === eventSK);
-        if (target && newPic) target.Picture = newPic;
-        if (this.currentDaurohDetail?.SK === eventSK && newPic) this.currentDaurohDetail.Picture = newPic;
+        if (target) updatePic(target);
+        if (this.currentDaurohDetail?.SK === eventSK) updatePic(this.currentDaurohDetail);
 
         toast.showToast({ message: "Foto berhasil diperbarui.", type: "success" });
         return true;

@@ -292,6 +292,21 @@ watch(() => props.show, (newVal) => {
     }
   }
 }, { immediate: true });
+// 1. Sinkronisasi Ikhwan/Akhwat -> Total
+watch(() => [isUnlimited.ikhwan, isUnlimited.akhwat], ([newIkhwan, newAkhwat]) => {
+  if (newIkhwan || newAkhwat) {
+    isUnlimited.total = true; 
+    quotaValues.total = 0; 
+  }
+});
+
+// 2. Sinkronisasi Total -> Ikhwan/Akhwat
+watch(() => isUnlimited.total, (isTotalUnlimited) => {
+  if (!isTotalUnlimited) {
+    if (isUnlimited.ikhwan) isUnlimited.ikhwan = false;
+    if (isUnlimited.akhwat) isUnlimited.akhwat = false;
+  }
+});
 
 const close = () => {
   if (!isLoading.value) emit('close');

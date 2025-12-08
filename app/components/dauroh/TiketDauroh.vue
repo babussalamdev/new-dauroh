@@ -20,11 +20,13 @@
               <a :href="'/dauroh/' + dauroh.SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
-                    <img 
-                      :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`" 
-                      class="card-img-top" 
-                      :alt="dauroh.Title" 
-                    />
+                   <NuxtImg
+                   :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`"
+                   class="card-img-top"
+                   :alt="dauroh.Title"
+                   loading="lazy"
+                   format="webp"
+                   />
                     <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
                   </div>
                   <div class="card-body d-flex flex-column p-3">
@@ -187,24 +189,26 @@
   }
 
   .dauroh-card-wrapper {
-    flex: 0 0 auto; 
-    width: calc(50% - 0.75rem); /* Mobile: 2 item per row (digeser) */
-    margin-bottom: 1rem;
+    flex: 0 0 auto;
+  /* MOBILE: Kasih lebar 80% biar konten enak dibaca & user tau bisa discroll */
+  width: 80%; 
+  margin-bottom: 1rem;
+  padding-right: 0.5rem; /* Jarak antar card manual krn layout flex */
   }
   @media (min-width: 576px) {
-    .dauroh-card-wrapper {
-      width: calc(50% - 0.75rem);
-    }
+  .dauroh-card-wrapper {
+    width: calc(50% - 0.75rem);
   }
-  @media (min-width: 768px) {
-    .dauroh-card-wrapper {
-      width: calc(33.333% - (1rem * 2 / 3) - 4px);
-    }
+}
+@media (min-width: 768px) {
+  .dauroh-card-wrapper {
+    width: calc(33.333% - (1rem * 2 / 3) - 4px);
   }
-  /* Desktop: 4 item per slide */
-  @media (min-width: 992px) {
-    .dauroh-card-wrapper {
-      width: calc(25% - (1rem * 3 / 4) - 4px);
+}
+
+@media (min-width: 992px) {
+  .dauroh-card-wrapper {
+    width: calc(25% - (1rem * 3 / 4) - 4px);
     }
     .card-container-flex {
       justify-content: center;

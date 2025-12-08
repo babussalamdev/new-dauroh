@@ -164,7 +164,7 @@
                       <button
                         type="submit"
                         class="btn btn-primary btn-sm"
-                        :disabled="isSavingSchedule || formState.scheduleDays.length === 0"
+                        :disabled="isSaveDisabled" 
                       >
                         <span v-if="isSavingSchedule" class="spinner-border spinner-border-sm me-2" />
                         {{ isSavingSchedule ? 'Menyimpan...' : 'Simpan Jadwal' }}
@@ -246,6 +246,28 @@ const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
 
+// -- LOGIC BARU: Cek Data Awal --
+const hasOriginalSchedule = computed(() => {
+    const dates = eventData.value?.Date;
+    return dates && typeof dates === 'object' && Object.keys(dates).length > 0;
+});
+
+// -- LOGIC BARU: Button Disabled State --
+const isSaveDisabled = computed(() => {
+    const isEmptyNow = formState.scheduleDays.length === 0;
+    
+    // 1. Sedang loading? -> Disabled
+    if (isSavingSchedule.value) return true;
+
+    // 2. Kondisi Kosong:
+    //    - Kalau sekarang kosong DAN aslinya juga kosong (belum pernah isi) -> Disabled
+    //    - Kalau sekarang kosong TAPI aslinya ada isinya (user mau hapus semua) -> Enabled (False)
+    if (isEmptyNow && !hasOriginalSchedule.value) return true;
+
+    // 3. Default -> Enabled
+    return false;
+});
+
 const convertToInputTime = (timeStr: string) => {
   if (!timeStr) return '';
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
@@ -314,53 +336,40 @@ const formatQuota = (value?: number | string | null) => {
 const formatEventDates = (dateObj: any) => {
   if (!dateObj || typeof dateObj !== 'object') return '-';
   
-  // Pastikan data valid string
+  // 1. Ambil array tanggal (string)
   const rawDates = Object.values(dateObj)
     .map((d: any) => d?.date)
     .filter((d: any) => typeof d === 'string' && d) as string[]; 
 
-  const uniqueDates = [...new Set(rawDates)].sort();
+  // 2. Buat objek Date valid & urutkan
+  const validDates = rawDates
+    .map(dateStr => new Date(dateStr))
+    .filter(d => !isNaN(d.getTime())) // Hapus invalid date
+    .sort((a, b) => a.getTime() - b.getTime());
 
-  if (uniqueDates.length === 0) return '-';
+  if (validDates.length === 0) return '-';
 
-  // Helper parse YYYY-MM-DD (dengan fallback untuk menghindari error TS)
-  const parse = (s: string) => {
-    const parts = s.split('-');
-    return { 
-      y: parseInt(parts[0] || '0'), 
-      m: parseInt(parts[1] || '0') - 1, 
-      d: parseInt(parts[2] || '0') 
-    };
-  };
+  const first = validDates[0] !;
 
-  const parsed = uniqueDates.map(parse);
-  const first = parsed[0];
-  
-  // Tambahkan pengecekan 'first' agar TS tidak complain 'possibly undefined'
-  if (!first) return '-';
+  // Helper formatting local (Indonesia)
+  const toDateStr = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const toMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  const sameMonthYear = parsed.every(d => d.y === first.y && d.m === first.m);
+  // 3. Logic Rentang Tanggal
+  const last = validDates[validDates.length - 1] !;
+  const sameMonthYear = (parsedDate: Date) => parsedDate.getMonth() === first.getMonth() && parsedDate.getFullYear() === first.getFullYear();
+  const isSameMonthYear = validDates.every(sameMonthYear);
 
-  if (sameMonthYear) {
-     const days = parsed.map(d => d.d);
-     const min = Math.min(...days);
-     const max = Math.max(...days);
-     
-     const monthYear = new Date(first.y, first.m, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  if (isSameMonthYear) {
+     const days = validDates.map(d => d.getDate()); // Ambil angka harinya aja
+     const monthYear = toMonthYear(first);
 
-     const isConsecutive = (max - min + 1) === days.length;
-
-     if (days.length > 1 && isConsecutive) {
-        return `${min}-${max} ${monthYear}`;
-     } else {
-        return `${days.join(', ')} ${monthYear}`;
-     }
+     // [UBAH DI SINI] Selalu gabungkan pakai koma, tanpa cek urutan
+     return `${days.join(', ')} ${monthYear}`;
   }
 
-  return uniqueDates.map(s => {
-     const p = parse(s);
-     return new Date(p.y, p.m, p.d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  }).join(', ');
+  // Fallback: Jika beda bulan/tahun, tampilkan tanggal lengkap dipisah koma
+  return validDates.map(toDateStr).join(', ');
 };
 
 watch(() => props.show, (newShow) => {
@@ -399,34 +408,60 @@ watch(() => props.show, (newShow) => {
 const addScheduleDay = () => formState.scheduleDays.push({ tempId: nextTempId++, date: '', start_time: '', end_time: '' });
 const removeScheduleDay = (index: number) => formState.scheduleDays.splice(index, 1);
 
+// -- LOGIC BARU: Handle Submit --
 const handleScheduleSubmit = async () => {
     if (!eventData.value?.SK) return; 
-    if (formState.scheduleDays.some((d) => !d.date || !d.start_time || !d.end_time))
-        return Swal.fire('Error', 'Semua kolom jadwal (Tanggal, Mulai, Selesai) wajib diisi.', 'error');
+    
+    // 1. Validasi Input Kosong (Hanya jika ada jadwal yang diinput)
+    if (formState.scheduleDays.length > 0) {
+        if (formState.scheduleDays.some((d) => !d.date || !d.start_time || !d.end_time))
+            return Swal.fire('Error', 'Semua kolom jadwal (Tanggal, Mulai, Selesai) wajib diisi.', 'error');
+    }
+
+    // 2. Validasi Logika Jam (Mulai vs Selesai)
+    for (let i = 0; i < formState.scheduleDays.length; i++) {
+        const day = formState.scheduleDays[i];
+        
+        // [PENTING] Skip kalau day undefined (untuk menghindari error TS/Runtime)
+        if (!day) continue; 
+
+        // Karena input type="time" formatnya "HH:mm" (24 jam), bisa bandingkan string
+        if (day.end_time <= day.start_time) {
+            return Swal.fire(
+                'Jam Tidak Valid', 
+                `Pada Hari ke-${i + 1}: Jam selesai (${day.end_time}) tidak boleh lebih awal atau sama dengan jam mulai (${day.start_time}).`, 
+                'warning'
+            );
+        }
+    }
 
     isSavingSchedule.value = true;
-    const dateObject: Record<string, DaurohDayDetail> = {};
-    const sortedDays = [...formState.scheduleDays].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    sortedDays.forEach((d, i) => {
-        const { tempId, ...dayData } = d;
-        dateObject[`day_${i + 1}`] = {
-            ...dayData,
-            start_time: convertFromInputTime(dayData.start_time),
-            end_time: convertFromInputTime(dayData.end_time)
-        };
-    });
-
+    
     try {
-        // Store will update state, no fetch needed
+        const dateObject: Record<string, DaurohDayDetail> = {};
+        const sortedDays = [...formState.scheduleDays].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        sortedDays.forEach((d, i) => {
+            const { tempId, ...dayData } = d;
+            dateObject[`day_${i + 1}`] = {
+                ...dayData,
+                start_time: convertFromInputTime(dayData.start_time),
+                end_time: convertFromInputTime(dayData.end_time)
+            };
+        });
+
+        // Kirim ke store (bisa object kosong {} jika dihapus semua)
         const ok = await daurohStore.updateDaurohSchedule(eventData.value.SK, dateObject);
+        
         if (ok) {
             Swal.fire('Berhasil', 'Jadwal berhasil disimpan.', 'success');
             emit('updated'); 
         }
     } catch (err: any) {
+        console.error(err);
         Swal.fire('Error', err.message || 'Terjadi kesalahan saat menyimpan jadwal.', 'error');
     } finally {
+        // [WAJIB] Reset loading state
         isSavingSchedule.value = false;
     }
 };

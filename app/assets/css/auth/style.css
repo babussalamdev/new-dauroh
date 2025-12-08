@@ -15,8 +15,9 @@
 }
 
 .auth-box {
-  width: 80%;
-  max-width: 480px; 
+  width: 100%; /* Ubah jadi 100% biar fluid */
+  max-width: 450px; /* Sedikit dikecilin biar compact */
+  margin: 0 auto; /* Tengahin */
 }
 /* Note: Jika ingin lebar beda, nanti bisa di-override di file vue masing-masing */
 
@@ -61,4 +62,13 @@
   padding-top: 0.7rem;
   padding-bottom: 0.7rem;
   font-size: 0.95rem;
+}
+@media (max-width: 576px) {
+  .auth-content {
+    padding: 1.5rem !important; /* Kurangi padding biar space lega */
+  }
+  
+  .auth-title {
+    font-size: 1.5rem; /* Kecilin font judul */
+  }
 }
