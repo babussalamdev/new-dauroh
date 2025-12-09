@@ -4,7 +4,6 @@
       v-if="!daurohStore.loading.tiketDauroh && daurohStore.tiketDaurohChunks.length > 0"
       id="tiketDauroh"
       class="carousel slide carousel-dark"
-      data-bs-ride="carousel"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
@@ -61,7 +60,7 @@
         type="button" 
         data-bs-target="#tiketDauroh" 
         data-bs-slide="prev"
-        v-show="isHovered && daurohStore.tiketDaurohChunks.length > 1"
+        v-show="daurohStore.tiketDaurohChunks.length > 1"
       >
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Previous</span>
@@ -71,7 +70,7 @@
         type="button" 
         data-bs-target="#tiketDauroh" 
         data-bs-slide="next"
-        v-show="isHovered && daurohStore.tiketDaurohChunks.length > 1"
+        v-show="daurohStore.tiketDaurohChunks.length > 1"
       >
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
@@ -188,13 +187,14 @@
     display: none;
   }
 
-  .dauroh-card-wrapper {
-    flex: 0 0 auto;
-  /* MOBILE: Kasih lebar 80% biar konten enak dibaca & user tau bisa discroll */
+ .dauroh-card-wrapper {
+  flex: 0 0 auto;
   width: 80%; 
   margin-bottom: 1rem;
-  padding-right: 0.5rem; /* Jarak antar card manual krn layout flex */
-  }
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
   @media (min-width: 576px) {
   .dauroh-card-wrapper {
     width: calc(50% - 0.75rem);
@@ -236,20 +236,28 @@
   }
   
   /* Sembunyikan tombol navigasi di Mobile/Tablet (biar di-swipe/scroll aja) */
-  @media (max-width: 991.98px) {
-    .carousel-control-prev,
-    .carousel-control-next {
-      display: none !important; /* Force hide di mobile */
-    }
-    .carousel {
-      padding-left: 0;
-      padding-right: 0;
-    }
-    .card-container-flex {
-      padding: 0 1rem;
-      padding-bottom: 10px;
-    }
+@media (max-width: 991.98px) {
+  /* Hapus rule display: none untuk prev/next */
+  
+  /* Kasih padding biar ada ruang buat tombol di kiri kanan */
+  .carousel {
+    padding-left: 35px; 
+    padding-right: 35px;
   }
+  
+  /* Geser posisi tombol biar pas di pinggir layar HP */
+  .carousel-control-prev {
+    left: 0; 
+  }
+  .carousel-control-next {
+    right: 0; /* Sebelumnya 5px, kita pepetin aja */
+  }
+
+  .card-container-flex {
+    padding: 0; /* Reset padding container card */
+    padding-bottom: 10px;
+  }
+}
   
   .carousel-control-prev-icon,
   .carousel-control-next-icon {

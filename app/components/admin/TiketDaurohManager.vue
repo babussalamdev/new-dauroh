@@ -18,7 +18,7 @@
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
               <th scope="col">Harga</th>
-              <th scope="col" class="text-center" style="width: 8%">Aksi</th> 
+              <th scope="col" class="text-center">Aksi</th> 
             </tr>
           </thead>
           <tbody v-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length > 0">

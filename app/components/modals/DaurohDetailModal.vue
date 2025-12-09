@@ -43,7 +43,7 @@
                   </li>
                   <li v-if="showAkhwat">
                     <small>
-                      <strong>Akhwat:</strong> 
+                      <strong>Akhwat: </strong> 
                       <span :class="getQuotaColor(dauroh?.Quota_Akhwat)">
                         {{ formatQuota(dauroh?.Quota_Akhwat) }}
                       </span>

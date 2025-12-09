@@ -139,11 +139,25 @@
                       </span>
                       <div class="col-12 col-sm-4">
                         <label :for="'date-modal-' + day.tempId" class="form-label small mb-1">Tanggal *</label>
-                        <input :id="'date-modal-' + day.tempId" type="date" class="form-control form-control-sm" v-model="day.date" required />
+                        <input 
+                            :id="'date-modal-' + day.tempId" 
+                            type="date" 
+                            class="form-control form-control-sm" 
+                            v-model="day.date" 
+                            :min="minDate"
+                            required 
+                        />
                         </div>
                       <div class="col-6 col-sm-3">
                         <label :for="'start-time-modal-' + day.tempId" class="form-label small mb-1">Mulai *</label>
-                        <input :id="'start-time-modal-' + day.tempId" type="time" class="form-control form-control-sm" v-model="day.start_time" required />
+                        <input 
+                            :id="'start-time-modal-' + day.tempId" 
+                            type="time" 
+                            class="form-control form-control-sm" 
+                            v-model="day.start_time" 
+                            :min="getMinStartTime(day.date)"
+                            required 
+                        />
                       </div>
                       <div class="col-6 col-sm-3">
                         <label :for="'end-time-modal-' + day.tempId" class="form-label small mb-1">Selesai *</label>
@@ -267,6 +281,31 @@ const isSaveDisabled = computed(() => {
     // 3. Default -> Enabled
     return false;
 });
+
+// -- MODIFIKASI: COMPUTED MIN DATE (HARI INI) --
+const minDate = computed(() => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
+// -- MODIFIKASI: FUNGSI MIN TIME (JAM SEKARANG) --
+const getMinStartTime = (selectedDate: string) => {
+  if (!selectedDate) return undefined;
+  
+  // Jika tanggal yang dipilih == Hari Ini
+  if (selectedDate === minDate.value) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  
+  // Jika tanggal masa depan, jam bebas
+  return undefined;
+};
 
 const convertToInputTime = (timeStr: string) => {
   if (!timeStr) return '';
@@ -571,7 +610,7 @@ const handlePictureSubmit = async () => {
 const openEditBasicModal = () => {
     // Isi data untuk modal edit basic
     if (eventData.value) {
-         showEditBasicModal.value = true;
+          showEditBasicModal.value = true;
     }
 };
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
