@@ -21,7 +21,7 @@
                   <h6 class="mb-0 fw-semibold">Informasi Dasar</h6>
                 </div>
                 <div class="card-body p-3">
-                  
+
                   <dl class="row mb-0 fs-sm">
                     <dt class="col-4 text-truncate">Tanggal</dt>
                     <dd class="col-8">{{ formatEventDates(eventData?.Date) }}</dd>
@@ -36,6 +36,20 @@
                     </dd>
                     <dt class="col-4 text-truncate">Harga</dt>
                     <dd class="col-8">{{ formatCurrency(eventData?.Price) }}</dd>
+                    
+                    <template v-if="eventData.Registration">
+                        <div class="col-12"><hr class="my-2 text-muted"></div>
+                        <dt class="col-12 mb-1 text-primary">Periode Pendaftaran:</dt>
+                        <dd class="col-12 ps-3 mb-0 small">
+                            <div class="mb-1">
+                                <span class="fw-bold">Mulai:</span> {{ formatDate(eventData.Registration.start_registration) }}
+                            </div>
+                            <div>
+                                <span class="fw-bold">Selesai:</span> {{ formatDate(eventData.Registration.end_registration) }}
+                            </div>
+                        </dd>
+                    </template>
+
                     <div class="col-12"><hr class="my-2"></div>
                     
                     <template v-if="showTotal">
@@ -55,7 +69,7 @@
                   </dl>
                   
                   <button @click="openEditBasicModal" class="btn btn-outline-secondary btn-sm w-100 mt-3">
-                    <i class="bi bi-pencil me-1"></i> Edit Info Dasar
+                    <i class="bi bi-pencil me-1"></i> Edit Info & Status
                   </button>
                 </div>
               </div>
@@ -260,29 +274,18 @@ const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
 const photoError = ref<string | null>(null);
 
-// -- LOGIC BARU: Cek Data Awal --
 const hasOriginalSchedule = computed(() => {
     const dates = eventData.value?.Date;
     return dates && typeof dates === 'object' && Object.keys(dates).length > 0;
 });
 
-// -- LOGIC BARU: Button Disabled State --
 const isSaveDisabled = computed(() => {
     const isEmptyNow = formState.scheduleDays.length === 0;
-    
-    // 1. Sedang loading? -> Disabled
     if (isSavingSchedule.value) return true;
-
-    // 2. Kondisi Kosong:
-    //    - Kalau sekarang kosong DAN aslinya juga kosong (belum pernah isi) -> Disabled
-    //    - Kalau sekarang kosong TAPI aslinya ada isinya (user mau hapus semua) -> Enabled (False)
     if (isEmptyNow && !hasOriginalSchedule.value) return true;
-
-    // 3. Default -> Enabled
     return false;
 });
 
-// -- MODIFIKASI: COMPUTED MIN DATE (HARI INI) --
 const minDate = computed(() => {
   const today = new Date();
   const year = today.getFullYear();
@@ -291,19 +294,14 @@ const minDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-// -- MODIFIKASI: FUNGSI MIN TIME (JAM SEKARANG) --
 const getMinStartTime = (selectedDate: string) => {
   if (!selectedDate) return undefined;
-  
-  // Jika tanggal yang dipilih == Hari Ini
   if (selectedDate === minDate.value) {
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
     return `${hh}:${mm}`;
   }
-  
-  // Jika tanggal masa depan, jam bebas
   return undefined;
 };
 
@@ -371,43 +369,45 @@ const formatQuota = (value?: number | string | null) => {
   return `${value} Peserta`;
 };
 
-// [REVISI FIX] Fungsi format tanggal dengan perbaikan type safety
+// Helper format date lengkap (Tgl + Jam + Menit + Detik)
+const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return '-';
+    // 'new Date(dateStr.replace(" ", "T"))'
+    const safeDateStr = dateStr.replace(' ', 'T');
+    return new Date(safeDateStr).toLocaleDateString('id-ID', { 
+        day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+};
+
 const formatEventDates = (dateObj: any) => {
   if (!dateObj || typeof dateObj !== 'object') return '-';
   
-  // 1. Ambil array tanggal (string)
   const rawDates = Object.values(dateObj)
     .map((d: any) => d?.date)
     .filter((d: any) => typeof d === 'string' && d) as string[]; 
 
-  // 2. Buat objek Date valid & urutkan
   const validDates = rawDates
     .map(dateStr => new Date(dateStr))
-    .filter(d => !isNaN(d.getTime())) // Hapus invalid date
+    .filter(d => !isNaN(d.getTime()))
     .sort((a, b) => a.getTime() - b.getTime());
 
   if (validDates.length === 0) return '-';
 
   const first = validDates[0] !;
-
-  // Helper formatting local (Indonesia)
   const toDateStr = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   const toMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  // 3. Logic Rentang Tanggal
   const last = validDates[validDates.length - 1] !;
   const sameMonthYear = (parsedDate: Date) => parsedDate.getMonth() === first.getMonth() && parsedDate.getFullYear() === first.getFullYear();
   const isSameMonthYear = validDates.every(sameMonthYear);
 
   if (isSameMonthYear) {
-     const days = validDates.map(d => d.getDate()); // Ambil angka harinya aja
+     const days = validDates.map(d => d.getDate()); 
      const monthYear = toMonthYear(first);
-
-     // [UBAH DI SINI] Selalu gabungkan pakai koma, tanpa cek urutan
      return `${days.join(', ')} ${monthYear}`;
   }
 
-  // Fallback: Jika beda bulan/tahun, tampilkan tanggal lengkap dipisah koma
   return validDates.map(toDateStr).join(', ');
 };
 
@@ -447,24 +447,17 @@ watch(() => props.show, (newShow) => {
 const addScheduleDay = () => formState.scheduleDays.push({ tempId: nextTempId++, date: '', start_time: '', end_time: '' });
 const removeScheduleDay = (index: number) => formState.scheduleDays.splice(index, 1);
 
-// -- LOGIC BARU: Handle Submit --
 const handleScheduleSubmit = async () => {
     if (!eventData.value?.SK) return; 
     
-    // 1. Validasi Input Kosong (Hanya jika ada jadwal yang diinput)
     if (formState.scheduleDays.length > 0) {
         if (formState.scheduleDays.some((d) => !d.date || !d.start_time || !d.end_time))
             return Swal.fire('Error', 'Semua kolom jadwal (Tanggal, Mulai, Selesai) wajib diisi.', 'error');
     }
 
-    // 2. Validasi Logika Jam (Mulai vs Selesai)
     for (let i = 0; i < formState.scheduleDays.length; i++) {
         const day = formState.scheduleDays[i];
-        
-        // [PENTING] Skip kalau day undefined (untuk menghindari error TS/Runtime)
         if (!day) continue; 
-
-        // Karena input type="time" formatnya "HH:mm" (24 jam), bisa bandingkan string
         if (day.end_time <= day.start_time) {
             return Swal.fire(
                 'Jam Tidak Valid', 
@@ -489,7 +482,6 @@ const handleScheduleSubmit = async () => {
             };
         });
 
-        // Kirim ke store (bisa object kosong {} jika dihapus semua)
         const ok = await daurohStore.updateDaurohSchedule(eventData.value.SK, dateObject);
         
         if (ok) {
@@ -500,7 +492,6 @@ const handleScheduleSubmit = async () => {
         console.error(err);
         Swal.fire('Error', err.message || 'Terjadi kesalahan saat menyimpan jadwal.', 'error');
     } finally {
-        // [WAJIB] Reset loading state
         isSavingSchedule.value = false;
     }
 };
@@ -592,7 +583,6 @@ const handlePictureSubmit = async () => {
   if (!eventData.value?.SK || !newPhotoBase64.value) return; 
   isSavingPicture.value = true;
   try {
-    // Store update state local, no fetch needed
     const success = await daurohStore.uploadEventPhoto(eventData.value.SK, newPhotoBase64.value);
     if (success) {
         previewUrl.value = newPhotoBase64.value; 
@@ -608,7 +598,6 @@ const handlePictureSubmit = async () => {
 };
 
 const openEditBasicModal = () => {
-    // Isi data untuk modal edit basic
     if (eventData.value) {
           showEditBasicModal.value = true;
     }
@@ -621,7 +610,6 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
   }
 
   isSavingBasic.value = true; 
-  // Store update state local, no fetch needed
   const success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
 
   if (success) {

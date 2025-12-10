@@ -4,19 +4,20 @@ import { useNuxtApp, useCookie } from "#app";
 
 // --- Interfaces & Types ---
 
-// 1. [BARU] Interface untuk Data Mentah dari API (Raw Response)
-// Ini kontrak mati sama Backend. Kalau backend ganti, ini yang diupdate.
+// 1. Interface Raw API
 export interface ApiDaurohRaw {
   SK: string;
   Title: string;
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
+  Registration?: DaurohRegistration; // Sesuai Postman
   Place: string;
   Price: number | string;
-  Quota_Ikhwan_Akhwat: number | string | null; // Nama field asli dari backend
+  Quota_Ikhwan_Akhwat: number | string | null;
   Quota_Ikhwan: number | string | null;
   Quota_Akhwat: number | string | null;
   Picture?: string;
+  IsActive?: boolean; // [BARU] Field Status
 }
 
 export interface DaurohDayDetail {
@@ -25,19 +26,26 @@ export interface DaurohDayDetail {
   end_time: string;
 }
 
-// 2. Interface Data Matang (Yang dipake di UI)
+export interface DaurohRegistration {
+  start_registration: string;
+  end_registration: string;
+}
+
+// 2. Interface UI
 export interface Dauroh {
   SK: string | null;
   id?: number | null;
   Title: string;
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
+  Registration?: DaurohRegistration;
   Place: string;
   Price: number;
   Quota_Ikhwan: number | 'non-quota';
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
   Picture?: string;
+  IsActive: boolean; // [BARU] Wajib ada di UI (default true)
 }
 
 export interface DaurohBasicData {
@@ -46,16 +54,18 @@ export interface DaurohBasicData {
   Gender: string;
   Place: string;
   Price: number;
+  Registration?: DaurohRegistration;
   Quota_Ikhwan: number | 'non-quota';
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
+  IsActive: boolean; // [BARU]
 }
 
 export interface DaurohSchedulePayload {
   [key: string]: DaurohDayDetail;
 }
 
-// --- Helpers (Utility) ---
+// --- Helpers ---
 const parseQuota = (val: number | string | null | undefined): number | 'non-quota' => {
   if (val === 'non-quota' || val === 'non quota') return 'non-quota';
   const num = Number(val);
@@ -72,21 +82,21 @@ const capitalizeText = (text: string): string => {
   return text.toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
-// Mapper: Mengubah data mentah (ApiDaurohRaw) ke format UI (Dauroh)
 const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
   SK: event.SK,
   Title: capitalizeText(event.Title || ""),
   Gender: event.Gender || "",
   Date: event.Date || undefined,
+  Registration: event.Registration || undefined,
   Place: event.Place || "",
   Price: Number(event.Price ?? 0),
   Quota_Total: parseQuota(event.Quota_Ikhwan_Akhwat),
   Quota_Ikhwan: parseQuota(event.Quota_Ikhwan),
   Quota_Akhwat: parseQuota(event.Quota_Akhwat),
   Picture: event.Picture || undefined,
+  IsActive: event.IsActive ?? true, // [BARU] Default true jika null
 });
 
-// Payload Builder
 const createEventPayload = (data: DaurohBasicData, accessToken: string, existingDate: any = {}) => {
   const payload: any = {
     Title: data.Title,
@@ -94,7 +104,9 @@ const createEventPayload = (data: DaurohBasicData, accessToken: string, existing
     Place: data.Place || "",
     Price: String(data.Price || 0),
     AccessToken: accessToken,
-    Date: existingDate, 
+    Date: existingDate,
+    Registration: data.Registration,
+    IsActive: data.IsActive, // [BARU] Kirim ke backend
   };
 
   const g = payload.Gender;
@@ -162,9 +174,14 @@ export const useDaurohStore = defineStore("dauroh", {
       this.loading.tiketDauroh = true;
       try {
         const { $apiBase } = useNuxtApp();
-        // Beri tahu TS kalau responnya array of ApiDaurohRaw
         const res = await $apiBase.get<ApiDaurohRaw[]>("/get-view?type=event");
-        this.tiketDauroh = Array.isArray(res.data) ? res.data.map(mapApiToDauroh) : [];
+        
+        // [BARU] Filter: Hanya tampilkan yang IsActive !== false
+        const rawData = Array.isArray(res.data) ? res.data : [];
+        this.tiketDauroh = rawData
+          .filter(event => event.IsActive !== false)
+          .map(mapApiToDauroh);
+          
       } catch (error) { console.error(error); } 
       finally { this.loading.tiketDauroh = false; }
     },
@@ -188,15 +205,21 @@ export const useDaurohStore = defineStore("dauroh", {
         const res = await $apiBase.get<ApiDaurohRaw[] | ApiDaurohRaw>(`/get-view?type=event&sk=${SK}`);
         
         let eventRaw: ApiDaurohRaw | undefined;
-        // Handle jika API balikin array atau object tunggal
         if (Array.isArray(res.data)) {
           eventRaw = res.data.find((e) => String(e.SK) === String(SK)) || res.data[0];
         } else {
           eventRaw = res.data;
         }
 
-        if (eventRaw) this.currentPublicDaurohDetail = mapApiToDauroh(eventRaw);
-        else throw new Error("Event tidak ditemukan");
+        if (eventRaw) {
+            // [BARU] Guard: Kalau user akses via link tapi event non-aktif
+            if (eventRaw.IsActive === false) {
+                throw new Error("Event ini sedang tidak aktif.");
+            }
+            this.currentPublicDaurohDetail = mapApiToDauroh(eventRaw);
+        } else {
+            throw new Error("Event tidak ditemukan");
+        }
 
       } catch (error: any) {
         const toast = useToastStore();
@@ -243,10 +266,8 @@ export const useDaurohStore = defineStore("dauroh", {
         const newEventData = res.data;
 
         if (newEventData && newEventData.SK) {
-          // Merge data input lokal + response server
           const mergedData: ApiDaurohRaw = { 
             ...newEventData,
-            // Pastikan field wajib ada (fallback ke input lokal)
             Title: newEventData.Title || daurohData.Title,
             Gender: newEventData.Gender || daurohData.Gender,
             Place: newEventData.Place || daurohData.Place,
@@ -254,6 +275,8 @@ export const useDaurohStore = defineStore("dauroh", {
             Quota_Ikhwan_Akhwat: newEventData.Quota_Ikhwan_Akhwat ?? serializeQuota(daurohData.Quota_Total),
             Quota_Ikhwan: newEventData.Quota_Ikhwan ?? serializeQuota(daurohData.Quota_Ikhwan),
             Quota_Akhwat: newEventData.Quota_Akhwat ?? serializeQuota(daurohData.Quota_Akhwat),
+            Registration: newEventData.Registration ?? daurohData.Registration,
+            IsActive: newEventData.IsActive ?? daurohData.IsActive, // [BARU]
           };
           
           this.adminTiketDauroh.unshift(mapApiToDauroh(mergedData));
@@ -286,7 +309,6 @@ export const useDaurohStore = defineStore("dauroh", {
 
         await $apiBase.put(`/update-default?type=event&sk=${daurohData.SK}`, payload);
         
-        // Update Optimistic UI
         const updateState = (target: Dauroh) => {
           Object.assign(target, {
             Title: capitalizeText(daurohData.Title),
@@ -295,7 +317,9 @@ export const useDaurohStore = defineStore("dauroh", {
             Gender: daurohData.Gender,
             Quota_Total: daurohData.Quota_Total,
             Quota_Ikhwan: daurohData.Quota_Ikhwan,
-            Quota_Akhwat: daurohData.Quota_Akhwat
+            Quota_Akhwat: daurohData.Quota_Akhwat,
+            Registration: daurohData.Registration, 
+            IsActive: daurohData.IsActive, // [BARU] Update Optimistic
           });
         };
 
@@ -328,7 +352,6 @@ export const useDaurohStore = defineStore("dauroh", {
 
       try {
         const { $apiBase } = useNuxtApp();
-        // Casting ke BasicData karena kita cuma butuh field dasarnya buat payload
         const payload = createEventPayload(currentData as unknown as DaurohBasicData, token, scheduleData);
 
         await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);

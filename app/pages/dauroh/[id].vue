@@ -7,6 +7,11 @@
         <div class="card shadow-lg">
           <img :src="dauroh.Picture" class="card-img-top" alt="Picture Dauroh" style="max-height: 400px; object-fit: cover;">
           <div class="card-body p-4">
+            <div v-if="!dauroh.IsActive" class="alert alert-warning mb-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> 
+                <strong>Event Non-Aktif</strong>. Event ini tidak terlihat di halaman publik.
+            </div>
+
             <h1 class="card-title">{{ dauroh.Title }}</h1>
             <span v-if="dauroh.Gender" class="badge bg-primary-subtle text-primary-emphasis rounded-pill mb-3 text-capitalize">{{ dauroh.Gender }}</span>
 
@@ -23,10 +28,22 @@
               <li v-else class="list-group-item"><strong>Tanggal:</strong> Akan diumumkan</li>
               <li class="list-group-item"><strong>Lokasi:</strong> {{ dauroh.Place || 'Akan diumumkan' }}</li>
               <li class="list-group-item"><strong>Harga:</strong> {{ formatCurrency(dauroh.Price) }}</li>
+              
+              <li v-if="dauroh.Registration" class="list-group-item text-muted small">
+                <i class="bi bi-clock"></i> Pendaftaran: 
+                {{ formatDate(dauroh.Registration.start_registration) }} - {{ formatDate(dauroh.Registration.end_registration) }}
+              </li>
             </ul>
 
             <div class="d-grid mt-4">
-              <button class="btn btn-primary btn-lg" @click="handleRegisterClick">Daftar Sekarang</button>
+              <button 
+                class="btn btn-lg" 
+                :class="registrationStatus.canRegister ? 'btn-primary' : 'btn-secondary'"
+                :disabled="!registrationStatus.canRegister"
+                @click="handleRegisterClick"
+              >
+                {{ registrationStatus.message }}
+              </button>
             </div>
           </div>
         </div>
@@ -59,26 +76,56 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useDaurohStore } from '~/stores/dauroh';
 import { useCheckoutStore } from '~/stores/checkout';
-import { useUserStore } from '~/stores/user'; // [PENTING] Import User Store
+import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
 
 const route = useRoute();
 const router = useRouter();
 const daurohStore = useDaurohStore();
 const checkoutStore = useCheckoutStore();
-const userStore = useUserStore(); // [PENTING] Init User Store
+const userStore = useUserStore();
 const { isLoggedIn } = useAuth();
 
 const daurohSK = route.params.id ? String(route.params.id) : null;
-
-// State untuk Modal QR (Gratis)
 const showQrModal = ref(false);
 const newlyCreatedTicket = ref(null);
+const showRegistrationModal = ref(false);
 
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
+// [REVISI] Logic Gate Pendaftaran + Cek Active
+const registrationStatus = computed(() => {
+  if (!dauroh.value) return { canRegister: false, message: 'Memuat...' };
+  
+  // 1. Cek Active
+  if (!dauroh.value.IsActive) {
+      return { canRegister: false, message: 'Event Tidak Aktif' };
+  }
+
+  // 2. Cek Registration Object
+  if (!dauroh.value.Registration) return { canRegister: true, message: 'Daftar Sekarang' };
+
+  const now = new Date();
+  const start = new Date(dauroh.value.Registration.start_registration);
+  const end = new Date(dauroh.value.Registration.end_registration);
+
+  // Normalisasi waktu ke awal/akhir hari biar adil (Opsional, tergantung format date string)
+  // Kalau formatnya cuma "YYYY-MM-DD", new Date("...") otomatis jam 00:00 UTC atau local
+  
+  if (now < start) {
+    return { canRegister: false, message: 'Pendaftaran Belum Dibuka' };
+  } else if (now > end) {
+    return { canRegister: false, message: 'Pendaftaran Ditutup' };
+  } else {
+    return { canRegister: true, message: 'Daftar Sekarang' };
+  }
+});
+
 onMounted(() => {
   if (daurohSK) {
+    // Note: Fetch ini mungkin throw error "Event tidak aktif" dari store.
+    // Jika mau tetap tampil tapi tombol disabled, hapus throw Error di store atau handle di sini.
+    // Kode di store tadi membolehkan fetch jika akses langsung via ID, tapi ngasih warning.
     daurohStore.fetchPublicDaurohDetail(daurohSK);
   }
 });
@@ -89,9 +136,10 @@ watch(dauroh, (newDauroh) => {
   });
 }, { immediate: true });
 
-const showRegistrationModal = ref(false);
 
 const handleRegisterClick = () => {
+  if (!registrationStatus.value.canRegister) return; 
+
   if (!isLoggedIn.value) {
     router.push('/login');
   } else if (dauroh.value && dauroh.value.SK) {
@@ -103,39 +151,24 @@ const closeRegistrationModal = () => {
   showRegistrationModal.value = false;
 };
 
-// [BAGIAN INI YANG MENGATUR REDIRECT]
 const handleRegistrationSubmit = (registrationData) => {
   closeRegistrationModal();
-
-  // Cek Harga (Pastikan menjadi Number)
   const price = Number(registrationData.dauroh.Price || 0);
 
   if (price === 0) {
-    // === JIKA GRATIS ===
-    // 1. Langsung simpan tiket ke user store (bypass pembayaran)
     userStore.registerDauroh(registrationData);
-
-    // 2. Siapkan data tiket dummy untuk ditampilkan di modal QR saat ini juga
     newlyCreatedTicket.value = {
       id: `TRX-${Date.now()}`, 
       dauroh: registrationData.dauroh,
       participants: registrationData.participants,
     };
-
-    // 3. Tampilkan Modal QR Code (dengan sedikit delay agar smooth)
-    setTimeout(() => {
-       showQrModal.value = true;
-    }, 300);
-
+    setTimeout(() => { showQrModal.value = true; }, 300);
   } else {
-    // === JIKA BERBAYAR ===
-    // Masuk ke flow checkout seperti biasa
     checkoutStore.startCheckout(registrationData);
     router.push('/checkout/select');
   }
 };
 
-// Kalau modal QR ditutup, baru arahkan ke dashboard
 const handleCloseQr = () => {
   showQrModal.value = false;
   router.push('/dashboard');
@@ -148,6 +181,14 @@ const formatCurrency = (value) => {
     currency: 'IDR',
     minimumFractionDigits: 0,
   }).format(value);
+};
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    // GunakantoLocaleDateString agar sesuai locale Indonesia
+    return new Date(dateStr).toLocaleDateString('id-ID', { 
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
 };
 </script>
 

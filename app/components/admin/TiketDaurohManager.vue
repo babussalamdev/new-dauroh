@@ -3,7 +3,7 @@
     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
       <h5 class="mb-0">Manajemen Event Dauroh</h5>
       <button class="btn btn-primary btn-sm" @click="openAddModal">
-        <i></i>
+        <i class="bi bi-plus-lg me-1"></i>
         Tambah Event
       </button>
     </div>
@@ -18,6 +18,7 @@
               <th scope="col">Tempat</th>
               <th scope="col">Gender</th>
               <th scope="col">Harga</th>
+              <th scope="col" class="text-center" style="width: 10%">Status</th>
               <th scope="col" class="text-center">Aksi</th> 
             </tr>
           </thead>
@@ -49,6 +50,16 @@
                   {{ dauroh.Gender}}
               </td>
               <td>{{ formatCurrency(dauroh.Price) }}</td>
+              
+              <td class="text-center">
+                <span v-if="dauroh.IsActive" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3">
+                  Active
+                </span>
+                <span v-else class="badge bg-danger bg-opacity-10 text-danger rounded-pill border border-danger px-3">
+                  Inactive
+                </span>
+              </td>
+
               <td class="text-center">
                 <button
                   class="btn btn-link text-info p-1"
@@ -65,12 +76,12 @@
           </tbody>
           <tbody v-else-if="!daurohStore.loading.adminTiketDauroh && daurohStore.adminTiketDauroh.length === 0">
             <tr>
-              <td colspan="7" class="text-center text-muted py-4">Belum ada data event dauroh.</td>
+              <td colspan="8" class="text-center text-muted py-4">Belum ada data event dauroh.</td>
             </tr>
           </tbody>
           <tbody v-else>
             <tr>
-              <td colspan="7">
+              <td colspan="8">
                 <CommonLoadingSpinner />
               </td>
             </tr>
@@ -138,38 +149,29 @@
   const formatEventDates = (dateObj: any) => {
     if (!dateObj || typeof dateObj !== 'object') return '-';
     
-    // 1. Ambil array tanggal (string)
     const rawDates = Object.values(dateObj)
       .map((d: any) => d?.date)
       .filter((d: any) => typeof d === 'string' && d) as string[]; 
 
-    // 2. Buat objek Date valid & urutkan
     const validDates = rawDates
       .map(dateStr => new Date(dateStr))
-      .filter(d => !isNaN(d.getTime())) // Hapus invalid date
+      .filter(d => !isNaN(d.getTime()))
       .sort((a, b) => a.getTime() - b.getTime());
 
     if (validDates.length === 0) return '-';
 
     const first = validDates[0]!;
-
-    // Helper formatting local (Indonesia)
     const toDateStr = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     const toMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-    // 3. Logic Rentang Tanggal
-    // Cek apakah semua tanggal ada di bulan dan tahun yang sama
     const isSameMonthYear = validDates.every(d => d.getMonth() === first.getMonth() && d.getFullYear() === first.getFullYear());
 
     if (isSameMonthYear) {
-       // Ambil angka harinya aja, lalu join pake koma
        const days = validDates.map(d => d.getDate()); 
        const monthYear = toMonthYear(first);
-
        return `${days.join(', ')} ${monthYear}`;
     }
 
-    // Fallback: Jika beda bulan/tahun, tampilkan tanggal lengkap dipisah koma
     return validDates.map(toDateStr).join(', ');
   };
 
@@ -188,6 +190,7 @@
   };
   
   const handleDetailUpdated = () => {
+    // Refresh data if needed, or relying on store reactivity
   };
 
   const openAddModal = () => {
