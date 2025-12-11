@@ -425,5 +425,30 @@ export const useDaurohStore = defineStore("dauroh", {
         console.error(error);
       }
     },
+
+    // [TAMBAHAN BARU] Action untuk update kuota secara real-time di frontend
+    decrementQuota(sk: string, totalPeserta: number, jumlahIkhwan: number, jumlahAkhwat: number) {
+      // Helper lokal untuk pengurangan aman (biar gak minus)
+      const kurangi = (currentVal: number | 'non-quota', amount: number): number | 'non-quota' => {
+        if (currentVal === 'non-quota') return 'non-quota';
+        const num = Number(currentVal);
+        return num >= amount ? num - amount : 0;
+      };
+
+      // 1. Update di list public (halaman depan/jadwal)
+      const eventDiList = this.tiketDauroh.find(e => e.SK === sk);
+      if (eventDiList) {
+        eventDiList.Quota_Total = kurangi(eventDiList.Quota_Total, totalPeserta);
+        eventDiList.Quota_Ikhwan = kurangi(eventDiList.Quota_Ikhwan, jumlahIkhwan);
+        eventDiList.Quota_Akhwat = kurangi(eventDiList.Quota_Akhwat, jumlahAkhwat);
+      }
+
+      // 2. Update di detail page yang sedang dibuka
+      if (this.currentPublicDaurohDetail && this.currentPublicDaurohDetail.SK === sk) {
+        this.currentPublicDaurohDetail.Quota_Total = kurangi(this.currentPublicDaurohDetail.Quota_Total, totalPeserta);
+        this.currentPublicDaurohDetail.Quota_Ikhwan = kurangi(this.currentPublicDaurohDetail.Quota_Ikhwan, jumlahIkhwan);
+        this.currentPublicDaurohDetail.Quota_Akhwat = kurangi(this.currentPublicDaurohDetail.Quota_Akhwat, jumlahAkhwat);
+      }
+    },
   },
 });

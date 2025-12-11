@@ -11,6 +11,7 @@
         <slot />
       </main>
     </div>
+    <NotificationsToastNotification />
   </div>
 </template>
 

@@ -229,6 +229,7 @@
 import { ref, reactive, watch, computed } from 'vue';
 import { useDaurohStore } from '@/stores/dauroh';
 import Swal from 'sweetalert2';
+import { useToastStore } from '@/stores/toast';
 import type { Dauroh, DaurohDayDetail, DaurohBasicData } from '@/stores/dauroh';
 
 const config = useRuntimeConfig();
@@ -246,6 +247,7 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'updated']);
 
 const daurohStore = useDaurohStore();
+const toastStore = useToastStore();
 
 const isSavingPicture = ref(false);
 const isSavingSchedule = ref(false);
@@ -485,7 +487,7 @@ const handleScheduleSubmit = async () => {
         const ok = await daurohStore.updateDaurohSchedule(eventData.value.SK, dateObject);
         
         if (ok) {
-            Swal.fire('Berhasil', 'Jadwal berhasil disimpan.', 'success');
+            toastStore.showToast({ message: 'Jadwal berhasil disimpan.', type: 'success' });
             emit('updated'); 
         }
     } catch (err: any) {
@@ -585,11 +587,10 @@ const handlePictureSubmit = async () => {
   try {
     const success = await daurohStore.uploadEventPhoto(eventData.value.SK, newPhotoBase64.value);
     if (success) {
-        previewUrl.value = newPhotoBase64.value; 
-        newPhotoBase64.value = null; 
-        if (fileInput.value) fileInput.value.value = ''; 
-        emit('updated'); 
-    } 
+            toastStore.showToast({ message: 'Gambar berhasil disimpan.', type: 'success' });
+            emit('updated'); 
+        }
+
   } catch (err: any) {
     Swal.fire('Error', err.message || 'Gagal menyimpan Picture.', 'error');
   } finally {
@@ -613,9 +614,9 @@ const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData, pho
   const success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
 
   if (success) {
-    closeEditBasicModal();
-    emit('updated');
-  }
+            toastStore.showToast({ message: 'Event berhasil disimpan.', type: 'success' });
+            emit('updated'); 
+        }
   isSavingBasic.value = false;
 };
 </script>

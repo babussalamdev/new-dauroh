@@ -70,31 +70,85 @@
 
               <div class="col-12 mt-4">
                  <h6 class="small fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">
-                   <i class="bi bi-clock-history me-1"></i> Waktu Pendaftaran
+                   <i class="bi bi-clock-history me-1"></i> Pengaturan Waktu Pendaftaran
                  </h6>
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label small fw-bold">Tanggal Buka <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" v-model="formState.RegStartDate" required>
-                <div class="form-text text-xs text-muted">Tgl mulai pendaftaran.</div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-bold">Jam Buka <span class="text-danger">*</span></label>
-                <input type="time" step="1" class="form-control" v-model="formState.RegStartTime" required>
-                <div class="form-text text-xs text-muted">Jam mulai (Format 24 jam).</div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="hasStartSwitch" v-model="formState.HasRegStart">
+                  <label class="form-check-label fw-medium" for="hasStartSwitch">
+                    Atur Waktu Buka Pendaftaran?
+                  </label>
+                  <div class="text-muted text-xs">Jika dimatikan, pendaftaran langsung dibuka saat event aktif.</div>
+                </div>
               </div>
 
-              <div class="col-md-6 mt-3">
-                <label class="form-label small fw-bold">Tanggal Tutup <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" v-model="formState.RegEndDate" required>
-                <div class="form-text text-xs text-muted">Tgl pendaftaran ditutup.</div>
+              <template v-if="formState.HasRegStart">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Tanggal Buka <span class="text-danger">*</span></label>
+                  <input 
+                    type="date" 
+                    class="form-control" 
+                    v-model="formState.RegStartDate" 
+                    :required="formState.HasRegStart"
+                    :min="minDate" 
+                  >
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Jam Buka <span class="text-danger">*</span></label>
+                  <input 
+                    type="time" 
+                    step="1" 
+                    class="form-control" 
+                    v-model="formState.RegStartTime" 
+                    :required="formState.HasRegStart"
+                    :min="getMinStartTime(formState.RegStartDate)"
+                  >
+                </div>
+              </template>
+
+              <div class="col-12 mt-3">
+                <div class="form-check form-switch">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="hasEndSwitch" 
+                    v-model="formState.HasRegEnd"
+                    :disabled="!formState.HasRegStart"
+                  >
+                  <label class="form-check-label fw-medium" :class="!formState.HasRegStart ? 'text-muted' : ''" for="hasEndSwitch">
+                    Atur Waktu Tutup Pendaftaran?
+                  </label>
+                  <div class="text-muted text-xs">
+                    {{ !formState.HasRegStart ? 'Wajib atur waktu buka terlebih dahulu.' : 'Jika dimatikan, pendaftaran tidak memiliki batas waktu akhir.' }}
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6 mt-3">
-                <label class="form-label small fw-bold">Jam Tutup <span class="text-danger">*</span></label>
-                <input type="time" step="1" class="form-control" v-model="formState.RegEndTime" required>
-                <div class="form-text text-xs text-muted">Jam tutup (Format 24 jam).</div>
-              </div>
+
+              <template v-if="formState.HasRegEnd">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Tanggal Tutup <span class="text-danger">*</span></label>
+                  <input 
+                    type="date" 
+                    class="form-control" 
+                    v-model="formState.RegEndDate" 
+                    :required="formState.HasRegEnd"
+                    :min="formState.RegStartDate || minDate"
+                  >
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Jam Tutup <span class="text-danger">*</span></label>
+                  <input 
+                    type="time" 
+                    step="1" 
+                    class="form-control" 
+                    v-model="formState.RegEndTime" 
+                    :required="formState.HasRegEnd"
+                    :min="getMinEndTime(formState.RegEndDate)"
+                  >
+                </div>
+              </template>
               
               <div class="col-12 mt-4">
                 <div class="card bg-light border-0 rounded-3">
@@ -230,7 +284,10 @@ const getInitialFormState = () => ({
   Place: '',
   Price: 0,
   IsActive: true,
-  // [REVISI] Split Date & Time Variables
+  
+  HasRegStart: false,
+  HasRegEnd: false,
+  
   RegStartDate: '',
   RegStartTime: '',
   RegEndDate: '',
@@ -252,6 +309,46 @@ const isUnlimited = reactive({
   ikhwan: false,
   akhwat: false
 });
+
+// [LOGIC BARU] Helper Min Date (Hari Ini)
+const minDate = computed(() => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
+// [LOGIC BARU] Helper Min Time (Jam Sekarang)
+const getMinStartTime = (selectedDate: string) => {
+  if (!selectedDate) return undefined;
+  // Jika tanggal yang dipilih == Hari Ini
+  if (selectedDate === minDate.value) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}:00`; // Sertakan detik 00 biar aman
+  }
+  return undefined;
+};
+
+// [LOGIC BARU] Helper Min End Time (Berdasarkan Start Time)
+const getMinEndTime = (selectedEndDate: string) => {
+  if (!selectedEndDate) return undefined;
+  
+  // Jika Tgl Tutup == Tgl Buka, Jam Tutup harus > Jam Buka
+  if (selectedEndDate === formState.RegStartDate) {
+      return formState.RegStartTime;
+  }
+  // Jika Tgl Tutup == Hari Ini (dan beda sama StartDate), cek Jam Sekarang
+  if (selectedEndDate === minDate.value) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}:00`;
+  }
+  return undefined;
+};
 
 // Validasi Input
 const validateMinOne = (field: 'total' | 'ikhwan' | 'akhwat') => {
@@ -320,19 +417,31 @@ watch(() => props.show, (newVal) => {
       formState.Price = props.dauroh.Price || 0;
       formState.IsActive = props.dauroh.IsActive ?? true;
       
-      // [REVISI LOGIC] Pecah string "YYYY-MM-DD HH:mm:ss" menjadi Tanggal dan Jam
       if (props.dauroh.Registration) {
          // Start
          const startStr = props.dauroh.Registration.start_registration || '';
-         const [sDate, sTime] = startStr.split(' ');
-         formState.RegStartDate = sDate || '';
-         formState.RegStartTime = sTime || '';
+         if (startStr && startStr.trim() !== '') {
+             formState.HasRegStart = true;
+             const [sDate, sTime] = startStr.split(' ');
+             formState.RegStartDate = sDate || '';
+             formState.RegStartTime = sTime || '';
+         } else {
+             formState.HasRegStart = false;
+         }
 
          // End
          const endStr = props.dauroh.Registration.end_registration || '';
-         const [eDate, eTime] = endStr.split(' ');
-         formState.RegEndDate = eDate || '';
-         formState.RegEndTime = eTime || '';
+         if (endStr && endStr.trim() !== '') {
+             formState.HasRegEnd = true;
+             const [eDate, eTime] = endStr.split(' ');
+             formState.RegEndDate = eDate || '';
+             formState.RegEndTime = eTime || '';
+         } else {
+             formState.HasRegEnd = false;
+         }
+      } else {
+          formState.HasRegStart = false;
+          formState.HasRegEnd = false;
       }
 
       const qTotal = props.dauroh.Quota_Total;
@@ -354,6 +463,18 @@ watch(() => props.show, (newVal) => {
     }
   }
 }, { immediate: true });
+
+// [LOGIC BARU] Watcher Dependency: Start mati -> End mati
+watch(() => formState.HasRegStart, (newVal) => {
+    if (!newVal) {
+        formState.HasRegEnd = false;
+        formState.RegStartDate = '';
+        formState.RegStartTime = '';
+        // Bersihkan End juga
+        formState.RegEndDate = '';
+        formState.RegEndTime = '';
+    }
+});
 
 watch(() => [isUnlimited.ikhwan, isUnlimited.akhwat], ([newIkhwan, newAkhwat]) => {
   if (newIkhwan || newAkhwat) {
@@ -385,6 +506,22 @@ const save = () => {
       return;
    }
 
+   // [LOGIC BARU] Validasi Tanggal
+   if (formState.HasRegStart && formState.HasRegEnd) {
+       const startStr = `${formState.RegStartDate} ${formState.RegStartTime}`;
+       const endStr = `${formState.RegEndDate} ${formState.RegEndTime}`;
+       
+       // Compare tanggal
+       if (new Date(endStr) <= new Date(startStr)) {
+           Swal.fire({
+               icon: 'warning',
+               title: 'Waktu Tidak Valid',
+               text: 'Waktu Tutup Pendaftaran tidak boleh lebih awal atau sama dengan Waktu Buka Pendaftaran.'
+           });
+           return;
+       }
+   }
+
    const formElement = document.getElementById('daurohBasicForm') as HTMLFormElement;
    if (formElement && !formElement.checkValidity()) {
        formElement.reportValidity();
@@ -394,6 +531,17 @@ const save = () => {
    const finalQuotaTotal = isUnlimited.total ? 'non-quota' : quotaValues.total;
    const finalQuotaIkhwan = isUnlimited.ikhwan ? 'non-quota' : quotaValues.ikhwan;
    const finalQuotaAkhwat = isUnlimited.akhwat ? 'non-quota' : quotaValues.akhwat;
+
+   let startString = "";
+   let endString = "";
+
+   if (formState.HasRegStart) {
+       startString = `${formState.RegStartDate} ${formState.RegStartTime}`;
+   }
+
+   if (formState.HasRegEnd) {
+       endString = `${formState.RegEndDate} ${formState.RegEndTime}`;
+   }
 
   const dataToEmit = {
     SK: props.isEditing ? formState.SK : null,
@@ -406,10 +554,9 @@ const save = () => {
     Quota_Akhwat: finalQuotaAkhwat,
     IsActive: formState.IsActive,
     
-    // [REVISI LOGIC] Gabungkan Tanggal + Spasi + Jam untuk dikirim ke Backend
     Registration: {
-        start_registration: `${formState.RegStartDate} ${formState.RegStartTime}`,
-        end_registration: `${formState.RegEndDate} ${formState.RegEndTime}`
+        start_registration: startString,
+        end_registration: endString
     }
   };
 

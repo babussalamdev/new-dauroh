@@ -93,7 +93,7 @@ const showRegistrationModal = ref(false);
 
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
-// [REVISI] Logic Gate Pendaftaran + Cek Active
+// [REVISI] Logic Gate Pendaftaran + Safe Date Parsing
 const registrationStatus = computed(() => {
   if (!dauroh.value) return { canRegister: false, message: 'Memuat...' };
   
@@ -106,12 +106,10 @@ const registrationStatus = computed(() => {
   if (!dauroh.value.Registration) return { canRegister: true, message: 'Daftar Sekarang' };
 
   const now = new Date();
-  const start = new Date(dauroh.value.Registration.start_registration);
-  const end = new Date(dauroh.value.Registration.end_registration);
+  // REVISI: replace(' ', 'T') biar aman di Safari/iOS
+  const start = new Date(dauroh.value.Registration.start_registration.replace(' ', 'T'));
+  const end = new Date(dauroh.value.Registration.end_registration.replace(' ', 'T'));
 
-  // Normalisasi waktu ke awal/akhir hari biar adil (Opsional, tergantung format date string)
-  // Kalau formatnya cuma "YYYY-MM-DD", new Date("...") otomatis jam 00:00 UTC atau local
-  
   if (now < start) {
     return { canRegister: false, message: 'Pendaftaran Belum Dibuka' };
   } else if (now > end) {
@@ -123,9 +121,6 @@ const registrationStatus = computed(() => {
 
 onMounted(() => {
   if (daurohSK) {
-    // Note: Fetch ini mungkin throw error "Event tidak aktif" dari store.
-    // Jika mau tetap tampil tapi tombol disabled, hapus throw Error di store atau handle di sini.
-    // Kode di store tadi membolehkan fetch jika akses langsung via ID, tapi ngasih warning.
     daurohStore.fetchPublicDaurohDetail(daurohSK);
   }
 });
@@ -183,11 +178,14 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+// [REVISI] Format Date biar nampilin JAM & replace spasi
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
-    // GunakantoLocaleDateString agar sesuai locale Indonesia
-    return new Date(dateStr).toLocaleDateString('id-ID', { 
-        day: 'numeric', month: 'long', year: 'numeric'
+    // Replace spasi ke T biar aman
+    const safeDate = dateStr.replace(' ', 'T');
+    return new Date(safeDate).toLocaleDateString('id-ID', { 
+        day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit' // Tambahan biar jam muncul
     });
 };
 </script>

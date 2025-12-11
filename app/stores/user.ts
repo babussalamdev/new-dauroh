@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useStorage } from '@vueuse/core';
 import type { Dauroh } from '~/stores/dauroh';
+import { useDaurohStore } from '~/stores/dauroh'; // [1] Import Store
 import { useToastStore } from './toast';
 
 export interface Participant {
@@ -39,6 +40,7 @@ export const useUserStore = defineStore('user', {
     registerDauroh(registrationData: { dauroh: Dauroh, participants: Participant[] }) {
       const { dauroh, participants } = registrationData;
       const toastStore = useToastStore();
+      const daurohStore = useDaurohStore(); // [2] Init Store
       
       if (!dauroh || !participants || participants.length === 0) {
         toastStore.showToast({ message: `Pendaftaran gagal: data tidak lengkap.`, type: 'danger' });
@@ -54,6 +56,15 @@ export const useUserStore = defineStore('user', {
       };
 
       this.upcomingTickets.unshift(newTicket);
+
+      // [3] LOGIC BARU: Hitung & Kurangi Kuota
+      const totalPeserta = participants.length;
+      const jumlahIkhwan = participants.filter(p => p.gender === 'Ikhwan').length;
+      const jumlahAkhwat = participants.filter(p => p.gender === 'Akhwat').length;
+
+      if (dauroh.SK) {
+        daurohStore.decrementQuota(dauroh.SK, totalPeserta, jumlahIkhwan, jumlahAkhwat);
+      }
 
       toastStore.showToast({
         message: `Pendaftaran berhasil! ${participants.length} peserta terdaftar.`,
