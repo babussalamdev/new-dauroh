@@ -20,11 +20,11 @@
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                    <NuxtImg
-                   :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`"
-                   class="card-img-top"
-                   :alt="dauroh.Title"
-                   loading="lazy"
-                   format="webp"
+                     :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`"
+                     class="card-img-top"
+                     :alt="dauroh.Title"
+                     loading="lazy"
+                     format="webp"
                    />
                     <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
                   </div>
@@ -100,6 +100,7 @@
   import { useToastStore } from '~/stores/toast';
   import { useAuth } from "~/composables/useAuth";
   import { useRouter } from 'vue-router';
+  import dayjs from 'dayjs';
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
@@ -119,6 +120,7 @@
   const showDetailModal = ref(false);
   const showImageModal = ref(false);
 
+  // --- Modal Handlers ---
   const openImageModal = (dauroh) => {
     selectedDauroh.value = dauroh;
     showImageModal.value = true;
@@ -142,22 +144,79 @@
     }, 200);
   };
   
+  // --- CORE LOGIC PENDAFTARAN (FIXED) ---
   const handleRegisterClick = (daurohItem) => {
-    // 1. Cek Status Login
+    // 1. CEK AKUN
     if (!isLoggedIn.value) {
       toastStore.showToast({
-        message: 'Mohon login atau daftar terlebih dahulu.',
+        message: 'Mohon login atau daftar akun terlebih dahulu.',
         type: 'info'
       });
+      return; 
+    }
 
+    // 2. CEK KUOTA (DIPERBAIKI)
+    let relevantQuota = 'non-quota';
+    const gender = (daurohItem.Gender || '').toLowerCase().trim(); // Tambah .trim() biar aman
+
+    // Urutan Cek: Campur -> Akhwat -> Ikhwan -> Fallback
+    if (gender.includes('ikhwan') && gender.includes('akhwat')) {
+      // Event Campur: Cek Kuota Total
+      relevantQuota = daurohItem.Quota_Total;
+    } else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
+      // Event Akhwat: Cek Kuota Akhwat (Pake .includes biar 'Khusus Akhwat' tetep kena)
+      relevantQuota = daurohItem.Quota_Akhwat;
+    } else if (gender.includes('ikhwan') || gender.includes('laki') || gender.includes('pria')) {
+      // Event Ikhwan: Cek Kuota Ikhwan
+      relevantQuota = daurohItem.Quota_Ikhwan;
     } else {
-      // 2. Validasi Data
-      if (daurohItem && daurohItem.SK) {
-        router.push(`/dauroh/register/${daurohItem.SK}`);
-      } else {
-        console.error("Event Data Invalid:", daurohItem);
-        toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+      // Fallback kalau gender ga jelas, baru cek Total
+      relevantQuota = daurohItem.Quota_Total;
+    }
+
+    // Logic: Jika kuota adalah angka (bukan non-quota) DAN sisa <= 0
+    if (typeof relevantQuota === 'number' && relevantQuota <= 0) {
+      toastStore.showToast({
+        message: 'Mohon maaf, kuota tiket sudah habis.',
+        type: 'warning'
+      });
+      return; 
+    }
+
+    // 3. CEK TANGGAL
+    const now = dayjs();
+    const startRegisStr = daurohItem.Registration?.start_registration;
+    const endRegisStr = daurohItem.Registration?.end_registration;
+
+    if (startRegisStr || endRegisStr) {
+      const startRegis = startRegisStr ? dayjs(startRegisStr) : null;
+      const endRegis = endRegisStr ? dayjs(endRegisStr) : null;
+
+      // Kasus A: Belum Buka
+      if (startRegis && startRegis.isValid() && now.isBefore(startRegis)) {
+        toastStore.showToast({
+          message: `Pendaftaran belum dibuka. Dimulai pada ${startRegis.format('DD MMM YYYY HH:mm')}`,
+          type: 'info'
+        });
+        return; 
       }
+
+      // Kasus B: Sudah Tutup
+      if (endRegis && endRegis.isValid() && now.isAfter(endRegis)) {
+        toastStore.showToast({
+          message: 'Pendaftaran sudah ditutup.',
+          type: 'warning'
+        });
+        return; 
+      }
+    }
+
+    // 4. LOLOS SEMUA
+    if (daurohItem && daurohItem.SK) {
+      router.push(`/dauroh/register/${daurohItem.SK}`);
+    } else {
+      console.error("Event Data Invalid:", daurohItem);
+      toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
     }
   };
 </script>
@@ -215,7 +274,7 @@
     }
   }
 
-  /* Styling Tombol Carousel (Prev/Next) */
+  /* Styling Tombol Carousel */
   .carousel-control-prev,
   .carousel-control-next {
     width: 40px;
@@ -235,34 +294,23 @@
     right: 5px;
   }
   
-  /* Sembunyikan tombol navigasi di Mobile/Tablet (biar di-swipe/scroll aja) */
+  /* Mobile Adjustment */
 @media (max-width: 991.98px) {
-  /* Hapus rule display: none untuk prev/next */
-  
-  /* Kasih padding biar ada ruang buat tombol di kiri kanan */
   .carousel {
     padding-left: 35px; 
     padding-right: 35px;
   }
-  
-  /* Geser posisi tombol biar pas di pinggir layar HP */
-  .carousel-control-prev {
-    left: 0; 
-  }
-  .carousel-control-next {
-    right: 0; /* Sebelumnya 5px, kita pepetin aja */
-  }
-
+  .carousel-control-prev { left: 0; }
+  .carousel-control-next { right: 0; }
   .card-container-flex {
-    padding: 0; /* Reset padding container card */
+    padding: 0; 
     padding-bottom: 10px;
   }
 }
   
   .carousel-control-prev-icon,
-  .carousel-control-next-icon {
-    background-size: 60%;
-  }
+  .carousel-control-next-icon { background-size: 60%; }
+  
   .card.dauroh-card {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
@@ -270,9 +318,8 @@
     cursor: pointer;
     height: 100%;
   }
-  .card.dauroh-card:hover {
-    transform: translateY(-5px);
-  }
+  .card.dauroh-card:hover { transform: translateY(-5px); }
+  
   .card.dauroh-card img {
     width: 100%;
     aspect-ratio: 2 / 3;
@@ -289,11 +336,6 @@
     font-size: 0.75rem;
     font-weight: bold;
   }
-  .card-body {
-    flex-grow: 1;
-  }
-  .card-body .btn {
-    font-size: 0.8rem;
-    padding: 0.25rem 0.75rem;
-  }
+  .card-body { flex-grow: 1; }
+  .card-body .btn { font-size: 0.8rem; padding: 0.25rem 0.75rem; }
 </style>

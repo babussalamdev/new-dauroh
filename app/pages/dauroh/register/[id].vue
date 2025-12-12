@@ -77,7 +77,7 @@
                   </div>
 
                   <div v-if="canShowAkhwat" class="d-flex justify-content-between align-items-center">
-                     <div>
+                      <div>
                       <span class="d-block fw-bold">Tiket Akhwat</span>
                       <small class="text-muted" v-if="typeof quotaInfo.akhwat === 'number' && quotaInfo.akhwat > 0">Sisa: {{ quotaInfo.akhwat }}</small>
                       <small class="text-success" v-else-if="quotaInfo.akhwat === 'non-quota'">Tanpa Batas Kuota</small>
@@ -136,7 +136,7 @@
                   </div>
 
                   <div class="col-md-6">
-                     <label class="form-label small">Domisili *</label>
+                      <label class="form-label small">Domisili *</label>
                     <input type="text" class="form-control" v-model="participant.domicile" required placeholder="Kota Tinggal">
                   </div>
                 </div>
@@ -230,27 +230,46 @@ const canShowAkhwat = computed(() => {
 const quotaInfo = computed(() => {
   if (!dauroh.value) return { ikhwan: 0, akhwat: 0, total: 0 };
   return {
-    ikhwan: dauroh.value.Quota_Ikhwan, // Bisa number atau 'non-quota'
+    ikhwan: dauroh.value.Quota_Ikhwan,
     akhwat: dauroh.value.Quota_Akhwat,
     total: dauroh.value.Quota_Total
   };
 });
 
+// [LOGIC DIPERBAIKI] Logic Sold Out yang Pintar
+const isSoldOut = computed(() => {
+    if(!dauroh.value) return false;
+
+    // 1. Cek apakah ada tiket Ikhwan yang bisa dibeli?
+    let ikhwanAvailable = false;
+    if (canShowIkhwan.value) {
+        const q = dauroh.value.Quota_Ikhwan;
+        // Ada jika 'non-quota' ATAU angka > 0
+        if (q === 'non-quota' || (typeof q === 'number' && q > 0)) {
+            ikhwanAvailable = true;
+        }
+    }
+
+    // 2. Cek apakah ada tiket Akhwat yang bisa dibeli?
+    let akhwatAvailable = false;
+    if (canShowAkhwat.value) {
+        const q = dauroh.value.Quota_Akhwat;
+        if (q === 'non-quota' || (typeof q === 'number' && q > 0)) {
+            akhwatAvailable = true;
+        }
+    }
+
+    // 3. Kesimpulan: Jika SALAH SATU masih ada, berarti BELUM Sold Out.
+    // (Misal: Ikhwan habis tapi Akhwat ada -> Belum Sold Out)
+    if (ikhwanAvailable || akhwatAvailable) return false;
+
+    // Jika tidak ada sama sekali yg available, baru Sold Out
+    return true;
+});
+
 const totalTickets = computed(() => formState.qtyIkhwan + formState.qtyAkhwat);
 const totalPrice = computed(() => (dauroh.value?.Price || 0) * totalTickets.value);
 const isMaxReached = computed(() => totalTickets.value >= 4);
-
-// [REVISI] Logika Sold Out yang Benar
-const isSoldOut = computed(() => {
-    if(!dauroh.value) return false;
-    // Jika 'non-quota' (Unlimited), berarti TIDAK sold out
-    if (dauroh.value.Quota_Total === 'non-quota') return false; 
-    
-    // Jika angka dan 0, berarti Sold Out
-    if (dauroh.value.Quota_Total === 0) return true; 
-    
-    return false;
-});
 
 // --- METHODS ---
 
@@ -259,7 +278,6 @@ const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
 
   if (type === 'ikhwan') {
     const newVal = formState.qtyIkhwan + change;
-    // Jika Quota adalah number (bukan 'non-quota') dan melebihi sisa, return
     if (typeof quotaInfo.value.ikhwan === 'number' && quotaInfo.value.ikhwan > 0 && newVal > quotaInfo.value.ikhwan) return;
     if (newVal >= 0) formState.qtyIkhwan = newVal;
   } else {
