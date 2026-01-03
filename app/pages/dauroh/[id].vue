@@ -93,7 +93,7 @@ const showRegistrationModal = ref(false);
 
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
-// [REVISI] Logic Gate Pendaftaran + Safe Date Parsing
+// [REVISI] Logic Gate Pendaftaran + Safe Date Parsing + Cek Kuota
 const registrationStatus = computed(() => {
   if (!dauroh.value) return { canRegister: false, message: 'Memuat...' };
   
@@ -102,21 +102,44 @@ const registrationStatus = computed(() => {
       return { canRegister: false, message: 'Event Tidak Aktif' };
   }
 
-  // 2. Cek Registration Object
+  // 2. Cek Kuota (Ditambahkan)
+  let relevantQuota = 'non-quota';
+  const gender = (dauroh.value.Gender || '').toLowerCase().trim();
+  
+  if (gender.includes('ikhwan') && gender.includes('akhwat')) {
+    relevantQuota = dauroh.value.Quota_Total;
+  } else if (gender.includes('akhwat')) {
+    relevantQuota = dauroh.value.Quota_Akhwat;
+  } else if (gender.includes('ikhwan')) {
+    relevantQuota = dauroh.value.Quota_Ikhwan;
+  } else {
+    relevantQuota = dauroh.value.Quota_Total;
+  }
+
+  // Jika kuota valid (bukan 'non-quota') dan habis (<= 0)
+  if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
+      return { canRegister: false, message: 'Kuota Habis' };
+  }
+
+  // 3. Cek Tanggal Pendaftaran
   if (!dauroh.value.Registration) return { canRegister: true, message: 'Daftar Sekarang' };
 
   const now = new Date();
-  // REVISI: replace(' ', 'T') biar aman di Safari/iOS
-  const start = new Date(dauroh.value.Registration.start_registration.replace(' ', 'T'));
-  const end = new Date(dauroh.value.Registration.end_registration.replace(' ', 'T'));
+  // Safe parsing untuk Safari
+  const startStr = dauroh.value.Registration.start_registration ? dauroh.value.Registration.start_registration.replace(' ', 'T') : null;
+  const endStr = dauroh.value.Registration.end_registration ? dauroh.value.Registration.end_registration.replace(' ', 'T') : null;
 
-  if (now < start) {
-    return { canRegister: false, message: 'Pendaftaran Belum Dibuka' };
-  } else if (now > end) {
-    return { canRegister: false, message: 'Pendaftaran Ditutup' };
-  } else {
-    return { canRegister: true, message: 'Daftar Sekarang' };
+  if (startStr) {
+    const start = new Date(startStr);
+    if (now < start) return { canRegister: false, message: 'Pendaftaran Belum Dibuka' };
   }
+
+  if (endStr) {
+    const end = new Date(endStr);
+    if (now > end) return { canRegister: false, message: 'Pendaftaran Ditutup' };
+  }
+
+  return { canRegister: true, message: 'Daftar Sekarang' };
 });
 
 onMounted(() => {
@@ -133,8 +156,10 @@ watch(dauroh, (newDauroh) => {
 
 
 const handleRegisterClick = () => {
+  // Jika tombol didisable oleh status (misal kuota habis/tanggal lewat), return.
   if (!registrationStatus.value.canRegister) return; 
 
+  // Cek Login Akun
   if (!isLoggedIn.value) {
     router.push('/login');
   } else if (dauroh.value && dauroh.value.SK) {
@@ -178,14 +203,12 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-// [REVISI] Format Date biar nampilin JAM & replace spasi
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
-    // Replace spasi ke T biar aman
     const safeDate = dateStr.replace(' ', 'T');
     return new Date(safeDate).toLocaleDateString('id-ID', { 
         day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit' // Tambahan biar jam muncul
+        hour: '2-digit', minute: '2-digit'
     });
 };
 </script>

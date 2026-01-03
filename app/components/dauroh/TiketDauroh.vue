@@ -144,38 +144,34 @@
     }, 200);
   };
   
-  // --- CORE LOGIC PENDAFTARAN (FIXED) ---
   const handleRegisterClick = (daurohItem) => {
-    // 1. CEK AKUN
+    // 1. CEK AKUN (If not logged in -> Popup/Redirect)
     if (!isLoggedIn.value) {
       toastStore.showToast({
         message: 'Mohon login atau daftar akun terlebih dahulu.',
         type: 'info'
       });
+      router.push('/login'); 
       return; 
     }
 
-    // 2. CEK KUOTA (DIPERBAIKI)
+    // 2. CEK KUOTA (If Sold < Quota -> Lanjut, Else -> Popup Quota)
     let relevantQuota = 'non-quota';
-    const gender = (daurohItem.Gender || '').toLowerCase().trim(); // Tambah .trim() biar aman
+    const gender = (daurohItem.Gender || '').toLowerCase().trim();
 
-    // Urutan Cek: Campur -> Akhwat -> Ikhwan -> Fallback
+    // Urutan Cek Kuota: Campur -> Akhwat -> Ikhwan -> Fallback Total
     if (gender.includes('ikhwan') && gender.includes('akhwat')) {
-      // Event Campur: Cek Kuota Total
       relevantQuota = daurohItem.Quota_Total;
     } else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
-      // Event Akhwat: Cek Kuota Akhwat (Pake .includes biar 'Khusus Akhwat' tetep kena)
       relevantQuota = daurohItem.Quota_Akhwat;
     } else if (gender.includes('ikhwan') || gender.includes('laki') || gender.includes('pria')) {
-      // Event Ikhwan: Cek Kuota Ikhwan
       relevantQuota = daurohItem.Quota_Ikhwan;
     } else {
-      // Fallback kalau gender ga jelas, baru cek Total
       relevantQuota = daurohItem.Quota_Total;
     }
 
-    // Logic: Jika kuota adalah angka (bukan non-quota) DAN sisa <= 0
-    if (typeof relevantQuota === 'number' && relevantQuota <= 0) {
+    // Logic: Jika kuota adalah angka DAN <= 0 (Habis)
+    if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
       toastStore.showToast({
         message: 'Mohon maaf, kuota tiket sudah habis.',
         type: 'warning'
@@ -183,26 +179,29 @@
       return; 
     }
 
-    // 3. CEK TANGGAL
+    // 3. CEK TANGGAL (If Dates Valid -> Masuk, Else -> Popup Tanggal)
+    // Safe parsing: replace ' ' with 'T' untuk kompatibilitas Safari/iOS
+    const startStr = daurohItem.Registration?.start_registration?.replace(' ', 'T');
+    const endStr = daurohItem.Registration?.end_registration?.replace(' ', 'T');
+
     const now = dayjs();
-    const startRegisStr = daurohItem.Registration?.start_registration;
-    const endRegisStr = daurohItem.Registration?.end_registration;
 
-    if (startRegisStr || endRegisStr) {
-      const startRegis = startRegisStr ? dayjs(startRegisStr) : null;
-      const endRegis = endRegisStr ? dayjs(endRegisStr) : null;
-
-      // Kasus A: Belum Buka
-      if (startRegis && startRegis.isValid() && now.isBefore(startRegis)) {
+    // Cek Start Date
+    if (startStr) {
+      const startRegis = dayjs(startStr);
+      if (startRegis.isValid() && now.isBefore(startRegis)) {
         toastStore.showToast({
           message: `Pendaftaran belum dibuka. Dimulai pada ${startRegis.format('DD MMM YYYY HH:mm')}`,
           type: 'info'
         });
         return; 
       }
+    }
 
-      // Kasus B: Sudah Tutup
-      if (endRegis && endRegis.isValid() && now.isAfter(endRegis)) {
+    // Cek End Date
+    if (endStr) {
+      const endRegis = dayjs(endStr);
+      if (endRegis.isValid() && now.isAfter(endRegis)) {
         toastStore.showToast({
           message: 'Pendaftaran sudah ditutup.',
           type: 'warning'
@@ -211,7 +210,7 @@
       }
     }
 
-    // 4. LOLOS SEMUA
+    // 4. LOLOS SEMUA -> MASUK
     if (daurohItem && daurohItem.SK) {
       router.push(`/dauroh/register/${daurohItem.SK}`);
     } else {
