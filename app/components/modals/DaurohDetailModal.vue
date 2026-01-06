@@ -82,8 +82,15 @@
           <button type="button" class="btn btn-light text-muted fw-medium px-4 rounded-pill" @click="close">
             Batal
           </button>
-          <button type="button" class="btn btn-primary fw-bold px-5 rounded-pill shadow-sm hover-up" @click="register">
-            Daftar Sekarang <i class="bi bi-arrow-right ms-1"></i>
+          
+          <button 
+            type="button" 
+            class="btn fw-bold px-5 rounded-pill shadow-sm hover-up"
+            :class="buttonState.cssClass"
+            :disabled="buttonState.disabled"
+            @click="register"
+          >
+            {{ buttonState.label }} <i v-if="!buttonState.disabled" class="bi bi-arrow-right ms-1"></i>
           </button>
         </div>
 
@@ -128,6 +135,72 @@ const showAkhwat = computed(() => {
 const gridColClass = computed(() => {
   return (showIkhwan.value && showAkhwat.value) ? 'col-6' : 'col-12'
 })
+const buttonState = computed(() => {
+  const item = props.dauroh;
+  if (!item) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
+
+  // 1. Cek Active
+  if (item.IsActive === false) {
+    return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
+  }
+
+  const now = dayjs();
+  if (item.Date) {
+     // Cast ke tipe DaurohDayDetail agar TS paham struktur datanya
+     const dates = Object.values(item.Date) as DaurohDayDetail[];
+     
+     if (dates.length > 0) {
+       // Ambil semua tanggal dalam bentuk string array
+       const allDates = dates.map(d => d.date);
+       
+       // Sort array string (YYYY-MM-DD aman disort secara leksikal)
+       // Tanggal paling akhir akan berada di index terakhir
+       allDates.sort();
+       
+       const lastEventDateStr = allDates[allDates.length - 1]; // Ambil yang paling akhir
+
+       if (lastEventDateStr) {
+         const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
+         if (eventEndTime.isValid() && now.isAfter(eventEndTime)) {
+            return { label: 'Selesai', disabled: true, cssClass: 'btn-secondary' };
+         }
+       }
+     }
+  }
+
+  // 3. Cek Masa Pendaftaran
+  const startStr = item.Registration?.start_registration?.replace(' ', 'T');
+  const endStr = item.Registration?.end_registration?.replace(' ', 'T');
+
+  if (startStr) {
+    const startRegis = dayjs(startStr);
+    if (startRegis.isValid() && now.isBefore(startRegis)) {
+       return { label: 'Belum Buka', disabled: true, cssClass: 'btn-secondary' };
+    }
+  }
+  if (endStr) {
+    const endRegis = dayjs(endStr);
+    if (endRegis.isValid() && now.isAfter(endRegis)) {
+       return { label: 'Ditutup', disabled: true, cssClass: 'btn-secondary' };
+    }
+  }
+
+  // 4. Cek Kuota
+  let relevantQuota: any = 'non-quota';
+  const gender = (item.Gender || '').toLowerCase().trim();
+
+  if (gender.includes('ikhwan') && gender.includes('akhwat')) relevantQuota = item.Quota_Total;
+  else if (gender.includes('akhwat')) relevantQuota = item.Quota_Akhwat;
+  else if (gender.includes('ikhwan')) relevantQuota = item.Quota_Ikhwan;
+  else relevantQuota = item.Quota_Total;
+
+  if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
+    return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
+  }
+
+  // 5. Lolos Semua
+  return { label: 'Daftar Sekarang', disabled: false, cssClass: 'btn-primary' };
+});
 
 // --- LOGIC LAINNYA ---
 const sortedSchedule = computed(() => {
@@ -156,7 +229,11 @@ const getQuotaColor = (val: number | 'non-quota' | undefined) => {
 };
 
 const close = () => emit('close')
-const register = () => emit('register', props.dauroh)
+const register = () => {
+  if (!buttonState.value.disabled) {
+    emit('register', props.dauroh)
+  }
+}
 </script>
 
 <style scoped>
@@ -167,16 +244,15 @@ const register = () => emit('register', props.dauroh)
   margin: 1.75rem auto; /* Default margin desktop */
 }
 
-/* --- ADJUSTMENT KHUSUS MOBILE (BIAR GAK FULL LAYAR) --- */
 @media (max-width: 576px) {
   .custom-modal-width {
-    width: 90%; /* Lebih ramping dikit (biar ada sisa kiri kanan) */
-    margin: 4rem auto; /* Kasih jarak GEDE dari atas & bawah biar kayak kartu floating */
-    min-height: auto; /* Reset tinggi minimal */
+    width: 90%; 
+    margin: 4rem auto;
+    min-height: auto;
   }
   
   .modal-dialog-scrollable {
-    max-height: calc(100% - 8rem); /* Kurangi tinggi maksimal modalnya sesuai margin (4rem x 2) */
+    max-height: calc(100% - 8rem);
   }
 
   .modal-body {

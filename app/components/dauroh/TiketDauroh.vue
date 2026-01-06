@@ -39,12 +39,16 @@
                       >
                         Detail
                       </button>
+                      
                       <button 
-                        class="btn btn-sm btn-primary rounded-pill w-100" 
+                        class="btn btn-sm rounded-pill w-100" 
+                        :class="getButtonState(dauroh).cssClass"
+                        :disabled="getButtonState(dauroh).disabled"
                         @click.prevent.stop="handleRegisterClick(dauroh)"
                       >
-                        Daftar
+                        {{ getButtonState(dauroh).label }}
                       </button>
+
                     </div>
                   </div>
                 </div>
@@ -143,23 +147,53 @@
       handleRegisterClick(dauroh);
     }, 200);
   };
-  
-  const handleRegisterClick = (daurohItem) => {
-    // 1. CEK AKUN (If not logged in -> Popup/Redirect)
-    if (!isLoggedIn.value) {
-      toastStore.showToast({
-        message: 'Mohon login atau daftar akun terlebih dahulu.',
-        type: 'info'
-      });
-      router.push('/login'); 
-      return; 
+
+  // --- [CORE LOGIC BARU] Status Tombol Terpusat ---
+  const getButtonState = (daurohItem) => {
+    if (!daurohItem) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
+
+    // 1. Cek Active
+    if (daurohItem.IsActive === false) {
+      return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
     }
 
-    // 2. CEK KUOTA (If Sold < Quota -> Lanjut, Else -> Popup Quota)
+    const now = dayjs();
+
+    // 2. Cek Tanggal Acara (Safety Net: Event Selesai)
+    if (daurohItem.Date) {
+       const dates = Object.values(daurohItem.Date);
+       if (dates.length > 0) {
+         // Cari tanggal paling akhir dari event
+         const lastEventDateStr = dates.reduce((max, current) => (current.date > max ? current.date : max), dates[0].date);
+         const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
+         
+         if (eventEndTime.isValid() && now.isAfter(eventEndTime)) {
+            return { label: 'Selesai', disabled: true, cssClass: 'btn-secondary' };
+         }
+       }
+    }
+
+    // 3. Cek Masa Pendaftaran
+    const startStr = daurohItem.Registration?.start_registration?.replace(' ', 'T');
+    const endStr = daurohItem.Registration?.end_registration?.replace(' ', 'T');
+
+    if (startStr) {
+      const startRegis = dayjs(startStr);
+      if (startRegis.isValid() && now.isBefore(startRegis)) {
+         return { label: 'Belum Buka', disabled: true, cssClass: 'btn-secondary' };
+      }
+    }
+    if (endStr) {
+      const endRegis = dayjs(endStr);
+      if (endRegis.isValid() && now.isAfter(endRegis)) {
+         return { label: 'Ditutup', disabled: true, cssClass: 'btn-secondary' };
+      }
+    }
+
+    // 4. Cek Kuota
     let relevantQuota = 'non-quota';
     const gender = (daurohItem.Gender || '').toLowerCase().trim();
 
-    // Urutan Cek Kuota: Campur -> Akhwat -> Ikhwan -> Fallback Total
     if (gender.includes('ikhwan') && gender.includes('akhwat')) {
       relevantQuota = daurohItem.Quota_Total;
     } else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
@@ -170,51 +204,36 @@
       relevantQuota = daurohItem.Quota_Total;
     }
 
-    // Logic: Jika kuota adalah angka DAN <= 0 (Habis)
     if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
-      toastStore.showToast({
-        message: 'Mohon maaf, kuota tiket sudah habis.',
-        type: 'warning'
-      });
+      return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
+    }
+
+    // 5. Lolos Semua -> Tombol Aktif
+    return { label: 'Daftar', disabled: false, cssClass: 'btn-primary' };
+  };
+
+  // --- Handler Klik ---
+  const handleRegisterClick = (daurohItem) => {
+    // Validasi ulang state tombol (Double Protection)
+    const state = getButtonState(daurohItem);
+    
+    // Jika state disabled (misal: user inspect element enable tombol), tolak.
+    if (state.disabled) {
+       toastStore.showToast({ message: `Tidak dapat mendaftar: Status ${state.label}`, type: 'warning' });
+       return;
+    }
+
+    // 1. CEK AKUN
+    if (!isLoggedIn.value) {
+      toastStore.showToast({ message: 'Mohon login atau daftar akun terlebih dahulu.', type: 'info' });
+      router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } });
       return; 
     }
 
-    // 3. CEK TANGGAL (If Dates Valid -> Masuk, Else -> Popup Tanggal)
-    // Safe parsing: replace ' ' with 'T' untuk kompatibilitas Safari/iOS
-    const startStr = daurohItem.Registration?.start_registration?.replace(' ', 'T');
-    const endStr = daurohItem.Registration?.end_registration?.replace(' ', 'T');
-
-    const now = dayjs();
-
-    // Cek Start Date
-    if (startStr) {
-      const startRegis = dayjs(startStr);
-      if (startRegis.isValid() && now.isBefore(startRegis)) {
-        toastStore.showToast({
-          message: `Pendaftaran belum dibuka. Dimulai pada ${startRegis.format('DD MMM YYYY HH:mm')}`,
-          type: 'info'
-        });
-        return; 
-      }
-    }
-
-    // Cek End Date
-    if (endStr) {
-      const endRegis = dayjs(endStr);
-      if (endRegis.isValid() && now.isAfter(endRegis)) {
-        toastStore.showToast({
-          message: 'Pendaftaran sudah ditutup.',
-          type: 'warning'
-        });
-        return; 
-      }
-    }
-
-    // 4. LOLOS SEMUA -> MASUK
+    // 2. LANJUT KE HALAMAN REGISTER
     if (daurohItem && daurohItem.SK) {
       router.push(`/dauroh/register/${daurohItem.SK}`);
     } else {
-      console.error("Event Data Invalid:", daurohItem);
       toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
     }
   };

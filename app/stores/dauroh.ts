@@ -169,14 +169,14 @@ export const useDaurohStore = defineStore("dauroh", {
 
     // --- Fetch Actions ---
 
-    async fetchPublicTiketDauroh() {
-      if (this.tiketDauroh.length > 0 || this.loading.tiketDauroh) return;
+  async fetchPublicTiketDauroh() {
+      if (this.loading.tiketDauroh) return;
+      
       this.loading.tiketDauroh = true;
       try {
         const { $apiBase } = useNuxtApp();
         const res = await $apiBase.get<ApiDaurohRaw[]>("/get-view?type=event");
         
-        // [BARU] Filter: Hanya tampilkan yang IsActive !== false
         const rawData = Array.isArray(res.data) ? res.data : [];
         this.tiketDauroh = rawData
           .filter(event => event.IsActive !== false)
@@ -185,7 +185,6 @@ export const useDaurohStore = defineStore("dauroh", {
       } catch (error) { console.error(error); } 
       finally { this.loading.tiketDauroh = false; }
     },
-
     async fetchAdminTiketDauroh() {
       if (this.loading.adminTiketDauroh) return;
       this.loading.adminTiketDauroh = true;
