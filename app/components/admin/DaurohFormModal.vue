@@ -15,9 +15,9 @@
                 <div class="d-flex justify-content-between align-items-center pb-3 mb-2 border-bottom">
                   <div>
                     <h6 class="fw-bold mb-1 text-dark">Status Publikasi</h6>
-                    <div class="small" :class="formState.IsActive ? 'text-success' : 'text-muted'">
-                      <i class="bi" :class="formState.IsActive ? 'bi-check-circle-fill' : 'bi-eye-slash-fill'"></i>
-                      {{ formState.IsActive ? 'Event Aktif (Terlihat oleh Peserta)' : 'Draft / Non-Aktif (Disembunyikan)' }}
+                    <div class="small" :class="isStatusActive ? 'text-success' : 'text-muted'">
+                      <i class="bi" :class="isStatusActive ? 'bi-check-circle-fill' : 'bi-eye-slash-fill'"></i>
+                      {{ isStatusActive ? 'Event Aktif (Terlihat oleh Peserta)' : 'Draft / Non-Aktif (Disembunyikan)' }}
                     </div>
                   </div>
                   <div class="form-check form-switch">
@@ -26,13 +26,13 @@
                       type="checkbox" 
                       role="switch" 
                       id="isActiveSwitch" 
-                      v-model="formState.IsActive" 
+                      v-model="isStatusActive" 
                       style="width: 3.2em; height: 1.6em; cursor: pointer;"
                     >
                   </div>
                 </div>
               </div>
-
+              
               <div class="col-12">
                 <label for="daurohTitleModal" class="form-label fw-medium">Nama Event <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="daurohTitleModal" v-model="formState.Title" placeholder="Masukkan nama dauroh..." required>
@@ -229,7 +229,6 @@
                   </div>
                 </div>
               </div>
-
             </div>
           </form>
         </div>
@@ -255,7 +254,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, reactive, computed } from 'vue';
+import { watch, reactive, computed, ref } from 'vue'; // Tambah ref
 import type { Dauroh } from '@/stores/dauroh';
 import { useDaurohStore } from '@/stores/dauroh';
 import Swal from 'sweetalert2'; 
@@ -277,13 +276,16 @@ const emit = defineEmits<{
 const daurohStore = useDaurohStore();
 const isLoading = computed(() => daurohStore.loading.savingBasic);
 
+// [UBAH] Gunakan ref untuk state boolean switch UI
+const isStatusActive = ref(false); // Default false (inactive) untuk event baru
+
 const getInitialFormState = () => ({
   SK: '', 
   Title: '',
   Gender: '',
   Place: '',
   Price: 0,
-  IsActive: true,
+  // IsActive dihapus dari sini, diganti handling Status via isStatusActive ref
   
   HasRegStart: false,
   HasRegEnd: false,
@@ -296,21 +298,9 @@ const getInitialFormState = () => ({
 
 const formState = reactive(getInitialFormState());
 
-// State untuk input angka
-const quotaValues = reactive({
-  total: 0,
-  ikhwan: 0,
-  akhwat: 0
-});
-
-// State untuk checkbox unlimited
-const isUnlimited = reactive({
-  total: false,
-  ikhwan: false,
-  akhwat: false
-});
-
-// [LOGIC BARU] Helper Min Date (Hari Ini)
+// ... (State quotaValues, isUnlimited, computed helpers minDate dll SAMA) ...
+const quotaValues = reactive({ total: 0, ikhwan: 0, akhwat: 0 });
+const isUnlimited = reactive({ total: false, ikhwan: false, akhwat: false });
 const minDate = computed(() => {
   const today = new Date();
   const year = today.getFullYear();
@@ -318,29 +308,21 @@ const minDate = computed(() => {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 });
-
-// [LOGIC BARU] Helper Min Time (Jam Sekarang)
 const getMinStartTime = (selectedDate: string) => {
   if (!selectedDate) return undefined;
-  // Jika tanggal yang dipilih == Hari Ini
   if (selectedDate === minDate.value) {
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
-    return `${hh}:${mm}:00`; // Sertakan detik 00 biar aman
+    return `${hh}:${mm}:00`;
   }
   return undefined;
 };
-
-// [LOGIC BARU] Helper Min End Time (Berdasarkan Start Time)
 const getMinEndTime = (selectedEndDate: string) => {
   if (!selectedEndDate) return undefined;
-  
-  // Jika Tgl Tutup == Tgl Buka, Jam Tutup harus > Jam Buka
   if (selectedEndDate === formState.RegStartDate) {
       return formState.RegStartTime;
   }
-  // Jika Tgl Tutup == Hari Ini (dan beda sama StartDate), cek Jam Sekarang
   if (selectedEndDate === minDate.value) {
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, '0');
@@ -350,25 +332,18 @@ const getMinEndTime = (selectedEndDate: string) => {
   return undefined;
 };
 
-// Validasi Input
+// ... (Validasi Quota SAMA) ...
 const validateMinOne = (field: 'total' | 'ikhwan' | 'akhwat') => {
     if (isUnlimited[field]) return; 
-    if (quotaValues[field] === 0) {
-        quotaValues[field] = 1; 
-    }
+    if (quotaValues[field] === 0) { quotaValues[field] = 1; }
 };
-
-const remainingQuota = computed(() => {
-  return quotaValues.total - (quotaValues.ikhwan + quotaValues.akhwat);
-});
+const remainingQuota = computed(() => quotaValues.total - (quotaValues.ikhwan + quotaValues.akhwat));
 const isQuotaMismatch = computed(() => {
   if (formState.Gender !== 'ikhwan, akhwat') return false; 
   if (isUnlimited.total || isUnlimited.ikhwan || isUnlimited.akhwat) return false;
   return remainingQuota.value !== 0;
 });
-const showAllocationWarning = computed(() => {
-  return formState.Gender === 'ikhwan, akhwat' && !isUnlimited.total && !isUnlimited.ikhwan && !isUnlimited.akhwat;
-});
+const showAllocationWarning = computed(() => formState.Gender === 'ikhwan, akhwat' && !isUnlimited.total && !isUnlimited.ikhwan && !isUnlimited.akhwat);
 const allocationMessage = computed(() => {
   if (remainingQuota.value === 0) return 'Alokasi Pas (Siap Simpan)';
   if (remainingQuota.value > 0) return `Kurang ${remainingQuota.value} lagi`;
@@ -397,6 +372,9 @@ watch(() => props.show, (newVal) => {
     
     quotaValues.total = 0; quotaValues.ikhwan = 0; quotaValues.akhwat = 0;
     isUnlimited.total = false; isUnlimited.ikhwan = false; isUnlimited.akhwat = false;
+    
+    // [UBAH] Default status untuk form baru = inactive (sesuai request)
+    isStatusActive.value = false;
 
     if (props.isEditing && props.dauroh) {
       formState.SK = props.dauroh.SK || '';
@@ -415,30 +393,27 @@ watch(() => props.show, (newVal) => {
       }
       
       formState.Price = props.dauroh.Price || 0;
-      formState.IsActive = props.dauroh.IsActive ?? true;
+      
+      // [UBAH] Set switch state berdasarkan string Status
+      isStatusActive.value = props.dauroh.Status === 'active';
       
       if (props.dauroh.Registration) {
-         // Start
+         // ... (Logic parsing tanggal sama persis) ...
          const startStr = props.dauroh.Registration.start_registration || '';
          if (startStr && startStr.trim() !== '') {
              formState.HasRegStart = true;
              const [sDate, sTime] = startStr.split(' ');
              formState.RegStartDate = sDate || '';
              formState.RegStartTime = sTime || '';
-         } else {
-             formState.HasRegStart = false;
-         }
+         } else { formState.HasRegStart = false; }
 
-         // End
          const endStr = props.dauroh.Registration.end_registration || '';
          if (endStr && endStr.trim() !== '') {
              formState.HasRegEnd = true;
              const [eDate, eTime] = endStr.split(' ');
              formState.RegEndDate = eDate || '';
              formState.RegEndTime = eTime || '';
-         } else {
-             formState.HasRegEnd = false;
-         }
+         } else { formState.HasRegEnd = false; }
       } else {
           formState.HasRegStart = false;
           formState.HasRegEnd = false;
@@ -464,25 +439,17 @@ watch(() => props.show, (newVal) => {
   }
 }, { immediate: true });
 
-// [LOGIC BARU] Watcher Dependency: Start mati -> End mati
+// ... (Watcher logic lainnya SAMA) ...
 watch(() => formState.HasRegStart, (newVal) => {
     if (!newVal) {
         formState.HasRegEnd = false;
-        formState.RegStartDate = '';
-        formState.RegStartTime = '';
-        // Bersihkan End juga
-        formState.RegEndDate = '';
-        formState.RegEndTime = '';
+        formState.RegStartDate = ''; formState.RegStartTime = '';
+        formState.RegEndDate = ''; formState.RegEndTime = '';
     }
 });
-
 watch(() => [isUnlimited.ikhwan, isUnlimited.akhwat], ([newIkhwan, newAkhwat]) => {
-  if (newIkhwan || newAkhwat) {
-    isUnlimited.total = true; 
-    quotaValues.total = 0; 
-  }
+  if (newIkhwan || newAkhwat) { isUnlimited.total = true; quotaValues.total = 0; }
 });
-
 watch(() => isUnlimited.total, (isTotalUnlimited) => {
   if (!isTotalUnlimited) {
     if (isUnlimited.ikhwan) isUnlimited.ikhwan = false;
@@ -490,43 +457,24 @@ watch(() => isUnlimited.total, (isTotalUnlimited) => {
   }
 });
 
-const close = () => {
-  if (!isLoading.value) emit('close');
-};
+const close = () => { if (!isLoading.value) emit('close'); };
 
 const save = () => {
    if (isLoading.value) return;
-
    if (isQuotaMismatch.value) {
-      Swal.fire({
-         icon: 'error',
-         title: 'Alokasi Kuota Salah',
-         text: `Total (${quotaValues.total}) harus sama dengan Ikhwan (${quotaValues.ikhwan}) + Akhwat (${quotaValues.akhwat}). ${allocationMessage.value}.`
-      });
+      Swal.fire({ icon: 'error', title: 'Alokasi Kuota Salah', text: `Total (${quotaValues.total}) harus sama dengan Ikhwan (${quotaValues.ikhwan}) + Akhwat (${quotaValues.akhwat}). ${allocationMessage.value}.` });
       return;
    }
-
-   // [LOGIC BARU] Validasi Tanggal
    if (formState.HasRegStart && formState.HasRegEnd) {
        const startStr = `${formState.RegStartDate} ${formState.RegStartTime}`;
        const endStr = `${formState.RegEndDate} ${formState.RegEndTime}`;
-       
-       // Compare tanggal
        if (new Date(endStr) <= new Date(startStr)) {
-           Swal.fire({
-               icon: 'warning',
-               title: 'Waktu Tidak Valid',
-               text: 'Waktu Tutup Pendaftaran tidak boleh lebih awal atau sama dengan Waktu Buka Pendaftaran.'
-           });
+           Swal.fire({ icon: 'warning', title: 'Waktu Tidak Valid', text: 'Waktu Tutup Pendaftaran tidak boleh lebih awal atau sama dengan Waktu Buka Pendaftaran.' });
            return;
        }
    }
-
    const formElement = document.getElementById('daurohBasicForm') as HTMLFormElement;
-   if (formElement && !formElement.checkValidity()) {
-       formElement.reportValidity();
-       return;
-   }
+   if (formElement && !formElement.checkValidity()) { formElement.reportValidity(); return; }
 
    const finalQuotaTotal = isUnlimited.total ? 'non-quota' : quotaValues.total;
    const finalQuotaIkhwan = isUnlimited.ikhwan ? 'non-quota' : quotaValues.ikhwan;
@@ -534,14 +482,8 @@ const save = () => {
 
    let startString = "";
    let endString = "";
-
-   if (formState.HasRegStart) {
-       startString = `${formState.RegStartDate} ${formState.RegStartTime}`;
-   }
-
-   if (formState.HasRegEnd) {
-       endString = `${formState.RegEndDate} ${formState.RegEndTime}`;
-   }
+   if (formState.HasRegStart) { startString = `${formState.RegStartDate} ${formState.RegStartTime}`; }
+   if (formState.HasRegEnd) { endString = `${formState.RegEndDate} ${formState.RegEndTime}`; }
 
   const dataToEmit = {
     SK: props.isEditing ? formState.SK : null,
@@ -552,7 +494,7 @@ const save = () => {
     Quota_Total: finalQuotaTotal,
     Quota_Ikhwan: finalQuotaIkhwan,
     Quota_Akhwat: finalQuotaAkhwat,
-    IsActive: formState.IsActive,
+    Status: isStatusActive.value ? 'active' : 'inactive', // [UBAH] Convert boolean to string
     
     Registration: {
         start_registration: startString,
@@ -565,13 +507,9 @@ const save = () => {
 </script>
 
 <style scoped>
-.modal { 
-  background-color: rgba(0, 0, 0, 0.5); 
-  z-index: 1060 !important; 
-}
-.modal-backdrop {
-  z-index: 1055 !important;
-}
+/* CSS Sama */
+.modal { background-color: rgba(0, 0, 0, 0.5); z-index: 1060 !important; }
+.modal-backdrop { z-index: 1055 !important; }
 .text-xs { font-size: 0.75rem; margin-top: 0.25rem; }
 .input-group-text { padding: 0.375rem 0.5rem; }
 .is-invalid {

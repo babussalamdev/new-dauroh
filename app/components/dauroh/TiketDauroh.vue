@@ -16,7 +16,12 @@
           <div class="d-flex card-container-flex">
             <div v-for="dauroh in chunk" :key="dauroh.SK" class="dauroh-card-wrapper">
               
-              <a :href="'/dauroh/' + dauroh.SK" @click.prevent="openImageModal(dauroh)" class="text-decoration-none d-block h-100">
+              <a 
+                :href="'/dauroh/' + dauroh.SK" 
+                @click.prevent="openImageModal(dauroh)" 
+                class="text-decoration-none d-block h-100"
+                :class="{ 'card-disabled': getCardStatus(dauroh).isDisabled }"
+              >
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                    <NuxtImg
@@ -27,6 +32,11 @@
                      format="webp"
                    />
                     <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
+                    
+                    <div v-if="getCardStatus(dauroh).overlayText" class="status-overlay">
+                      {{ getCardStatus(dauroh).overlayText }}
+                    </div>
+
                   </div>
                   <div class="card-body d-flex flex-column p-3">
                     <h6 class="card-title fw-bold text-dark">{{ dauroh.Title }}</h6>
@@ -148,22 +158,22 @@
     }, 200);
   };
 
-  // --- [CORE LOGIC BARU] Status Tombol Terpusat ---
+  // --- Status Tombol Terpusat ---
   const getButtonState = (daurohItem) => {
     if (!daurohItem) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
 
-    // 1. Cek Active
-    if (daurohItem.IsActive === false) {
+    // 1. [UBAH] Cek Status (String)
+    if (daurohItem.Status === 'inactive') {
       return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
     }
 
     const now = dayjs();
 
     // 2. Cek Tanggal Acara (Safety Net: Event Selesai)
+    // ... (logic sama) ...
     if (daurohItem.Date) {
        const dates = Object.values(daurohItem.Date);
        if (dates.length > 0) {
-         // Cari tanggal paling akhir dari event
          const lastEventDateStr = dates.reduce((max, current) => (current.date > max ? current.date : max), dates[0].date);
          const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
          
@@ -173,6 +183,7 @@
        }
     }
 
+    // ... (Sisa logic 3, 4, 5 sama persis) ...
     // 3. Cek Masa Pendaftaran
     const startStr = daurohItem.Registration?.start_registration?.replace(' ', 'T');
     const endStr = daurohItem.Registration?.end_registration?.replace(' ', 'T');
@@ -212,25 +223,36 @@
     return { label: 'Daftar', disabled: false, cssClass: 'btn-primary' };
   };
 
+  // --- MODIFIKASI 3: Helper untuk Style Card & Text Overlay ---
+  const getCardStatus = (daurohItem) => {
+    const buttonState = getButtonState(daurohItem);
+    const label = buttonState.label;
+
+    // Filter kondisi mana saja yang bikin tiket jadi Hitam Putih & Unclickable
+    if (['Habis', 'Selesai', 'Ditutup', 'Non-Aktif'].includes(label)) {
+      let overlayText = '';
+      if (label === 'Habis') overlayText = 'SOLD OUT';
+      else if (label === 'Selesai') overlayText = 'SELESAI';
+      else if (label === 'Ditutup') overlayText = 'DITUTUP';
+      else if (label === 'Non-Aktif') overlayText = 'NON AKTIF';
+
+      return { isDisabled: true, overlayText: overlayText };
+    }
+
+    return { isDisabled: false, overlayText: null };
+  };
+
   // --- Handler Klik ---
   const handleRegisterClick = (daurohItem) => {
-    // Validasi ulang state tombol (Double Protection)
     const state = getButtonState(daurohItem);
-    
-    // Jika state disabled (misal: user inspect element enable tombol), tolak.
     if (state.disabled) {
        toastStore.showToast({ message: `Tidak dapat mendaftar: Status ${state.label}`, type: 'warning' });
        return;
     }
-
-    // 1. CEK AKUN
     if (!isLoggedIn.value) {
       toastStore.showToast({ message: 'Mohon login atau daftar akun terlebih dahulu.', type: 'info' });
-      router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } });
       return; 
     }
-
-    // 2. LANJUT KE HALAMAN REGISTER
     if (daurohItem && daurohItem.SK) {
       router.push(`/dauroh/register/${daurohItem.SK}`);
     } else {
@@ -240,6 +262,35 @@
 </script>
 
 <style scoped>
+  /* --- MODIFIKASI 4: CSS Khusus Status --- */
+  
+  /* Membuat elemen jadi hitam putih dan tidak bisa diklik */
+  .card-disabled {
+    filter: grayscale(100%);
+    pointer-events: none; /* User tidak bisa klik sama sekali */
+    cursor: default;
+  }
+
+  /* Tulisan overlay di tengah gambar */
+  .status-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Posisi tepat di tengah */
+    
+    background-color: rgba(0, 0, 0, 0.7); /* Background transparan gelap biar tulisan terbaca */
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    z-index: 5;
+    white-space: nowrap;
+    border: 2px solid white;
+  }
+
+  /* --- Style Existing --- */
   .carousel {
     position: relative;
     padding-left: 50px;
@@ -248,8 +299,6 @@
   .carousel-inner {
     padding: 1rem 0;
   }
-  
-  /* Scroll horizontal untuk Mobile */
   .card-container-flex {
     display: flex;
     gap: 1rem;
@@ -292,7 +341,6 @@
     }
   }
 
-  /* Styling Tombol Carousel */
   .carousel-control-prev,
   .carousel-control-next {
     width: 40px;
@@ -312,7 +360,6 @@
     right: 5px;
   }
   
-  /* Mobile Adjustment */
 @media (max-width: 991.98px) {
   .carousel {
     padding-left: 35px; 

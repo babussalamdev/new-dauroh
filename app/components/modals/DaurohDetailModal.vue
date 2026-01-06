@@ -62,7 +62,10 @@
                 <div class="card border-0 shadow-sm bg-light-subtle">
                   <div class="card-body p-3 py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                      <span class="fw-bold text-dark d-block" style="font-size: 0.95rem;">Hari ke-{{ index + 1 }}</span>
+                      <span class="fw-bold text-dark d-block" style="font-size: 0.95rem;">
+                        {{ sortedSchedule.length > 1 ? `Hari ke-${index + 1}` : 'Hari' }}
+                      </span>
+                      
                       <small class="text-muted" style="font-size: 0.85rem;">{{ formatDate(day.date) }}</small>
                     </div>
                     <div class="d-flex align-items-center px-3 py-1 bg-white border rounded-pill">
@@ -135,29 +138,30 @@ const showAkhwat = computed(() => {
 const gridColClass = computed(() => {
   return (showIkhwan.value && showAkhwat.value) ? 'col-6' : 'col-12'
 })
+
+// --- [CORE LOGIC] BUTTON STATE (Fixed & Type Safe) ---
 const buttonState = computed(() => {
   const item = props.dauroh;
   if (!item) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
 
   // 1. Cek Active
-  if (item.IsActive === false) {
-    return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
-  }
+ if (item.Status === 'inactive') {
+      return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
+    }
+
 
   const now = dayjs();
+
+  // 2. Cek Tanggal Acara (Safety Net: Event Selesai)
   if (item.Date) {
-     // Cast ke tipe DaurohDayDetail agar TS paham struktur datanya
      const dates = Object.values(item.Date) as DaurohDayDetail[];
      
      if (dates.length > 0) {
-       // Ambil semua tanggal dalam bentuk string array
+       // Logic Aman: Map ke string -> Sort -> Ambil Terakhir
        const allDates = dates.map(d => d.date);
+       allDates.sort(); // Sort String YYYY-MM-DD aman secara leksikal
        
-       // Sort array string (YYYY-MM-DD aman disort secara leksikal)
-       // Tanggal paling akhir akan berada di index terakhir
-       allDates.sort();
-       
-       const lastEventDateStr = allDates[allDates.length - 1]; // Ambil yang paling akhir
+       const lastEventDateStr = allDates[allDates.length - 1]; 
 
        if (lastEventDateStr) {
          const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
@@ -190,9 +194,13 @@ const buttonState = computed(() => {
   const gender = (item.Gender || '').toLowerCase().trim();
 
   if (gender.includes('ikhwan') && gender.includes('akhwat')) relevantQuota = item.Quota_Total;
-  else if (gender.includes('akhwat')) relevantQuota = item.Quota_Akhwat;
-  else if (gender.includes('ikhwan')) relevantQuota = item.Quota_Ikhwan;
-  else relevantQuota = item.Quota_Total;
+  else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
+     relevantQuota = item.Quota_Akhwat;
+  } else if (gender.includes('ikhwan') || gender.includes('laki') || gender.includes('pria')) {
+     relevantQuota = item.Quota_Ikhwan;
+  } else {
+     relevantQuota = item.Quota_Total;
+  }
 
   if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
     return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
@@ -240,19 +248,19 @@ const register = () => {
 /* --- MODAL WIDTH & RESPONSIVENESS --- */
 .custom-modal-width {
   max-width: 550px;
-  width: 95%; /* Default lebar */
-  margin: 1.75rem auto; /* Default margin desktop */
+  width: 95%; 
+  margin: 1.75rem auto; 
 }
 
 @media (max-width: 576px) {
   .custom-modal-width {
     width: 90%; 
-    margin: 4rem auto;
-    min-height: auto;
+    margin: 4rem auto; 
+    min-height: auto; 
   }
   
   .modal-dialog-scrollable {
-    max-height: calc(100% - 8rem);
+    max-height: calc(100% - 8rem); 
   }
 
   .modal-body {

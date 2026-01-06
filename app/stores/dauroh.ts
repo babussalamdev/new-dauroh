@@ -10,14 +10,14 @@ export interface ApiDaurohRaw {
   Title: string;
   Gender: string;
   Date?: { [key: string]: DaurohDayDetail };
-  Registration?: DaurohRegistration; // Sesuai Postman
+  Registration?: DaurohRegistration;
   Place: string;
   Price: number | string;
   Quota_Ikhwan_Akhwat: number | string | null;
   Quota_Ikhwan: number | string | null;
   Quota_Akhwat: number | string | null;
   Picture?: string;
-  IsActive?: boolean; // [BARU] Field Status
+  Status?: string;
 }
 
 export interface DaurohDayDetail {
@@ -45,7 +45,7 @@ export interface Dauroh {
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
   Picture?: string;
-  IsActive: boolean; // [BARU] Wajib ada di UI (default true)
+  Status: string;
 }
 
 export interface DaurohBasicData {
@@ -58,7 +58,7 @@ export interface DaurohBasicData {
   Quota_Ikhwan: number | 'non-quota';
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
-  IsActive: boolean; // [BARU]
+  Status: string; // [UBAH]
 }
 
 export interface DaurohSchedulePayload {
@@ -94,7 +94,7 @@ const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
   Quota_Ikhwan: parseQuota(event.Quota_Ikhwan),
   Quota_Akhwat: parseQuota(event.Quota_Akhwat),
   Picture: event.Picture || undefined,
-  IsActive: event.IsActive ?? true, // [BARU] Default true jika null
+  Status: event.Status || 'inactive',
 });
 
 const createEventPayload = (data: DaurohBasicData, accessToken: string, existingDate: any = {}) => {
@@ -106,7 +106,7 @@ const createEventPayload = (data: DaurohBasicData, accessToken: string, existing
     AccessToken: accessToken,
     Date: existingDate,
     Registration: data.Registration,
-    IsActive: data.IsActive, // [BARU] Kirim ke backend
+    Status: data.Status,
   };
 
   const g = payload.Gender;
@@ -179,7 +179,7 @@ export const useDaurohStore = defineStore("dauroh", {
         
         const rawData = Array.isArray(res.data) ? res.data : [];
         this.tiketDauroh = rawData
-          .filter(event => event.IsActive !== false)
+          .filter(event => event.Status !== 'inactive') // [UBAH] Filter berdasarkan Status string
           .map(mapApiToDauroh);
           
       } catch (error) { console.error(error); } 
@@ -211,8 +211,8 @@ export const useDaurohStore = defineStore("dauroh", {
         }
 
         if (eventRaw) {
-            // [BARU] Guard: Kalau user akses via link tapi event non-aktif
-            if (eventRaw.IsActive === false) {
+            // [UBAH] Guard: Kalau status inactive
+            if (eventRaw.Status === 'inactive') {
                 throw new Error("Event ini sedang tidak aktif.");
             }
             this.currentPublicDaurohDetail = mapApiToDauroh(eventRaw);
@@ -275,7 +275,7 @@ export const useDaurohStore = defineStore("dauroh", {
             Quota_Ikhwan: newEventData.Quota_Ikhwan ?? serializeQuota(daurohData.Quota_Ikhwan),
             Quota_Akhwat: newEventData.Quota_Akhwat ?? serializeQuota(daurohData.Quota_Akhwat),
             Registration: newEventData.Registration ?? daurohData.Registration,
-            IsActive: newEventData.IsActive ?? daurohData.IsActive, // [BARU]
+            Status: newEventData.Status ?? daurohData.Status,
           };
           
           this.adminTiketDauroh.unshift(mapApiToDauroh(mergedData));
@@ -318,7 +318,7 @@ export const useDaurohStore = defineStore("dauroh", {
             Quota_Ikhwan: daurohData.Quota_Ikhwan,
             Quota_Akhwat: daurohData.Quota_Akhwat,
             Registration: daurohData.Registration, 
-            IsActive: daurohData.IsActive, // [BARU] Update Optimistic
+            Status: daurohData.Status,
           });
         };
 
@@ -335,119 +335,93 @@ export const useDaurohStore = defineStore("dauroh", {
         this.loading.savingBasic = false;
       }
     },
-
     async updateDaurohSchedule(eventSK: string, scheduleData: DaurohSchedulePayload): Promise<boolean> {
-      const token = useCookie("AccessToken").value;
-      if (!token) return false;
-
-      this.loading.savingSchedule = true;
-      const toast = useToastStore();
-
-      const currentData = this.adminTiketDauroh.find(d => d.SK === eventSK) || this.currentDaurohDetail;
-      if (!currentData) {
-         this.loading.savingSchedule = false;
-         return false;
-      }
-
-      try {
-        const { $apiBase } = useNuxtApp();
-        const payload = createEventPayload(currentData as unknown as DaurohBasicData, token, scheduleData);
-
-        await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
-        
-        const updateSchedule = (target: Dauroh) => { target.Date = scheduleData; };
-        
-        const targetAdmin = this.adminTiketDauroh.find(d => d.SK === eventSK);
-        if (targetAdmin) updateSchedule(targetAdmin);
-        if (this.currentDaurohDetail?.SK === eventSK) updateSchedule(this.currentDaurohDetail);
-
-        toast.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
-        return true;
-      } catch (error: any) {
-        const msg = error.response?.data?.message || error.message || "Gagal menyimpan jadwal.";
-        toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
-        return false;
-      } finally {
-        this.loading.savingSchedule = false;
-      }
-    },
-
-    async uploadEventPhoto(eventSK: string, photoBase64: string): Promise<boolean> {
-      const token = useCookie("AccessToken").value;
-      if (!token || !photoBase64) return false;
-
-      this.loading.uploadPhoto = true;
-      const toast = useToastStore();
-
-      try {
-        const { $apiBase } = useNuxtApp();
-        const base64Data = photoBase64.split(",")[1];
-        const payload = { AccessToken: token, OldPicture: "", Picture: base64Data };
-
-        const res = await $apiBase.put<{ Picture: string }>(`/update-default?type=photo-event&sk=${eventSK}`, payload);
-        const newPic = res.data?.Picture;
-
-        const updatePic = (target: Dauroh) => { if (newPic) target.Picture = newPic; };
-
-        const target = this.adminTiketDauroh.find(d => d.SK === eventSK);
-        if (target) updatePic(target);
-        if (this.currentDaurohDetail?.SK === eventSK) updatePic(this.currentDaurohDetail);
-
-        toast.showToast({ message: "Foto berhasil diperbarui.", type: "success" });
-        return true;
-      } catch (error: any) {
-        console.error(error);
-        toast.showToast({ message: "Gagal upload foto.", type: "danger" });
-        return false;
-      } finally {
-        this.loading.uploadPhoto = false;
-      }
-    },
-
-    async deleteTiketDauroh(SK: string) {
-      const token = useCookie("AccessToken").value;
-      if (!token) return;
-
-      try {
-        const { $apiBase } = useNuxtApp();
+        // ... (kode sama) ...
+        const token = useCookie("AccessToken").value;
+        if (!token) return false;
+        this.loading.savingSchedule = true;
         const toast = useToastStore();
-        
-        await $apiBase.delete(`/delete-default?pk=event&sk=${SK}`, {
-          data: { AccessToken: token },
-        });
+        const currentData = this.adminTiketDauroh.find(d => d.SK === eventSK) || this.currentDaurohDetail;
+        if (!currentData) { this.loading.savingSchedule = false; return false; }
 
-        this.adminTiketDauroh = this.adminTiketDauroh.filter((d) => d.SK !== SK);
-        this.tiketDauroh = this.tiketDauroh.filter((d) => d.SK !== SK);
-        
-        toast.showToast({ message: `Event berhasil dihapus.`, type: "success" });
-      } catch (error) {
-        console.error(error);
-      }
+        try {
+            const { $apiBase } = useNuxtApp();
+            const payload = createEventPayload(currentData as unknown as DaurohBasicData, token, scheduleData);
+            await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
+            
+            const updateSchedule = (target: Dauroh) => { target.Date = scheduleData; };
+            const targetAdmin = this.adminTiketDauroh.find(d => d.SK === eventSK);
+            if (targetAdmin) updateSchedule(targetAdmin);
+            if (this.currentDaurohDetail?.SK === eventSK) updateSchedule(this.currentDaurohDetail);
+
+            toast.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
+            return true;
+        } catch (error: any) {
+            // ... (kode error sama) ...
+             const msg = error.response?.data?.message || error.message || "Gagal menyimpan jadwal.";
+            toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
+            return false;
+        } finally {
+            this.loading.savingSchedule = false;
+        }
     },
-
-    // [TAMBAHAN BARU] Action untuk update kuota secara real-time di frontend
+    async uploadEventPhoto(eventSK: string, photoBase64: string): Promise<boolean> {
+        // ... kode sama ...
+        const token = useCookie("AccessToken").value;
+        if (!token || !photoBase64) return false;
+        this.loading.uploadPhoto = true;
+        const toast = useToastStore();
+        try {
+            const { $apiBase } = useNuxtApp();
+            const base64Data = photoBase64.split(",")[1];
+            const payload = { AccessToken: token, OldPicture: "", Picture: base64Data };
+            const res = await $apiBase.put<{ Picture: string }>(`/update-default?type=photo-event&sk=${eventSK}`, payload);
+            const newPic = res.data?.Picture;
+            const updatePic = (target: Dauroh) => { if (newPic) target.Picture = newPic; };
+            const target = this.adminTiketDauroh.find(d => d.SK === eventSK);
+            if (target) updatePic(target);
+            if (this.currentDaurohDetail?.SK === eventSK) updatePic(this.currentDaurohDetail);
+            toast.showToast({ message: "Foto berhasil diperbarui.", type: "success" });
+            return true;
+        } catch (error: any) {
+            console.error(error);
+            toast.showToast({ message: "Gagal upload foto.", type: "danger" });
+            return false;
+        } finally {
+            this.loading.uploadPhoto = false;
+        }
+    },
+    async deleteTiketDauroh(SK: string) {
+        // ... kode sama ...
+        const token = useCookie("AccessToken").value;
+        if (!token) return;
+        try {
+            const { $apiBase } = useNuxtApp();
+            const toast = useToastStore();
+            await $apiBase.delete(`/delete-default?pk=event&sk=${SK}`, { data: { AccessToken: token } });
+            this.adminTiketDauroh = this.adminTiketDauroh.filter((d) => d.SK !== SK);
+            this.tiketDauroh = this.tiketDauroh.filter((d) => d.SK !== SK);
+            toast.showToast({ message: `Event berhasil dihapus.`, type: "success" });
+        } catch (error) { console.error(error); }
+    },
     decrementQuota(sk: string, totalPeserta: number, jumlahIkhwan: number, jumlahAkhwat: number) {
-      // Helper lokal untuk pengurangan aman (biar gak minus)
-      const kurangi = (currentVal: number | 'non-quota', amount: number): number | 'non-quota' => {
-        if (currentVal === 'non-quota') return 'non-quota';
-        const num = Number(currentVal);
-        return num >= amount ? num - amount : 0;
-      };
-
-      // 1. Update di list public (halaman depan/jadwal)
-      const eventDiList = this.tiketDauroh.find(e => e.SK === sk);
-      if (eventDiList) {
-        eventDiList.Quota_Total = kurangi(eventDiList.Quota_Total, totalPeserta);
-        eventDiList.Quota_Ikhwan = kurangi(eventDiList.Quota_Ikhwan, jumlahIkhwan);
-        eventDiList.Quota_Akhwat = kurangi(eventDiList.Quota_Akhwat, jumlahAkhwat);
-      }
-
-      // 2. Update di detail page yang sedang dibuka
-      if (this.currentPublicDaurohDetail && this.currentPublicDaurohDetail.SK === sk) {
-        this.currentPublicDaurohDetail.Quota_Total = kurangi(this.currentPublicDaurohDetail.Quota_Total, totalPeserta);
-        this.currentPublicDaurohDetail.Quota_Ikhwan = kurangi(this.currentPublicDaurohDetail.Quota_Ikhwan, jumlahIkhwan);
-        this.currentPublicDaurohDetail.Quota_Akhwat = kurangi(this.currentPublicDaurohDetail.Quota_Akhwat, jumlahAkhwat);
-      }
+        // ... kode sama ...
+        const kurangi = (currentVal: number | 'non-quota', amount: number): number | 'non-quota' => {
+            if (currentVal === 'non-quota') return 'non-quota';
+            const num = Number(currentVal);
+            return num >= amount ? num - amount : 0;
+        };
+        const eventDiList = this.tiketDauroh.find(e => e.SK === sk);
+        if (eventDiList) {
+            eventDiList.Quota_Total = kurangi(eventDiList.Quota_Total, totalPeserta);
+            eventDiList.Quota_Ikhwan = kurangi(eventDiList.Quota_Ikhwan, jumlahIkhwan);
+            eventDiList.Quota_Akhwat = kurangi(eventDiList.Quota_Akhwat, jumlahAkhwat);
+        }
+        if (this.currentPublicDaurohDetail && this.currentPublicDaurohDetail.SK === sk) {
+            this.currentPublicDaurohDetail.Quota_Total = kurangi(this.currentPublicDaurohDetail.Quota_Total, totalPeserta);
+            this.currentPublicDaurohDetail.Quota_Ikhwan = kurangi(this.currentPublicDaurohDetail.Quota_Ikhwan, jumlahIkhwan);
+            this.currentPublicDaurohDetail.Quota_Akhwat = kurangi(this.currentPublicDaurohDetail.Quota_Akhwat, jumlahAkhwat);
+        }
     },
   },
 });

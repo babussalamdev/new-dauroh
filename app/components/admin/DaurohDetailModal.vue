@@ -114,7 +114,7 @@
                       :id="'photoInputModal-' + (eventData?.SK || 'new')"
                     />
                     <label :for="'photoInputModal-' + (eventData?.SK || 'new')" class="btn btn-sm btn-outline-secondary w-100 mt-2">
-                      <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Ganti Picture' : 'Pilih Picture' }}
+                      <i class="bi bi-upload me-1"></i> {{ previewUrl ? 'Change Picture' : 'Select Picture' }}
                     </label>
                   </div>
 

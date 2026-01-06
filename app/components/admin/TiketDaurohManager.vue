@@ -52,7 +52,7 @@
               <td>{{ formatCurrency(dauroh.Price) }}</td>
               
               <td class="text-center">
-                <span v-if="dauroh.IsActive" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3">
+                <span v-if="dauroh.Status === 'active'" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3">
                   Active
                 </span>
                 <span v-else class="badge bg-danger bg-opacity-10 text-danger rounded-pill border border-danger px-3">

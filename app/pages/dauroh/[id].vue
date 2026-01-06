@@ -7,7 +7,7 @@
         <div class="card shadow-lg">
           <img :src="dauroh.Picture" class="card-img-top" alt="Picture Dauroh" style="max-height: 400px; object-fit: cover;">
           <div class="card-body p-4">
-            <div v-if="!dauroh.IsActive" class="alert alert-warning mb-3">
+            <div v-if="!dauroh.Status" class="alert alert-warning mb-3">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i> 
                 <strong>Event Non-Aktif</strong>. Event ini tidak terlihat di halaman publik.
             </div>
@@ -98,7 +98,7 @@ const registrationStatus = computed(() => {
   if (!dauroh.value) return { canRegister: false, message: 'Memuat...' };
   
   // 1. Cek Active
-  if (!dauroh.value.IsActive) {
+  if (!dauroh.value.Status) {
       return { canRegister: false, message: 'Event Tidak Aktif' };
   }
 
