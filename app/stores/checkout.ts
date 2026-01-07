@@ -3,21 +3,23 @@
 import { defineStore } from 'pinia';
 import type { Dauroh } from '~/stores/dauroh';
 import { useStorage } from '@vueuse/core';
-import { useNuxtApp } from '#app'; // <-- Import useNuxtApp
+import { useNuxtApp } from '#app';
+import { useAuth } from '~/composables/useAuth';
 
-// Tipe data untuk satu peserta dari modal
+// ... (Interface Participant & TransactionDetails TETAP SAMA, TIDAK PERLU DIUBAH) ...
 interface Participant {
-  name: string;
-  email: string;
-  gender: string;
+  Name: string;
+  Email: string;
+  Gender: string;
+  Age: number | string;
+  Domicile: string;
 }
 
-// Tipe untuk detail transaksi
 interface TransactionDetails {
-  vaNumber: string;
-  amount: number;
-  paymentMethod: string;
-  expiryTime: number; // Timestamp
+  link_id?: string;
+  link_url?: string;
+  amount?: number;
+  status?: string;
 }
 
 export const useCheckoutStore = defineStore('checkout', {
@@ -28,79 +30,94 @@ export const useCheckoutStore = defineStore('checkout', {
     transactionDetails: useStorage<TransactionDetails | null>('checkout_transaction', null, sessionStorage),
     voucherCode: useStorage<string | null>('checkout_voucher_code', null, sessionStorage),
     discountAmount: useStorage<number>('checkout_discount_amount', 0, sessionStorage),
+    isLoading: false,
   }),
 
   getters: {
-    // Menghitung total biaya berdasarkan jumlah peserta dan harga tiket
     totalAmount(state): number {
-      if (!state.dauroh || !state.participants) {
-        return 0;
-      }
+      if (!state.dauroh || !state.participants) return 0;
       return (state.dauroh.Price || 0) * state.participants.length;
     },
     finalAmount(state): number {
       const total = (state.dauroh?.Price || 0) * state.participants.length;
       const final = total - state.discountAmount;
-      return final < 0 ? 0 : final; // Pastikan total tidak minus
+      return final < 0 ? 0 : final;
     },
   },
 
   actions: {
-    // 1. Dipanggil saat user submit modal registrasi
     startCheckout(registrationData: { dauroh: Dauroh; participants: Participant[] }) {
       this.dauroh = registrationData.dauroh;
       this.participants = registrationData.participants;
       this.paymentMethod = null;
       this.transactionDetails = null;
-      this.voucherCode = null; // Reset voucher saat memulai checkout baru
+      this.voucherCode = null;
       this.discountAmount = 0;
-      // --- AKHIR ---
     },
 
-    // 2. Dipanggil saat user memilih bank di halaman 'select'
     setPaymentMethod(method: string) {
       this.paymentMethod = method;
     },
-    // Aksi untuk menyimpan hasil validasi voucher
+    
     setVoucher(code: string | null, amount: number) {
       this.voucherCode = code;
       this.discountAmount = amount;
     },
 
-    // 3. Dipanggil saat user klik "Bayar" di halaman 'summary'
     async createPayment() {
-      // const { $apiBase } = useNuxtApp();
+      this.isLoading = true;
       
-      // // UNCOMMENT INI UNTUK INTEGRASI BACKEND
-      // const response = await $apiBase.post('/api/create-payment', {
-      //   daurohSK: this.dauroh?. SK,
-      //   participants: this.participants,
-      //   paymentMethod: this.paymentMethod,
-      //   voucherCode: this.voucherCode, // <-- Kirim voucher code
-      //   finalAmount: this.finalAmount   // <-- Kirim total akhir
-      // });
-      // this.transactionDetails = response.data;
-      // return true;
-      console.log("Membuat pembayaran dengan detail:", {
-        daurohSK: this.dauroh?. SK,
-        paymentMethod: this.paymentMethod,
-        voucherCode: this.voucherCode,
-        totalAmount: this.totalAmount,
-        discountAmount: this.discountAmount,
-        finalAmount: this.finalAmount,
-      });
+      // [PERUBAHAN 1] Ambil $apiFlip (Plugin baru kita)
+      const { $apiFlip } = useNuxtApp(); 
+      const { accessToken, user } = useAuth();
 
-      this.transactionDetails = {
-        vaNumber: '9888442365281', // Nomor VA palsu
-        amount: this.finalAmount,
-        paymentMethod: this.paymentMethod || 'BSI',
-        expiryTime: Date.now() + 24 * 60 * 60 * 1000 // 24 jam dari sekarang
-      };
-      
-      return true;
+      try {
+        // 1. Transform Array Peserta ke Object Person (PascalCase)
+        const objectPerson: Record<string, any> = {};
+        
+        this.participants.forEach((p, index) => {
+          objectPerson[`person${index + 1}`] = {
+            Name: p.Name,           
+            Gender: p.Gender.toLowerCase(), // Backend minta lowercase (ikhwan/akhwat)
+            Age: Number(p.Age),
+            Domicile: p.Domicile
+          };
+        });
+
+        // 2. Susun Payload Utama
+        const payload = {
+            Amount: String(this.finalAmount),
+            Name: user.value?.name || 'Guest',
+            Bank: this.paymentMethod?.toLowerCase() || 'bsi',
+            EventSK: this.dauroh?.SK,
+            objectPerson: objectPerson, 
+            AccessToken: accessToken.value // Token tetap diambil dari Auth user
+        };
+
+        console.log("Payload Flip:", payload);
+
+        // [PERUBAHAN 2] Gunakan $apiFlip, bukan $apiBase
+        // Endpointnya cukup '/flip-dauroh' karena base URL-nya sudah mengarah ke '/prod/'
+        const response = await $apiFlip.post('/flip-dauroh', payload);
+        
+        this.transactionDetails = response.data; 
+
+        return { success: true, data: response.data };
+
+      } catch (error: any) {
+        console.error("Payment Flip Error:", error);
+        
+        let errorMessage = "Terjadi kesalahan saat memproses pembayaran.";
+        if (error.response && error.response.data) {
+           errorMessage = error.response.data.message || error.response.data.error || JSON.stringify(error.response.data);
+        }
+
+        return { success: false, message: errorMessage, error: error };
+      } finally {
+        this.isLoading = false;
+      }
     },
 
-    // 4. Untuk membersihkan store setelah selesai atau batal
     clearCheckout() {
       this.dauroh = null;
       this.participants = [];

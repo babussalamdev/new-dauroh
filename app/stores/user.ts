@@ -1,15 +1,15 @@
 import { defineStore } from 'pinia';
 import { useStorage } from '@vueuse/core';
 import type { Dauroh } from '~/stores/dauroh';
-import { useDaurohStore } from '~/stores/dauroh'; // [1] Import Store
+import { useDaurohStore } from '~/stores/dauroh';
 import { useToastStore } from './toast';
 
 export interface Participant {
-  name: string;
-  email?: string; // Optional, hanya wajib untuk peserta 1
-  gender?: string;
-  age?: number;
-  domicile?: string;
+  Name: string;
+  Email?: string; 
+  Gender: string;
+  Age?: number | string;
+  Domicile?: string;
   qrCode?: string;
 }
 
@@ -17,15 +17,15 @@ export interface UserTicket {
   SK: string;
   date: string;
   dauroh: Dauroh;
-  participants: Participant[]; // Satu objek tiket menampung banyak peserta
+  participants: Participant[]; 
   status: 'Upcoming' | 'Selesai'; 
   paymentStatus: 'Lunas' | 'Pending';
 }
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    upcomingTickets: useStorage<UserTicket[]>('user_upcoming_tickets', [], sessionStorage),
-    historyTickets: useStorage<UserTicket[]>('user_history_tickets', [], sessionStorage),
+    upcomingTickets: useStorage<UserTicket[]>('user_upcoming_tickets', [], localStorage),
+    historyTickets: useStorage<UserTicket[]>('user_history_tickets', [], localStorage),
     isLoading: false,
   }),
   
@@ -36,11 +36,10 @@ export const useUserStore = defineStore('user', {
   },
 
   actions: {
-    // Logic tetap menerima array participants dalam satu objek registrationData
     registerDauroh(registrationData: { dauroh: Dauroh, participants: Participant[] }) {
       const { dauroh, participants } = registrationData;
       const toastStore = useToastStore();
-      const daurohStore = useDaurohStore(); // [2] Init Store
+      const daurohStore = useDaurohStore();
       
       if (!dauroh || !participants || participants.length === 0) {
         toastStore.showToast({ message: `Pendaftaran gagal: data tidak lengkap.`, type: 'danger' });
@@ -50,17 +49,15 @@ export const useUserStore = defineStore('user', {
         SK: `TRX-${Date.now()}`,
         date: new Date().toISOString(),
         dauroh: dauroh,
-        participants: participants, // Array peserta disimpan di dalam satu object
+        participants: participants,
         status: 'Upcoming',
         paymentStatus: 'Lunas'
       };
 
       this.upcomingTickets.unshift(newTicket);
-
-      // [3] LOGIC BARU: Hitung & Kurangi Kuota
       const totalPeserta = participants.length;
-      const jumlahIkhwan = participants.filter(p => p.gender === 'Ikhwan').length;
-      const jumlahAkhwat = participants.filter(p => p.gender === 'Akhwat').length;
+      const jumlahIkhwan = participants.filter(p => p.Gender === 'Ikhwan').length;
+      const jumlahAkhwat = participants.filter(p => p.Gender === 'Akhwat').length;
 
       if (dauroh.SK) {
         daurohStore.decrementQuota(dauroh.SK, totalPeserta, jumlahIkhwan, jumlahAkhwat);

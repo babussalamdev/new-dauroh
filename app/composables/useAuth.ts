@@ -107,6 +107,7 @@ export const useAuth = () => {
     logout,
     getUser,
     isLoggedIn,
-    isAdmin
+    isAdmin,
+    accessToken
   }
 }

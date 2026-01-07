@@ -1,10 +1,9 @@
 import { defineStore } from "pinia";
 import { useToastStore } from "./toast";
 import { useNuxtApp, useCookie } from "#app";
+import dayjs from "dayjs";
 
-// --- Interfaces & Types ---
 
-// 1. Interface Raw API
 export interface ApiDaurohRaw {
   SK: string;
   Title: string;
@@ -166,24 +165,39 @@ export const useDaurohStore = defineStore("dauroh", {
     setSearchQuery(query: string) {
       this.searchQuery = query;
     },
-
-    // --- Fetch Actions ---
-
-  async fetchPublicTiketDauroh() {
+    async fetchPublicTiketDauroh() {
       if (this.loading.tiketDauroh) return;
       
       this.loading.tiketDauroh = true;
       try {
         const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get<ApiDaurohRaw[]>("/get-view?type=event");
+        
+        // Tetap pakai endpoint 'homepage' sesuai settingan temanmu
+        const res = await $apiBase.get<ApiDaurohRaw[]>("/get-view?type=homepage");
         
         const rawData = Array.isArray(res.data) ? res.data : [];
         this.tiketDauroh = rawData
-          .filter(event => event.Status !== 'inactive') // [UBAH] Filter berdasarkan Status string
+          .filter(event => {
+             // 1. Cek Status Inactive (Manual Admin)
+             if (event.Status === 'inactive') return false;
+             // 2. Cek Tanggal Event (Otomatis)
+             if (event.Date) {
+               const dates = Object.values(event.Date);
+               if (dates.length > 0) {
+                const firstDate = dates[0]?.date ?? ""; 
+                const lastEventDateStr = dates.reduce((max, current) => 
+                  (current.date > max ? current.date : max), firstDate
+              );
+                 const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
+                 if (dayjs().isAfter(eventEndTime)) return false;
+               }
+             }
+             // Lolos semua filter -> Tampilkan
+             return true;
+          })
           .map(mapApiToDauroh);
-          
-      } catch (error) { console.error(error); } 
-      finally { this.loading.tiketDauroh = false; }
+        } catch (error) { console.error(error); } 
+        finally { this.loading.tiketDauroh = false; }
     },
     async fetchAdminTiketDauroh() {
       if (this.loading.adminTiketDauroh) return;
@@ -211,7 +225,6 @@ export const useDaurohStore = defineStore("dauroh", {
         }
 
         if (eventRaw) {
-            // [UBAH] Guard: Kalau status inactive
             if (eventRaw.Status === 'inactive') {
                 throw new Error("Event ini sedang tidak aktif.");
             }
@@ -336,18 +349,16 @@ export const useDaurohStore = defineStore("dauroh", {
       }
     },
     async updateDaurohSchedule(eventSK: string, scheduleData: DaurohSchedulePayload): Promise<boolean> {
-        // ... (kode sama) ...
-        const token = useCookie("AccessToken").value;
-        if (!token) return false;
-        this.loading.savingSchedule = true;
-        const toast = useToastStore();
-        const currentData = this.adminTiketDauroh.find(d => d.SK === eventSK) || this.currentDaurohDetail;
-        if (!currentData) { this.loading.savingSchedule = false; return false; }
-
-        try {
-            const { $apiBase } = useNuxtApp();
-            const payload = createEventPayload(currentData as unknown as DaurohBasicData, token, scheduleData);
-            await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
+      const token = useCookie("AccessToken").value;
+      if (!token) return false;
+      this.loading.savingSchedule = true;
+      const toast = useToastStore();
+      const currentData = this.adminTiketDauroh.find(d => d.SK === eventSK) || this.currentDaurohDetail;
+      if (!currentData) { this.loading.savingSchedule = false; return false; }
+      try {
+        const { $apiBase } = useNuxtApp();
+        const payload = createEventPayload(currentData as unknown as DaurohBasicData, token, scheduleData);
+        await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
             
             const updateSchedule = (target: Dauroh) => { target.Date = scheduleData; };
             const targetAdmin = this.adminTiketDauroh.find(d => d.SK === eventSK);
@@ -357,7 +368,6 @@ export const useDaurohStore = defineStore("dauroh", {
             toast.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
             return true;
         } catch (error: any) {
-            // ... (kode error sama) ...
              const msg = error.response?.data?.message || error.message || "Gagal menyimpan jadwal.";
             toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
             return false;

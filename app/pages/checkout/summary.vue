@@ -58,6 +58,26 @@
         <div v-if="error" class="alert alert-danger small p-2 mt-3">
           {{ error }}
         </div>
+
+        <h6 class="fw-bold mt-4 mb-2 small text-muted">DATA PESERTA</h6>
+        <div class="table-responsive mb-4 border rounded">
+          <table class="table table-sm mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-3">Nama</th>
+                <th>Gender</th>
+                <th>Usia</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(p, idx) in store.participants" :key="idx">
+                <td class="ps-3">{{ p.Name }}</td>
+                <td>{{ p.Gender }}</td>
+                <td>{{ p.Age }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         
         <div class="d-flex justify-content-between mt-4">
           <button class="btn btn-secondary" @click="router.push('/checkout/select')" :disabled="loading">
@@ -81,11 +101,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
+import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 import { useNuxtApp } from '#app'; 
 
-// Import logo bank
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -95,159 +115,82 @@ import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
-definePageMeta({
-  layout: 'checkout',
-});
+definePageMeta({ layout: 'checkout' });
 useHead({ title: 'Ringkasan Pembayaran' });
 
 const store = useCheckoutStore();
+const userStore = useUserStore();
 const router = useRouter();
 const { $apiBase } = useNuxtApp();
 const loading = ref(false);
 const error = ref<string | null>(null);
 
 onMounted(() => {
-  if (!store.paymentMethod) {
-    router.replace('/checkout/select');
-  }
+  if (!store.paymentMethod) router.replace('/checkout/select');
 });
 
-// Helper Logo
 const paymentLogoUrl = computed(() => {
   const logos: { [key: string]: string } = {
-    'BNI': bniLogo,
-    'BRI': briLogo,
-    'BSI': bsiLogo,
-    'CIMB': cimbLogo,
-    'DANAMON': danamonLogo,
-    'MANDIRI': mandiriLogo,
-    'PERMATA': permataLogo,
-    'QRIS': qrisLogo,
+    'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo,
+    'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo,
   };
   return store.paymentMethod ? logos[store.paymentMethod] : null;
 });
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
-};
+const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 
-// --- LOGIKA VOUCHER REAL API ---
 const applyVoucher = async () => {
-  error.value = null;
-  loading.value = true;
-  
+  error.value = null; loading.value = true;
   const code = store.voucherCode;
-
-  if (!code) {
-    store.setVoucher(null, 0);
-    loading.value = false;
-    return;
-  }
+  if (!code) { store.setVoucher(null, 0); loading.value = false; return; }
 
   try {
-    //msh dummy endpoint
-    const response = await $apiBase.post('/check-voucher', {
-        code: code,
-        eventSK: store.dauroh?.SK,
-        totalAmount: store.totalAmount
-    });
-
+    const response = await $apiBase.post('/check-voucher', { code, eventSK: store.dauroh?.SK, totalAmount: store.totalAmount });
     const result = response.data;
+    let disc = 0;
+    if (result.amount !== undefined) disc = Number(result.amount);
+    else if (result.type === 'PERCENT') disc = store.totalAmount * (result.value / 100);
+    else if (result.type === 'FIXED') disc = Number(result.value);
     
-    // Asumsi response backend mengembalikan 'amount' (nilai potongan langsung dalam Rupiah)
-    // atau 'value' (persentase) & 'type' (PERCENT/FIXED)
-    let calculatedDiscount = 0;
-
-    if (result.amount !== undefined) {
-        // Backend sudah menghitungkan nominal potongannya
-        calculatedDiscount = Number(result.amount);
-    } else if (result.type && result.value) {
-        // Jika backend mengembalikan raw data (tipe dan nilai)
-        if (result.type === 'PERCENT') {
-            calculatedDiscount = store.totalAmount * (result.value / 100);
-        } else if (result.type === 'FIXED') {
-            calculatedDiscount = Number(result.value);
-        }
-    }
-
-    // Validasi: Diskon gak boleh lebih gede dari total harga
-    if (calculatedDiscount > store.totalAmount) {
-      calculatedDiscount = store.totalAmount;
-    }
-
-    // Simpan hasil hitungan ke State
-    store.setVoucher(code, calculatedDiscount);
-    
-    Swal.fire({
-      icon: 'success',
-      title: 'Voucher Berhasil!',
-      text: `Anda mendapatkan potongan ${formatCurrency(calculatedDiscount)}`,
-      timer: 1500,
-      showConfirmButton: false
-    });
-
+    if (disc > store.totalAmount) disc = store.totalAmount;
+    store.setVoucher(code, disc);
+    Swal.fire({ icon: 'success', title: 'Voucher Berhasil!', text: `Potongan ${formatCurrency(disc)}`, timer: 1500, showConfirmButton: false });
   } catch (err: any) {
-    store.setVoucher(code, 0); // Reset jika gagal
-    error.value = err.response?.data?.message || err.message || 'Kode voucher tidak valid';
-  } finally {
-    loading.value = false;
-  }
+    store.setVoucher(code, 0);
+    error.value = err.response?.data?.message || err.message || 'Kode voucher salah';
+  } finally { loading.value = false; }
 };
-// --- AKHIR LOGIKA VOUCHER REAL ---
 
 const handlePay = async () => {
-  loading.value = true;
-  error.value = null;
+  loading.value = true; error.value = null;
   try {
-    // Saat createPayment, store akan mengirim 'finalAmount' yang sudah didiskon
-    const success = await store.createPayment();
-    
-    if (success) {
+    const result = await store.createPayment();
+    if (result.success) {
+      if (store.dauroh && store.participants.length > 0) {
+        userStore.registerDauroh({ dauroh: store.dauroh, participants: store.participants });
+      }
       router.push('/checkout/instructions');
     } else {
-      throw new Error('Gagal membuat transaksi.');
+      const isSoldOut = result.error?.response?.status === 400 || result.error?.response?.status === 409 || (result.message && result.message.toLowerCase().includes('habis'));
+      if (isSoldOut) {
+         await Swal.fire({ icon: 'error', title: 'Mohon Maaf', text: 'Kuota tiket sudah habis.', confirmButtonText: 'Kembali ke Home', confirmButtonColor: '#d33' });
+         store.clearCheckout(); router.push('/');
+      } else {
+         throw new Error(result.message || 'Gagal membuat transaksi.');
+      }
     }
-
   } catch (err: any) {
     error.value = err.message || 'Gagal memproses pembayaran.';
-  } finally {
-    loading.value = false;
-  }
+    Swal.fire({ icon: 'error', title: 'Gagal', text: error.value || 'Terjadi kesalahan sistem.' });
+  } finally { loading.value = false; }
 };
 
 onBeforeRouteLeave((to, from, next) => {
-  if (to.path === '/checkout/instructions' || to.path === '/checkout/select') {
-    next(); 
-    return;
-  }
-  
-  Swal.fire({
-    title: 'Anda yakin ingin membatalkan pembayaran?',
-    text: "Data yang sudah Anda isi akan hilang jika Anda keluar.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Ya, Batalkan',
-    cancelButtonText: 'Lanjut Bayar'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      store.clearCheckout();
-      next();
-    } else {
-      next(false);
-    }
-  });
+  if (to.path === '/checkout/instructions' || to.path === '/checkout/select') { next(); return; }
+  Swal.fire({ title: 'Batalkan pembayaran?', text: "Data akan hilang.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya', cancelButtonText: 'Tidak' }).then((r) => r.isConfirmed ? (store.clearCheckout(), next()) : next(false));
 });
 </script>
 
 <style scoped>
-.payment-logo-summary {
-  max-height: 50px;
-  max-width: 150px;
-  object-fit: contain;
-}
-.list-group-item.bg-light {
-  background-color: #f8f9fa !important;
-}
+.payment-logo-summary { max-height: 50px; max-width: 150px; object-fit: contain; }
 </style>

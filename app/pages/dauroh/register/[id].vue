@@ -31,7 +31,7 @@
             </div>
             
             <div v-if="isSoldOut" class="alert alert-danger mb-0">
-              Mohon maaf, kuota tiket sudah habis.
+               {{ soldOutMessage }}
             </div>
           </div>
         </div>
@@ -112,18 +112,18 @@
             <div v-for="(participant, index) in formState.participants" :key="index" class="card shadow-sm border-0 mb-3">
               <div class="card-header bg-light py-2">
                 <span class="fw-bold text-primary">Peserta {{ index + 1 }}</span>
-                <span class="badge bg-secondary ms-2">{{ participant.gender }}</span>
+                <span class="badge bg-secondary ms-2">{{ participant.Gender }}</span>
               </div>
               <div class="card-body">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label small">Nama Lengkap *</label>
-                    <input type="text" class="form-control" v-model="participant.name" required>
+                    <input type="text" class="form-control" v-model="participant.Name" required>
                   </div>
                   
                   <div class="col-md-6" v-if="index === 0">
                     <label class="form-label small">Email *</label>
-                    <input type="email" class="form-control" v-model="participant.email" required placeholder="email@contoh.com">
+                    <input type="email" class="form-control" v-model="participant.Email" required placeholder="email@contoh.com">
                     <div class="form-text text-primary fst-italic" style="font-size: 0.75rem;">
                       <i class="bi bi-info-circle me-1"></i>
                       Tiket & info untuk <strong>semua peserta</strong> akan dikirim ke email ini.
@@ -132,12 +132,12 @@
 
                   <div class="col-md-6">
                     <label class="form-label small">Usia *</label>
-                    <input type="number" class="form-control" v-model="participant.age" required min="5" placeholder="Tahun">
+                    <input type="number" class="form-control" v-model="participant.Age" required min="5" placeholder="Tahun">
                   </div>
 
                   <div class="col-md-6">
                       <label class="form-label small">Domisili *</label>
-                    <input type="text" class="form-control" v-model="participant.domicile" required placeholder="Kota Tinggal">
+                    <input type="text" class="form-control" v-model="participant.Domicile" required placeholder="Kota Tinggal">
                   </div>
                 </div>
               </div>
@@ -173,12 +173,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue';
+import { ref, computed, reactive, watch, onMounted } from 'vue'; 
 import { useRoute, useRouter } from 'vue-router';
 import { useDaurohStore } from '~/stores/dauroh';
 import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
+import dayjs from 'dayjs'; 
 
 definePageMeta({
   middleware: (to, from) => {
@@ -205,11 +206,40 @@ const formState = reactive({
   participants: [] as any[]
 });
 
+const STORAGE_KEY = computed(() => `dauroh_reg_draft_${daurohSK.value}`);
+
+onMounted(() => {
+  if (process.client) { 
+    const saved = localStorage.getItem(STORAGE_KEY.value);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.participants && Array.isArray(parsed.participants)) {
+          formState.qtyIkhwan = parsed.qtyIkhwan || 0;
+          formState.qtyAkhwat = parsed.qtyAkhwat || 0;
+          formState.participants = parsed.participants;
+        }
+      } catch (e) {
+        console.error('Gagal load draft pendaftaran', e);
+        localStorage.removeItem(STORAGE_KEY.value);
+      }
+    }
+  }
+});
+
+watch(formState, (newVal) => {
+  if (process.client) {
+    localStorage.setItem(STORAGE_KEY.value, JSON.stringify(newVal));
+  }
+}, { deep: true });
+
 watch(daurohSK, async (newSk) => {
   if (newSk) {
-    formState.qtyIkhwan = 0;
-    formState.qtyAkhwat = 0;
-    formState.participants = [];
+    if (!process.client || !localStorage.getItem(`dauroh_reg_draft_${newSk}`)) {
+      formState.qtyIkhwan = 0;
+      formState.qtyAkhwat = 0;
+      formState.participants = [];
+    }
     await daurohStore.fetchPublicDaurohDetail(newSk);
   }
 }, { immediate: true });
@@ -236,21 +266,35 @@ const quotaInfo = computed(() => {
   };
 });
 
-// [LOGIC DIPERBAIKI] Logic Sold Out yang Pintar
+const soldOutMessage = ref("Mohon maaf, kuota tiket sudah habis.");
+
 const isSoldOut = computed(() => {
     if(!dauroh.value) return false;
 
-    // 1. Cek apakah ada tiket Ikhwan yang bisa dibeli?
+    if (dauroh.value.Status === 'inactive') {
+      soldOutMessage.value = "Pendaftaran ditutup (Non-Aktif).";
+      return true;
+    }
+
+    if (dauroh.value.Date) {
+       const dates = Object.values(dauroh.value.Date);
+       if (dates.length > 0) {
+          const lastDate = dates.reduce((max, cur) => cur.date > max ? cur.date : max, dates[0]!.date);
+          if (dayjs().isAfter(dayjs(`${lastDate}T23:59:59`))) {
+             soldOutMessage.value = "Pendaftaran ditutup (Event Selesai).";
+             return true;
+          }
+       }
+    }
+
     let ikhwanAvailable = false;
     if (canShowIkhwan.value) {
         const q = dauroh.value.Quota_Ikhwan;
-        // Ada jika 'non-quota' ATAU angka > 0
         if (q === 'non-quota' || (typeof q === 'number' && q > 0)) {
             ikhwanAvailable = true;
         }
     }
 
-    // 2. Cek apakah ada tiket Akhwat yang bisa dibeli?
     let akhwatAvailable = false;
     if (canShowAkhwat.value) {
         const q = dauroh.value.Quota_Akhwat;
@@ -259,11 +303,9 @@ const isSoldOut = computed(() => {
         }
     }
 
-    // 3. Kesimpulan: Jika SALAH SATU masih ada, berarti BELUM Sold Out.
-    // (Misal: Ikhwan habis tapi Akhwat ada -> Belum Sold Out)
     if (ikhwanAvailable || akhwatAvailable) return false;
 
-    // Jika tidak ada sama sekali yg available, baru Sold Out
+    soldOutMessage.value = "Mohon maaf, kuota tiket sudah habis.";
     return true;
 });
 
@@ -289,24 +331,37 @@ const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
   generateForms();
 };
 
+// [UBAH] Generate form dengan Key PascalCase
 const generateForms = () => {
   const newParticipants: any[] = []; 
+  const oldParticipants = [...formState.participants];
+
+  const popExisting = (gender: string) => {
+    // Cari berdasarkan Key Gender (Besar)
+    const idx = oldParticipants.findIndex(p => p.Gender === gender);
+    if (idx !== -1) {
+      return oldParticipants.splice(idx, 1)[0];
+    }
+    return null;
+  };
 
   for (let i = 0; i < formState.qtyIkhwan; i++) {
-    const existing = formState.participants.find((p: any) => p.gender === 'Ikhwan' && !newParticipants.includes(p));
+    const existing = popExisting('Ikhwan');
     if (existing) {
        newParticipants.push(existing);
     } else {
-       newParticipants.push({ name: '', email: '', gender: 'Ikhwan', age: '', domicile: '' });
+       // [UBAH] Inisialisasi dengan Key Besar
+       newParticipants.push({ Name: '', Email: '', Gender: 'Ikhwan', Age: '', Domicile: '' });
     }
   }
 
   for (let i = 0; i < formState.qtyAkhwat; i++) {
-    const existing = formState.participants.find((p: any) => p.gender === 'Akhwat' && !newParticipants.includes(p));
+    const existing = popExisting('Akhwat');
     if (existing) {
        newParticipants.push(existing);
     } else {
-       newParticipants.push({ name: '', email: '', gender: 'Akhwat', age: '', domicile: '' });
+       // [UBAH] Inisialisasi dengan Key Besar
+       newParticipants.push({ Name: '', Email: '', Gender: 'Akhwat', Age: '', Domicile: '' });
     }
   }
 
@@ -320,11 +375,16 @@ const formatCurrency = (val: number) => {
 
 const handleSubmit = () => {
   if (!dauroh.value) return;
+  
+  if (process.client) {
+    localStorage.removeItem(STORAGE_KEY.value);
+  }
 
-  const mainEmail = formState.participants[0]?.email;
+  // [UBAH] Logic Email (Key Besar)
+  const mainEmail = formState.participants[0]?.Email;
   const finalParticipants = formState.participants.map((p, i) => ({
     ...p,
-    email: (i === 0) ? p.email : mainEmail
+    Email: (i === 0) ? p.Email : mainEmail
   }));
 
   const registrationData = {
