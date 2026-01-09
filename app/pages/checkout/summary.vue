@@ -101,10 +101,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
-import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
-import { useNuxtApp } from '#app'; 
+import { useNuxtApp } from '#app';
+import { useAuth } from '~/composables/useAuth'; 
 
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
@@ -119,14 +119,18 @@ definePageMeta({ layout: 'checkout' });
 useHead({ title: 'Ringkasan Pembayaran' });
 
 const store = useCheckoutStore();
-const userStore = useUserStore();
 const router = useRouter();
 const { $apiBase } = useNuxtApp();
+const { accessToken } = useAuth(); 
 const loading = ref(false);
 const error = ref<string | null>(null);
 
 onMounted(() => {
-  if (!store.paymentMethod) router.replace('/checkout/select');
+  // [REVISI] Hapus store.loadFromStorage() karena useStorage otomatis handle.
+  // Cek validasi pembayaran
+  if (!store.paymentMethod) {
+     // router.replace('/checkout/select'); // Opsional: redirect jika data hilang total
+  }
 });
 
 const paymentLogoUrl = computed(() => {
@@ -140,54 +144,173 @@ const paymentLogoUrl = computed(() => {
 const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 
 const applyVoucher = async () => {
-  error.value = null; loading.value = true;
+  error.value = null; 
+  loading.value = true;
   const code = store.voucherCode;
-  if (!code) { store.setVoucher(null, 0); loading.value = false; return; }
+
+  if (!code) { 
+    store.removeVoucher(); 
+    loading.value = false; 
+    return; 
+  }
 
   try {
-    const response = await $apiBase.post('/check-voucher', { code, eventSK: store.dauroh?.SK, totalAmount: store.totalAmount });
-    const result = response.data;
-    let disc = 0;
-    if (result.amount !== undefined) disc = Number(result.amount);
-    else if (result.type === 'PERCENT') disc = store.totalAmount * (result.value / 100);
-    else if (result.type === 'FIXED') disc = Number(result.value);
+    const payload = {
+      code: code,
+      eventSK: store.dauroh?.SK,
+      AccessToken: accessToken.value
+    };
+
+    console.log("Sending Voucher Payload:", payload);
+
+    const response = await $apiBase.put('/match-voucher', payload);
+    const rawResult = response.data;
     
+    console.log("🔥 API RESPONSE RAW:", rawResult);
+
+    // --- LOGIC KUPAS DATA (Tetap Pertahankan yang Robust ini) ---
+    let finalData = rawResult;
+    // 1. Cek Wrapper 'data'
+    if (finalData && typeof finalData === 'object' && 'data' in finalData) {
+        finalData = finalData.data;
+    }
+    // 2. Cek Array (Ambil index 0)
+    if (Array.isArray(finalData)) {
+        finalData = finalData[0];
+    }
+    // 3. Cek Wrapper 'data' lagi (Nested case)
+    if (finalData && typeof finalData === 'object' && 'data' in finalData) {
+        finalData = finalData.data;
+    }
+
+    if (!finalData) throw new Error("Format data voucher tidak dikenali.");
+
+    let disc = 0;
+    
+    // Cari key Diskon/Nominal/Amount/Value
+    const valAmount = finalData.Amount ?? finalData.amount ?? 
+                      finalData.Nominal ?? finalData.nominal ??
+                      finalData.Diskon ?? finalData.diskon; 
+
+    const valValue  = finalData.Value ?? finalData.value;
+    const valType   = finalData.Type ?? finalData.type;
+
+    if (valAmount !== undefined) {
+       disc = Number(valAmount);
+    } 
+    else if (valType === 'PERCENT' || valType === 'percent') {
+       disc = store.totalAmount * (Number(valValue) / 100);
+    } 
+    else if (valType === 'FIXED' || valType === 'fixed') {
+       disc = Number(valValue);
+    }
+    else if (typeof rawResult === 'number') {
+       disc = rawResult;
+    }
+
     if (disc > store.totalAmount) disc = store.totalAmount;
-    store.setVoucher(code, disc);
-    Swal.fire({ icon: 'success', title: 'Voucher Berhasil!', text: `Potongan ${formatCurrency(disc)}`, timer: 1500, showConfirmButton: false });
+
+    if (disc > 0) {
+      store.setVoucher(code, disc);
+      Swal.fire({ 
+        icon: 'success', 
+        title: 'Voucher Berhasil!', 
+        text: `Potongan ${formatCurrency(disc)}`, 
+        timer: 1500, 
+        showConfirmButton: false 
+      });
+    } else {
+      throw new Error("Voucher tidak valid atau nominal 0");
+    }
+
   } catch (err: any) {
-    store.setVoucher(code, 0);
-    error.value = err.response?.data?.message || err.message || 'Kode voucher salah';
-  } finally { loading.value = false; }
+    console.error("Voucher Error:", err);
+    store.removeVoucher();
+    store.voucherCode = code; 
+    
+    // Ambil pesan asli dari backend
+    let rawMsg = err.response?.data?.message || err.message || '';
+    let userMsg = 'Kode voucher salah atau tidak ditemukan.';
+
+    // [FITUR BARU] Deteksi Error Spesifik (Inactive/Expire)
+    const lowerMsg = rawMsg.toLowerCase();
+    if (lowerMsg.includes('inactive') || lowerMsg.includes('expire') || lowerMsg.includes('sudah digunakan')) {
+        userMsg = 'Voucher sudah tidak aktif / kadaluarsa.';
+    } else if (lowerMsg.includes('not found') || lowerMsg.includes('tidak ditemukan')) {
+        userMsg = 'Kode voucher tidak ditemukan.';
+    }
+
+    error.value = userMsg;
+    
+    // 🔥 NOTIF ERROR SINGKAT
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal',
+      text: userMsg,
+      timer: 2000,
+      showConfirmButton: false
+    });
+
+  } finally { 
+    loading.value = false; 
+  }
 };
 
 const handlePay = async () => {
-  loading.value = true; error.value = null;
+  loading.value = true; 
+  error.value = null;
+  
   try {
     const result = await store.createPayment();
+
     if (result.success) {
-      if (store.dauroh && store.participants.length > 0) {
-        userStore.registerDauroh({ dauroh: store.dauroh, participants: store.participants });
-      }
       router.push('/checkout/instructions');
     } else {
-      const isSoldOut = result.error?.response?.status === 400 || result.error?.response?.status === 409 || (result.message && result.message.toLowerCase().includes('habis'));
+      const isSoldOut = result.error?.response?.status === 400 || 
+                        result.error?.response?.status === 409 || 
+                        (result.message && result.message.toLowerCase().includes('habis'));
+      
       if (isSoldOut) {
-         await Swal.fire({ icon: 'error', title: 'Mohon Maaf', text: 'Kuota tiket sudah habis.', confirmButtonText: 'Kembali ke Home', confirmButtonColor: '#d33' });
-         store.clearCheckout(); router.push('/');
+         await Swal.fire({ 
+           icon: 'error', 
+           title: 'Mohon Maaf', 
+           text: 'Kuota tiket sudah habis.', 
+           confirmButtonText: 'Kembali ke Home', 
+           confirmButtonColor: '#d33' 
+         });
+         store.clearCheckout(); 
+         router.push('/');
       } else {
          throw new Error(result.message || 'Gagal membuat transaksi.');
       }
     }
   } catch (err: any) {
+    console.error(err);
     error.value = err.message || 'Gagal memproses pembayaran.';
-    Swal.fire({ icon: 'error', title: 'Gagal', text: error.value || 'Terjadi kesalahan sistem.' });
-  } finally { loading.value = false; }
+    Swal.fire({ 
+      icon: 'error', 
+      title: 'Gagal', 
+      text: error.value || 'Terjadi kesalahan sistem.' 
+    });
+  } finally { 
+    loading.value = false; 
+  }
 };
 
 onBeforeRouteLeave((to, from, next) => {
-  if (to.path === '/checkout/instructions' || to.path === '/checkout/select') { next(); return; }
-  Swal.fire({ title: 'Batalkan pembayaran?', text: "Data akan hilang.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya', cancelButtonText: 'Tidak' }).then((r) => r.isConfirmed ? (store.clearCheckout(), next()) : next(false));
+  if (to.path === '/checkout/instructions' || to.path === '/checkout/select') { 
+    next(); 
+    return; 
+  }
+  Swal.fire({ 
+    title: 'Batalkan pembayaran?', 
+    text: "Data akan hilang.", 
+    icon: 'warning', 
+    showCancelButton: true, 
+    confirmButtonColor: '#d33', 
+    confirmButtonText: 'Ya', 
+    cancelButtonText: 'Tidak' 
+  }).then((r) => r.isConfirmed ? (store.clearCheckout(), next()) : next(false));
 });
 </script>
 

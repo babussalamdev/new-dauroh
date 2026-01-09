@@ -29,7 +29,7 @@ export default defineNuxtConfig({
       ],
     },
   },
-  modules: ["@nuxt/content", "@nuxt/image", "@nuxt/scripts", "@nuxt/test-utils", "@nuxt/ui", "@pinia/nuxt", "@nuxt/fonts", "@nuxt/icon"],
+  modules: ["@nuxt/content", "@nuxt/image", "@nuxt/scripts", "@nuxt/test-utils", "@pinia/nuxt", ,"@pinia-plugin-persistedstate/nuxt", "@nuxt/fonts", "@nuxt/icon"],
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE,

@@ -117,15 +117,10 @@ definePageMeta({
   }
 });
 
-// * Gunakan store
 const store = useAdminUserStore();
-
 onMounted(() => { 
-  // * Panggil action dari store
-  store.getListaccount(); 
+  store.getListaccount(true); 
 });
-
-// * Implementasi getRoleBadge
 const getRoleBadge = (role: string) => {
   switch (role) {
     case 'admin':
@@ -137,8 +132,6 @@ const getRoleBadge = (role: string) => {
       return 'bg-light text-dark';
   }
 };
-
-// * Fungsi handleDelete dihapus dari sini
 
 </script>
 

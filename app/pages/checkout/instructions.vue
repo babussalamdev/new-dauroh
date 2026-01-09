@@ -11,7 +11,10 @@
         >
         
         <p class="text-muted mb-1">Jumlah yang harus dibayar</p>
-        <h2 class="fw-bold mb-3 text-primary">{{ formatCurrency(store.transactionDetails?.amount || 0) }}</h2>
+        
+        <h2 class="fw-bold mb-3 text-primary">
+          {{ formatCurrency(Number(store.transactionDetails?.amount || 0)) }}
+        </h2>
 
         <div v-if="paymentStatus === 'pending'" class="countdown-timer mb-4 badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
           <i class="bi bi-clock me-1"></i>
@@ -23,21 +26,23 @@
         <div class="text-start">
           <div v-if="paymentStatus === 'pending'">
              <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
+             
              <component 
               :is="currentBankComponent" 
               v-if="currentBankComponent"
               :vaNumber="store.transactionDetails?.vaNumber || 'ERROR'"
-              :amount="store.transactionDetails?.amount || 0"
+              :amount="Number(store.transactionDetails?.amount || 0)"
             />
+            
             <div v-else class="alert alert-warning text-center">
               Gunakan No. VA: <strong>{{ store.transactionDetails?.vaNumber }}</strong>
             </div>
           </div>
-         
+          
           <div class="mt-4 pt-2 border-top">
              <div v-if="paymentStatus === 'pending'" class="text-center">
               <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-              <span class="ms-2 text-muted small">Menunggu pembayaran otomatis...</span>
+              <span class="ms-2 text-muted small">Mengecek pembayaran...</span>
             </div>
 
             <div v-if="paymentStatus === 'success'" class="alert alert-success text-center">
@@ -75,9 +80,10 @@ import { ref, onMounted, onUnmounted, computed, watch, defineAsyncComponent } fr
 import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import { useNuxtApp } from '#app'; 
 import Swal from 'sweetalert2';
 
-// Import Logo Bank
+// Import Assets
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -93,17 +99,18 @@ useHead({ title: 'Instruksi Pembayaran' });
 const store = useCheckoutStore();
 const userStore = useUserStore();
 const router = useRouter();
+const { $apiFlip } = useNuxtApp(); // Akses API Flip kalau mau cek status
 
 // State
 const paymentStatus = ref<'pending' | 'success' | 'expired'>('pending');
-const countdown = ref('23:59:59');
+const countdown = ref('...');
 const showQrModal = ref(false);
 
-// Timer refs
+// Interval Variable
 let timerInterval: NodeJS.Timeout | null = null;
-let simulationTimer: NodeJS.Timeout | null = null;
+let pollingInterval: NodeJS.Timeout | null = null; // Buat cek status ke server
 
-// Dynamic Bank Components
+// --- Components & Computed ---
 const BankComponents: any = {
   'BNI': defineAsyncComponent(() => import('~/components/bank/BNI.vue')),
   'BRI': defineAsyncComponent(() => import('~/components/bank/BRI.vue')),
@@ -119,63 +126,108 @@ const currentBankComponent = computed(() => {
   return method ? BankComponents[method] : null;
 });
 
-// --- [PERBAIKAN DISINI] ---
-// Kirim seluruh array 'participants', jangan cuma index [0]
 const newlyCreatedTicket = computed(() => {
   if (!store.dauroh || !store.participants.length) return undefined;
-  
-  return {
-    dauroh: store.dauroh,
-    // Gunakan key 'participants' (plural) agar dideteksi sebagai array di modal
-    participants: store.participants 
-  };
+  return { dauroh: store.dauroh, participants: store.participants };
 });
-// --- [AKHIR PERBAIKAN] ---
 
+const paymentLogoUrl = computed(() => {
+  const logos: { [key: string]: string } = { 'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo };
+  return store.transactionDetails?.paymentMethod ? logos[store.transactionDetails.paymentMethod] : null;
+});
+
+const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+
+// --- Lifecycle ---
 onMounted(() => {
+  // 1. Cek Data Transaksi
   if (!store.transactionDetails) {
     router.replace('/checkout/summary');
     return;
   }
-  startTimer(store.transactionDetails.expiryTime);
-  startPaymentSimulation();
+
+  // 2. Setup Timer (Handle String/Number/Undefined)
+  const rawExpiry = store.transactionDetails.expiryTime;
+  let expiryTimestamp = Date.now() + (24 * 60 * 60 * 1000); // Default 24 jam
+
+  if (typeof rawExpiry === 'string') {
+    expiryTimestamp = new Date(rawExpiry).getTime();
+  } else if (typeof rawExpiry === 'number') {
+    expiryTimestamp = rawExpiry;
+  }
+  startTimer(expiryTimestamp);
+
+  // 3. PILIH SALAH SATU MODE DI BAWAH INI:
+  
+  // MODE A: SIMULASI (Cocok buat testing tanpa backend real)
+  startPaymentSimulation(); 
+
+  // MODE B: REAL (Uncomment ini kalau API Flip udah jalan)
+  // startPollingStatus();
 });
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
-  if (simulationTimer) clearTimeout(simulationTimer);
+  if (pollingInterval) clearInterval(pollingInterval);
 });
 
+// --- Logic Status ---
+
+// MODE A: Simulasi (Otomatis sukses dalam 5 detik)
 const startPaymentSimulation = () => {
-  // Simulasi sukses bayar dalam 5 detik
-  simulationTimer = setTimeout(() => {
+  console.log("Mode Simulasi: Pembayaran akan sukses dalam 5 detik...");
+  setTimeout(() => {
     if (paymentStatus.value === 'pending') {
       paymentStatus.value = 'success';
     }
   }, 5000);
 };
 
-// Watcher: Jika sukses, daftarkan user dan buka QR Modal
+// MODE B: Polling Real (Cek ke server setiap 5 detik)
+/*
+const startPollingStatus = () => {
+  pollingInterval = setInterval(async () => {
+    try {
+      if(!store.transactionDetails?.link_id) return;
+
+      // Contoh endpoint cek status
+      const response = await $apiFlip.get(`/check-status/${store.transactionDetails.link_id}`);
+      const status = response.data.status; // 'SUCCESSFUL', 'PENDING', etc
+
+      if (status === 'SUCCESSFUL') {
+         paymentStatus.value = 'success';
+         if(pollingInterval) clearInterval(pollingInterval);
+      } else if (status === 'CANCELLED' || status === 'FAILED') {
+         // Handle failed logic here
+      }
+    } catch (err) {
+      console.error("Gagal cek status:", err);
+    }
+  }, 5000); // Cek tiap 5 detik
+};
+*/
+
+// Watcher: Saat Status Berubah jadi SUCCESS
 watch(paymentStatus, (newStatus) => {
   if (newStatus === 'success') {
     if (timerInterval) clearInterval(timerInterval);
+    if (pollingInterval) clearInterval(pollingInterval);
     
-    // 1. Simpan ke user store (Create Ticket)
+    // 👇 PERBAIKAN DI SINI:
+    // Tambahkan 'as any' biar TypeScript gak protes soal properti yang "hilang"
     const registrationData = {
-      dauroh: store.dauroh!,
-      participants: store.participants,
+      dauroh: store.dauroh as any, 
+      participants: store.participants as any[],
     };
+    
     userStore.registerDauroh(registrationData);
 
-    // 2. Tampilkan Modal QR Code secara langsung
-    // Beri delay sedikit agar transisi UI enak dilihat
     setTimeout(() => {
       showQrModal.value = true;
     }, 500);
   }
 });
 
-// Saat modal ditutup, HANYA tutup modal (jangan redirect otomatis)
 const handleCloseQr = () => {
   showQrModal.value = false;
 };
@@ -185,7 +237,6 @@ const goToDashboard = () => {
   router.push('/dashboard');
 };
 
-// --- Timer & Formatters ---
 const startTimer = (expiryTime: number) => {
   timerInterval = setInterval(() => {
     const now = Date.now();
@@ -203,14 +254,7 @@ const startTimer = (expiryTime: number) => {
   }, 1000);
 };
 
-const paymentLogoUrl = computed(() => {
-  const logos: { [key: string]: string } = { 'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo };
-  return store.transactionDetails?.paymentMethod ? logos[store.transactionDetails.paymentMethod] : null;
-});
-
-const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
-
-// Navigation Guard
+// Guard Navigation (Cegah user back sembarangan)
 onBeforeRouteLeave((to, from, next) => {
   if (paymentStatus.value === 'success' || to.path === '/dashboard') {
     next();
