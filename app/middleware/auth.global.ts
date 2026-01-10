@@ -17,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 2. Tentukan halaman publik
-  const publicPages = ["/", "/login", "/register", "/admin/login"];
+  const publicPages = ["/", "/login", "/register", "/admin/login", "/verify"];
   const isPublicPage = publicPages.includes(to.path);
 
   // 3. Lindungi halaman yang tidak publik

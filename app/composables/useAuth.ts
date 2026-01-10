@@ -1,6 +1,7 @@
 import { useLoading } from '~/composables/useLoading'
-import Swal from "sweetalert2"
-import type { AuthUser } from '~/types/auth'  // import tipe
+import type { AuthUser } from '~/types/auth' 
+// Swal kita hapus importnya karena kita serahkan error handling ke UI (login.vue)
+// import Swal from "sweetalert2" 
 
 export const useAuth = () => {
   const loading = useLoading()
@@ -33,6 +34,7 @@ export const useAuth = () => {
       await getUser()
 
       // redirect sesuai type login
+      // Note: Di login.vue kamu sudah ada redirect, tapi ini gapapa dibiarkan sebagai fallback
       if (type === 'admin') {
         router.push('/admin')
       } else {
@@ -40,18 +42,25 @@ export const useAuth = () => {
       }
 
     } catch (error: any) {
-      Swal.fire({
+      // ❌ HAPUS SWAL DISINI (Biar gak double alert & errornya gak ketelen)
+      /* Swal.fire({
         text: error.response?.data?.error || error.message || "Login gagal",
         icon: "error",
         showConfirmButton: false,
         timer: 2000,
-      })
+      }) 
+      */
+
+      // ✅ WAJIB: Lempar error ke luar biar ditangkap login.vue
+      // Supaya popup "Verifikasi Sekarang" bisa muncul
+      throw error 
+
     } finally {
       loading.value = false
     }
   }
 
-  // ===== FUNGSI LOGOUT DIPERBARUI DI SINI =====
+  // ===== FUNGSI LOGOUT (TIDAK DIUBAH) =====
   const logout = async () => {
     try {
       await $apiBase.post("signout-account", {
@@ -73,9 +82,9 @@ export const useAuth = () => {
       
       // Arahkan ke halaman login yang sesuai
       if (loginType === 'admin') {
-        router.push("/admin/login") // <-- Jika admin, ke login admin
+        router.push("/admin/login") 
       } else {
-        router.push("/login") // <-- Jika bukan, ke login user
+        router.push("/login") 
       }
     }
   }
