@@ -36,19 +36,23 @@
               <tr>
                 <th>Nama Lengkap</th>
                 <th>Email</th>
-                <th>Role</th>
+                <th class="text-center">Role</th>
                 <th class="text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="store.paginatedData.length > 0" v-for="user in store.paginatedData" :key="user.email">
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-                <td>
-                  <span :class="['badge', getRoleBadge(user.role)]">{{ user.role }}</span>
-                </td>
+              <tr v-if="store.paginatedData.length > 0" v-for="user in store.paginatedData" :key="user.SK">
+                
+                <td>{{ user.Name }}</td>
+                
+                <td>{{ user.SK }}</td>
+                
                 <td class="text-center">
-                  <NuxtLink :to="`/admin/users/edit/${user.email}`" class="btn btn-link text-primary p-1" title="Edit">
+                  <span :class="['badge', getRoleBadge(user.Series)]">{{ user.Series }}</span>
+                </td>
+                
+                <td class="text-center">
+                  <NuxtLink :to="`/admin/users/edit/${user.SK}`" class="btn btn-link text-primary p-1" title="Edit">
                     <i class="bi bi-pencil-square fs-5"></i>
                   </NuxtLink>
                   </td>
@@ -118,10 +122,17 @@ definePageMeta({
 });
 
 const store = useAdminUserStore();
+
 onMounted(() => { 
   store.getListaccount(true); 
 });
-const getRoleBadge = (role: string) => {
+
+const getRoleBadge = (series: string) => {
+  // Jaga-jaga kalau datanya undefined/null
+  if (!series) return 'bg-light text-dark';
+  
+  const role = series.toLowerCase();
+  
   switch (role) {
     case 'admin':
     case 'root':
@@ -132,7 +143,6 @@ const getRoleBadge = (role: string) => {
       return 'bg-light text-dark';
   }
 };
-
 </script>
 
 <style scoped>

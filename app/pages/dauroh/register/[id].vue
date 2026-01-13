@@ -52,7 +52,6 @@
                   <i class="bi bi-ticket-perforated me-2"></i>
                   {{ totalTickets > 0 ? `${totalTickets} Tiket Dipilih` : 'Pilih Jumlah Tiket' }}
                 </span>
-                <span class="fw-bold">{{ formatCurrency(totalPrice) }}</span>
               </button>
 
               <div class="dropdown-menu w-100 p-3 shadow mt-2 border-0">
@@ -152,6 +151,7 @@
                 <button 
                   type="submit" 
                   class="btn btn-primary px-4 py-2 rounded-pill fw-bold w-100 w-sm-auto"
+                  :disabled="totalTickets === 0"
                 >
                   Lanjut Pembayaran <i class="bi bi-arrow-right ms-1"></i>
                 </button>
@@ -331,13 +331,11 @@ const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
   generateForms();
 };
 
-// [UBAH] Generate form dengan Key PascalCase
 const generateForms = () => {
   const newParticipants: any[] = []; 
   const oldParticipants = [...formState.participants];
 
   const popExisting = (gender: string) => {
-    // Cari berdasarkan Key Gender (Besar)
     const idx = oldParticipants.findIndex(p => p.Gender === gender);
     if (idx !== -1) {
       return oldParticipants.splice(idx, 1)[0];
@@ -350,7 +348,6 @@ const generateForms = () => {
     if (existing) {
        newParticipants.push(existing);
     } else {
-       // [UBAH] Inisialisasi dengan Key Besar
        newParticipants.push({ Name: '', Email: '', Gender: 'Ikhwan', Age: '', Domicile: '' });
     }
   }
@@ -360,8 +357,7 @@ const generateForms = () => {
     if (existing) {
        newParticipants.push(existing);
     } else {
-       // [UBAH] Inisialisasi dengan Key Besar
-       newParticipants.push({ Name: '', Email: '', Gender: 'Akhwat', Age: '', Domicile: '' });
+        newParticipants.push({ Name: '', Email: '', Gender: 'Akhwat', Age: '', Domicile: '' });
     }
   }
 
@@ -374,24 +370,38 @@ const formatCurrency = (val: number) => {
 };
 
 const handleSubmit = () => {
-  if (!dauroh.value) return;
+  // 1. Cek apakah data dauroh ada
+  if (!dauroh.value || !dauroh.value.SK) return;
   
+  // 2. Hapus draft jika ada
   if (process.client) {
     localStorage.removeItem(STORAGE_KEY.value);
   }
 
-  // [UBAH] Logic Email (Key Besar)
+  // 3. --- LOGIC EMAIL & DATA PESERTA (JANGAN DIHAPUS) ---
   const mainEmail = formState.participants[0]?.Email;
+  
+  // Variabel 'finalParticipants' DIDEFINISIKAN DI SINI
   const finalParticipants = formState.participants.map((p, i) => ({
     ...p,
-    Email: (i === 0) ? p.Email : mainEmail
+    // Copy email peserta pertama ke peserta lain (jika tiket rombongan)
+    Email: (i === 0) ? p.Email : mainEmail,
+    // Pastikan umur jadi number
+    Age: Number(p.Age)
   }));
 
+  // 4. --- SIAPKAN DATA ---
   const registrationData = {
-    dauroh: dauroh.value!,
-    participants: finalParticipants
+    dauroh: {
+        ...dauroh.value,
+        // Paksa SK jadi string (Casting)
+        SK: dauroh.value.SK as string 
+    },
+    // Gunakan variabel yang sudah didefinisikan di langkah 3
+    participants: finalParticipants as any[] 
   };
 
+  // 5. --- EKSEKUSI ---
   if ((dauroh.value.Price || 0) === 0) {
     userStore.registerDauroh(registrationData);
     router.push('/dashboard');

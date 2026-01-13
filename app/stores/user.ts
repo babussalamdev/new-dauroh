@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia';
 import { useStorage } from '@vueuse/core';
-import type { Dauroh } from '~/stores/dauroh';
 import { useDaurohStore } from '~/stores/dauroh';
 import { useToastStore } from './toast';
 
+// --- INTERFACE (Sudah Dilengkapi biar ga Error di Riwayat) ---
+
 export interface Participant {
   Name: string;
-  Email?: string; 
+  Email?: string;
   Gender: string;
   Age?: number | string;
   Domicile?: string;
@@ -14,71 +15,112 @@ export interface Participant {
 }
 
 export interface UserTicket {
-  SK: string;
-  date: string;
-  dauroh: Dauroh;
+  SK: string;        
+  id?: string;       
+  date: string;      
+  created_at?: string; 
+
+  dauroh: any;       
   participants: Participant[]; 
-  status: 'Upcoming' | 'Selesai'; 
-  paymentStatus: 'Lunas' | 'Pending';
+  
+  // 🔥 TAMBAHAN 1: Field ini wajib ada biar error 'Property does not exist' hilang
+  title?: string;              
+  total_participants?: number; 
+  
+  // Status
+  status: 'Upcoming' | 'Selesai' | 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED' | 'active'; 
+  paymentStatus?: string;
+
+  // Data Pembayaran
+  amount?: number;
+  va_number?: string;
+  receiver_bank_account?: any;
+  sender_bank?: string;
+  expired_date?: string;
+
+  // 🔥 TAMBAHAN 2: Penyelamat kalau ada field tak terduga
+  [key: string]: any; 
 }
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    upcomingTickets: useStorage<UserTicket[]>('user_upcoming_tickets', [], localStorage),
-    historyTickets: useStorage<UserTicket[]>('user_history_tickets', [], localStorage),
+    // Penyimpanan LocalStorage
+    tickets: useStorage<UserTicket[]>('user_tickets_v2', [], localStorage),
     isLoading: false,
   }),
   
   getters: {
-    getUpcomingTickets: (state) => state.upcomingTickets,
-    getHistoryTickets: (state) => state.historyTickets,
-    getAllTickets: (state) => [...state.upcomingTickets, ...state.historyTickets],
+    getAllTickets: (state) => state.tickets,
+    
+    getUpcomingTickets: (state) => state.tickets.filter(t => t.status === 'Upcoming' || t.status === 'PAID'),
+    getPendingTickets: (state) => state.tickets.filter(t => t.status === 'PENDING'),
   },
 
   actions: {
-    registerDauroh(registrationData: { dauroh: Dauroh, participants: Participant[] }) {
-      const { dauroh, participants } = registrationData;
-      const toastStore = useToastStore();
-      const daurohStore = useDaurohStore();
-      
-      if (!dauroh || !participants || participants.length === 0) {
-        toastStore.showToast({ message: `Pendaftaran gagal: data tidak lengkap.`, type: 'danger' });
-        return; 
-      }
-      const newTicket: UserTicket = {
-        SK: `TRX-${Date.now()}`,
-        date: new Date().toISOString(),
-        dauroh: dauroh,
-        participants: participants,
-        status: 'Upcoming',
-        paymentStatus: 'Lunas'
-      };
-
-      this.upcomingTickets.unshift(newTicket);
-      const totalPeserta = participants.length;
-      const jumlahIkhwan = participants.filter(p => p.Gender === 'Ikhwan').length;
-      const jumlahAkhwat = participants.filter(p => p.Gender === 'Akhwat').length;
-
-      if (dauroh.SK) {
-        daurohStore.decrementQuota(dauroh.SK, totalPeserta, jumlahIkhwan, jumlahAkhwat);
-      }
-
-      toastStore.showToast({
-        message: `Pendaftaran berhasil! ${participants.length} peserta terdaftar.`,
-        type: 'success'
-      });
+    async fetchTickets() {
+        return this.tickets;
     },
 
-    moveToHistory(ticketSK: string) {
-      const index = this.upcomingTickets.findIndex(t => t.SK === ticketSK);
-      if (index !== -1) {
-        const ticket = this.upcomingTickets[index];
-        if (ticket) {
-          ticket.status = 'Selesai';
-          this.historyTickets.unshift(ticket);
-          this.upcomingTickets.splice(index, 1);
-        }
+    registerDauroh(payload: any) {
+      const { dauroh, participants, transactionDetails } = payload;
+      const toastStore = useToastStore();
+      const daurohStore = useDaurohStore();
+
+      let initialStatus: any = 'Upcoming'; 
+      let trxAmount = 0;
+
+      if (transactionDetails) {
+          initialStatus = transactionDetails.status === 'PENDING' ? 'PENDING' : 'Upcoming';
+          trxAmount = Number(transactionDetails.amount || 0);
       }
+
+      const newTicket: UserTicket = {
+        SK: transactionDetails?.link_id ? `TRX-${transactionDetails.link_id}` : `TRX-${Date.now()}`,
+        id: transactionDetails?.link_id ? `TRX-${transactionDetails.link_id}` : `TRX-${Date.now()}`,
+        date: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        
+        // Simpan Title event di root object juga buat jaga-jaga
+        title: dauroh?.Title || 'Event Dauroh',
+        
+        dauroh: dauroh,
+        participants: participants || [],
+        total_participants: participants?.length || 0, // Simpan jumlah peserta
+        
+        status: initialStatus,
+        amount: trxAmount || (dauroh.Price * (participants?.length || 1)),
+
+        va_number: transactionDetails?.vaNumber || transactionDetails?.receiver_bank_account?.account_number,
+        receiver_bank_account: transactionDetails?.receiver_bank_account,
+        sender_bank: transactionDetails?.sender_bank || transactionDetails?.paymentMethod,
+        expired_date: transactionDetails?.expiryTime || transactionDetails?.expired_date
+      };
+
+      // Cek duplikasi
+      const exists = this.tickets.find(t => t.SK === newTicket.SK);
+      if (!exists) {
+          this.tickets.unshift(newTicket);
+      } else {
+          Object.assign(exists, newTicket);
+      }
+
+      // Update kuota visual
+      if (dauroh?.SK && initialStatus !== 'PENDING') {
+        const total = participants.length;
+        const ikhwan = participants.filter((p:any) => p.Gender?.toLowerCase() === 'ikhwan').length;
+        const akhwat = participants.filter((p:any) => p.Gender?.toLowerCase() === 'akhwat').length;
+        daurohStore.decrementQuota(dauroh.SK, total, ikhwan, akhwat);
+      }
+
+      console.log("Tiket disimpan:", newTicket);
+    },
+
+    removeTicket(skOrId: string) {
+        if (!skOrId) return;
+        this.tickets = this.tickets.filter(t => t.SK !== skOrId && t.id !== skOrId);
+        
+        const toastStore = useToastStore();
+        toastStore.showToast({ message: 'Riwayat berhasil dihapus.', type: 'success' });
     }
   }
 });

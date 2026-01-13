@@ -6,7 +6,7 @@
         <div class="text-center mb-3">
           <img 
             v-if="paymentLogoUrl" 
-            :src="paymentLogoUrl || ''" 
+            :src="paymentLogoUrl" 
             :alt="store.paymentMethod || 'Logo Pembayaran'" 
             class="payment-logo-summary"
           >
@@ -40,7 +40,7 @@
 
         <ul class="list-group list-group-flush mt-4">
           <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            Biaya Pendaftaran - {{ store.dauroh?.Title }} ({{ store.participants?.length }} tiket)
+            Biaya Pendaftaran - {{ store.dauroh?.Title }} ({{ store.participants?.length || 0 }} tiket)
             <span>{{ formatCurrency(store.totalAmount) }}</span>
           </li>
           
@@ -106,6 +106,7 @@ import Swal from 'sweetalert2';
 import { useNuxtApp } from '#app';
 import { useAuth } from '~/composables/useAuth'; 
 
+// Import Images (Vite/Nuxt 4 Style)
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -126,10 +127,9 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 onMounted(() => {
-  // [REVISI] Hapus store.loadFromStorage() karena useStorage otomatis handle.
-  // Cek validasi pembayaran
+  // Redirect ke halaman pilih metode jika data pembayaran kosong
   if (!store.paymentMethod) {
-     // router.replace('/checkout/select'); // Opsional: redirect jika data hilang total
+     // router.replace('/checkout/select'); 
   }
 });
 
@@ -138,7 +138,7 @@ const paymentLogoUrl = computed(() => {
     'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo,
     'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo,
   };
-  return store.paymentMethod ? logos[store.paymentMethod] : null;
+  return store.paymentMethod ? logos[store.paymentMethod.toUpperCase()] : null;
 });
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
@@ -155,9 +155,12 @@ const applyVoucher = async () => {
   }
 
   try {
+    // Validasi Event SK harus ada
+    if (!store.dauroh?.SK) throw new Error("Data event tidak ditemukan.");
+
     const payload = {
       code: code,
-      eventSK: store.dauroh?.SK,
+      eventSK: store.dauroh.SK,
       AccessToken: accessToken.value
     };
 
@@ -166,19 +169,14 @@ const applyVoucher = async () => {
     const response = await $apiBase.put('/match-voucher', payload);
     const rawResult = response.data;
     
-    console.log("🔥 API RESPONSE RAW:", rawResult);
-
-    // --- LOGIC KUPAS DATA (Tetap Pertahankan yang Robust ini) ---
+    // --- Logic Parsing Data Voucher ---
     let finalData = rawResult;
-    // 1. Cek Wrapper 'data'
     if (finalData && typeof finalData === 'object' && 'data' in finalData) {
         finalData = finalData.data;
     }
-    // 2. Cek Array (Ambil index 0)
     if (Array.isArray(finalData)) {
         finalData = finalData[0];
     }
-    // 3. Cek Wrapper 'data' lagi (Nested case)
     if (finalData && typeof finalData === 'object' && 'data' in finalData) {
         finalData = finalData.data;
     }
@@ -187,7 +185,6 @@ const applyVoucher = async () => {
 
     let disc = 0;
     
-    // Cari key Diskon/Nominal/Amount/Value
     const valAmount = finalData.Amount ?? finalData.amount ?? 
                       finalData.Nominal ?? finalData.nominal ??
                       finalData.Diskon ?? finalData.diskon; 
@@ -208,6 +205,7 @@ const applyVoucher = async () => {
        disc = rawResult;
     }
 
+    // Validasi diskon tidak boleh melebihi total
     if (disc > store.totalAmount) disc = store.totalAmount;
 
     if (disc > 0) {
@@ -226,13 +224,12 @@ const applyVoucher = async () => {
   } catch (err: any) {
     console.error("Voucher Error:", err);
     store.removeVoucher();
+    // Kembalikan kode ke input agar user bisa edit
     store.voucherCode = code; 
     
-    // Ambil pesan asli dari backend
     let rawMsg = err.response?.data?.message || err.message || '';
     let userMsg = 'Kode voucher salah atau tidak ditemukan.';
 
-    // [FITUR BARU] Deteksi Error Spesifik (Inactive/Expire)
     const lowerMsg = rawMsg.toLowerCase();
     if (lowerMsg.includes('inactive') || lowerMsg.includes('expire') || lowerMsg.includes('sudah digunakan')) {
         userMsg = 'Voucher sudah tidak aktif / kadaluarsa.';
@@ -242,7 +239,6 @@ const applyVoucher = async () => {
 
     error.value = userMsg;
     
-    // 🔥 NOTIF ERROR SINGKAT
     Swal.fire({
       icon: 'error',
       title: 'Gagal',
@@ -266,9 +262,27 @@ const handlePay = async () => {
     if (result.success) {
       router.push('/checkout/instructions');
     } else {
+      // --- LOGIC HANDLING ERROR KHUSUS ---
+      const errMsg = (result.message || '').toLowerCase();
+      
+      // 1. Cek Apakah Errornya "Booking PENDING"
+      if (errMsg.includes('booking pending') || errMsg.includes('memiliki booking')) {
+         await Swal.fire({ 
+           icon: 'warning', 
+           title: 'Transaksi Sudah Ada', 
+           text: 'Anda memiliki transaksi yang belum dibayar. Silakan cek riwayat pendaftaran.', 
+           confirmButtonText: 'Cek Riwayat', 
+           confirmButtonColor: '#004754' 
+         });
+         // Redirect ke halaman Riwayat (sesuai file yang lu punya)
+         router.push('/riwayat-pendaftaran'); 
+         return;
+      }
+
+      // 2. Cek Apakah Tiket Habis
       const isSoldOut = result.error?.response?.status === 400 || 
                         result.error?.response?.status === 409 || 
-                        (result.message && result.message.toLowerCase().includes('habis'));
+                        errMsg.includes('habis');
       
       if (isSoldOut) {
          await Swal.fire({ 
@@ -286,6 +300,7 @@ const handlePay = async () => {
     }
   } catch (err: any) {
     console.error(err);
+    // ... error handling standar ...
     error.value = err.message || 'Gagal memproses pembayaran.';
     Swal.fire({ 
       icon: 'error', 
@@ -298,22 +313,29 @@ const handlePay = async () => {
 };
 
 onBeforeRouteLeave((to, from, next) => {
+  // Izinkan navigasi ke instruksi atau kembali ke select tanpa prompt
   if (to.path === '/checkout/instructions' || to.path === '/checkout/select') { 
     next(); 
     return; 
   }
+  
+  // Prompt konfirmasi jika user mau keluar dari proses checkout
   Swal.fire({ 
     title: 'Batalkan pembayaran?', 
-    text: "Data akan hilang.", 
+    text: "Data pendaftaran akan hilang.", 
     icon: 'warning', 
     showCancelButton: true, 
     confirmButtonColor: '#d33', 
-    confirmButtonText: 'Ya', 
-    cancelButtonText: 'Tidak' 
+    confirmButtonText: 'Ya, Batalkan', 
+    cancelButtonText: 'Lanjut Bayar' 
   }).then((r) => r.isConfirmed ? (store.clearCheckout(), next()) : next(false));
 });
 </script>
 
 <style scoped>
-.payment-logo-summary { max-height: 50px; max-width: 150px; object-fit: contain; }
+.payment-logo-summary { 
+  max-height: 50px; 
+  max-width: 150px; 
+  object-fit: contain; 
+}
 </style>
