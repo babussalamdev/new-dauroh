@@ -3,8 +3,6 @@ import { useStorage } from '@vueuse/core';
 import { useDaurohStore } from '~/stores/dauroh';
 import { useToastStore } from './toast';
 
-// --- INTERFACE (Sudah Dilengkapi biar ga Error di Riwayat) ---
-
 export interface Participant {
   Name: string;
   Email?: string;
@@ -22,8 +20,6 @@ export interface UserTicket {
 
   dauroh: any;       
   participants: Participant[]; 
-  
-  // 🔥 TAMBAHAN 1: Field ini wajib ada biar error 'Property does not exist' hilang
   title?: string;              
   total_participants?: number; 
   
@@ -37,8 +33,6 @@ export interface UserTicket {
   receiver_bank_account?: any;
   sender_bank?: string;
   expired_date?: string;
-
-  // 🔥 TAMBAHAN 2: Penyelamat kalau ada field tak terduga
   [key: string]: any; 
 }
 
@@ -70,17 +64,20 @@ export const useUserStore = defineStore('user', {
       let trxAmount = 0;
 
       if (transactionDetails) {
+          // Priority status dari transaction details
           initialStatus = transactionDetails.status === 'PENDING' ? 'PENDING' : 'Upcoming';
           trxAmount = Number(transactionDetails.amount || 0);
       }
+      const finalId = transactionDetails?.link_id 
+        ? String(transactionDetails.link_id) 
+        : String(Date.now());
 
       const newTicket: UserTicket = {
-        SK: transactionDetails?.link_id ? `TRX-${transactionDetails.link_id}` : `TRX-${Date.now()}`,
-        id: transactionDetails?.link_id ? `TRX-${transactionDetails.link_id}` : `TRX-${Date.now()}`,
+        SK: finalId,
+        id: finalId,
+        
         date: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        
-        // Simpan Title event di root object juga buat jaga-jaga
         title: dauroh?.Title || 'Event Dauroh',
         
         dauroh: dauroh,
@@ -96,15 +93,15 @@ export const useUserStore = defineStore('user', {
         expired_date: transactionDetails?.expiryTime || transactionDetails?.expired_date
       };
 
-      // Cek duplikasi
+      // Cek duplikasi ID agar tidak double push
       const exists = this.tickets.find(t => t.SK === newTicket.SK);
       if (!exists) {
           this.tickets.unshift(newTicket);
       } else {
-          Object.assign(exists, newTicket);
+          Object.assign(exists, newTicket); // Update jika sudah ada
       }
 
-      // Update kuota visual
+      // Update kuota visual store sebelah (opsional, visual only)
       if (dauroh?.SK && initialStatus !== 'PENDING') {
         const total = participants.length;
         const ikhwan = participants.filter((p:any) => p.Gender?.toLowerCase() === 'ikhwan').length;
