@@ -7,8 +7,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+// Tidak perlu import onMounted atau useRouter kalau tidak dipakai langsung di sini
+// useHead sudah auto-import di Nuxt 3
 
 useHead({
   titleTemplate: '%s - Dauroh',
@@ -20,15 +20,3 @@ useHead({
   ]
 });
 </script>
-
-<style>
-/* CSS GLOBAL */
-:root {
-  --color-primary: #004754;
-  --color-text-dark: #374151;
-  --color-card-bg: #FFFFFF;
-  --navbar-height: 60px;
-}
-
-
-</style>
