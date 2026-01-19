@@ -63,7 +63,7 @@
               <td class="text-center">
                 <button
                   class="btn btn-link text-info p-1"
-                  @click="openDetailModal(dauroh)"
+                  @click="navigateToPage(dauroh)"
                   :disabled="!dauroh.SK"
                   :title="dauroh.SK ? 'Lihat Detail & Edit' : 'Detail belum tersedia'">
                   <i class="bi bi-search fs-5"></i>
@@ -106,22 +106,18 @@
     @close="closeDeleteModal"
     @confirm="confirmDelete" />
 
-  <AdminDaurohDetailModal
-    v-if="showDetailModal"
-    :show="showDetailModal"
-    :dauroh="selectedDaurohForDetail" 
-    @close="closeDetailModal"
-    @updated="handleDetailUpdated" />
-</template>
+  </template>
 
 <script setup lang="ts">
   import { ref, onMounted } from "vue";
   import { useDaurohStore } from "@/stores/dauroh";
   import type { Dauroh } from "@/stores/dauroh";
   import Swal from "sweetalert2";
+  import { useRouter } from 'vue-router'; // [TAMBAH] Router
 
   const config = useRuntimeConfig();
   const imgBaseUrl = ref(config.public.img || '');
+  const router = useRouter(); // [TAMBAH] Init router
 
   const daurohStore = useDaurohStore();
 
@@ -130,8 +126,10 @@
   const isEditing = ref(false);
   const selectedDauroh = ref<Partial<Dauroh> | null>(null);
   const selectedDaurohForDelete = ref<Dauroh | null>(null);
-  const showDetailModal = ref(false);
-  const selectedDaurohForDetail = ref<Dauroh | null>(null); 
+  
+  // [HAPUS] State modal detail tidak lagi diperlukan
+  // const showDetailModal = ref(false);
+  // const selectedDaurohForDetail = ref<Dauroh | null>(null); 
 
   onMounted(() => {
     daurohStore.fetchAdminTiketDauroh();
@@ -175,23 +173,16 @@
     return validDates.map(toDateStr).join(', ');
   };
 
-  const openDetailModal = (dauroh: Dauroh | null) => {
+  // [TAMBAH] Fungsi navigasi ke halaman detail
+  const navigateToPage = (dauroh: Dauroh | null) => {
     if (dauroh && dauroh.SK) {
-      selectedDaurohForDetail.value = dauroh;
-      showDetailModal.value = true;
+      router.push(`/admin/event/${dauroh.SK}`);
     } else {
-      Swal.fire("Error", "SK event tidak valid untuk dilihat detailnya.", "error");
+      Swal.fire("Error", "SK event tidak valid.", "error");
     }
   };
-  
-  const closeDetailModal = () => {
-    showDetailModal.value = false;
-    selectedDaurohForDetail.value = null; 
-  };
-  
-  const handleDetailUpdated = () => {
-    // Refresh data if needed, or relying on store reactivity
-  };
+
+  // [HAPUS] Fungsi openDetailModal, closeDetailModal, handleDetailUpdated
 
   const openAddModal = () => {
     isEditing.value = false;
@@ -204,14 +195,17 @@
     selectedDauroh.value = null;
   };
   
-  const handleSave = async (payload: {
+ const handleSave = async (payload: {
     daurohData: Omit<Dauroh, "id" | "Date" | "Picture" >;
     photoBase64: null;
   }) => {
     let success = false;
     try {
       if (isEditing.value && payload.daurohData.SK) {
-        success = await daurohStore.updateTiketDaurohBasic(payload.daurohData);
+        success = await daurohStore.updateTiketDaurohBasic({
+          ...payload.daurohData,
+          SK: payload.daurohData.SK
+        });
       } else {
         success = await daurohStore.addTiketDaurohBasic(payload.daurohData);
       }
@@ -219,7 +213,6 @@
       success = false;
       Swal.fire("Error", "Terjadi kesalahan saat memproses penyimpanan.", "error");
     }
-
     if (success) {
       closeFormModal();
     }

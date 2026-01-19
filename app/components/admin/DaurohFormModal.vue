@@ -61,13 +61,13 @@
                   <option disabled value="">Pilih Target</option>
                   <option value="Ikhwan">Ikhwan (Laki-laki)</option>
                   <option value="Akhwat">Akhwat (Perempuan)</option>
-                  <option value="ikhwan, akhwat">Campuran (Ikhwan & Akhwat)</option>
+                  <option value="ikhwan, akhwat">(Ikhwan & Akhwat)</option>
                 </select>
               </div>
 
               <div class="col-md-6">
                 <label for="daurohPlaceModal" class="form-label fw-bold text-muted small-label">Lokasi <span class="text-danger">*</span></label>
-                <input type="text" class="form-control modern-input" id="daurohPlaceModal" v-model="formState.Place" placeholder="Nama Masjid / Gedung" required>
+                <input type="text" class="form-control modern-input" id="daurohPlaceModal" v-model="formState.Place" placeholder="Cth: Masjid Babussalam" required>
               </div>
 
               <div class="col-12">
