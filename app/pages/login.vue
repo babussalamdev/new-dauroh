@@ -128,10 +128,8 @@ const handleLogin = async () => {
     router.push('/'); 
 
   } catch (error: any) {
-    console.log("Full Error Object:", error); // Debugging: Cek di console browser
-
-    // 1. Ambil pesan error seakurat mungkin
-    // Prioritas: response.data.error > response.data.message > message biasa
+   
+        // Prioritas: response.data.error > response.data.message > message biasa
     let errMsg = "Gagal Login";
     if (error.response && error.response.data) {
         errMsg = error.response.data.error || error.response.data.message || JSON.stringify(error.response.data);

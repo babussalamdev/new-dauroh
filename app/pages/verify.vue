@@ -103,9 +103,6 @@ const handleVerify = async () => {
         phone_number: storedData.value.phone_number,
         username: storedData.value.username
     };
-
-    console.log("Mengirim Payload:", payload); // Debugging
-
     // 4. TEMBAK API
     await $apiBase.post('/verify-email', payload);
 

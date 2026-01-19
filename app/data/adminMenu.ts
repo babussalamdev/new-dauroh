@@ -16,6 +16,8 @@ interface DropdownMenu {
 
 export const mainMenuItems: MenuItem[] = [
   { to: '/admin', icon: 'bi-speedometer2', text: 'Dashboard' },
+  // TAMBAHKAN INI:
+  { to: '/admin/scan', icon: 'bi-qr-code-scan', text: 'Scan Presensi' }, 
 ];
 
 export const dropdownMenuItems: DropdownMenu[] = [

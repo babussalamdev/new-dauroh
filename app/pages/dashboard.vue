@@ -16,24 +16,34 @@
                   <div v-for="(ticket, index) in upcomingTickets" :key="'card-'+index" class="col-md-6 col-lg-4">
                     <div class="card h-100 border shadow-sm overflow-hidden">
                       <div class="d-flex flex-column flex-sm-row h-100">
-                      <NuxtImg 
-                      v-if="ticket.dauroh.Picture"
-                      :src="`${imgBaseUrl}/${ticket.dauroh.SK}/${ticket.dauroh.Picture}.webp`" 
-                      class="bg-light ticket-img"
-                      :alt="ticket.dauroh.Title"
-                      loading="lazy"
-                      format="webp"
-                      />
-                      <div v-else class="bg-light ticket-img d-flex align-items-center justify-content-center text-muted">
-                        <i class="bi bi-image"></i>
-                      </div>
-                    <div class="p-3 d-flex flex-column justify-content-center w-100">
-                      <h6 class="fw-bold mb-1 text-truncate-2">{{ ticket.dauroh.Title }}</h6>
-                      <p class="text-muted mb-1 small"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
-                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill w-auto align-self-start">
-                        Akan Datang
-                      </span>
-                    </div>
+                        <NuxtImg 
+                          v-if="ticket.dauroh.Picture"
+                          :src="`${imgBaseUrl}/${ticket.dauroh.SK}/${ticket.dauroh.Picture}.webp`" 
+                          class="bg-light ticket-img"
+                          :alt="ticket.dauroh.Title"
+                          loading="lazy"
+                          format="webp"
+                        />
+                        <div v-else class="bg-light ticket-img d-flex align-items-center justify-content-center text-muted">
+                          <i class="bi bi-image"></i>
+                        </div>
+                        <div class="p-3 d-flex flex-column justify-content-center w-100">
+                          <h6 class="fw-bold mb-1 text-truncate-2">{{ ticket.dauroh.Title }}</h6>
+                          <p class="text-muted mb-1 small"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
+                          
+                          <span v-if="ticket.status === 'PENDING'" 
+                                class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill w-auto align-self-start">
+                            Menunggu Pembayaran
+                          </span>
+                          <span v-else-if="ticket.status === 'CHECKED_IN'" 
+                                class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill w-auto align-self-start">
+                            <i class="bi bi-check-circle-fill me-1"></i> Sudah Check-in
+                          </span>
+                          <span v-else 
+                                class="badge bg-success-subtle text-success border border-success-subtle rounded-pill w-auto align-self-start">
+                            Akan Datang
+                          </span>
+                          </div>
                       </div>
                     </div>
                   </div>
@@ -67,27 +77,40 @@
                         <td class="ps-4">
                           <span class="font-monospace small text-muted">#{{ ticket.SK.slice(-6) }}</span>
                           <br>
-                          <span class="badge bg-success">Lunas</span>
-                        </td>
+                          
+                          <span v-if="ticket.status === 'PENDING'" class="badge bg-warning text-dark">Menunggu Pembayaran</span>
+                          <span v-else-if="ticket.status === 'CHECKED_IN'" class="badge bg-info text-dark">Sudah Check-in</span>
+                          <span v-else class="badge bg-success">Lunas</span>
+                          </td>
                         <td>
                           <span class="fw-bold d-block text-truncate" style="max-width: 200px;">{{ ticket.dauroh.Title }}</span>
                           <small class="text-muted">{{ formatCurrency(ticket.dauroh.Price) }}</small>
                         </td>
                         <td>
                           <div v-for="p in ticket.participants" :key="p.name" class="small fw-medium">
-                            <i class="bi bi-person me-1 text-secondary"></i> {{ p.name }}
+                            <i class="bi bi-person me-1 text-secondary"></i> {{ p.Name }}
                           </div>
                         </td>
                         <td class="text-center">
-                          <button 
-                          class="btn btn-primary btn-sm rounded px-2 px-md-3 text-nowrap" 
-                          @click="openQrModal(ticket)"
-                          title="Lihat QR Code"
+                          
+                          <NuxtLink 
+                            v-if="ticket.status === 'PENDING'"
+                            :to="`/dauroh/register/${ticket.dauroh.SK}`" 
+                            class="btn btn-warning btn-sm rounded px-3 fw-bold"
                           >
-                          <i class="bi bi-qr-code"></i>
-                          <span class="d-none d-md-inline ms-1">Lihat QR</span>
-                        </button>
-                        </td>
+                            Bayar
+                          </NuxtLink>
+
+                          <button 
+                            v-else
+                            class="btn btn-primary btn-sm rounded px-2 px-md-3 text-nowrap" 
+                            @click="openQrModal(ticket)"
+                            title="Lihat QR Code"
+                          >
+                            <i class="bi bi-qr-code"></i>
+                            <span class="d-none d-md-inline ms-1">Lihat QR</span>
+                          </button>
+                          </td>
                       </tr>
                     </tbody>
                   </table>
@@ -121,7 +144,8 @@ const userStore = useUserStore();
 const showQrModal = ref(false);
 const selectedTicket = ref(null);
 
-const upcomingTickets = computed(() => userStore.getUpcomingTickets);
+// REVISI: Menggunakan getter 'getDashboardData' agar tiket PENDING dan CHECKED_IN juga masuk
+const upcomingTickets = computed(() => userStore.getDashboardData);
 
 const openQrModal = (ticket) => {
   selectedTicket.value = ticket;

@@ -96,7 +96,6 @@ const handleForgotPassword = async () => {
   successMessage.value = null;
 
   try {
-    // // Untuk bagian integrasi BE: Panggil API forgot password
     // const response = await $apiBase.post('/forgot-password', { // Ganti dengan endpoint yang benar
     //   email: form.email
     // });
@@ -120,9 +119,9 @@ const handleForgotPassword = async () => {
 
 <style scoped>
 .modal {
-  z-index: 1055; /* Default Bootstrap modal z-index */
+  z-index: 1055;
 }
 .modal-backdrop {
-    z-index: 1050; /* Default Bootstrap backdrop z-index */
+    z-index: 1050;
 }
 </style>

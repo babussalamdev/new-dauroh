@@ -14,13 +14,18 @@
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
       
-      <div v-if="sortedTickets.length > 0" class="table-responsive">
+      <div v-if="userStore.isLoading" class="text-center py-5">
+         <div class="spinner-border text-primary" role="status"></div>
+         <p class="text-muted mt-2 small">Memuat data...</p>
+      </div>
+
+      <div v-else-if="sortedTickets.length > 0" class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="bg-light">
             <tr>
               <th scope="col" class="ps-4 py-3 text-uppercase text-secondary fs-7 fw-semibold">Tanggal & ID</th>
               <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold">Event Info</th>
-              <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold">Peserta</th>
+              <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Peserta</th>
               <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Status</th>
               <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-end">Total</th>
               <th scope="col" class="pe-4 py-3 text-uppercase text-secondary fs-7 fw-semibold text-center" style="width: 150px;">Aksi</th>
@@ -33,7 +38,7 @@
                 <div class="d-flex flex-column">
                   <span class="fw-bold text-dark mb-1">{{ formatDate(ticket.created_at || ticket.date) }}</span>
                   <span class="badge bg-light text-secondary border rounded-1 fw-normal text-start" style="width: fit-content;">
-                    {{ ticket.SK || ticket.id }}
+                    {{ ticket.SK }}
                   </span>
                 </div>
               </td>
@@ -48,23 +53,15 @@
                 </small>
               </td>
 
-              <td class="py-3">
-                <div class="d-flex flex-column gap-1">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-person-circle me-2 text-muted opacity-50 small"></i>
-                    <span class="text-dark small fw-medium">
-                      {{ ticket.participants?.[0]?.Name || 'Peserta' }}
-                    </span>
-                  </div>
-                  <small v-if="(ticket.participants?.length || 0) > 1" class="text-muted ms-4" style="font-size: 0.75rem;">
-                    + {{ (ticket.participants?.length || 1) - 1 }} lainnya
-                  </small>
-                </div>
+              <td class="py-3 text-center">
+                <span class="text-dark fs-10">
+                  {{ ticket.participants?.length || 1 }} Orang
+                </span>
               </td>
 
               <td class="py-3 text-center">
                 <span class="badge rounded-pill px-3 py-2 status-badge" :class="getStatusClass(ticket.status)">
-                  {{ ticket.status === 'PENDING' ? 'Menunggu' : ticket.status }}
+                  {{ ticket.status === 'PENDING' ? 'Menunggu' : (ticket.status === 'CHECKED_IN' ? 'Sudah Check-in' : ticket.status) }}
                 </span>
               </td>
 
@@ -76,41 +73,27 @@
 
               <td class="pe-4 py-3 text-center">
                 
-                <div v-if="ticket.status === 'PENDING'" class="d-flex flex-column gap-2">
+                <div class="d-flex flex-column gap-2">
+                  
                   <button 
+                    @click="openDetailModal(ticket)" 
+                    class="btn btn-sm btn-outline-secondary border shadow-sm w-100 d-flex align-items-center justify-content-center gap-2"
+                  >
+                    <i class="bi bi-eye"></i> Detail
+                  </button>
+
+                  <button 
+                    v-if="ticket.status === 'PENDING'"
                     @click="resumePayment(ticket)" 
-                    class="btn btn-sm btn-primary fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 w-100"
-                    title="Lanjut ke halaman pembayaran"
+                    class="btn btn-sm btn-primary fw-bold shadow-sm w-100 d-flex align-items-center justify-content-center gap-2"
                   >
                     <i class="bi bi-credit-card-2-front"></i> Bayar
                   </button>
-                  <button 
-                    @click="cancelBooking(ticket)" 
-                    class="btn btn-sm btn-light border text-danger d-flex align-items-center justify-content-center gap-2 w-100 hover-danger"
-                  >
-                    <i class="bi bi-x-circle"></i> Batal
-                  </button>
-                </div>
 
-                <div v-else-if="['PAID', 'Upcoming', 'Selesai', 'active'].includes(ticket.status)">
                   <button 
-                    @click="showTicket(ticket)" 
-                    class="btn btn-sm btn-success-subtle text-success border border-success fw-bold w-100 d-flex align-items-center justify-content-center gap-2"
-                  >
-                    <i class="bi bi-qr-code"></i> E-Tiket
-                  </button>
-                </div>
-
-                <div v-else class="d-flex flex-column gap-2">
-                  <NuxtLink 
-                    :to="`/dauroh/register/${ticket.dauroh?.SK}`" 
-                    class="btn btn-sm btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2"
-                  >
-                    <i class="bi bi-arrow-repeat"></i> Ulang
-                  </NuxtLink>
-                  <button 
+                    v-if="['EXPIRED', 'FAILED', 'CANCELLED'].includes(ticket.status)"
                     @click="deleteHistory(ticket)" 
-                    class="btn btn-sm btn-link text-muted text-decoration-none p-0 small"
+                    class="btn btn-sm btn-link text-danger text-decoration-none p-0 small"
                   >
                     <i class="bi bi-trash"></i> Hapus
                   </button>
@@ -136,9 +119,67 @@
 
     </div>
 
+    <div v-if="showDetail" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+          
+          <div class="modal-header border-bottom-0 pb-0">
+            <h5 class="modal-title fw-bold">Detail Peserta</h5>
+            <button type="button" class="btn-close" @click="closeDetailModal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div v-if="selectedTicketDetail" class="mb-3">
+              <h6 class="text-primary fw-bold mb-1">{{ selectedTicketDetail.title || selectedTicketDetail.dauroh?.Title }}</h6>
+              <small class="text-muted">ID: {{ selectedTicketDetail.SK }}</small>
+            </div>
+
+            <div class="card bg-light border-0 rounded-3 overflow-hidden">
+              <table class="table table-sm table-borderless align-middle mb-0">
+                <thead class="border-bottom">
+                  <tr class="text-secondary small">
+                    <th class="ps-3 py-2">Nama Peserta</th>
+                    <th class="text-end pe-3">Tiket</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p, idx) in selectedTicketDetail?.participants" :key="idx">
+                    <td class="ps-3 py-2">
+                      <div class="fw-bold text-dark">{{ p.Name }}</div>
+                      <small class="text-muted" style="font-size: 0.75rem;">{{ p.Gender || 'Umum' }}</small>
+                    </td>
+                    <td class="text-end pe-3">
+                      <button 
+                        v-if="['PAID', 'Upcoming', 'Selesai', 'active', 'CHECKED_IN'].includes(selectedTicketDetail.status)"
+                        @click="showIndividualQr(selectedTicketDetail, p)"
+                        class="btn btn-sm btn-primary py-1 px-3 rounded-pill"
+                        style="font-size: 0.75rem;"
+                      >
+                        <i class="bi bi-qr-code me-1"></i> QR
+                      </button>
+                      <span v-else class="badge bg-secondary">Belum Lunas</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+             <div v-if="selectedTicketDetail?.status === 'PENDING'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <div>Selesaikan pembayaran untuk melihat QR Tiket.</div>
+             </div>
+          </div>
+          
+          <div class="modal-footer border-top-0 pt-0">
+             <button type="button" class="btn btn-light w-100 rounded-pill" @click="closeDetailModal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <ModalsQrCodeModal 
       :show="showQr" 
-      :ticket="selectedTicket" 
+      :ticket="qrPayload" 
       @close="showQr = false" 
     />
 
@@ -146,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue'; // <--- TAMBAHIN onMounted
 import { useRouter } from 'vue-router';
 import { useUserStore } from '~/stores/user';
 import { useCheckoutStore } from '~/stores/checkout';
@@ -154,11 +195,10 @@ import Swal from 'sweetalert2';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 
-dayjs.locale('id'); // Set locale Indonesia
+dayjs.locale('id'); 
 
 useHead({ title: 'Riwayat Pendaftaran' });
 
-// Middleware Auth
 definePageMeta({
   middleware: (to, from) => {
     const { isLoggedIn } = useAuth();
@@ -170,10 +210,22 @@ const router = useRouter();
 const userStore = useUserStore();
 const checkoutStore = useCheckoutStore();
 
-const showQr = ref(false);
-const selectedTicket = ref<any>(null);
+// --- INI BAGIAN PENTING YANG KETINGGALAN ---
+onMounted(() => {
+  // Panggil fungsi "TEMBAK API" yang udah kita buat di user.ts
+  userStore.fetchUserTransactions();
+});
+// -------------------------------------------
 
-// Sorting data: Terbaru paling atas
+// STATE UNTUK MODAL DETAIL
+const showDetail = ref(false);
+const selectedTicketDetail = ref<any>(null);
+
+// STATE UNTUK MODAL QR
+const showQr = ref(false);
+const qrPayload = ref<any>(null);
+
+// Sorting logic
 const sortedTickets = computed(() => {
   if (!userStore.tickets) return [];
   return [...userStore.tickets].sort((a, b) => {
@@ -183,11 +235,31 @@ const sortedTickets = computed(() => {
   });
 });
 
-// --- ACTIONS ---
+// --- LOGIC MODAL DETAIL ---
+const openDetailModal = (ticket: any) => {
+  selectedTicketDetail.value = ticket;
+  showDetail.value = true;
+};
 
-// 1. 🔥 Bayar Sekarang
+const closeDetailModal = () => {
+  showDetail.value = false;
+  selectedTicketDetail.value = null;
+};
+
+// --- LOGIC TAMPILKAN QR INDIVIDU ---
+const showIndividualQr = (ticket: any, specificParticipant: any) => {
+  qrPayload.value = {
+    dauroh: ticket.dauroh,
+    participants: [specificParticipant],
+    SK: ticket.SK 
+  };
+  
+  showQr.value = true;
+};
+
+// --- ACTIONS LAINNYA ---
+
 const resumePayment = (ticket: any) => {
-  // Masukkan data ke store checkout agar halaman instruksi tahu apa yang harus dibayar
   checkoutStore.dauroh = ticket.dauroh;
   checkoutStore.participants = ticket.participants || [];
   
@@ -203,42 +275,6 @@ const resumePayment = (ticket: any) => {
   router.push('/checkout/instructions');
 };
 
-// 2. Batalkan Pesanan
-const cancelBooking = async (ticket: any) => {
-  const result = await Swal.fire({
-    title: 'Batalkan Pendaftaran?',
-    text: "Pendaftaran yang dibatalkan akan dihapus dari sistem.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#e9ecef',
-    cancelButtonText: '<span class="text-dark">Kembali</span>',
-    confirmButtonText: 'Ya, Batalkan'
-  });
-
-  if (result.isConfirmed) {
-    // Hapus dari local storage
-    userStore.removeTicket(ticket.SK || ticket.id);
-    Swal.fire({
-      title: 'Dibatalkan!',
-      text: 'Pendaftaran berhasil dibatalkan.',
-      icon: 'success',
-      timer: 1500,
-      showConfirmButton: false
-    });
-  }
-};
-
-// 3. 🎫 Lihat E-Tiket
-const showTicket = (ticket: any) => {
-  selectedTicket.value = {
-    dauroh: ticket.dauroh,
-    participants: ticket.participants
-  };
-  showQr.value = true;
-};
-
-// 4. Hapus Riwayat (Sampah)
 const deleteHistory = async (ticket: any) => {
   const result = await Swal.fire({
     title: 'Hapus Riwayat?',
@@ -254,7 +290,7 @@ const deleteHistory = async (ticket: any) => {
   }
 };
 
-// --- Helpers Formatter ---
+// --- HELPERS ---
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -269,7 +305,7 @@ const getStatusClass = (status: string) => {
   if (!status) return 'bg-light text-secondary';
   const s = status.toLowerCase();
   
-  if (['upcoming', 'paid', 'success', 'active'].includes(s)) {
+  if (['upcoming', 'paid', 'success', 'active', 'checked_in'].includes(s)) {
     return 'bg-success-subtle text-success border border-success-subtle';
   } else if (['pending', 'waiting'].includes(s)) {
     return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
@@ -282,41 +318,24 @@ const getStatusClass = (status: string) => {
 </script>
 
 <style scoped>
-/* Custom Table Styling */
+/* Table Styles */
 .table thead th {
   font-size: 0.75rem; 
   letter-spacing: 0.5px;
   border-bottom: 1px solid #eee;
 }
-
 .table tbody td {
   font-size: 0.9rem;
   border-bottom: 1px solid #f8f9fa;
 }
-
 .table-hover tbody tr:hover {
   background-color: #fcfcfc;
 }
-
 .status-badge {
   font-weight: 600;
   font-size: 0.75rem;
 }
-
 .fs-7 {
   font-size: 0.75rem !important;
 }
-
-/* Button & Color Utilities */
-.hover-danger:hover {
-  background-color: #fee2e2 !important;
-  color: #dc2626 !important;
-  border-color: #fee2e2 !important;
-}
-
-.bg-success-subtle { background-color: #ecfdf5; }
-.bg-warning-subtle { background-color: #fffbeb; }
-.bg-danger-subtle { background-color: #fef2f2; }
-.btn-success-subtle { background-color: #ecfdf5; border-color: #10b981; }
-.btn-success-subtle:hover { background-color: #d1fae5; }
 </style>

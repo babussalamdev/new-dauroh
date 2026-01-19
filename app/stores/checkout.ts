@@ -18,16 +18,16 @@ interface Dauroh {
   [key: string]: any;
 }
 
-// Interface Response Transaksi (Sesuai Response Flip)
+// Interface Response Transaksi
 interface TransactionDetails {
   link_id?: string;
   link_url?: string;
   amount?: number;
   status?: string;
   paymentMethod?: string;
-  vaNumber?: string;       // Mapping dari receiver_bank_account.account_number
-  expiryTime?: string;     // Mapping dari expired_date
-  expired_date?: string;   // Field asli Flip
+  vaNumber?: string;
+  expiryTime?: string;
+  expired_date?: string;
   sender_bank_type?: string; 
   [key: string]: any;
 }
@@ -100,7 +100,6 @@ export const useCheckoutStore = defineStore('checkout', {
       const { accessToken, user } = useAuth();
 
       try {
-        // 1. Siapkan Object Peserta (Sesuai Payload JSON: person1, person2, dst)
         const objectPerson: Record<string, any> = {};
         this.participants.forEach((p, index) => {
           objectPerson[`person${index + 1}`] = {
@@ -111,17 +110,15 @@ export const useCheckoutStore = defineStore('checkout', {
           };
         });
 
-        // 2. Tentukan Bank (Sesuai Payload JSON: "Bank")
+        // 2. Tentukan Bank (Payload JSON: "Bank")
         let bankCode = this.paymentMethod?.toLowerCase() || 'bsi';
         let paymentType = 'virtual_account'; // Default
 
-        // Logic QRIS (Jika backend nanti support)
+        // Logic QRIS
         if (bankCode === 'qris' || bankCode === 'gopay') {
             bankCode = 'qris'; 
             paymentType = 'wallet_account'; 
         }
-
-        // 3. Susun Payload (STRUKTUR SAMA PERSIS DENGAN CONTOH KAMU)
         const payload: any = {
             Amount: String(this.finalAmount), // String "200000"
             Name: user.value?.name || 'Guest',
@@ -141,9 +138,7 @@ export const useCheckoutStore = defineStore('checkout', {
         if (this.voucherCode) {
             payload.VoucherCode = this.voucherCode;
         }
-
-        console.log("Payload Flip:", payload);
-
+       
         // 4. Kirim Request
         const response = await $apiFlip.post('/flip-dauroh', payload);
         const result = response.data; 
@@ -187,7 +182,6 @@ export const useCheckoutStore = defineStore('checkout', {
 
     // --- Action untuk WebSocket ---
     updatePaymentStatus(data: any) {
-      console.log("Store Update Received:", data);
       if (this.transactionDetails) {
         this.transactionDetails = { ...this.transactionDetails, ...data };
       } else {

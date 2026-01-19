@@ -2,6 +2,11 @@
   "name": "nuxt-app",
   "type": "module",
   "private": true,
+  "overrides": {
+    "@pinia-plugin-persistedstate/nuxt": {
+      "@pinia/nuxt": "$@pinia/nuxt"
+    }
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -25,6 +30,7 @@
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "html2pdf.js": "^0.12.1",
+    "html5-qrcode": "^2.3.8",
     "nuxt": "^4.1.2",
     "pinia": "^3.0.3",
     "sweetalert2": "^11.23.0",

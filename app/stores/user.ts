@@ -24,6 +24,7 @@ export interface Participant {
 export interface UserTicket {
   SK: string;        
   id?: string;       
+  full_sk?: string; 
   date: string;      
   created_at?: string; 
 
@@ -33,7 +34,7 @@ export interface UserTicket {
   total_participants?: number; 
   
   // Status
-  status: 'Upcoming' | 'Selesai' | 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED' | 'active'; 
+  status: 'Upcoming' | 'Selesai' | 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED' | 'active' | 'CHECKED_IN';
   paymentStatus?: string;
 
   // Data Pembayaran
@@ -56,26 +57,21 @@ export const useUserStore = defineStore('user', {
     getAllTickets: (state) => state.tickets,
     getUpcomingTickets: (state) => state.tickets.filter(t => t.status === 'Upcoming' || t.status === 'PAID'),
     getPendingTickets: (state) => state.tickets.filter(t => t.status === 'PENDING'),
+    getDashboardData: (state) => state.tickets.filter(t => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status)
+  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   },
 
   actions: {
     async fetchUserProfile() {
         this.isLoading = true;
         try {
-            // FIX 1: Gunakan 'getUser' (sesuai nama export di useAuth.ts)
             const { user, getUser } = useAuth();
             
             if (!user.value) {
-               // FIX 1: Panggil 'getUser()' bukan 'fetchUser()'
                await getUser(); 
             }
 
             if (user.value) {
-                // FIX 2: Urutan Spread Operator diperbaiki
-                // Spread '...user.value' ditaruh di atas agar properti default masuk,
-                // baru kemudian kita overwrite/mapping properti khusus seperti 'fullname' & 'phone'.
-                // Kita HAPUS baris 'email: ...' karena sudah otomatis terambil dari spread '...user.value'
-                
                 this.user = {
                     ...user.value, 
                     fullname: user.value.name || '', 
@@ -89,14 +85,108 @@ export const useUserStore = defineStore('user', {
         }
     },
 
-    async fetchTickets() {
-        return this.tickets;
+    // --- ACTION UTAMA: FETCH RIWAYAT & GABUNG DATA ---
+    async fetchUserTransactions() {
+      console.log("Action fetchUserTransactions DIMULAI");
+      
+      const nuxtApp = useNuxtApp() as any;
+      const apiBase = nuxtApp.$apiBase; // Sudah Benar ($apiBase)
+      
+      if (!apiBase) {
+        console.error("⛔ STOP: $apiBase tidak ditemukan.");
+        return; 
+      }
+      
+      const daurohStore = useDaurohStore() as any;
+      const { user } = useAuth(); 
+
+      this.isLoading = true;
+
+      try {
+        // --- STEP 1: LOAD MASTER DATA EVENT ---
+        // Kita butuh data event buat tau Judul & Harga
+        if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
+            console.log(" memanggil fetchPublicTiketDauroh...");
+            
+            // ✅ FIX: Memanggil nama fungsi yang BENAR dari dauroh.ts
+            if (typeof daurohStore.fetchPublicTiketDauroh === 'function') {
+                await daurohStore.fetchPublicTiketDauroh();
+            } else {
+               console.warn("⚠️ [DEBUG] Fungsi fetchPublicTiketDauroh tidak ditemukan!");
+            }
+        }
+
+        // --- STEP 2: TEMBAK API RIWAYAT ---
+        console.log("Menembak API /get-payment...");
+        const response = await apiBase.get('/get-payment?type=client');
+        console.log("Response API:", response.data);
+        
+        // --- STEP 3: MAPPING (GABUNGKAN DATA) ---
+        const mappedTickets = response.data.map((item: any) => {
+          
+          // Pecah ID: "e9820a#03d240" -> EventID: "e9820a"
+          const parts = (item.SK || '').split('#');
+          const eventId = parts[0]; 
+          const ticketId = parts[1] || item.SK; 
+
+          // 🔍 CARI DATA DETAIL DI STORE
+          const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
+
+          // LOGIKA PENGISIAN:
+          // Jika event sudah lewat (inactive), mungkin gak ketemu di store (karena filter di dauroh.ts).
+          const title = foundEvent?.Title || item.Title || 'Event Tidak Dikenal / Sudah Lewat';
+          const place = foundEvent?.Place || 'Lokasi Online / Tidak Diketahui';
+          const amount = foundEvent?.Price || 0; 
+
+          // Peserta Dummy (Pakai nama user login)
+          const participants = [
+            { 
+              Name: item.PIC || user.value?.name || 'Peserta', 
+              Gender: '-' 
+            }
+          ];
+
+          return {
+             SK: ticketId,
+             full_sk: item.SK,
+             status: item.Status,
+             created_at: item.CreatedAt,
+             date: item.CreatedAt, // Kompatibilitas
+             
+             // Data Gabungan
+             dauroh: { 
+               Title: title,
+               Place: place,
+               SK: eventId
+             },
+             
+             amount: amount,
+             participants: participants,
+             total_participants: 1,
+
+             // Payment Dummy
+             va_number: '-', 
+             expired_date: '-'
+          } as UserTicket;
+        });
+
+        // Sort: Terbaru di atas
+        this.tickets = mappedTickets.sort((a: any, b: any) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+
+        console.log("✅ [DEBUG] Selesai! Data Judul & Harga berhasil di-load.");
+
+      } catch (error) {
+        console.error("❌ [DEBUG] ERROR FATAL:", error);
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     registerDauroh(payload: any) {
       const { dauroh, participants, transactionDetails } = payload;
-      const toastStore = useToastStore();
-      const daurohStore = useDaurohStore();
+      const daurohStore = useDaurohStore() as any; 
 
       let initialStatus: any = 'Upcoming'; 
       let trxAmount = 0;
@@ -137,10 +227,13 @@ export const useUserStore = defineStore('user', {
         const total = participants.length;
         const ikhwan = participants.filter((p:any) => p.Gender?.toLowerCase() === 'ikhwan').length;
         const akhwat = participants.filter((p:any) => p.Gender?.toLowerCase() === 'akhwat').length;
-        daurohStore.decrementQuota(dauroh.SK, total, ikhwan, akhwat);
+        
+        if (typeof daurohStore.decrementQuota === 'function') {
+           daurohStore.decrementQuota(dauroh.SK, total, ikhwan, akhwat);
+        }
       }
 
-      console.log("Tiket disimpan:", newTicket);
+      console.log("Tiket disimpan lokal:", newTicket);
     },
 
     removeTicket(skOrId: string) {
