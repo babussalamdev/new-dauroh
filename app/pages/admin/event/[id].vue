@@ -21,6 +21,7 @@
       
       <div class="col-lg-4 col-xl-3">
         <div class="sticky-sidebar">
+          
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white group-hover-img">
             <div class="position-relative aspect-ratio-3x4 bg-light d-flex align-items-center justify-content-center overflow-hidden">
                <img v-if="previewUrl" :src="previewUrl" class="w-100 h-100 object-fit-cover transition-transform" alt="Poster">
@@ -78,45 +79,36 @@
       </div>
 
       <div class="col-lg-8 col-xl-9">
-        <div class="mb-4">
-           <h2 class="fw-bold text-dark mb-1">{{ eventData.Title }}</h2>
-           <span class="text-muted small">Kelola detail konten dan rundown acara.</span>
-        </div>
-
-        <section class="card border-0 shadow-sm rounded-4 p-4 p-lg-5 mb-4 bg-white">
-           <div class="d-flex justify-content-between align-items-center mb-4">
-              <h5 class="fw-bold text-dark m-0"><i class="bi bi-file-text me-2 text-primary"></i>Detail Konten</h5>
+        <section class="card border-0 shadow-sm rounded-4 p-0 overflow-hidden mb-4 bg-white">
+           <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+              <h5 class="fw-bold text-dark m-0"><i class="bi bi-file-text me-2 text-primary"></i>Deskripsi Event</h5>
               <div v-if="isContentChanged" class="text-warning small fw-bold animate-pulse">
-                 <i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i> Perubahan belum disimpan
+                 <i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i> Belum disimpan
               </div>
            </div>
 
-           <form @submit.prevent="handleContentSubmit">
-             <div class="row g-4">
-               <div class="col-12">
-                 <label class="form-label fw-bold text-dark x-small text-uppercase">1. Intro / Deskripsi Singkat</label>
-                 <textarea class="form-control modern-textarea" rows="4" v-model="contentForm.Description" placeholder="Contoh: Dengan mengharap ridho Allah..." @input="isContentChanged = true"></textarea>
+           <div class="p-0">
+             <form @submit.prevent="handleContentSubmit">
+               
+               <div class="quill-wrapper bg-light">
+                  <div ref="editorContainer" style="height: 400px; border: none;"></div>
                </div>
-               <div class="col-12">
-                 <label class="form-label fw-bold text-dark x-small text-uppercase">2. Pemateri & Tema</label>
-                 <textarea class="form-control modern-textarea" rows="5" v-model="contentForm.Speakers" placeholder="Contoh: 🎙️ Ustadz Fulan - Tema A..." @input="isContentChanged = true"></textarea>
+
+               <div class="px-4 py-3 bg-white border-top d-flex justify-content-between align-items-center">
+                  <small class="text-muted fst-italic">Gunakan toolbar di atas untuk format teks (Bold, Italic, List, dll)</small>
+                  
+                  <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" :disabled="isSavingBasic || !isContentChanged">
+                     <span v-if="isSavingBasic" class="spinner-border spinner-border-sm me-2"></span>
+                     {{ isSavingBasic ? 'Menyimpan...' : 'Simpan Deskripsi' }}
+                  </button>
                </div>
-               <div class="col-md-6">
-                 <label class="form-label fw-bold text-dark x-small text-uppercase">3. Maklumat / Syarat</label>
-                 <textarea class="form-control modern-textarea" rows="4" v-model="contentForm.Maklumat" placeholder="1. Khusus ikhwan... 2. Luruskan niat..." @input="isContentChanged = true"></textarea>
-               </div>
-               <div class="col-md-6">
-                 <label class="form-label fw-bold text-dark x-small text-uppercase">4. Sponsor & Kontak</label>
-                 <textarea class="form-control modern-textarea" rows="4" v-model="contentForm.Sponsors" placeholder="Sponsored by: @bbsslm... Info: 0812..." @input="isContentChanged = true"></textarea>
-               </div>
-             </div>
-             <div class="mt-4 text-end">
-                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" :disabled="isSavingBasic || !isContentChanged">
-                   <span v-if="isSavingBasic" class="spinner-border spinner-border-sm me-2"></span>
-                   {{ isSavingBasic ? 'Menyimpan...' : 'Simpan' }}
-                </button>
-             </div>
-           </form>
+             </form>
+           </div>
+        </section>
+
+        <section class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" v-if="contentForm.Description">
+            <h6 class="fw-bold text-muted small text-uppercase mb-3">Live Preview Tampilan</h6>
+            <div class="preview-box p-3 rounded-3 bg-soft-gray border text-secondary" v-html="contentForm.Description"></div>
         </section>
 
         <section class="card border-0 shadow-sm rounded-4 p-4 p-lg-5 mb-4 bg-white">
@@ -179,6 +171,10 @@ import { useToastStore } from '@/stores/toast';
 import { useRoute } from 'vue-router';
 import type { Dauroh, DaurohDayDetail, DaurohBasicData } from '@/stores/dauroh';
 
+// [IMPORT QUILL] - Pastikan npm install quill dulu
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
+
 definePageMeta({ layout: 'admin' });
 
 const config = useRuntimeConfig();
@@ -202,6 +198,9 @@ const isContentChanged = ref(false);
 
 const showEditBasicModal = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const editorContainer = ref<HTMLElement | null>(null); // Ref untuk Quill
+let quillInstance: Quill | null = null; // Instance Quill
+
 const canvas = ref<HTMLCanvasElement | null>(null);
 const previewUrl = ref<string | null>(null);
 const newPhotoBase64 = ref<string | null>(null);
@@ -213,9 +212,6 @@ let nextTempId = 0;
 
 const contentForm = reactive({
   Description: '',
-  Speakers: '',
-  Maklumat: '',
-  Sponsors: ''
 });
 
 const minDate = computed(() => {
@@ -230,6 +226,55 @@ onMounted(async () => {
     }
 });
 
+// Init Quill saat data sudah siap dan DOM dirender
+const initQuill = () => {
+  if (editorContainer.value && !quillInstance) {
+    quillInstance = new Quill(editorContainer.value, {
+      theme: 'snow',
+      placeholder: 'Tulis deskripsi event lengkap di sini...',
+      modules: {
+        toolbar: [
+          // [1] Header & Font
+          [{ 'header': [1, 2, 3, 4, 5, 6, false] }], // H1 - H6
+          [{ 'font': [] }],                          // Serif, Sans, Monospace
+
+          // [2] Styling Teks Dasar
+          ['bold', 'italic', 'underline', 'strike'], // Tebal, Miring, Garis Bawah, Coret
+          
+          // [3] Warna Teks & Background
+          [{ 'color': [] }, { 'background': [] }],   
+
+          // [4] Paragraf & List
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'align': [] }],                         // Rata Kiri/Tengah/Kanan
+          [{ 'indent': '-1'}, { 'indent': '+1' }],   // Geser masuk/keluar
+
+          // [5] Media (Link, Gambar, Video)
+          ['link', 'image', 'video'],
+
+          // [6] Bersihkan Format
+          ['clean']                               
+        ]
+      }
+    });
+
+    // Load initial data
+    if (contentForm.Description) {
+      quillInstance.clipboard.dangerouslyPasteHTML(contentForm.Description);
+    }
+
+    // Listen to changes
+    quillInstance.on('text-change', () => {
+      if (quillInstance) {
+        const html = quillInstance.root.innerHTML;
+        if (contentForm.Description !== html) {
+           contentForm.Description = html;
+           isContentChanged.value = true;
+        }
+      }
+    });
+  }
+};
 watch(eventData, () => initializeData());
 
 const initializeData = () => {
@@ -256,11 +301,10 @@ const initializeData = () => {
     }
 
     contentForm.Description = eventData.value.Description || '';
-    contentForm.Speakers = eventData.value.Speakers || '';
-    contentForm.Maklumat = eventData.value.Maklumat || '';
-    contentForm.Sponsors = eventData.value.Sponsors || '';
-    
     isContentChanged.value = false;
+
+    // Panggil init Quill setelah data masuk (nextTick mungkin diperlukan di case kompleks, tapi disini biasanya aman di watch/mounted)
+    setTimeout(() => initQuill(), 100); 
   }
 };
 
@@ -281,18 +325,17 @@ const handleContentSubmit = async () => {
   }
 };
 
+// ... (Sisa function handlePicture, handleSchedule, helper, sama persis seperti sebelumnya) ...
+// Copy-paste saja function helper dari code sebelumnya jika belum ada di sini.
+
 const openEditBasicModal = () => (showEditBasicModal.value = true);
 const closeEditBasicModal = () => (showEditBasicModal.value = false);
 const handleUpdateBasicInfo = async (payload: { daurohData: DaurohBasicData }) => {
   isSavingBasic.value = true;
-  // Pastikan payload.daurohData memiliki SK yang valid
-  if(!payload.daurohData.SK) {
-      // Jika SK kosong (misal dari form baru, walau edit), ambil dari route
-      payload.daurohData.SK = eventSK;
-  }
+  if(!payload.daurohData.SK) payload.daurohData.SK = eventSK;
   const success = await daurohStore.updateTiketDaurohBasic({
       ...payload.daurohData,
-      SK: payload.daurohData.SK! // Assert string karena sudah dicek
+      SK: payload.daurohData.SK!
   });
   if (success) toastStore.showToast({ message: 'Info dasar berhasil diperbarui.', type: 'success' });
   isSavingBasic.value = false;
@@ -359,19 +402,16 @@ const handlePictureSubmit = async () => {
   isSavingPicture.value = false;
 };
 
-// [FIX] Helper Logic yang aman
 const convertToInputTime = (t: string) => {
   if (!t) return '';
   if (t.includes(' ')) { 
      const parts = t.split(' ');
      const time = parts[0];
      const mod = parts[1];
-     if (!time) return t; // Safety
-
+     if (!time) return t; 
      const timeParts = time.split('.');
      let h = timeParts[0];
      const m = timeParts[1];
-
      if (mod === 'PM' && h !== '12') h = String(Number(h) + 12);
      if (mod === 'AM' && h === '12') h = '00';
      return `${h}:${m}`;
@@ -399,11 +439,7 @@ const formatEventDates = (d: any) => { return d ? 'Lihat Jadwal' : '-'; };
 .inset-0 { top: 0; left: 0; right: 0; bottom: 0; }
 .cursor-pointer { cursor: pointer; }
 .icon-sq { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; flex-shrink: 0; }
-.modern-textarea {
-  background-color: #f8f9fa; border: 1px solid #edf2f7; border-radius: 0.75rem;
-  font-size: 0.95rem; line-height: 1.6; padding: 1rem; resize: vertical; transition: all 0.2s;
-}
-.modern-textarea:focus { background-color: #fff; border-color: var(--bs-primary); box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.1); }
+
 .group-hover-img .hover-opacity-100 { opacity: 0; }
 .group-hover-img:hover .hover-opacity-100 { opacity: 1; }
 .transition-opacity { transition: opacity 0.3s ease; }
@@ -411,4 +447,28 @@ const formatEventDates = (d: any) => { return d ? 'Lihat Jadwal' : '-'; };
 .hover-border-primary:hover { border-color: var(--bs-primary) !important; }
 .animate-pulse { animation: pulse 2s infinite; }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+/* QUILL CUSTOMIZATION - Minimalist Theme */
+:deep(.ql-toolbar) {
+  border: none !important;
+  border-bottom: 1px solid #eee !important;
+  background-color: #fff;
+  border-radius: 0.75rem 0.75rem 0 0;
+  padding: 12px 16px !important;
+}
+:deep(.ql-container) {
+  border: none !important;
+  background-color: #fff;
+  border-radius: 0 0 0.75rem 0.75rem;
+  font-family: inherit; /* Ikut font website */
+  font-size: 0.95rem;
+}
+:deep(.ql-editor) {
+  min-height: 350px;
+  padding: 20px;
+  line-height: 1.6;
+}
+:deep(.ql-editor p) {
+  margin-bottom: 1rem;
+}
 </style>

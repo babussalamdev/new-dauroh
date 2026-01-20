@@ -16,12 +16,11 @@
           <div class="d-flex card-container-flex">
             <div v-for="dauroh in chunk" :key="dauroh.SK" class="dauroh-card-wrapper">
               
-              <a 
-                :href="'/dauroh/' + dauroh.SK" 
-                @click.prevent="openImageModal(dauroh)" 
-                class="text-decoration-none d-block h-100"
-                :class="{ 'card-disabled': getCardStatus(dauroh).isDisabled }"
-              >
+              <NuxtLink 
+  :to="`/dauroh/${dauroh.SK}`" 
+  class="text-decoration-none d-block h-100"
+  :class="{ 'card-disabled': getCardStatus(dauroh).isDisabled }"
+>
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                    <NuxtImg
@@ -51,18 +50,18 @@
                       </button>
                       
                       <button 
-                        class="btn btn-sm rounded-pill w-100" 
-                        :class="getButtonState(dauroh).cssClass"
-                        :disabled="getButtonState(dauroh).disabled"
-                        @click.prevent.stop="handleRegisterClick(dauroh)"
+                      class="btn btn-sm rounded-pill w-100" 
+                      :class="getButtonState(dauroh).cssClass"
+                      :disabled="getButtonState(dauroh).disabled"
+                      @click.prevent.stop="handleRegisterClick(dauroh, $event)" 
                       >
-                        {{ getButtonState(dauroh).label }}
-                      </button>
+                      {{ getButtonState(dauroh).label }}
+                    </button>
 
                     </div>
                   </div>
                 </div>
-              </a>
+              </NuxtLink>
 
             </div>
           </div>
@@ -242,29 +241,46 @@
     return { isDisabled: false, overlayText: null };
   };
 
-  // --- Handler Klik ---
-  const handleRegisterClick = (daurohItem) => {
-    const state = getButtonState(daurohItem);
-    if (state.disabled) {
-       toastStore.showToast({ message: `Tidak dapat mendaftar: Status ${state.label}`, type: 'warning' });
-       return;
-    }
-    if (!isLoggedIn.value) {
-      toastStore.showToast({ message: 'Mohon login atau daftar akun terlebih dahulu.', type: 'info' });
-      return; 
-    }
-    if (daurohItem && daurohItem.SK) {
-      router.push(`/dauroh/register/${daurohItem.SK}`);
+const handleRegisterClick = (daurohItem, event = null) => {
+  const state = getButtonState(daurohItem);
+  
+  // Helper untuk menampilkan error (Bubble di tombol atau Toast sebagai fallback)
+  const showError = (message) => {
+    if (event && event.target) {
+      // Logic Validasi "Ala Form Required"
+      const btn = event.currentTarget || event.target;
+      btn.setCustomValidity(message); // Set pesan error
+      btn.reportValidity(); // Munculkan bubble
+      btn.oninput = () => btn.setCustomValidity(""); 
+      setTimeout(() => btn.setCustomValidity(""), 2000); 
     } else {
-      toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+      // Fallback ke Toast kalau diklik dari Modal (karena ga ada event klik tombol fisik)
+      toastStore.showToast({ message: message, type: 'warning' });
     }
   };
+
+  // 1. Cek Status Button (Disabled/Habis/dll)
+  if (state.disabled) {
+     showError(`Gagal: Status ${state.label}`);
+     return;
+  }
+
+  // 2. Cek Login
+  if (!isLoggedIn.value) {
+    showError('Mohon login atau daftar akun terlebih dahulu.');
+    return; 
+  }
+
+  // 3. Lanjut ke Registrasi
+  if (daurohItem && daurohItem.SK) {
+    router.push(`/dauroh/register/${daurohItem.SK}`);
+  } else {
+    toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+  }
+};
 </script>
 
 <style scoped>
-  /* --- MODIFIKASI 4: CSS Khusus Status --- */
-  
-  /* Membuat elemen jadi hitam putih dan tidak bisa diklik */
   .card-disabled {
     filter: grayscale(100%);
     pointer-events: none; /* User tidak bisa klik sama sekali */

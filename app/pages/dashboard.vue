@@ -59,7 +59,7 @@
 
             <div class="card shadow-sm border-0 mt-4">
               <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
+                <h3 class="mb-0 fw-bold"><i class="bi bi-receipt me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h3>
               </div>
               <div class="card-body p-0">
                 <div v-if="upcomingTickets.length > 0" class="table-responsive">
@@ -87,7 +87,7 @@
                           <small class="text-muted">{{ formatCurrency(ticket.dauroh.Price) }}</small>
                         </td>
                         <td>
-                          <div v-for="p in ticket.participants" :key="p.name" class="small fw-medium">
+                          <div v-for="p in ticket.participants" :key="p.Name" class="small fw-medium">
                             <i class="bi bi-person me-1 text-secondary"></i> {{ p.Name }}
                           </div>
                         </td>

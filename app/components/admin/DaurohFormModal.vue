@@ -25,7 +25,7 @@
                   </div>
                   <div style="line-height: 1.2;">
                     <h6 class="fw-bold mb-0 text-truncate" style="font-size: 0.9rem;" :class="isStatusActive ? 'text-success-emphasis' : 'text-secondary-emphasis'">
-                      {{ isStatusActive ? 'Event Aktif (Publik)' : 'Mode Draft (Tersembunyi)' }}
+                      {{ isStatusActive ? 'Publish' : 'Draft' }}
                     </h6>
                   </div>
                 </div>

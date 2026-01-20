@@ -1,223 +1,269 @@
 <template>
-  <div class="container py-5">
-    <CommonLoadingSpinner v-if="daurohStore.loading.detailPublic && !dauroh" />
+  <div class="bg-white min-vh-100 pb-5 font-blog">
+    
+    <div v-if="daurohStore.loading.detailPublic" class="container py-5 text-center" style="min-height: 50vh;">
+      <div class="spinner-border text-dark" role="status"></div>
+      <p class="mt-3 text-muted ls-1 small text-uppercase">Memuat Artikel...</p>
+    </div>
 
-    <div v-else-if="dauroh" class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="card shadow-lg">
-          <img :src="dauroh.Picture" class="card-img-top" alt="Picture Dauroh" style="max-height: 400px; object-fit: cover;">
-          <div class="card-body p-4">
-            <div v-if="!dauroh.Status" class="alert alert-warning mb-3">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i> 
-                <strong>Event Non-Aktif</strong>. Event ini tidak terlihat di halaman publik.
-            </div>
-
-            <h1 class="card-title">{{ dauroh.Title }}</h1>
-            <span v-if="dauroh.Gender" class="badge bg-primary-subtle text-primary-emphasis rounded-pill mb-3 text-capitalize">{{ dauroh.Gender }}</span>
-
-            <h5 class="mt-4">Detail Acara</h5>
-            <ul class="list-group list-group-flush">
-              <li v-if="dauroh.Date && Object.keys(dauroh.Date).length > 0" class="list-group-item">
-                <strong>Jadwal:</strong>
-                <ul class="list-unstyled ps-3 mt-1">
-                  <li v-for="(day, key) in dauroh.Date" :key="key">
-                    <small> {{ day.date }} ({{ day.start_time }} - {{ day.end_time }})</small>
-                  </li>
-                </ul>
-              </li>
-              <li v-else class="list-group-item"><strong>Tanggal:</strong> Akan diumumkan</li>
-              <li class="list-group-item"><strong>Lokasi:</strong> {{ dauroh.Place || 'Akan diumumkan' }}</li>
-              <li class="list-group-item"><strong>Harga:</strong> {{ formatCurrency(dauroh.Price) }}</li>
-              
-              <li v-if="dauroh.Registration" class="list-group-item text-muted small">
-                <i class="bi bi-clock"></i> Pendaftaran: 
-                {{ formatDate(dauroh.Registration.start_registration) }} - {{ formatDate(dauroh.Registration.end_registration) }}
-              </li>
-            </ul>
-
-            <div class="d-grid mt-4">
-              <button 
-                class="btn btn-lg" 
-                :class="registrationStatus.canRegister ? 'btn-primary' : 'btn-secondary'"
-                :disabled="!registrationStatus.canRegister"
-                @click="handleRegisterClick"
-              >
-                {{ registrationStatus.message }}
-              </button>
-            </div>
-          </div>
-        </div>
+    <div v-else-if="!dauroh" class="container py-5 text-center">
+      <div class="py-5">
+        <h3 class="fw-bold text-dark">Konten Tidak Ditemukan</h3>
+        <NuxtLink to="/" class="btn btn-outline-dark rounded-pill mt-3 px-4">Kembali ke Home</NuxtLink>
       </div>
     </div>
-    
-    <div v-else-if="!daurohStore.loading.detailPublic && !dauroh" class="text-center">
-      <h2>Dauroh tidak ditemukan</h2>
-      <p>Maaf, kami tidak dapat menemukan detail untuk dauroh yang Anda cari.</p>
-      <NuxtLink to="/" class="btn btn-secondary">Kembali ke Beranda</NuxtLink>
+
+    <div v-else>
+      
+      <div class="container pt-5 pb-4 text-center" style="max-width: 900px;">
+         <span class="badge bg-light text-dark border mb-3 px-3 py-2 rounded-pill text-uppercase ls-1 x-small fw-bold">
+            {{ dauroh.Gender === 'ikhwan, akhwat' ? 'Umum' : dauroh.Gender }}
+         </span>
+         
+         <h1 class="display-5 fw-bold text-dark mb-3 lh-sm">{{ dauroh.Title }}</h1>
+         
+         <div class="d-flex justify-content-center align-items-center gap-3 text-muted small text-uppercase ls-1">
+            <span><i class="bi bi-calendar3 me-1"></i> {{ formatDate(dauroh.Date) }}</span>
+            <span class="text-light-gray">|</span>
+            <span><i class="bi bi-geo-alt me-1"></i> {{ dauroh.Place }}</span>
+         </div>
+      </div>
+
+      <div class="container pb-5">
+        <div class="row justify-content-center">
+          
+          <div class="col-lg-8">
+            
+            <div class="mb-5 rounded-4 overflow-hidden shadow-sm position-relative bg-light">
+               <img 
+                  v-if="dauroh.Picture"
+                  :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`" 
+                  class="w-100 h-auto d-block" 
+                  :alt="dauroh.Title"
+                  @error="onImageError"
+               >
+               <div v-else class="py-5 text-center text-muted bg-light">
+                  <i class="bi bi-image fs-1 opacity-25"></i>
+               </div>
+            </div>
+
+            <article class="blog-body ql-editor px-md-3">
+               <div v-if="dauroh.Description" v-html="dauroh.Description"></div>
+               <p v-else class="text-muted fst-italic text-center py-4">
+                 Belum ada deskripsi lengkap untuk event ini.
+               </p>
+            </article>
+
+            <div class="mt-5 pt-4 border-top px-md-3">
+               <div class="d-flex align-items-center gap-2">
+                  <span class="fw-bold small text-uppercase me-2">Bagikan:</span>
+                  <button class="btn btn-sm btn-light rounded-circle" @click="copyLink" title="Salin Link"><i class="bi bi-link-45deg"></i></button>
+                  <a :href="`https://wa.me/?text=${encodeURIComponent(dauroh.Title + ' ' + currentUrl)}`" target="_blank" class="btn btn-sm btn-success rounded-circle text-white"><i class="bi bi-whatsapp"></i></a>
+               </div>
+            </div>
+
+          </div>
+
+          <div class="col-lg-4 mt-5 mt-lg-0 ps-lg-5">
+             <div class="sticky-top" style="top: 100px;">
+                
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+                   <div class="card-body p-4 text-center">
+                      <p class="text-muted x-small text-uppercase fw-bold mb-1">Tiket / Infaq</p>
+                      <h3 class="fw-bold text-primary mb-4">{{ formatCurrency(dauroh.Price) }}</h3>
+                      
+                      <button 
+                        class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm mb-3"
+                        :disabled="!registrationStatus.canRegister"
+                        @click="handleRegisterClick"
+                      >
+                        {{ registrationStatus.message }}
+                      </button>
+
+                      <div v-if="!registrationStatus.canRegister" class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis x-small py-2 mb-0">
+                         <i class="bi bi-info-circle me-1"></i> Pendaftaran belum dibuka / penuh.
+                      </div>
+                   </div>
+                   <div class="card-footer bg-light p-3 text-center border-0 x-small">
+                      Ada kendala? <a href="#" class="text-dark fw-bold">Hubungi Admin</a>
+                   </div>
+                </div>
+
+                <div class="card border-0 bg-soft-gray rounded-4 p-4">
+                   <h6 class="fw-bold text-dark mb-3 x-small text-uppercase">Detail Waktu</h6>
+                   <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
+                      <li class="d-flex justify-content-between border-bottom pb-2">
+                         <span>Hari</span>
+                         <span class="fw-bold text-dark">{{ getDayName(dauroh.Date) }}</span>
+                      </li>
+                      <li class="d-flex justify-content-between border-bottom pb-2">
+                         <span>Jam</span>
+                         <span class="fw-bold text-dark">{{ getTimeRange(dauroh.Date) }}</span>
+                      </li>
+                      <li class="d-flex justify-content-between">
+                         <span>Kuota</span>
+                         <span class="fw-bold text-dark">{{ getQuotaDisplay(dauroh) }}</span>
+                      </li>
+                   </ul>
+                </div>
+
+             </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
-
-    <ModalsDaurohRegistrationModal
-      v-if="showRegistrationModal"
-      :show="showRegistrationModal"
-      :dauroh="dauroh"
-      @close="closeRegistrationModal"
-      @submit="handleRegistrationSubmit"
-    />
-
-    <ModalsQrCodeModal 
-      :show="showQrModal" 
-      :ticket="newlyCreatedTicket" 
-      @close="handleCloseQr" 
-    />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useDaurohStore } from '~/stores/dauroh';
-import { useCheckoutStore } from '~/stores/checkout';
-import { useUserStore } from '~/stores/user';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
+// Import CSS Quill agar output HTML (ul, ol, bold) tampil benar
+import 'quill/dist/quill.snow.css'; 
 
 const route = useRoute();
 const router = useRouter();
 const daurohStore = useDaurohStore();
-const checkoutStore = useCheckoutStore();
-const userStore = useUserStore();
 const { isLoggedIn } = useAuth();
+const config = useRuntimeConfig();
 
-const daurohSK = route.params.id ? String(route.params.id) : null;
-const showQrModal = ref(false);
-const newlyCreatedTicket = ref(null);
-const showRegistrationModal = ref(false);
+const daurohSK = String(route.params.id);
+const imgUrl = ref(config.public.img || '');
+const currentUrl = ref('');
 
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
-// [REVISI] Logic Gate Pendaftaran + Safe Date Parsing + Cek Kuota
-const registrationStatus = computed(() => {
-  if (!dauroh.value) return { canRegister: false, message: 'Memuat...' };
-  
-  // 1. Cek Active
-  if (!dauroh.value.Status) {
-      return { canRegister: false, message: 'Event Tidak Aktif' };
-  }
-
-  // 2. Cek Kuota (Ditambahkan)
-  let relevantQuota = 'non-quota';
-  const gender = (dauroh.value.Gender || '').toLowerCase().trim();
-  
-  if (gender.includes('ikhwan') && gender.includes('akhwat')) {
-    relevantQuota = dauroh.value.Quota_Total;
-  } else if (gender.includes('akhwat')) {
-    relevantQuota = dauroh.value.Quota_Akhwat;
-  } else if (gender.includes('ikhwan')) {
-    relevantQuota = dauroh.value.Quota_Ikhwan;
-  } else {
-    relevantQuota = dauroh.value.Quota_Total;
-  }
-
-  // Jika kuota valid (bukan 'non-quota') dan habis (<= 0)
-  if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
-      return { canRegister: false, message: 'Kuota Habis' };
-  }
-
-  // 3. Cek Tanggal Pendaftaran
-  if (!dauroh.value.Registration) return { canRegister: true, message: 'Daftar Sekarang' };
-
-  const now = new Date();
-  // Safe parsing untuk Safari
-  const startStr = dauroh.value.Registration.start_registration ? dauroh.value.Registration.start_registration.replace(' ', 'T') : null;
-  const endStr = dauroh.value.Registration.end_registration ? dauroh.value.Registration.end_registration.replace(' ', 'T') : null;
-
-  if (startStr) {
-    const start = new Date(startStr);
-    if (now < start) return { canRegister: false, message: 'Pendaftaran Belum Dibuka' };
-  }
-
-  if (endStr) {
-    const end = new Date(endStr);
-    if (now > end) return { canRegister: false, message: 'Pendaftaran Ditutup' };
-  }
-
-  return { canRegister: true, message: 'Daftar Sekarang' };
-});
-
 onMounted(() => {
+  currentUrl.value = window.location.href;
   if (daurohSK) {
     daurohStore.fetchPublicDaurohDetail(daurohSK);
   }
 });
 
-watch(dauroh, (newDauroh) => {
-  useHead({
-    title: newDauroh ? newDauroh.Title : 'Detail Dauroh',
-  });
-}, { immediate: true });
+// --- SEO Title ---
+watch(dauroh, (newVal) => {
+  if (newVal) {
+    useHead({
+      title: `${newVal.Title} - Babussalam Event`,
+    });
+  }
+});
+const onImageError = (e: Event) => {
+  (e.target as HTMLImageElement).style.display = 'none';
+};
 
+const formatCurrency = (val: number | string) => {
+  if (!val || Number(val) === 0) return 'GRATIS';
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(val));
+};
+
+const formatDate = (dateObj: any) => {
+  if (!dateObj || typeof dateObj !== 'object') return 'Jadwal Menyusul';
+  const rawDates = Object.values(dateObj).map((d: any) => d?.date).filter(Boolean) as string[];
+  if (rawDates.length === 0 || !rawDates[0]) return 'Jadwal Menyusul';
+  
+  return new Date(rawDates[0]).toLocaleDateString('id-ID', { 
+     day: 'numeric', month: 'long', year: 'numeric' 
+  });
+};
+
+const getDayName = (dateObj: any) => {
+  if (!dateObj) return '-';
+  const rawDates = Object.values(dateObj).map((d: any) => d?.date).filter(Boolean) as string[];
+  if (rawDates.length === 0 || !rawDates[0]) return '-';
+  
+  return new Date(rawDates[0]).toLocaleDateString('id-ID', { weekday: 'long' });
+};
+
+const getTimeRange = (dateObj: any) => {
+  if (!dateObj) return '-';
+  const first = Object.values(dateObj)[0] as any;
+  if (!first) return '-';
+  const s = first.start_time?.substring(0,5) || '??';
+  const e = first.end_time?.substring(0,5) || '??';
+  return `${s} - ${e} WIB`;
+};
+
+const getQuotaDisplay = (d: any) => {
+  if (!d) return '-';
+  if (d.Quota_Total === 'non-quota') return 'Tanpa Batas';
+  return `${d.Quota_Total}`;
+};
+
+const registrationStatus = computed(() => {
+  if (!dauroh.value) return { canRegister: false, message: 'Loading...' };
+  if (dauroh.value.Status !== 'active') return { canRegister: false, message: 'Event Selesai / Tutup' };
+  
+  // Logic kuota sederhana
+  if (dauroh.value.Quota_Total !== 'non-quota' && Number(dauroh.value.Quota_Total) <= 0) {
+      return { canRegister: false, message: 'Kuota Penuh' };
+  }
+  
+  return { canRegister: true, message: 'Daftar Sekarang' };
+});
 
 const handleRegisterClick = () => {
-  // Jika tombol didisable oleh status (misal kuota habis/tanggal lewat), return.
-  if (!registrationStatus.value.canRegister) return; 
-
-  // Cek Login Akun
   if (!isLoggedIn.value) {
-    router.push('/login');
-  } else if (dauroh.value && dauroh.value.SK) {
-    router.push(`/dauroh/register/${dauroh.value.SK}`);
-  }
-};
-
-const closeRegistrationModal = () => {
-  showRegistrationModal.value = false;
-};
-
-const handleRegistrationSubmit = (registrationData) => {
-  closeRegistrationModal();
-  const price = Number(registrationData.dauroh.Price || 0);
-
-  if (price === 0) {
-    userStore.registerDauroh(registrationData);
-    newlyCreatedTicket.value = {
-      id: `TRX-${Date.now()}`, 
-      dauroh: registrationData.dauroh,
-      participants: registrationData.participants,
-    };
-    setTimeout(() => { showQrModal.value = true; }, 300);
+    router.push(`/login?redirect=/dauroh/${daurohSK}`);
   } else {
-    checkoutStore.startCheckout(registrationData);
-    router.push('/checkout/select');
+    router.push(`/dauroh/register/${daurohSK}`);
   }
 };
 
-const handleCloseQr = () => {
-  showQrModal.value = false;
-  router.push('/dashboard');
-};
-
-const formatCurrency = (value) => {
-  if (value === null || value === undefined || value === 0) return 'Gratis';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(value);
-};
-
-const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const safeDate = dateStr.replace(' ', 'T');
-    return new Date(safeDate).toLocaleDateString('id-ID', { 
-        day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
+const copyLink = () => {
+  navigator.clipboard.writeText(currentUrl.value);
+  alert('Link tersalin!');
 };
 </script>
 
 <style scoped>
-.card-img-top {
-  border-bottom: 1px solid #eee;
+/* TYPOGRAPHY BLOG */
+.font-blog {
+  font-family: 'Georgia', 'Times New Roman', serif; /* Font serif agar mirip artikel bacaan/koran */
 }
-.text-capitalize {
-  text-transform: capitalize;
+.font-blog h1, .font-blog h2, .font-blog h3, .font-blog h4, .font-blog h5, .font-blog h6, 
+.font-blog .btn, .font-blog .badge, .font-blog .ls-1 {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif; /* Font sans-serif untuk UI element */
+}
+
+.bg-soft-gray { background-color: #f9f9f9; }
+.text-light-gray { color: #ddd; }
+.ls-1 { letter-spacing: 1px; }
+.x-small { font-size: 0.75rem; }
+
+/* QUILL CONTENT STYLING (Penting untuk Output) */
+:deep(.blog-body) {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: #333;
+}
+/* Style gambar di dalam konten (Output) */
+:deep(.blog-body img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 2rem auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+:deep(.blog-body p) {
+  margin-bottom: 1.5rem;
+}
+:deep(.blog-body ul), :deep(.blog-body ol) {
+  padding-left: 2rem;
+  margin-bottom: 1.5rem;
+}
+:deep(.blog-body li) {
+  margin-bottom: 0.5rem;
+}
+:deep(.blog-body h2) {
+  font-weight: 800;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  font-size: 1.75rem;
 }
 </style>
