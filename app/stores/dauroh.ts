@@ -17,13 +17,8 @@ export interface ApiDaurohRaw {
   Quota_Akhwat: number | string | null;
   Picture?: string;
   Status?: string;
-  // Field Baru
   Description?: string;
-  Speakers?: string;
-  Maklumat?: string;
-  Sponsors?: string;
 }
-
 export interface DaurohDayDetail {
   date: string;
   start_time: string;
@@ -50,11 +45,7 @@ export interface Dauroh {
   Quota_Total: number | 'non-quota';
   Picture?: string;
   Status: string;
-  // Field Baru
   Description?: string;
-  Speakers?: string;
-  Maklumat?: string;
-  Sponsors?: string;
 }
 
 // 3. Interface Form
@@ -69,11 +60,7 @@ export interface DaurohBasicData {
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
   Status: string;
-  // Field Baru (Wajib ada di interface agar tidak error Type)
   Description?: string;
-  Speakers?: string;
-  Maklumat?: string;
-  Sponsors?: string;
 }
 
 export interface DaurohSchedulePayload {
@@ -110,11 +97,7 @@ const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
   Quota_Akhwat: parseQuota(event.Quota_Akhwat),
   Picture: event.Picture || undefined,
   Status: event.Status || 'inactive',
-  // Mapping field baru
   Description: event.Description || "",
-  Speakers: event.Speakers || "",
-  Maklumat: event.Maklumat || "",
-  Sponsors: event.Sponsors || "",
 });
 
 const createEventPayload = (data: DaurohBasicData, accessToken: string, existingDate: any = {}) => {
@@ -127,11 +110,7 @@ const createEventPayload = (data: DaurohBasicData, accessToken: string, existing
     Date: existingDate,
     Registration: data.Registration,
     Status: data.Status,
-    // Field baru
     Description: data.Description || "",
-    Speakers: data.Speakers || "",
-    Maklumat: data.Maklumat || "",
-    Sponsors: data.Sponsors || "",
   };
 
   const g = payload.Gender;
@@ -316,9 +295,6 @@ export const useDaurohStore = defineStore("dauroh", {
             Registration: daurohData.Registration ?? currentEvent.Registration,
             Status: daurohData.Status ?? currentEvent.Status,
             Description: daurohData.Description ?? currentEvent.Description,
-            Speakers: daurohData.Speakers ?? currentEvent.Speakers,
-            Maklumat: daurohData.Maklumat ?? currentEvent.Maklumat,
-            Sponsors: daurohData.Sponsors ?? currentEvent.Sponsors,
         };
 
         const payload = createEventPayload(mergedData, token, currentEvent.Date || {}); 
@@ -336,9 +312,6 @@ export const useDaurohStore = defineStore("dauroh", {
             Registration: mergedData.Registration, 
             Status: mergedData.Status,
             Description: mergedData.Description,
-            Speakers: mergedData.Speakers,
-            Maklumat: mergedData.Maklumat,
-            Sponsors: mergedData.Sponsors,
           });
         };
 

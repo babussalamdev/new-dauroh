@@ -140,11 +140,8 @@ const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
-
 const showQrModal = ref(false);
 const selectedTicket = ref(null);
-
-// REVISI: Menggunakan getter 'getDashboardData' agar tiket PENDING dan CHECKED_IN juga masuk
 const upcomingTickets = computed(() => userStore.getDashboardData);
 
 const openQrModal = (ticket) => {
@@ -158,7 +155,12 @@ const closeQrModal = () => {
 };
 
 const formatCurrency = (val) => {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+  if (!val || Number(val) === 0) return 'Gratis';
+  return new Intl.NumberFormat('id-ID', { 
+    style: 'currency', 
+    currency: 'IDR', 
+    minimumFractionDigits: 0 
+  }).format(Number(val));
 };
 </script>
 

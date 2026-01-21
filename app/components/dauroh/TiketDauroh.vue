@@ -53,7 +53,7 @@
                       class="btn btn-sm rounded-pill w-100" 
                       :class="getButtonState(dauroh).cssClass"
                       :disabled="getButtonState(dauroh).disabled"
-                      @click.prevent.stop="handleRegisterClick(dauroh, $event)" 
+                      @click.prevent.stop="handleRegisterClick(dauroh)" 
                       >
                       {{ getButtonState(dauroh).label }}
                     </button>
@@ -114,6 +114,7 @@
   import { useAuth } from "~/composables/useAuth";
   import { useRouter } from 'vue-router';
   import dayjs from 'dayjs';
+  import Swal from 'sweetalert2'; // Tambahkan Import Swal
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
@@ -161,15 +162,14 @@
   const getButtonState = (daurohItem) => {
     if (!daurohItem) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
 
-    // 1. [UBAH] Cek Status (String)
+    // 1. Cek Status
     if (daurohItem.Status === 'inactive') {
       return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
     }
 
     const now = dayjs();
 
-    // 2. Cek Tanggal Acara (Safety Net: Event Selesai)
-    // ... (logic sama) ...
+    // 2. Cek Tanggal Acara
     if (daurohItem.Date) {
        const dates = Object.values(daurohItem.Date);
        if (dates.length > 0) {
@@ -177,12 +177,11 @@
          const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
          
          if (eventEndTime.isValid() && now.isAfter(eventEndTime)) {
-            return { label: 'Selesai', disabled: true, cssClass: 'btn-secondary' };
+           return { label: 'Selesai', disabled: true, cssClass: 'btn-secondary' };
          }
        }
     }
 
-    // ... (Sisa logic 3, 4, 5 sama persis) ...
     // 3. Cek Masa Pendaftaran
     const startStr = daurohItem.Registration?.start_registration?.replace(' ', 'T');
     const endStr = daurohItem.Registration?.end_registration?.replace(' ', 'T');
@@ -218,16 +217,14 @@
       return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
     }
 
-    // 5. Lolos Semua -> Tombol Aktif
+    // 5. Tombol Aktif
     return { label: 'Daftar', disabled: false, cssClass: 'btn-primary' };
   };
 
-  // --- MODIFIKASI 3: Helper untuk Style Card & Text Overlay ---
   const getCardStatus = (daurohItem) => {
     const buttonState = getButtonState(daurohItem);
     const label = buttonState.label;
 
-    // Filter kondisi mana saja yang bikin tiket jadi Hitam Putih & Unclickable
     if (['Habis', 'Selesai', 'Ditutup', 'Non-Aktif'].includes(label)) {
       let overlayText = '';
       if (label === 'Habis') overlayText = 'SOLD OUT';
@@ -241,43 +238,35 @@
     return { isDisabled: false, overlayText: null };
   };
 
-const handleRegisterClick = (daurohItem, event = null) => {
-  const state = getButtonState(daurohItem);
-  
-  // Helper untuk menampilkan error (Bubble di tombol atau Toast sebagai fallback)
-  const showError = (message) => {
-    if (event && event.target) {
-      // Logic Validasi "Ala Form Required"
-      const btn = event.currentTarget || event.target;
-      btn.setCustomValidity(message); // Set pesan error
-      btn.reportValidity(); // Munculkan bubble
-      btn.oninput = () => btn.setCustomValidity(""); 
-      setTimeout(() => btn.setCustomValidity(""), 2000); 
+  // --- REVISI DI SINI ---
+  const handleRegisterClick = (daurohItem) => {
+    const state = getButtonState(daurohItem);
+    
+    // 1. Cek Status Button
+    if (state.disabled) {
+       toastStore.showToast({ message: `Gagal: Status ${state.label}`, type: 'warning' });
+       return;
+    }
+
+    // 2. Cek Login (Gunakan Swal agar muncul di TENGAH LAYAR)
+    if (!isLoggedIn.value) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Login Diperlukan',
+        text: 'Mohon login atau daftar akun terlebih dahulu.',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#0d6efd' // Warna biru bootstrap
+      });
+      return; 
+    }
+
+    // 3. Lanjut ke Registrasi
+    if (daurohItem && daurohItem.SK) {
+      router.push(`/dauroh/register/${daurohItem.SK}`);
     } else {
-      // Fallback ke Toast kalau diklik dari Modal (karena ga ada event klik tombol fisik)
-      toastStore.showToast({ message: message, type: 'warning' });
+      toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
     }
   };
-
-  // 1. Cek Status Button (Disabled/Habis/dll)
-  if (state.disabled) {
-     showError(`Gagal: Status ${state.label}`);
-     return;
-  }
-
-  // 2. Cek Login
-  if (!isLoggedIn.value) {
-    showError('Mohon login atau daftar akun terlebih dahulu.');
-    return; 
-  }
-
-  // 3. Lanjut ke Registrasi
-  if (daurohItem && daurohItem.SK) {
-    router.push(`/dauroh/register/${daurohItem.SK}`);
-  } else {
-    toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
-  }
-};
 </script>
 
 <style scoped>

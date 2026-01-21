@@ -50,37 +50,6 @@
                </div>
             </div>
           </div>
-
-          <div class="mb-2">
-            <h6 class="fw-bold mb-3 d-flex align-items-center text-dark">
-              <i class="bi bi-calendar2-week text-primary me-2"></i> Timeline Acara
-            </h6>
-            
-            <div class="timeline-wrapper ps-2">
-              <div v-for="(day, index) in sortedSchedule" :key="index" class="timeline-item position-relative pb-4 ps-4">
-                <div class="timeline-dot bg-white border border-4 border-primary rounded-circle position-absolute top-0 start-0"></div>
-                <div class="card border-0 shadow-sm bg-light-subtle">
-                  <div class="card-body p-3 py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>
-                      <span class="fw-bold text-dark d-block" style="font-size: 0.95rem;">
-                        {{ sortedSchedule.length > 1 ? `Hari ke-${index + 1}` : 'Hari' }}
-                      </span>
-                      
-                      <small class="text-muted" style="font-size: 0.85rem;">{{ formatDate(day.date) }}</small>
-                    </div>
-                    <div class="d-flex align-items-center px-3 py-1 bg-white border rounded-pill">
-                      <i class="bi bi-clock me-2 text-dark" style="font-size: 0.8rem;"></i>
-                      <span class="fw-bold text-dark font-monospace" style="font-size: 0.9rem;">
-                         {{ day.start_time }} - {{ day.end_time }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="modal-footer border-top bg-white p-3">
           <button type="button" class="btn btn-light text-muted fw-medium px-4 rounded-pill" @click="close">
             Batal
@@ -96,10 +65,10 @@
             {{ buttonState.label }} <i v-if="!buttonState.disabled" class="bi bi-arrow-right ms-1"></i>
           </button>
         </div>
-
       </div>
     </div>
   </div>
+</div>
   
   <div v-if="show" class="modal-backdrop fade show"></div>
 </template>
