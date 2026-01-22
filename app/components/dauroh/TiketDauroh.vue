@@ -17,10 +17,10 @@
             <div v-for="dauroh in chunk" :key="dauroh.SK" class="dauroh-card-wrapper">
               
               <NuxtLink 
-  :to="`/dauroh/${dauroh.SK}`" 
-  class="text-decoration-none d-block h-100"
-  :class="{ 'card-disabled': getCardStatus(dauroh).isDisabled }"
->
+                :to="`/dauroh/${dauroh.SK}`" 
+                class="text-decoration-none d-block h-100"
+                :class="{ 'card-disabled': getCardStatus(dauroh).isDisabled }"
+              >
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                    <NuxtImg
@@ -114,7 +114,7 @@
   import { useAuth } from "~/composables/useAuth";
   import { useRouter } from 'vue-router';
   import dayjs from 'dayjs';
-  import Swal from 'sweetalert2'; // Tambahkan Import Swal
+  import Swal from 'sweetalert2'; 
 
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
@@ -248,14 +248,43 @@
        return;
     }
 
-    // 2. Cek Login (Gunakan Swal agar muncul di TENGAH LAYAR)
+    // 2. Cek Login (CUSTOMIZED STYLE)
     if (!isLoggedIn.value) {
       Swal.fire({
+        // Gunakan icon kustom atau icon bawaan
         icon: 'info',
+        // Teks & Judul
         title: 'Login Diperlukan',
-        text: 'Mohon login atau daftar akun terlebih dahulu.',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#0d6efd' // Warna biru bootstrap
+        text: 'Mohon login terlebih dahulu untuk mendaftar.',
+        
+        // Konfigurasi Tombol
+        showCancelButton: true,
+        confirmButtonText: 'Login Sekarang',
+        cancelButtonText: 'Nanti',
+        reverseButtons: true, // Posisi tombol dibalik biar UX lebih modern
+        
+        // Mematikan styling bawaan SweetAlert agar bisa pakai Bootstrap Class
+        buttonsStyling: false,
+        
+        // Styling Custom menggunakan Bootstrap Classes
+        customClass: {
+          popup: 'rounded-4 border-0 shadow-lg p-4', // Card lebih bulat dan shadow lembut
+          title: 'fs-5 fw-bold text-dark mb-2',
+          htmlContainer: 'text-muted small mb-4',
+          confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium', // Tombol Login
+          cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium' // Tombol Batal
+        },
+        
+        // Backdrop (Latar belakang) dengan efek blur
+        // backdrop: `
+        //   rgba(0,0,0,0.2)
+        //   left top
+        //   no-repeat
+        // `
+      }).then((result) => {
+        if (result.isConfirmed) {
+           router.push('/login');
+        }
       });
       return; 
     }
@@ -272,7 +301,7 @@
 <style scoped>
   .card-disabled {
     filter: grayscale(100%);
-    pointer-events: none; /* User tidak bisa klik sama sekali */
+    pointer-events: none; 
     cursor: default;
   }
 
@@ -281,9 +310,9 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Posisi tepat di tengah */
+    transform: translate(-50%, -50%); 
     
-    background-color: rgba(0, 0, 0, 0.7); /* Background transparan gelap biar tulisan terbaca */
+    background-color: rgba(0, 0, 0, 0.7); 
     color: white;
     padding: 8px 16px;
     border-radius: 5px;
@@ -409,3 +438,10 @@
   .card-body { flex-grow: 1; }
   .card-body .btn { font-size: 0.8rem; padding: 0.25rem 0.75rem; }
 </style>
+
+<!-- <style>
+.swal2-backdrop-show {
+  backdrop-filter: blur(5px); /* Efek kaca buram modern */
+  -webkit-backdrop-filter: blur(5px);
+}
+</style> -->

@@ -31,9 +31,9 @@
 
 <script setup>
 import { useUserStore } from '~/stores/user';
-import { useToastStore } from '~/stores/toast';
 import { useAuth } from '~/composables/useAuth';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 
 // Icons
 import QrCode from '~/components/icons/QrIcon.vue';
@@ -42,15 +42,34 @@ import BoothIcon from '~/components/icons/BoothIcon.vue';
 
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
-const toastStore = useToastStore();
 const router = useRouter();
+const swalConfig = {
+  customClass: {
+    popup: 'rounded-4 border-0 shadow-lg p-4',
+    title: 'fs-5 fw-bold text-dark mb-1',
+    htmlContainer: 'text-muted small mb-3',
+    confirmButton: 'btn btn-primary rounded-pill px-4 shadow-sm fw-medium',
+    cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium me-2'
+  },
+  buttonsStyling: false,
+  backdrop: `rgba(0,0,0,0.15) left top no-repeat`
+};
 
 const handleButtonClick = (path) => {
-  // 1. Cek Login
   if (!isLoggedIn.value) {
-    toastStore.showToast({
-      message: 'Mohon login atau daftar terlebih dahulu.',
-      type: 'info'
+    Swal.fire({
+      ...swalConfig,
+      icon: 'info',
+      title: 'Login Diperlukan',
+      text: 'Silakan login terlebih dahulu untuk mengakses fitur ini.',
+      confirmButtonText: 'Login Sekarang',
+      showCancelButton: true,
+      cancelButtonText: 'Nanti',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.push('/login');
+      }
     });
     return;
   }
@@ -63,9 +82,22 @@ const handleButtonClick = (path) => {
         // Arahkan ke dashboard tempat QR berada
         router.push('/dashboard');
       } else {
-        toastStore.showToast({
-          message: 'Anda belum memiliki tiket dauroh aktif.',
-          type: 'info'
+        Swal.fire({
+          ...swalConfig,
+          icon: 'question', 
+          iconColor: '#dee2e6',
+          title: 'Belum Ada Tiket',
+          text: 'Anda belum memiliki tiket aktif. Yuk cari kajian menarik!',
+          confirmButtonText: 'Cari Dauroh',
+          showCancelButton: true,
+          cancelButtonText: 'Tutup',
+          reverseButtons: true
+        }).then((result) => {
+           // Jika user klik 'Cari Dauroh', scroll ke list dauroh (opsional)
+           if (result.isConfirmed) {
+             const element = document.getElementById('tiketDauroh');
+             if(element) element.scrollIntoView({ behavior: 'smooth' });
+           }
         });
       }
       break;
@@ -83,4 +115,11 @@ const handleButtonClick = (path) => {
 
 <style scoped>
 @import url("~/assets/css/components/hero.css");
+</style>
+
+<style>
+.swal2-backdrop-show {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
 </style>

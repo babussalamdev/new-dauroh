@@ -4,7 +4,6 @@
     <div v-if="daurohStore.loading.detailPublic" class="container py-5 text-center d-flex align-items-center justify-content-center" style="min-height: 60vh;">
       <div>
          <div class="spinner-border text-dark mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
-         <p class="text-muted ls-1 small text-uppercase m-0">Memuat Artikel...</p>
       </div>
     </div>
 
