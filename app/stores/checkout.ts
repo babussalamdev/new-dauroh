@@ -2,7 +2,8 @@ import { defineStore } from 'pinia';
 import { useNuxtApp } from '#app';
 import { useAuth } from '~/composables/useAuth';
 
-// --- INTERFACES ---
+export type CheckoutStep = 'select' | 'summary' | 'instructions';
+
 interface Participant {
   Name: string;
   Email: string;
@@ -35,9 +36,9 @@ interface TransactionDetails {
 export const useCheckoutStore = defineStore('checkout', {
   // --- STATE ---
   state: () => ({
+    currentStep: 'select' as CheckoutStep,
     dauroh: null as Dauroh | null,
     participants: [] as Participant[],
-    
     paymentMethod: null as string | null,
     transactionDetails: null as TransactionDetails | null, 
     
@@ -69,13 +70,17 @@ export const useCheckoutStore = defineStore('checkout', {
 
   // --- ACTIONS ---
   actions: {
+    setStep(step: CheckoutStep) {
+      this.currentStep = step;
+    },
+
     startCheckout(registrationData: { dauroh: Dauroh; participants: Participant[] }) {
       this.dauroh = registrationData.dauroh;
       this.participants = registrationData.participants;
-      
       this.paymentMethod = null;
       this.transactionDetails = null;
       this.removeVoucher(); 
+      this.currentStep = 'select';
     },
 
     setPaymentMethod(method: string) {
@@ -128,9 +133,6 @@ export const useCheckoutStore = defineStore('checkout', {
             
             objectPerson: objectPerson, 
             AccessToken: accessToken.value,
-
-            // --- Parameter Tambahan (Opsional / Jaga-jaga) ---
-            // Dikirim siapa tahu backend membacanya untuk QRIS
             PaymentType: paymentType, 
             sender_bank_type: paymentType 
         };
@@ -143,19 +145,19 @@ export const useCheckoutStore = defineStore('checkout', {
         const response = await $apiFlip.post('/flip-dauroh', payload);
         const result = response.data; 
         
-        // 5. Mapping Response agar Frontend (Instructions.vue) bisa baca
+        // 5. Mapping Response
         this.transactionDetails = {
             ...result, 
-            
             // Ambil Nomor VA yang ngumpet di dalam object receiver_bank_account
             vaNumber: result.receiver_bank_account?.account_number, 
             
             // Mapping waktu expire untuk countdown
             expiryTime: result.expired_date,
 
-            // Simpan metode pembayaran biar logonya muncul
+            // Simpan metode pembayaran biar
             paymentMethod: this.paymentMethod || 'Bank'
         };
+        this.currentStep = 'instructions';
 
         return { success: true, data: result };
 
@@ -163,9 +165,7 @@ export const useCheckoutStore = defineStore('checkout', {
         console.error("Payment Flip Error:", error);
         
         let errorMessage = "Terjadi kesalahan saat memproses pembayaran.";
-        // Handle error message dari backend/Flip dengan rapi
         if (error.response && error.response.data) {
-           // Cek apakah error string atau object
            const errData = error.response.data;
            if (typeof errData === 'string') {
              errorMessage = errData;
@@ -179,8 +179,6 @@ export const useCheckoutStore = defineStore('checkout', {
         this.isLoading = false;
       }
     },
-
-    // --- Action untuk WebSocket ---
     updatePaymentStatus(data: any) {
       if (this.transactionDetails) {
         this.transactionDetails = { ...this.transactionDetails, ...data };
@@ -197,6 +195,8 @@ export const useCheckoutStore = defineStore('checkout', {
 
     clearCheckout() {
       this.$reset();
+      // [BARU] Pastikan balik ke step awal
+      this.currentStep = 'select';
     }
   },
 

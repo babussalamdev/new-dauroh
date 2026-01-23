@@ -66,6 +66,7 @@
     </a>
 
     <ModalsQrCodeModal 
+      v-if="showQrModal"
       :show="showQrModal" 
       :ticket="newlyCreatedTicket" 
       @close="handleCloseQr" 
@@ -80,7 +81,7 @@ import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-// Import Assets
+// Import Assets (Sama kayak sebelumnya)
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -90,8 +91,7 @@ import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
-definePageMeta({ layout: 'checkout' });
-useHead({ title: 'Instruksi Pembayaran' });
+// HAPUS definePageMeta (karena ini component)
 
 const store = useCheckoutStore();
 const userStore = useUserStore();
@@ -99,13 +99,11 @@ const router = useRouter();
 const showQrModal = ref(false);
 
 // --- Computed Helpers ---
-// 1. Ambil status langsung dari Store (karena store diupdate sama WebSocket)
 const currentStatus = computed(() => store.transactionDetails?.status || 'PENDING');
 
-// 2. Cek apakah sudah lunas (handle variasi string dari backend)
 const isPaid = computed(() => {
-  const s = currentStatus.value.toUpperCase();
-  return s === 'PAID' || s === 'SUCCESS' || s === 'SETTLED' || s === 'LUNAS';
+  const s = (currentStatus.value || '').toUpperCase();
+  return ['PAID', 'SUCCESS', 'SETTLED', 'LUNAS'].includes(s);
 });
 
 const newlyCreatedTicket = computed(() => {
@@ -133,41 +131,42 @@ const BankComponents: any = {
 };
 
 const currentBankComponent = computed(() => {
-  // Pastikan ambil paymentMethod dari transactionDetails yg paling update
   const method = store.transactionDetails?.paymentMethod?.toUpperCase(); 
   return method ? BankComponents[method] : null;
 });
 
 // --- Lifecycle & Watcher ---
 onMounted(() => {
+ // Simpan record "Pending" ke userStore pas instruksi dibuka
  if (store.transactionDetails && store.dauroh) {
-      userStore.registerDauroh({
-          dauroh: store.dauroh,
-          participants: store.participants,
-          transactionDetails: store.transactionDetails // Data lengkap dari Flip
-      });
-  }
+     userStore.registerDauroh({
+         dauroh: store.dauroh,
+         participants: store.participants,
+         transactionDetails: store.transactionDetails 
+     });
+ }
 });
 
-// 🔥 DETEKSI OTOMATIS SAAT LUNAS (Dari WebSocket)
+// Deteksi Lunas via WebSocket/Store Update
 watch(isPaid, (paid) => {
   if (paid) {
-    // 1. Simpan tiket ke userStore (History Frontend)
+    // Update status di Frontend Store
     const registrationData = {
       dauroh: store.dauroh as any, 
       participants: store.participants as any[],
     };
-    userStore.registerDauroh(registrationData);
+    userStore.registerDauroh(registrationData); // Ini harusnya update status jd 'PAID'
 
-    // 2. Munculkan Modal QR Tiket
+    // Tampilkan notif & modal
     setTimeout(() => {
-      showQrModal.value = true;
       Swal.fire({
         icon: 'success',
         title: 'Alhamdulillah!',
         text: 'Pembayaran telah diterima.',
         timer: 2000,
         showConfirmButton: false
+      }).then(() => {
+          showQrModal.value = true;
       });
     }, 500);
   }
@@ -182,15 +181,13 @@ const goToDashboard = () => {
   router.push('/dashboard');
 };
 
-// Guard Navigation
+// Guard Navigation (Cegah user keluar tanpa sengaja)
 onBeforeRouteLeave((to, from, next) => {
-  // Kalau sudah lunas atau mau ke dashboard, bebaskan
   if (isPaid.value || to.path === '/dashboard') {
     next();
     return;
   }
   
-  // Kalau belum lunas, tanya dulu
   Swal.fire({
     title: 'Keluar halaman?',
     text: "Anda bisa melanjutkan pembayaran nanti lewat menu Riwayat.",
@@ -201,6 +198,7 @@ onBeforeRouteLeave((to, from, next) => {
     cancelButtonText: 'Batal'
   }).then((result) => {
     if (result.isConfirmed) {
+      store.clearCheckout(); // [PENTING] Bersihkan store kalau user nyerah
       next();
     } else {
       next(false);

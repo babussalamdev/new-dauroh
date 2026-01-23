@@ -1,8 +1,5 @@
 <template>
-  <div>
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        
+  <div> 
         <div class="text-center mb-3">
           <img 
             v-if="paymentLogoUrl" 
@@ -80,9 +77,10 @@
         </div>
         
         <div class="d-flex justify-content-between mt-4">
-          <button class="btn btn-secondary" @click="router.push('/checkout/select')" :disabled="loading">
+          <button class="btn btn-secondary" @click="store.setStep('select')" :disabled="loading">
             Kembali
           </button>
+          
           <button class="btn btn-primary" @click="handlePay" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             {{ loading ? 'Memproses...' : 'Bayar' }}
@@ -90,23 +88,20 @@
         </div>
 
       </div>
-    </div>
-
     <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
       <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
-import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router'; // onBeforeRouteLeave dihapus dari sini biar simple
 import Swal from 'sweetalert2';
 import { useNuxtApp } from '#app';
 import { useAuth } from '~/composables/useAuth'; 
 
-// Import Images (Vite/Nuxt 4 Style)
+// Import Images
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -116,8 +111,8 @@ import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
-definePageMeta({ layout: 'checkout' });
-useHead({ title: 'Ringkasan Pembayaran' });
+// REVISI 2: Hapus definePageMeta (karena ini component, bukan page)
+// definePageMeta({ layout: 'checkout' });
 
 const store = useCheckoutStore();
 const router = useRouter();
@@ -127,9 +122,9 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 onMounted(() => {
-  // Redirect ke halaman pilih metode jika data pembayaran kosong
+  // REVISI 3: Cek paymentMethod, kalau null lempar balik ke step select
   if (!store.paymentMethod) {
-     // router.replace('/checkout/select'); 
+     store.setStep('select');
   }
 });
 
@@ -155,7 +150,6 @@ const applyVoucher = async () => {
   }
 
   try {
-    // Validasi Event SK harus ada
     if (!store.dauroh?.SK) throw new Error("Data event tidak ditemukan.");
 
     const payload = {
@@ -164,59 +158,37 @@ const applyVoucher = async () => {
       AccessToken: accessToken.value
     };
 
-    console.log("Sending Voucher Payload:", payload);
-
     const response = await $apiBase.put('/match-voucher', payload);
     const rawResult = response.data;
     
-    // --- Logic Parsing Data Voucher ---
+    // Logic Parsing Voucher (Tetap sama)
     let finalData = rawResult;
-    if (finalData && typeof finalData === 'object' && 'data' in finalData) {
-        finalData = finalData.data;
-    }
-    if (Array.isArray(finalData)) {
-        finalData = finalData[0];
-    }
-    if (finalData && typeof finalData === 'object' && 'data' in finalData) {
-        finalData = finalData.data;
-    }
+    if (finalData && typeof finalData === 'object' && 'data' in finalData) finalData = finalData.data;
+    if (Array.isArray(finalData)) finalData = finalData[0];
+    if (finalData && typeof finalData === 'object' && 'data' in finalData) finalData = finalData.data;
 
     if (!finalData) throw new Error("Format data voucher tidak dikenali.");
 
     let disc = 0;
-    
-    const valAmount = finalData.Amount ?? finalData.amount ?? 
-                      finalData.Nominal ?? finalData.nominal ??
-                      finalData.Diskon ?? finalData.diskon; 
-
+    const valAmount = finalData.Amount ?? finalData.amount ?? finalData.Nominal ?? finalData.nominal ?? finalData.Diskon ?? finalData.diskon; 
     const valValue  = finalData.Value ?? finalData.value;
     const valType   = finalData.Type ?? finalData.type;
 
     if (valAmount !== undefined) {
        disc = Number(valAmount);
-    } 
-    else if (valType === 'PERCENT' || valType === 'percent') {
+    } else if (valType === 'PERCENT' || valType === 'percent') {
        disc = store.totalAmount * (Number(valValue) / 100);
-    } 
-    else if (valType === 'FIXED' || valType === 'fixed') {
+    } else if (valType === 'FIXED' || valType === 'fixed') {
        disc = Number(valValue);
-    }
-    else if (typeof rawResult === 'number') {
+    } else if (typeof rawResult === 'number') {
        disc = rawResult;
     }
 
-    // Validasi diskon tidak boleh melebihi total
     if (disc > store.totalAmount) disc = store.totalAmount;
 
     if (disc > 0) {
       store.setVoucher(code, disc);
-      Swal.fire({ 
-        icon: 'success', 
-        title: 'Voucher Berhasil!', 
-        text: `Potongan ${formatCurrency(disc)}`, 
-        timer: 1500, 
-        showConfirmButton: false 
-      });
+      Swal.fire({ icon: 'success', title: 'Voucher Berhasil!', text: `Potongan ${formatCurrency(disc)}`, timer: 1500, showConfirmButton: false });
     } else {
       throw new Error("Voucher tidak valid atau nominal 0");
     }
@@ -224,7 +196,6 @@ const applyVoucher = async () => {
   } catch (err: any) {
     console.error("Voucher Error:", err);
     store.removeVoucher();
-    // Kembalikan kode ke input agar user bisa edit
     store.voucherCode = code; 
     
     let rawMsg = err.response?.data?.message || err.message || '';
@@ -238,14 +209,7 @@ const applyVoucher = async () => {
     }
 
     error.value = userMsg;
-    
-    Swal.fire({
-      icon: 'error',
-      title: 'Gagal',
-      text: userMsg,
-      timer: 2000,
-      showConfirmButton: false
-    });
+    Swal.fire({ icon: 'error', title: 'Gagal', text: userMsg, timer: 2000, showConfirmButton: false });
 
   } finally { 
     loading.value = false; 
@@ -260,38 +224,24 @@ const handlePay = async () => {
     const result = await store.createPayment();
 
     if (result.success) {
-      router.push('/checkout/instructions');
+      // REVISI 4: Jangan push router.
+      // Store checkout.ts sudah otomatis set `this.currentStep = 'instructions'` kalau sukses.
+      // Jadi diamkan saja, UI akan berubah sendiri.
+      
     } else {
-      // --- LOGIC HANDLING ERROR KHUSUS ---
+      // --- LOGIC ERROR HANDLING ---
       const errMsg = (result.message || '').toLowerCase();
       
-      // 1. Cek Apakah Errornya "Booking PENDING"
       if (errMsg.includes('booking pending') || errMsg.includes('memiliki booking')) {
-         await Swal.fire({ 
-           icon: 'warning', 
-           title: 'Transaksi Sudah Ada', 
-           text: 'Anda memiliki transaksi yang belum dibayar. Silakan cek riwayat pendaftaran.', 
-           confirmButtonText: 'Cek Riwayat', 
-           confirmButtonColor: '#004754' 
-         });
-         // Redirect ke halaman Riwayat (sesuai file yang lu punya)
+         await Swal.fire({ icon: 'warning', title: 'Transaksi Sudah Ada', text: 'Anda memiliki transaksi yang belum dibayar.', confirmButtonText: 'Cek Riwayat', confirmButtonColor: '#004754' });
          router.push('/riwayat-pendaftaran'); 
          return;
       }
 
-      // 2. Cek Apakah Tiket Habis
-      const isSoldOut = result.error?.response?.status === 400 || 
-                        result.error?.response?.status === 409 || 
-                        errMsg.includes('habis');
+      const isSoldOut = result.error?.response?.status === 400 || result.error?.response?.status === 409 || errMsg.includes('habis');
       
       if (isSoldOut) {
-         await Swal.fire({ 
-           icon: 'error', 
-           title: 'Mohon Maaf', 
-           text: 'Kuota tiket sudah habis.', 
-           confirmButtonText: 'Kembali ke Home', 
-           confirmButtonColor: '#d33' 
-         });
+         await Swal.fire({ icon: 'error', title: 'Mohon Maaf', text: 'Kuota tiket sudah habis.', confirmButtonText: 'Kembali ke Home', confirmButtonColor: '#d33' });
          store.clearCheckout(); 
          router.push('/');
       } else {
@@ -300,36 +250,12 @@ const handlePay = async () => {
     }
   } catch (err: any) {
     console.error(err);
-    // ... error handling standar ...
     error.value = err.message || 'Gagal memproses pembayaran.';
-    Swal.fire({ 
-      icon: 'error', 
-      title: 'Gagal', 
-      text: error.value || 'Terjadi kesalahan sistem.' 
-    });
+    Swal.fire({ icon: 'error', title: 'Gagal', text: error.value || 'Terjadi kesalahan sistem.' });
   } finally { 
     loading.value = false; 
   }
 };
-
-onBeforeRouteLeave((to, from, next) => {
-  // Izinkan navigasi ke instruksi atau kembali ke select tanpa prompt
-  if (to.path === '/checkout/instructions' || to.path === '/checkout/select') { 
-    next(); 
-    return; 
-  }
-  
-  // Prompt konfirmasi jika user mau keluar dari proses checkout
-  Swal.fire({ 
-    title: 'Batalkan pembayaran?', 
-    text: "Data pendaftaran akan hilang.", 
-    icon: 'warning', 
-    showCancelButton: true, 
-    confirmButtonColor: '#d33', 
-    confirmButtonText: 'Ya, Batalkan', 
-    cancelButtonText: 'Lanjut Bayar' 
-  }).then((r) => r.isConfirmed ? (store.clearCheckout(), next()) : next(false));
-});
 </script>
 
 <style scoped>

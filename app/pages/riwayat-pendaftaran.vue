@@ -260,6 +260,7 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
 // --- ACTIONS LAINNYA ---
 
 const resumePayment = (ticket: any) => {
+  // 1. Restore Data ke Store
   checkoutStore.dauroh = ticket.dauroh;
   checkoutStore.participants = ticket.participants || [];
   
@@ -267,12 +268,17 @@ const resumePayment = (ticket: any) => {
     ...ticket,
     status: ticket.status,
     amount: ticket.amount,
+    // Pastikan mapping field ini sesuai sama response backend
     vaNumber: ticket.va_number || ticket.receiver_bank_account?.account_number, 
     expiryTime: ticket.expired_date,
-    paymentMethod: ticket.sender_bank || 'Bank',
+    paymentMethod: ticket.sender_bank || ticket.payment_method || 'Bank',
   };
-
-  router.push('/checkout/instructions');
+  if (checkoutStore.setStep) {
+      checkoutStore.setStep('instructions');
+  } else {
+      checkoutStore.currentStep = 'instructions';
+  }
+  router.push('/checkout');
 };
 
 const deleteHistory = async (ticket: any) => {

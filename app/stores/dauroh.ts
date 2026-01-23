@@ -3,7 +3,7 @@ import { useToastStore } from "./toast";
 import { useNuxtApp, useCookie } from "#app";
 import dayjs from "dayjs";
 
-// 1. Interface API Raw
+// 1. Interface API Raw (Update: Tambah Field Sold)
 export interface ApiDaurohRaw {
   SK: string;
   Title: string;
@@ -12,13 +12,22 @@ export interface ApiDaurohRaw {
   Registration?: DaurohRegistration;
   Place: string;
   Price: number | string;
+  
+  // Quota Fields
   Quota_Ikhwan_Akhwat: number | string | null;
   Quota_Ikhwan: number | string | null;
   Quota_Akhwat: number | string | null;
+  
+  // [BARU] Sold Fields (Dari API)
+  Sold_Ikhwan_Akhwat?: number | string | null;
+  Sold_Ikhwan?: number | string | null;
+  Sold_Akhwat?: number | string | null;
+
   Picture?: string;
   Status?: string;
   Description?: string;
 }
+
 export interface DaurohDayDetail {
   date: string;
   start_time: string;
@@ -30,7 +39,7 @@ export interface DaurohRegistration {
   end_registration: string;
 }
 
-// 2. Interface UI
+// 2. Interface UI (Update: Tambah Field Sold)
 export interface Dauroh {
   SK: string | null;
   id?: number | null;
@@ -40,9 +49,17 @@ export interface Dauroh {
   Registration?: DaurohRegistration;
   Place: string;
   Price: number;
+  
+  // Sisa Kuota (Running)
   Quota_Ikhwan: number | 'non-quota';
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
+
+  // [BARU] Data Terjual (Untuk Hitung Kapasitas)
+  Sold_Ikhwan: number;
+  Sold_Akhwat: number;
+  Sold_Total: number;
+
   Picture?: string;
   Status: string;
   Description?: string;
@@ -74,6 +91,11 @@ const parseQuota = (val: number | string | null | undefined): number | 'non-quot
   return isNaN(num) ? 0 : num;
 };
 
+const parseSold = (val: number | string | null | undefined): number => {
+  const num = Number(val);
+  return isNaN(num) ? 0 : num;
+};
+
 const serializeQuota = (val: number | string | 'non-quota'): string => {
   if (val === 'non-quota') return 'non-quota';
   return String(val);
@@ -92,9 +114,17 @@ const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
   Registration: event.Registration || undefined,
   Place: event.Place || "",
   Price: Number(event.Price ?? 0),
+  
+  // Mapping Sisa Kuota
   Quota_Total: parseQuota(event.Quota_Ikhwan_Akhwat),
   Quota_Ikhwan: parseQuota(event.Quota_Ikhwan),
   Quota_Akhwat: parseQuota(event.Quota_Akhwat),
+
+  // [BARU] Mapping Data Sold
+  Sold_Total: parseSold(event.Sold_Ikhwan_Akhwat),
+  Sold_Ikhwan: parseSold(event.Sold_Ikhwan),
+  Sold_Akhwat: parseSold(event.Sold_Akhwat),
+
   Picture: event.Picture || undefined,
   Status: event.Status || 'inactive',
   Description: event.Description || "",
@@ -266,7 +296,6 @@ export const useDaurohStore = defineStore("dauroh", {
       } finally { this.loading.savingBasic = false; }
     },
 
-    // [FIX UTAMA]: Gunakan Partial<DaurohBasicData> agar tidak error saat kirim data sebagian
     async updateTiketDaurohBasic(daurohData: Partial<DaurohBasicData> & { SK: string }): Promise<boolean> {
       const token = useCookie("AccessToken").value;
       if (!token || !daurohData.SK) return false;
@@ -282,7 +311,6 @@ export const useDaurohStore = defineStore("dauroh", {
 
       try {
         const { $apiBase } = useNuxtApp();
-        // Merge data lama dengan data baru
         const mergedData: DaurohBasicData = {
             SK: currentEvent.SK,
             Title: daurohData.Title ?? currentEvent.Title,

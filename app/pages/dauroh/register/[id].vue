@@ -453,7 +453,9 @@ const handleSubmit = () => {
     router.push('/dashboard');
   } else {
     checkoutStore.startCheckout(registrationData);
-    router.push('/checkout/select');
+    // ✅ BENAR: Arahkan ke /checkout aja. 
+    // Store akan otomatis set step pertama jadi 'select'
+    router.push('/checkout'); 
   }
 };
 </script>

@@ -7,9 +7,11 @@
     </div>
 
     <LayoutNavbar />
+    
     <main class="main-content-scroll-area">
       <NuxtPage />
     </main>
+    
     <LayoutFooter />
 
     <NotificationsToastNotification />
@@ -26,11 +28,20 @@ const loading = useLoading() // ambil state global loading
   background-color: var(--color-bg);
   color: var(--color-text-dark);
   min-height: 100vh;
+  
+  /* [FIX] Tambahkan Flexbox agar Footer selalu di bawah (Sticky Footer) */
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content-scroll-area {
   padding-top: 20px;
   /* Memberi ruang agar konten tidak ketutup navbar */
+  
+  /* [FIX] Area konten akan melar mengisi sisa ruang kosong */
+  flex: 1; 
+  display: flex;
+  flex-direction: column; /* Biar child (NuxtPage) juga bisa full height */
 }
 
 /* PENAMBAHAN STYLE BARU UNTUK OVERLAY */

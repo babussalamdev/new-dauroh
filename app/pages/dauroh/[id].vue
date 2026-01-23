@@ -1,13 +1,13 @@
 <template>
-  <div class="bg-white min-vh-100 pb-5 font-blog">
+  <div class="bg-white min-vh-100 pb-5 font-blog d-flex flex-column">
     
-    <div v-if="daurohStore.loading.detailPublic" class="container py-5 text-center d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+    <div v-if="daurohStore.loading.detailPublic" class="container py-5 text-center d-flex align-items-center justify-content-center flex-grow-1">
       <div>
          <div class="spinner-border text-dark mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
       </div>
     </div>
 
-    <div v-else-if="!dauroh" class="container py-5 text-center d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+    <div v-else-if="!dauroh" class="container py-5 text-center d-flex align-items-center justify-content-center flex-grow-1">
       <div>
         <h3 class="fw-bold text-dark mb-3">Konten Tidak Ditemukan</h3>
         <NuxtLink to="/" class="btn btn-dark rounded-pill px-5 fw-bold">Kembali ke Home</NuxtLink>
@@ -20,17 +20,16 @@
          <h1 class="display-5 fw-bold text-dark mb-3 lh-sm">{{ dauroh.Title }}</h1>
          
          <div class="d-flex justify-content-center align-items-center gap-3 text-secondary small text-uppercase ls-1 flex-wrap">
-            <span><i class="bi bi-calendar3 me-1"></i> {{ formatDate(dauroh.Date) }}</span>
-            <span class="text-light-gray d-none d-sm-inline">|</span>
-            <span><i class="bi bi-geo-alt me-1"></i> {{ dauroh.Place }}</span>
+           <span><i class="bi bi-calendar3 me-1"></i> {{ formatDate(dauroh.Date) }}</span>
+           <span class="text-light-gray d-none d-sm-inline">|</span>
+           <span><i class="bi bi-geo-alt me-1"></i> {{ dauroh.Place }}</span>
          </div>
       </div>
 
-      <div class="container pb-5">
+      <div class="container pb-5 flex-grow-1">
         <div class="row justify-content-center g-5">
           
           <div class="col-lg-8">
-            
             <div class="mb-5 rounded-4 overflow-hidden shadow-sm position-relative bg-light mx-auto border" style="max-width: 100%;">
                <div class="aspect-ratio-box">
                    <img 
@@ -56,15 +55,11 @@
                </p>
             </article>
           </div>
+          
           <div class="col-lg-4 ps-lg-4">
              <div class="sticky-top" style="top: 100px; z-index: 10;">
                 
-                <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4 position-relative">
-                   
-                   <div class="position-absolute top-0 end-0 m-3">
-                       
-                   </div>
-
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
                    <div class="card-body p-4 pt-5 text-center">
                       <p class="text-muted x-small text-uppercase fw-bold mb-1 ls-1">Harga Tiket</p>
                       <h3 class="fw-bold text-primary mb-4">{{ formatCurrency(dauroh.Price) }}</h3>
@@ -80,7 +75,8 @@
                       <div v-if="!registrationStatus.canRegister" class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis x-small py-2 mb-0 rounded-3">
                          <i class="bi bi-info-circle me-1"></i> {{ registrationStatus.message }}
                       </div>
-                      <span class="badge bg-light text-dark border px-3 py-2 rounded-pill text-uppercase x-small fw-bold shadow-sm">
+                      
+                      <span class="badge bg-light text-dark border px-3 py-2 rounded-pill text-uppercase x-small fw-bold shadow-sm mt-3">
                            {{ getGenderLabel(dauroh.Gender) }}
                        </span>
                    </div>
@@ -90,37 +86,70 @@
                    </div>
                 </div>
 
-                <div class="card border-0 bg-soft-gray rounded-4 p-4">
-                   <h6 class="fw-bold text-dark mb-4 x-small text-uppercase ls-1 border-bottom pb-2">Detail Event</h6>
-                   <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
-                      <li class="d-flex justify-content-between">
-                         <span>Hari</span>
-                         <span class="fw-bold text-dark">{{ getDayName(dauroh.Date) }}</span>
-                      </li>
-                      <li class="d-flex justify-content-between">
-                         <span>Jam</span>
-                         <span class="fw-bold text-dark">{{ getTimeRange(dauroh.Date) }}</span>
-                      </li>
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                   <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                      <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                         <i class="bi bi-pie-chart-fill text-primary"></i> Sisa Kuota
+                      </h6>
+                   </div>
+                   <div class="card-body p-4">
                       
-                      <template v-if="showTotal">
-                         <li class="d-flex justify-content-between align-items-center">
-                             <span>Sisa Kuota</span>
-                             <span class="fw-bold text-dark">{{ formatQuota(dauroh.Quota_Total) }}</span>
-                         </li>
-                      </template>
-                      
-                      <template v-else>
-                         <li v-if="showIkhwan" class="d-flex justify-content-between align-items-center">
-                            <span>Kuota Ikhwan</span>
-                            <span class="fw-bold text-dark">{{ formatQuota(dauroh.Quota_Ikhwan) }}</span>
-                         </li>
-                         <li v-if="showAkhwat" class="d-flex justify-content-between align-items-center">
-                            <span>Kuota Akhwat</span>
-                            <span class="fw-bold text-dark">{{ formatQuota(dauroh.Quota_Akhwat) }}</span>
-                         </li>
-                      </template>
+                      <div v-if="dauroh.Quota_Total === 'non-quota'" class="text-center py-2">
+                         <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                            <i class="bi bi-infinity me-1"></i> Tanpa Batas
+                         </span>
+                      </div>
 
-                   </ul>
+                      <div v-else class="d-flex flex-column gap-3">
+                         <div v-if="showIkhwan" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-primary">
+                            <span class="small fw-bold text-secondary ps-1">Ikhwan</span>
+                            <span class="fw-bold text-dark">
+                               {{ formatQuota(getRemaining(dauroh.Quota_Ikhwan, dauroh.Sold_Ikhwan)) }}
+                            </span>
+                         </div>
+
+                         <div v-if="showAkhwat" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-danger">
+                            <span class="small fw-bold text-secondary ps-1">Akhwat</span>
+                            <span class="fw-bold text-dark">
+                               {{ formatQuota(getRemaining(dauroh.Quota_Akhwat, dauroh.Sold_Akhwat)) }}
+                            </span>
+                         </div>
+
+                         <div v-if="showTotal && !showIkhwan && !showAkhwat" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
+                            <span class="small fw-bold text-secondary">Tiket Tersedia</span>
+                            <span class="fw-bold text-dark">
+                               {{ formatQuota(getRemaining(dauroh.Quota_Total, dauroh.Sold_Total)) }}
+                            </span>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                   <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                      <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                         <i class="bi bi-info-circle-fill text-primary"></i> Detail Event
+                      </h6>
+                   </div>
+                   <div class="card-body p-4">
+                      <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
+                         <li class="d-flex justify-content-between border-bottom pb-2">
+                            <span>Hari</span>
+                            <span class="fw-bold text-dark">{{ getDayName(dauroh.Date) }}</span>
+                         </li>
+                         <li class="d-flex justify-content-between border-bottom pb-2">
+                            <span>Jam</span>
+                            <span class="fw-bold text-dark">{{ getTimeRange(dauroh.Date) }}</span>
+                         </li>
+                         
+                         <li class="d-flex justify-content-between">
+                            <span>Total Kapasitas</span>
+                            <span class="fw-bold text-dark text-end" style="max-width: 60%;">
+                               {{ totalQuotaDisplay }}
+                            </span>
+                         </li>
+                      </ul>
+                   </div>
                 </div>
 
              </div>
@@ -138,6 +167,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useDaurohStore } from '~/stores/dauroh';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
+import Swal from 'sweetalert2'; 
 import 'quill/dist/quill.snow.css'; 
 
 const route = useRoute();
@@ -152,16 +182,25 @@ const currentUrl = ref('');
 
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
+// --- HELPER LOGIC ---
+
+// 1. Gender Label
 const getGenderLabel = (g: string) => {
     if (!g) return 'Umum';
-    return g.includes('ikhwan, akhwat') ? 'Ikhwan, Akhwat' : g;
+    const lower = g.toLowerCase();
+    
+    if (lower.includes('ikhwan') && lower.includes('akhwat')) return 'Umum'; 
+    if (lower.includes('ikhwan') || lower.includes('laki') || lower.includes('pria')) return 'Khusus Ikhwan';
+    if (lower.includes('akhwat') || lower.includes('perempuan') || lower.includes('wanita')) return 'Khusus Akhwat';
+    
+    return 'Umum';
 };
 
-// Logic tampilan kuota (sama seperti sebelumnya)
+// 2. Toggles untuk baris kuota
 const showTotal = computed(() => {
     if (!dauroh.value) return false;
-    const g = dauroh.value.Gender?.toLowerCase() || '';
     if (dauroh.value.Quota_Total === 'non-quota') return true;
+    const g = dauroh.value.Gender?.toLowerCase() || '';
     return g === 'umum' || (!g.includes('ikhwan') && !g.includes('akhwat'));
 });
 
@@ -175,30 +214,66 @@ const showAkhwat = computed(() => {
     return g.includes('akhwat') || g.includes('perempuan') || g.includes('wanita') || g.includes('ikhwan, akhwat');
 });
 
-// --- [REVISI PENTING] LOGIC TOMBOL DAFTAR ---
+// 3. Hitung Sisa Kuota (Quota - Sold)
+const getRemaining = (quota: number | string, sold: number | string) => {
+    if (quota === 'non-quota') return 'Tanpa Batas';
+    const q = Number(quota) || 0;
+    const s = Number(sold) || 0;
+    const remain = q - s;
+    return remain < 0 ? 0 : remain; // Safety check
+};
+
+// 4. Format Angka Kuota
+const formatQuota = (val: string | number) => {
+    if (val === 'non-quota' || val === 'Tanpa Batas') return 'Tanpa Batas';
+    if (val === 0 || val === '0') return '0 (Penuh)';
+    return `${val}`;
+};
+
+// 5. Total Kapasitas Display (Ambil Murni Quota Awal)
+const totalQuotaDisplay = computed(() => {
+    if (!dauroh.value) return '-';
+    const d = dauroh.value;
+
+    if (d.Quota_Total === 'non-quota') return 'Tanpa Batas';
+
+    // Karena API 'Quota' = Kapasitas Awal, kita langsung tampilkan saja.
+    // Tidak perlu ditambah Sold lagi.
+    
+    let text = [];
+    if (showIkhwan.value) text.push(`Ikhwan: ${d.Quota_Ikhwan}`);
+    if (showAkhwat.value) text.push(`Akhwat: ${d.Quota_Akhwat}`);
+    
+    if (text.length > 0) return text.join(', ');
+    
+    return `${d.Quota_Total} Kursi`;
+});
+
+// 6. Cek Status Registrasi
 const registrationStatus = computed(() => {
   const d = dauroh.value;
   if (!d) return { canRegister: false, message: 'Loading...' };
   
   if (d.Status !== 'active') return { canRegister: false, message: 'Event Selesai / Tutup' };
   
-  // 1. Cek Unlimited
   if (d.Quota_Total === 'non-quota') {
      return { canRegister: true, message: 'Daftar Sekarang' };
   }
 
-  // 2. Logic Pengecekan Kuota (FIX BUG KUOTA PENUH)
-  // Cek apakah SALAH SATU slot masih tersedia (> 0)
-  const qTotal = Number(d.Quota_Total || 0);
-  const qIkhwan = Number(d.Quota_Ikhwan || 0);
-  const qAkhwat = Number(d.Quota_Akhwat || 0);
+  // Cek apakah masih ada sisa (Quota - Sold > 0)
+  const remTotal = getRemaining(d.Quota_Total, d.Sold_Total);
+  const remIkhwan = getRemaining(d.Quota_Ikhwan, d.Sold_Ikhwan);
+  const remAkhwat = getRemaining(d.Quota_Akhwat, d.Sold_Akhwat);
 
-  // Jika Total masih ada, ATAU Ikhwan masih ada, ATAU Akhwat masih ada
-  if (qTotal > 0 || qIkhwan > 0 || qAkhwat > 0) {
+  // Jika salah satu slot masih ada sisa, tombol aktif
+  if (
+    (typeof remTotal === 'number' && remTotal > 0) || 
+    (typeof remIkhwan === 'number' && remIkhwan > 0) || 
+    (typeof remAkhwat === 'number' && remAkhwat > 0)
+  ) {
      return { canRegister: true, message: 'Daftar Sekarang' };
   }
   
-  // Jika semua benar-benar habis
   return { canRegister: false, message: 'Kuota Penuh' };
 });
 
@@ -253,24 +328,32 @@ const getTimeRange = (dateObj: any) => {
   return `${s} - ${e} WIB`;
 };
 
-const formatQuota = (val: string | number) => {
-    if (val === 'non-quota') return 'Tanpa Batas';
-    if (val === 0 || val === '0') return '0 (Penuh)';
-    if (!val) return '-';
-    return `${val} Orang`;
-};
-
 const handleRegisterClick = () => {
   if (!isLoggedIn.value) {
-    router.push(`/login?redirect=/dauroh/${daurohSK}`);
+    Swal.fire({
+        icon: 'info',
+        title: 'Login Diperlukan',
+        text: 'Mohon login terlebih dahulu untuk mendaftar.',
+        showCancelButton: true,
+        confirmButtonText: 'Login Sekarang',
+        cancelButtonText: 'Nanti',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+          popup: 'rounded-4 border-0 shadow-lg p-4',
+          title: 'fs-5 fw-bold text-dark mb-2',
+          htmlContainer: 'text-muted small mb-4',
+          confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium',
+          cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium'
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+           router.push('/login');
+        }
+      });
   } else {
     router.push(`/dauroh/register/${daurohSK}`);
   }
-};
-
-const copyLink = () => {
-  navigator.clipboard.writeText(currentUrl.value);
-  alert('Link tersalin!');
 };
 </script>
 
@@ -280,7 +363,7 @@ const copyLink = () => {
 }
 .font-blog h1, .font-blog h2, .font-blog h3, .font-blog h4, .font-blog h5, .font-blog h6, 
 .font-blog .btn, .font-blog .badge, .font-blog .ls-1, .font-blog .x-small, .font-blog small, 
-.font-blog .card-body, .font-blog .nav-link {
+.font-blog .card-body, .font-blog .nav-link, .font-blog .card-header {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
