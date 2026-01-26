@@ -1,33 +1,30 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isLoggedIn, isAdmin, getUser, logout } = useAuth();
-
-  // 1. Selalu coba pulihkan sesi jika state user kosong dan ada token
-  if (!isLoggedIn.value && process.client) {
-    const token = localStorage.getItem("IdToken");
-    if (token) {
-      try {
-        await getUser(); 
-      } catch {
-        await logout();
-        return; 
-      }
-    }
-  }
-  // 2. Tentukan halaman publik
-  const publicPages = ["/", "/login", "/register", "/admin/login", "/verify"];
-  const isPublicPage = publicPages.includes(to.path) || to.path.startsWith('/dauroh/');
-
-  // 3. Lindungi halaman yang tidak publik
-  if (!isPublicPage) {
-    if (!isLoggedIn.value) {
-      return navigateTo("/login");
+  const { accessToken, user, isAdmin, getUser } = useAuth();
+  
+  // 1. Jika ada token tapi data user kosong (misal abis refresh), ambil data user dulu
+  if (accessToken.value && !user.value) {
+    try {
+      await getUser();
+    } catch (error) {
+      accessToken.value = null; // Token error/expired, hapus saja
     }
   }
 
-  // 4. Lindungi halaman admin secara spesifik
-  if (to.path.startsWith('/admin') && to.path !== '/admin/login') {
-    if (!isAdmin.value) {
-      return navigateTo('/dashboard'); 
+  // 2. Proteksi rute ADMIN
+  if (to.path.startsWith('/admin')) {
+    // Jika mencoba akses /admin/login saat sudah login admin, arahkan ke dashboard admin
+    if (to.path === '/admin/login' && isAdmin.value) {
+      return navigateTo('/admin');
+    }
+    if (to.path !== '/admin/login' && !isAdmin.value) {
+      return navigateTo('/admin/login');
+    }
+  }
+
+  const userOnlyPaths = ['/dashboard', '/profile', '/riwayat-pendaftaran'];
+  if (userOnlyPaths.some(path => to.path.startsWith(path))) {
+    if (!accessToken.value) {
+      return navigateTo('/login');
     }
   }
 });

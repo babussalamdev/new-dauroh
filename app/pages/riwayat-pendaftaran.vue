@@ -55,7 +55,7 @@
 
               <td class="py-3 text-center">
                 <span class="text-dark fs-10">
-                  {{ ticket.participants?.length || 1 }} Orang
+                  {{ ticket.participants?.length || 1 }} Peserta
                 </span>
               </td>
 

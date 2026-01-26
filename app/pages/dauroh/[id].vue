@@ -143,7 +143,7 @@
                          </li>
                          
                          <li class="d-flex justify-content-between">
-                            <span>Total Kapasitas</span>
+                            <span>Total Kuota</span>
                             <span class="fw-bold text-dark text-end" style="max-width: 60%;">
                                {{ totalQuotaDisplay }}
                             </span>

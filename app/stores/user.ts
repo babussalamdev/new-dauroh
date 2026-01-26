@@ -57,9 +57,20 @@ export const useUserStore = defineStore('user', {
     getAllTickets: (state) => state.tickets,
     getUpcomingTickets: (state) => state.tickets.filter(t => t.status === 'Upcoming' || t.status === 'PAID'),
     getPendingTickets: (state) => state.tickets.filter(t => t.status === 'PENDING'),
-    getDashboardData: (state) => state.tickets.filter(t => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status)
-  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    getDashboardData: (state) => state.tickets.filter(t => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    getValidTickets: (state) => {
+    if (!state.tickets) return [];
+    return state.tickets.filter(ticket => {
+      // 1. Cek apakah data dauroh/event-nya masih ada
+      const isEventExist = ticket.dauroh && ticket.dauroh.Title;
+      // 2. Cek apakah statusnya belum EXPIRED
+      // (Sesuaikan string 'EXPIRED' dengan response dari backend lu)
+      const isNotExpired = ticket.status !== 'EXPIRED';
+
+      return isEventExist && isNotExpired;
+    });
   },
+},
 
   actions: {
     async fetchUserProfile() {

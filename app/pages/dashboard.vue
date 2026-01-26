@@ -1,122 +1,138 @@
 <template>
-  <div class="user-dashboard bg-light">
-    <div class="container py-5">
+  <div class="user-dashboard bg-light-subtle">
+    <div class="container py-4 py-lg-5">
       <div v-if="isLoggedIn">
         <div class="row g-4">
           
           <div class="col-lg-12">
-            
-            <div class="card h-100 border shadow-sm overflow-hidden">
-              <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center"> 
-                <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i>Dauroh Aktif</h5>
-                <span class="badge bg-primary rounded-pill">{{ upcomingTickets.length }} Event</span>
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h5 class="mb-0 fw-bold text-dark">
+                    <i class="bi bi-calendar2-week me-2 text-primary"></i>Agenda Dauroh
+                  </h5>
+                </div>
+                
+                <ul class="nav nav-pills mt-3 bg-light p-1 rounded-3 d-inline-flex">
+                  <li class="nav-item">
+                    <button class="nav-link rounded-3 px-4 py-2" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">
+                      Dauroh Aktif
+                      <span class="ms-1 badge" :class="activeTab === 'active' ? 'bg-white text-primary' : 'bg-secondary text-white'">
+                        {{ activeDauroh.length }}
+                      </span>
+                    </button>
+                  </li>
+                  <li class="nav-item">
+                    <button class="nav-link rounded-3 px-4 py-2" :class="{ active: activeTab === 'completed' }" @click="activeTab = 'completed'">
+                      Sudah Selesai
+                    </button>
+                  </li>
+                </ul>
               </div>
-              <div class="card-body">
-                <div v-if="upcomingTickets.length > 0" class="row g-3">
-                  <div v-for="(ticket, index) in upcomingTickets" :key="'card-'+index" class="col-md-6 col-lg-4">
-                    <div class="card h-100 border shadow-sm overflow-hidden">
-                      <div class="d-flex flex-column flex-sm-row h-100">
-                        <NuxtImg 
-                          v-if="ticket.dauroh.Picture"
-                          :src="`${imgBaseUrl}/${ticket.dauroh.SK}/${ticket.dauroh.Picture}.webp`" 
-                          class="bg-light ticket-img"
-                          :alt="ticket.dauroh.Title"
-                          loading="lazy"
-                          format="webp"
-                        />
-                        <div v-else class="bg-light ticket-img d-flex align-items-center justify-content-center text-muted">
-                          <i class="bi bi-image"></i>
-                        </div>
-                        <div class="p-3 d-flex flex-column justify-content-center w-100">
-                          <h6 class="fw-bold mb-1 text-truncate-2">{{ ticket.dauroh.Title }}</h6>
-                          <p class="text-muted mb-1 small"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
-                          
-                          <span v-if="ticket.status === 'PENDING'" 
-                                class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill w-auto align-self-start">
-                            Menunggu Pembayaran
-                          </span>
-                          <span v-else-if="ticket.status === 'CHECKED_IN'" 
-                                class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill w-auto align-self-start">
-                            <i class="bi bi-check-circle-fill me-1"></i> Sudah Check-in
-                          </span>
-                          <span v-else 
-                                class="badge bg-success-subtle text-success border border-success-subtle rounded-pill w-auto align-self-start">
-                            Akan Datang
-                          </span>
+
+              <div class="card-body bg-white pt-0">
+                <div v-if="activeTab === 'active'">
+                  <div v-if="activeDauroh.length > 0" class="row g-3">
+                    <div v-for="(ticket, index) in activeDauroh" :key="'active-'+index" class="col-md-6 col-lg-4">
+                      <div class="card h-100 border rounded-4 hover-shadow transition">
+                        <div class="d-flex flex-row h-100">
+                          <div class="p-2">
+                            <NuxtImg 
+                              v-if="ticket.dauroh.Picture"
+                              :src="`${imgBaseUrl}/${ticket.dauroh.SK}/${ticket.dauroh.Picture}.webp`" 
+                              class="rounded-3 object-fit-cover shadow-sm"
+                              style="width: 100px; height: 100px;"
+                              :alt="ticket.dauroh.Title"
+                              loading="lazy"
+                            />
+                            <div v-else class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted" style="width: 100px; height: 100px;">
+                              <i class="bi bi-image fs-3"></i>
+                            </div>
                           </div>
+                          <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
+                            <div>
+                              <h6 class="fw-bold mb-1 text-truncate-2 small">{{ ticket.dauroh.Title }}</h6>
+                              <p class="text-muted mb-2 small-8"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mt-auto">
+                              <span v-if="ticket.status === 'PENDING'" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle small-8">
+                                Belum Bayar
+                              </span>
+                              <span v-else class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle small-8">
+                                Terdaftar
+                              </span>
+                              <NuxtLink :to="`/dauroh/${ticket.dauroh.SK}`" class="btn btn-link btn-sm p-0 text-decoration-none small-8 fw-bold">Detail</NuxtLink>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div v-else class="text-center py-5">
+                    <i class="bi bi-calendar-x fs-1 text-light-emphasis"></i>
+                    <p class="text-muted mt-2">Belum ada dauroh aktif yang diikuti.</p>
+                  </div>
                 </div>
-                
-                <div v-else class="text-center text-muted py-5 bg-light rounded-3 border border-dashed">
-                  <i class="bi bi-ticket-perforated fs-1 text-secondary mb-2"></i>
-                  <p class="mb-0">Tidak ada dauroh aktif saat ini.</p>
-                  <NuxtLink to="/" class="btn btn-primary btn-sm mt-3 rounded-pill px-4">Cari Dauroh</NuxtLink>
+
+                <div v-else>
+                  <div v-if="completedDauroh.length > 0" class="row g-3">
+                    <div v-for="(ticket, index) in completedDauroh" :key="'comp-'+index" class="col-md-6 col-lg-4">
+                      <div class="card h-100 border rounded-4 opacity-75 grayscale bg-light">
+                        <div class="p-3">
+                          <h6 class="fw-bold mb-1 text-truncate">{{ ticket.dauroh.Title }}</h6>
+                          <p class="text-muted mb-0 small"><i class="bi bi-check2-all me-1"></i>Selesai pada {{ formatDate(ticket.dauroh.Date) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="text-center py-5">
+                    <p class="text-muted small">Riwayat dauroh belum tersedia.</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="card shadow-sm border-0 mt-4">
-              <div class="card-header bg-white py-3">
-                <h3 class="mb-0 fw-bold"><i class="bi bi-receipt me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h3>
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+              <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
               </div>
               <div class="card-body p-0">
                 <div v-if="upcomingTickets.length > 0" class="table-responsive">
-                  <table class="table table-bordered table-hover table-sm align-middle fs-sm">
-                    <thead class="table-light">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
                       <tr>
-                        <th class="ps-4">ID Transaksi</th>
-                        <th>Event</th>
-                        <th>Peserta</th>
-                        <th class="text-center">Tiket</th>
+                        <th class="ps-4 py-3 border-0 small text-uppercase fw-bold text-muted">Transaksi</th>
+                        <th class="border-0 small text-uppercase fw-bold text-muted">Detail Event</th>
+                        <th class="border-0 small text-uppercase fw-bold text-muted text-center">Tiket</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="(ticket, index) in upcomingTickets" :key="'row-'+index">
                         <td class="ps-4">
-                          <span class="font-monospace small text-muted">#{{ ticket.SK.slice(-6) }}</span>
-                          <br>
-                          
-                          <span v-if="ticket.status === 'PENDING'" class="badge bg-warning text-dark">Menunggu Pembayaran</span>
-                          <span v-else-if="ticket.status === 'CHECKED_IN'" class="badge bg-info text-dark">Sudah Check-in</span>
-                          <span v-else class="badge bg-success">Lunas</span>
-                          </td>
-                        <td>
-                          <span class="fw-bold d-block text-truncate" style="max-width: 200px;">{{ ticket.dauroh.Title }}</span>
-                          <small class="text-muted">{{ formatCurrency(ticket.dauroh.Price) }}</small>
-                        </td>
-                        <td>
-                          <div v-for="p in ticket.participants" :key="p.Name" class="small fw-medium">
-                            <i class="bi bi-person me-1 text-secondary"></i> {{ p.Name }}
+                          <div class="d-flex flex-column">
+                            <span class="fw-bold text-primary small">#{{ ticket.SK.slice(-6).toUpperCase() }}</span>
+                            <span v-if="ticket.status === 'PENDING'" class="text-warning small-8 fw-medium">Menunggu Verifikasi</span>
+                            <span v-else class="text-success small-8 fw-medium">Pembayaran Lunas</span>
                           </div>
                         </td>
-                        <td class="text-center">
-                          
-                          <NuxtLink 
-                            v-if="ticket.status === 'PENDING'"
-                            :to="`/dauroh/register/${ticket.dauroh.SK}`" 
-                            class="btn btn-warning btn-sm rounded px-3 fw-bold"
-                          >
-                            Bayar
-                          </NuxtLink>
-
+                        <td>
+                          <span class="fw-bold d-block text-dark">{{ ticket.dauroh.Title }}</span>
+                          <span class="text-muted small-8">{{ ticket.participants.length }} Peserta • {{ formatCurrency(ticket.dauroh.Price) }}</span>
+                        </td>
+                        <td class="text-center pe-4">
                           <button 
-                            v-else
-                            class="btn btn-primary btn-sm rounded px-2 px-md-3 text-nowrap" 
+                            class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" 
                             @click="openQrModal(ticket)"
-                            title="Lihat QR Code"
                           >
-                            <i class="bi bi-qr-code"></i>
-                            <span class="d-none d-md-inline ms-1">Lihat QR</span>
+                            <i class="bi bi-qr-code-scan me-2"></i>E-Ticket
                           </button>
-                          </td>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <div v-else class="text-center py-4 text-muted">
-                  <small>Belum ada data pembayaran.</small>
+                <div v-else class="text-center py-5">
+                  <p class="text-muted">Belum ada riwayat transaksi.</p>
                 </div>
               </div>
             </div>
@@ -135,14 +151,39 @@
 import { ref, computed } from 'vue';
 import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
+import dayjs from 'dayjs';
 
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
+const activeTab = ref('active');
+
 const showQrModal = ref(false);
 const selectedTicket = ref(null);
-const upcomingTickets = computed(() => userStore.getDashboardData);
+
+const upcomingTickets = computed(() => userStore.getDashboardData || []);
+
+// Filter Dauroh Aktif vs Selesai
+const activeDauroh = computed(() => {
+  return upcomingTickets.value.filter(t => {
+    if (!t.dauroh.Date) return true;
+    const dates = Object.values(t.dauroh.Date);
+    if (dates.length === 0) return true;
+    const lastDate = dates.reduce((max, curr) => curr.date > max ? curr.date : max, dates[0].date);
+    return dayjs().isBefore(dayjs(lastDate).add(1, 'day'));
+  });
+});
+
+const completedDauroh = computed(() => {
+  return upcomingTickets.value.filter(t => {
+    if (!t.dauroh.Date) return false;
+    const dates = Object.values(t.dauroh.Date);
+    if (dates.length === 0) return false;
+    const lastDate = dates.reduce((max, curr) => curr.date > max ? curr.date : max, dates[0].date);
+    return dayjs().isAfter(dayjs(lastDate).add(1, 'day'));
+  });
+});
 
 const openQrModal = (ticket) => {
   selectedTicket.value = ticket;
@@ -162,31 +203,64 @@ const formatCurrency = (val) => {
     minimumFractionDigits: 0 
   }).format(Number(val));
 };
+
+const formatDate = (dateObj) => {
+  if (!dateObj) return '-';
+  const dates = Object.values(dateObj);
+  if (dates.length === 0) return '-';
+  return dayjs(dates[0].date).format('DD MMM YYYY');
+};
 </script>
 
 <style scoped>
-@import url("~/assets/css/admin/tables.css");
 .user-dashboard {
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 70px);
+  background-color: #f8f9fa;
 }
+
+.hover-shadow:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+}
+
+.transition {
+  transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link {
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #ffffff;
+  color: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
 .text-truncate-2 {
   display: -webkit-box;
-  line-clamp: 2;
+  -webkit-line-clamp: 2; /* Vendor prefix */
+  line-clamp: 2;         /* Standard property (Saran Audit) */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.ticket-img {
-  width: 100%;
-  height: 160px; /* Atur tinggi gambar di HP */
-  object-fit: cover;
+
+.small-8 {
+  font-size: 0.8rem;
 }
 
-/* Tampilan Tablet & Desktop (min-width: 576px): Gambar balik ke kiri */
-@media (min-width: 576px) {
-  .ticket-img {
-    width: 120px !important; /* Lebar fix di desktop */
-    height: 100% !important; /* Tinggi ngikutin konten */
-    min-height: 140px; /* Jaga-jaga biar gak gepeng kalau konten dikit */
-  }
+.grayscale {
+  filter: grayscale(1);
+}
+
+.table thead th {
+  letter-spacing: 0.5px;
+}
+
+/* Custom shadow & border radius for cards */
+.rounded-4 {
+  border-radius: 1rem !important;
 }
 </style>

@@ -151,7 +151,6 @@
               <div v-if="formState.scheduleDays.length === 0" class="text-center py-5 rounded-4 bg-light border border-dashed">
                  <i class="bi bi-calendar-range fs-1 text-muted opacity-25"></i>
                  <p class="text-muted small mt-2">Belum ada jadwal.</p>
-                 <button type="button" class="btn btn-link btn-sm text-decoration-none" @click="addScheduleDay">Mulai tambah</button>
               </div>
               
               <div v-else class="d-flex flex-column gap-3">
