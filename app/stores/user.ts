@@ -48,29 +48,37 @@ export interface UserTicket {
 
 export const useUserStore = defineStore('user', {
   state: () => ({
+    // State asli bernama 'tickets'
     tickets: useStorage<UserTicket[]>('user_tickets_v2', [], localStorage),
     user: null as UserProfile | null,
     isLoading: false,
   }),
   
   getters: {
-    getAllTickets: (state) => state.tickets,
-    getUpcomingTickets: (state) => state.tickets.filter(t => t.status === 'Upcoming' || t.status === 'PAID'),
-    getPendingTickets: (state) => state.tickets.filter(t => t.status === 'PENDING'),
-    getDashboardData: (state) => state.tickets.filter(t => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    getValidTickets: (state) => {
-    if (!state.tickets) return [];
-    return state.tickets.filter(ticket => {
-      // 1. Cek apakah data dauroh/event-nya masih ada
-      const isEventExist = ticket.dauroh && ticket.dauroh.Title;
-      // 2. Cek apakah statusnya belum EXPIRED
-      // (Sesuaikan string 'EXPIRED' dengan response dari backend lu)
-      const isNotExpired = ticket.status !== 'EXPIRED';
+    // [FIX 1] Tambahkan Getter 'transactions' sebagai ALIAS untuk 'tickets'
+    // Ini supaya kode di register/[id].vue yang manggil userStore.transactions bisa jalan
+    transactions: (state) => state.tickets,
 
-      return isEventExist && isNotExpired;
-    });
+    getAllTickets: (state) => state.tickets,
+    
+    // [FIX 2] Tambahkan tipe eksplisit (t: UserTicket) untuk mengatasi error 'implicitly has an any type'
+    getUpcomingTickets: (state) => state.tickets.filter((t: UserTicket) => t.status === 'Upcoming' || t.status === 'PAID'),
+    
+    getPendingTickets: (state) => state.tickets.filter((t: UserTicket) => t.status === 'PENDING'),
+    
+    getDashboardData: (state) => state.tickets
+      .filter((t: UserTicket) => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status))
+      .sort((a: UserTicket, b: UserTicket) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      
+    getValidTickets: (state) => {
+      if (!state.tickets) return [];
+      return state.tickets.filter((ticket: UserTicket) => {
+        const isEventExist = ticket.dauroh && ticket.dauroh.Title;
+        const isNotExpired = ticket.status !== 'EXPIRED';
+        return isEventExist && isNotExpired;
+      });
+    },
   },
-},
 
   actions: {
     async fetchUserProfile() {
@@ -96,12 +104,11 @@ export const useUserStore = defineStore('user', {
         }
     },
 
-    // --- ACTION UTAMA: FETCH RIWAYAT & GABUNG DATA ---
     async fetchUserTransactions() {
       console.log("Action fetchUserTransactions DIMULAI");
       
       const nuxtApp = useNuxtApp() as any;
-      const apiBase = nuxtApp.$apiBase; // Sudah Benar ($apiBase)
+      const apiBase = nuxtApp.$apiBase; 
       
       if (!apiBase) {
         console.error("⛔ STOP: $apiBase tidak ditemukan.");
@@ -114,12 +121,8 @@ export const useUserStore = defineStore('user', {
       this.isLoading = true;
 
       try {
-        // --- STEP 1: LOAD MASTER DATA EVENT ---
-        // Kita butuh data event buat tau Judul & Harga
         if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
             console.log(" memanggil fetchPublicTiketDauroh...");
-            
-            // ✅ FIX: Memanggil nama fungsi yang BENAR dari dauroh.ts
             if (typeof daurohStore.fetchPublicTiketDauroh === 'function') {
                 await daurohStore.fetchPublicTiketDauroh();
             } else {
@@ -127,29 +130,22 @@ export const useUserStore = defineStore('user', {
             }
         }
 
-        // --- STEP 2: TEMBAK API RIWAYAT ---
         console.log("Menembak API /get-payment...");
         const response = await apiBase.get('/get-payment?type=client');
         console.log("Response API:", response.data);
         
-        // --- STEP 3: MAPPING (GABUNGKAN DATA) ---
         const mappedTickets = response.data.map((item: any) => {
           
-          // Pecah ID: "e9820a#03d240" -> EventID: "e9820a"
           const parts = (item.SK || '').split('#');
           const eventId = parts[0]; 
           const ticketId = parts[1] || item.SK; 
 
-          // 🔍 CARI DATA DETAIL DI STORE
           const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
 
-          // LOGIKA PENGISIAN:
-          // Jika event sudah lewat (inactive), mungkin gak ketemu di store (karena filter di dauroh.ts).
           const title = foundEvent?.Title || item.Title || 'Event Tidak Dikenal / Sudah Lewat';
           const place = foundEvent?.Place || 'Lokasi Online / Tidak Diketahui';
           const amount = foundEvent?.Price || 0; 
 
-          // Peserta Dummy (Pakai nama user login)
           const participants = [
             { 
               Name: item.PIC || user.value?.name || 'Peserta', 
@@ -162,9 +158,8 @@ export const useUserStore = defineStore('user', {
              full_sk: item.SK,
              status: item.Status,
              created_at: item.CreatedAt,
-             date: item.CreatedAt, // Kompatibilitas
+             date: item.CreatedAt, 
              
-             // Data Gabungan
              dauroh: { 
                Title: title,
                Place: place,
@@ -175,13 +170,11 @@ export const useUserStore = defineStore('user', {
              participants: participants,
              total_participants: 1,
 
-             // Payment Dummy
              va_number: '-', 
              expired_date: '-'
           } as UserTicket;
         });
 
-        // Sort: Terbaru di atas
         this.tickets = mappedTickets.sort((a: any, b: any) => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });

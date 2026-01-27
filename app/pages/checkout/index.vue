@@ -19,6 +19,9 @@ const checkoutStore = useCheckoutStore()
   <div class="card shadow-sm">
       <div class="card-body p-4">
   <div class="checkout-container">
+
+{{ checkoutStore.currentStep }}
+    
     <CheckoutSelectMethod 
       v-if="checkoutStore.currentStep === 'select'" 
     />

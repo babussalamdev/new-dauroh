@@ -60,8 +60,12 @@
               </td>
 
               <td class="py-3 text-center">
-                <span class="badge rounded-pill px-3 py-2 status-badge" :class="getStatusClass(ticket.status)">
-                  {{ ticket.status === 'PENDING' ? 'Menunggu' : (ticket.status === 'CHECKED_IN' ? 'Sudah Check-in' : ticket.status) }}
+                <span class="badge rounded-pill px-3 py-2 status-badge" :class="getStatusClass(getSmartStatus(ticket))">
+                  <span v-if="getSmartStatus(ticket) === 'PENDING'">Menunggu Pembayaran</span>
+                  <span v-else-if="getSmartStatus(ticket) === 'EXPIRED'">Kadaluarsa</span>
+                  <span v-else-if="getSmartStatus(ticket) === 'CANCELLED'">Dibatalkan</span>
+                  <span v-else-if="getSmartStatus(ticket) === 'PAID'">Lunas</span>
+                  <span v-else>{{ ticket.status }}</span>
                 </span>
               </td>
 
@@ -83,21 +87,21 @@
                   </button>
 
                   <button 
-                    v-if="ticket.status === 'PENDING'"
+                    v-if="getSmartStatus(ticket) === 'PENDING'"
                     @click="resumePayment(ticket)" 
                     class="btn btn-sm btn-primary fw-bold shadow-sm w-100 d-flex align-items-center justify-content-center gap-2"
                   >
                     <i class="bi bi-credit-card-2-front"></i> Bayar
                   </button>
 
-                  <button 
-                    v-if="['EXPIRED', 'FAILED', 'CANCELLED'].includes(ticket.status)"
-                    @click="deleteHistory(ticket)" 
-                    class="btn btn-sm btn-link text-danger text-decoration-none p-0 small"
+                  <span 
+                    v-else-if="['EXPIRED', 'FAILED', 'CANCELLED'].includes(getSmartStatus(ticket))"
+                    class="text-muted x-small fst-italic mt-1"
                   >
-                    <i class="bi bi-trash"></i> Hapus
-                  </button>
-                </div>
+                    Tidak Tersedia
+                  </span>
+
+                  </div>
 
               </td>
 
@@ -150,7 +154,7 @@
                     </td>
                     <td class="text-end pe-3">
                       <button 
-                        v-if="['PAID', 'Upcoming', 'Selesai', 'active', 'CHECKED_IN'].includes(selectedTicketDetail.status)"
+                        v-if="['PAID', 'Upcoming', 'Selesai', 'active', 'CHECKED_IN'].includes(getSmartStatus(selectedTicketDetail))"
                         @click="showIndividualQr(selectedTicketDetail, p)"
                         class="btn btn-sm btn-primary py-1 px-3 rounded-pill"
                         style="font-size: 0.75rem;"
@@ -164,7 +168,7 @@
               </table>
             </div>
 
-             <div v-if="selectedTicketDetail?.status === 'PENDING'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
+             <div v-if="getSmartStatus(selectedTicketDetail) === 'PENDING'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <div>Selesaikan pembayaran untuk melihat QR Tiket.</div>
              </div>
@@ -187,11 +191,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'; // <--- TAMBAHIN onMounted
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '~/stores/user';
 import { useCheckoutStore } from '~/stores/checkout';
-import Swal from 'sweetalert2';
+import { useDaurohStore } from '~/stores/dauroh'; 
+import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 
@@ -209,23 +214,21 @@ definePageMeta({
 const router = useRouter();
 const userStore = useUserStore();
 const checkoutStore = useCheckoutStore();
+const daurohStore = useDaurohStore();
+const { getSmartStatus } = useTransactionStatus();
 
-// --- INI BAGIAN PENTING YANG KETINGGALAN ---
-onMounted(() => {
-  // Panggil fungsi "TEMBAK API" yang udah kita buat di user.ts
+onMounted(async () => {
+  if (daurohStore.tiketDauroh.length === 0) {
+      await daurohStore.fetchPublicTiketDauroh();
+  }
   userStore.fetchUserTransactions();
 });
-// -------------------------------------------
 
-// STATE UNTUK MODAL DETAIL
 const showDetail = ref(false);
 const selectedTicketDetail = ref<any>(null);
-
-// STATE UNTUK MODAL QR
 const showQr = ref(false);
 const qrPayload = ref<any>(null);
 
-// Sorting logic
 const sortedTickets = computed(() => {
   if (!userStore.tickets) return [];
   return [...userStore.tickets].sort((a, b) => {
@@ -235,7 +238,6 @@ const sortedTickets = computed(() => {
   });
 });
 
-// --- LOGIC MODAL DETAIL ---
 const openDetailModal = (ticket: any) => {
   selectedTicketDetail.value = ticket;
   showDetail.value = true;
@@ -246,21 +248,16 @@ const closeDetailModal = () => {
   selectedTicketDetail.value = null;
 };
 
-// --- LOGIC TAMPILKAN QR INDIVIDU ---
 const showIndividualQr = (ticket: any, specificParticipant: any) => {
   qrPayload.value = {
     dauroh: ticket.dauroh,
     participants: [specificParticipant],
     SK: ticket.SK 
   };
-  
   showQr.value = true;
 };
 
-// --- ACTIONS LAINNYA ---
-
 const resumePayment = (ticket: any) => {
-  // 1. Restore Data ke Store
   checkoutStore.dauroh = ticket.dauroh;
   checkoutStore.participants = ticket.participants || [];
   
@@ -268,11 +265,11 @@ const resumePayment = (ticket: any) => {
     ...ticket,
     status: ticket.status,
     amount: ticket.amount,
-    // Pastikan mapping field ini sesuai sama response backend
     vaNumber: ticket.va_number || ticket.receiver_bank_account?.account_number, 
     expiryTime: ticket.expired_date,
     paymentMethod: ticket.sender_bank || ticket.payment_method || 'Bank',
   };
+  
   if (checkoutStore.setStep) {
       checkoutStore.setStep('instructions');
   } else {
@@ -280,23 +277,6 @@ const resumePayment = (ticket: any) => {
   }
   router.push('/checkout');
 };
-
-const deleteHistory = async (ticket: any) => {
-  const result = await Swal.fire({
-    title: 'Hapus Riwayat?',
-    text: "Data ini akan dihapus permanen.",
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    confirmButtonText: 'Hapus'
-  });
-
-  if (result.isConfirmed) {
-    userStore.removeTicket(ticket.SK || ticket.id);
-  }
-};
-
-// --- HELPERS ---
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -343,5 +323,8 @@ const getStatusClass = (status: string) => {
 }
 .fs-7 {
   font-size: 0.75rem !important;
+}
+.x-small {
+  font-size: 0.75rem;
 }
 </style>

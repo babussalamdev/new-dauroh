@@ -53,8 +53,10 @@
 
           <div v-else-if="currentStatus === 'EXPIRED' || currentStatus === 'expired'" class="alert alert-danger text-center">
              <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
-             <p>Maaf, batas waktu pembayaran telah berakhir.</p>
-             <button class="btn btn-danger mt-2" @click="router.push('/')">Kembali ke Beranda</button>
+             <p>Sesi pembayaran telah berakhir.</p>
+             <button class="btn btn-outline-danger btn-sm mt-3" @click="handleExpiredState">
+                Pilih Metode Pembayaran Ulang
+             </button>
           </div>
 
         </div>
@@ -81,7 +83,7 @@ import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-// Import Assets (Sama kayak sebelumnya)
+// Import Assets
 import bniLogo from '~/assets/img/bank/bni.png';
 import briLogo from '~/assets/img/bank/bri.png';
 import bsiLogo from '~/assets/img/bank/bsi.png';
@@ -90,8 +92,6 @@ import danamonLogo from '~/assets/img/bank/danamon.png';
 import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
-
-// HAPUS definePageMeta (karena ini component)
 
 const store = useCheckoutStore();
 const userStore = useUserStore();
@@ -135,29 +135,62 @@ const currentBankComponent = computed(() => {
   return method ? BankComponents[method] : null;
 });
 
+// --- Helper: Handle Expired Logic ---
+// Kita pisah logic ini biar bisa dipanggil dari Watcher, onMounted, atau Tombol Manual
+const handleExpiredState = () => {
+    Swal.fire({
+      icon: 'error',
+      title: 'Waktu Habis!',
+      text: 'Sesi pembayaran Anda telah berakhir. Silakan pilih metode pembayaran ulang.',
+      timer: 2000,
+      showConfirmButton: false
+    }).then(() => {
+      // 1. Reset Transaksi
+      if (store.resetTransaction) {
+        store.resetTransaction(); 
+      } else {
+        store.transactionDetails = null;
+        store.paymentMethod = null;
+      }
+      
+      // 2. Paksa Pindah Step
+      store.setStep('select');
+    });
+};
+
 // --- Lifecycle & Watcher ---
 onMounted(() => {
- // Simpan record "Pending" ke userStore pas instruksi dibuka
- if (store.transactionDetails && store.dauroh) {
+  // 1. Cek Data
+  if (store.transactionDetails && store.dauroh) {
      userStore.registerDauroh({
          dauroh: store.dauroh,
          participants: store.participants,
          transactionDetails: store.transactionDetails 
      });
- }
+  }
+  const status = (currentStatus.value || '').toUpperCase();
+  if (status === 'EXPIRED') {
+     handleExpiredState();
+  }
 });
 
-// Deteksi Lunas via WebSocket/Store Update
-watch(isPaid, (paid) => {
-  if (paid) {
-    // Update status di Frontend Store
+// --- Watcher Status ---
+watch(currentStatus, (newStatus) => {
+  const status = (newStatus || '').toUpperCase();
+
+  // 1. Handle Expired (Realtime change)
+  if (status === 'EXPIRED') {
+    handleExpiredState();
+  }
+  
+  // 2. Handle Paid
+  else if (['PAID', 'SUCCESS', 'SETTLED', 'LUNAS'].includes(status)) {
     const registrationData = {
       dauroh: store.dauroh as any, 
       participants: store.participants as any[],
     };
-    userStore.registerDauroh(registrationData); // Ini harusnya update status jd 'PAID'
+    userStore.registerDauroh(registrationData); 
 
-    // Tampilkan notif & modal
     setTimeout(() => {
       Swal.fire({
         icon: 'success',
@@ -170,7 +203,7 @@ watch(isPaid, (paid) => {
       });
     }, 500);
   }
-});
+}, { immediate: true });
 
 const handleCloseQr = () => {
   showQrModal.value = false;
@@ -181,9 +214,15 @@ const goToDashboard = () => {
   router.push('/dashboard');
 };
 
-// Guard Navigation (Cegah user keluar tanpa sengaja)
+// Guard Navigation
 onBeforeRouteLeave((to, from, next) => {
   if (isPaid.value || to.path === '/dashboard') {
+    next();
+    return;
+  }
+  
+  // Izinkan navigasi internal (ganti step)
+  if (to.path === from.path) {
     next();
     return;
   }
@@ -198,7 +237,7 @@ onBeforeRouteLeave((to, from, next) => {
     cancelButtonText: 'Batal'
   }).then((result) => {
     if (result.isConfirmed) {
-      store.clearCheckout(); // [PENTING] Bersihkan store kalau user nyerah
+      store.clearCheckout(); 
       next();
     } else {
       next(false);

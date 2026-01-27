@@ -99,6 +99,12 @@ export const useCheckoutStore = defineStore('checkout', {
       this.voucherApplied = false;
     },
 
+    // [BARU] Action Helper untuk Reset Transaksi (Fix Error TypeScript)
+    resetTransaction() {
+      this.transactionDetails = null;
+      this.paymentMethod = null;
+    },
+
     async createPayment() {
       this.isLoading = true;
       const { $apiFlip } = useNuxtApp(); 
@@ -179,6 +185,7 @@ export const useCheckoutStore = defineStore('checkout', {
         this.isLoading = false;
       }
     },
+    
     updatePaymentStatus(data: any) {
       if (this.transactionDetails) {
         this.transactionDetails = { ...this.transactionDetails, ...data };
@@ -186,16 +193,16 @@ export const useCheckoutStore = defineStore('checkout', {
         this.transactionDetails = data;
       }
     },
-
     setExpired() {
-      if (this.transactionDetails) {
-        this.transactionDetails.status = 'expired';
+      alert('ya')
+      if (this.currentStep === 'instructions') {
+        alert('ya')
+        this.currentStep = 'select';
       }
     },
 
     clearCheckout() {
       this.$reset();
-      // [BARU] Pastikan balik ke step awal
       this.currentStep = 'select';
     }
   },

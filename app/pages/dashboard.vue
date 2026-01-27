@@ -55,7 +55,7 @@
                               <p class="text-muted mb-2 small-8"><i class="bi bi-geo-alt me-1"></i>{{ ticket.dauroh.Place }}</p>
                             </div>
                             <div class="d-flex align-items-center justify-content-between mt-auto">
-                              <span v-if="ticket.status === 'PENDING'" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle small-8">
+                              <span v-if="getSmartStatus(ticket) === 'PENDING'" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle small-8">
                                 Belum Bayar
                               </span>
                               <span v-else class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle small-8">
@@ -111,7 +111,7 @@
                         <td class="ps-4">
                           <div class="d-flex flex-column">
                             <span class="fw-bold text-primary small">#{{ ticket.SK.slice(-6).toUpperCase() }}</span>
-                            <span v-if="ticket.status === 'PENDING'" class="text-warning small-8 fw-medium">Menunggu Verifikasi</span>
+                            <span v-if="getSmartStatus(ticket) === 'PENDING'" class="text-warning small-8 fw-medium">Menunggu Verifikasi</span>
                             <span v-else class="text-success small-8 fw-medium">Pembayaran Lunas</span>
                           </div>
                         </td>
@@ -148,21 +148,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '~/stores/user';
+import { useDaurohStore } from '~/stores/dauroh';
 import { useAuth } from '~/composables/useAuth';
+import { useTransactionStatus } from '~/composables/useTransactionStatus'; 
 import dayjs from 'dayjs';
 
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
+const daurohStore = useDaurohStore();
+const { getSmartStatus } = useTransactionStatus();
 const activeTab = ref('active');
 
 const showQrModal = ref(false);
 const selectedTicket = ref(null);
-
-const upcomingTickets = computed(() => userStore.getDashboardData || []);
+const upcomingTickets = computed(() => {
+  const allTickets = userStore.getDashboardData || [];
+  return allTickets.filter(item => {
+    const status = getSmartStatus(item);
+    return status === 'PENDING' || status === 'PAID';
+  });
+});
+onMounted(async () => {
+    if (daurohStore.tiketDauroh.length === 0) {
+        await daurohStore.fetchPublicTiketDauroh();
+    }
+});
 
 // Filter Dauroh Aktif vs Selesai
 const activeDauroh = computed(() => {

@@ -183,6 +183,8 @@ import { useDaurohStore } from '~/stores/dauroh';
 import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
+import { useTransactionStatus } from '~/composables/useTransactionStatus';
+import Swal from 'sweetalert2';
 import dayjs from 'dayjs'; 
 
 definePageMeta({
@@ -196,11 +198,11 @@ const route = useRoute();
 const router = useRouter();
 const daurohStore = useDaurohStore();
 const checkoutStore = useCheckoutStore();
-const userStore = useUserStore(); // REVISI 1: Panggil User Store
+const userStore = useUserStore();
 const config = useRuntimeConfig();
+const { getSmartStatus } = useTransactionStatus(); 
 
 const daurohSK = computed(() => String(route.params.id));
-
 const imgBaseUrl = ref(config.public.img || '');
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
@@ -213,19 +215,43 @@ const formState = reactive({
 const STORAGE_KEY = computed(() => `dauroh_reg_draft_${daurohSK.value}`);
 
 onMounted(async () => {
-  // Pastikan profile user ter-load biar bisa auto-fill
-  if (!userStore.user) {
-      await userStore.fetchUserProfile();
-  }
+  // 1. Fetch data User & Transaksi (PENTING)
+  if (!userStore.user) await userStore.fetchUserProfile();
   
-  // FIX: Selalu panggil fetchUserProfile untuk memastikan data sinkron dengan sesi aktif
-  // Timpa pengecekan di atas, atau cukup panggil langsung:
-  await userStore.fetchUserProfile(); 
+  // Fetch transaksi biar kita tau ada yg nyangkut gak
+  await userStore.fetchUserTransactions(); 
 
+  // 2. Fetch data Dauroh (buat cek status Ghost Event)
+  if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
+      await daurohStore.fetchPublicTiketDauroh();
+  }
+
+  // 3. Bersihkan Checkout Store jika ada transaksi 'Zombie'
+  if (checkoutStore.transactionDetails) {
+      const zombieStatus = getSmartStatus(checkoutStore.transactionDetails);
+      // Kalau statusnya EXPIRED/CANCELLED, bersihkan store biar bisa buat baru
+      if (['EXPIRED', 'CANCELLED'].includes(zombieStatus)) {
+          if (checkoutStore.clearCheckout) {
+              checkoutStore.clearCheckout();
+          } else {
+              checkoutStore.$reset();
+              checkoutStore.currentStep = 'select';
+          }
+      }
+  }
+
+  // 4. Load Draft
   if (process.client) { 
     const saved = localStorage.getItem(STORAGE_KEY.value);
     if (saved) {
-      // ... logic load draft ...
+       try {
+         const parsed = JSON.parse(saved);
+         if (parsed.qtyIkhwan) formState.qtyIkhwan = parsed.qtyIkhwan;
+         if (parsed.qtyAkhwat) formState.qtyAkhwat = parsed.qtyAkhwat;
+         if (parsed.participants) formState.participants = parsed.participants;
+       } catch (e) {
+         console.error("Failed load draft", e);
+       }
     }
   }
 });
@@ -269,7 +295,6 @@ const quotaInfo = computed(() => {
   };
 });
 
-// REVISI 2: Logic Sisa Tiket Realtime (Visual Only)
 const getDynamicQuotaText = (quotaTotal: any, selectedQty: number) => {
     if (quotaTotal === 'non-quota') return 'Tanpa Batas Kuota';
     if (typeof quotaTotal === 'number') {
@@ -284,7 +309,7 @@ const getDynamicQuotaColor = (quotaTotal: any, selectedQty: number) => {
     if (typeof quotaTotal === 'number') {
         const remaining = quotaTotal - selectedQty;
         if (remaining <= 0) return 'text-danger fw-bold';
-        if (remaining < 5) return 'text-warning fw-bold'; // Warn if running low
+        if (remaining < 5) return 'text-warning fw-bold'; 
         return 'text-muted';
     }
     return 'text-danger';
@@ -294,7 +319,6 @@ const isQuotaReached = (quotaTotal: any, selectedQty: number) => {
     if (quotaTotal === 'non-quota') return false;
     return selectedQty >= quotaTotal;
 }
-// End Revisi 2
 
 const soldOutMessage = ref("Mohon maaf, kuota tiket sudah habis.");
 
@@ -344,7 +368,6 @@ const totalPrice = computed(() => (dauroh.value?.Price || 0) * totalTickets.valu
 const isMaxReached = computed(() => totalTickets.value >= 4);
 
 // --- METHODS ---
-
 const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
   if (change > 0 && isMaxReached.value) return;
 
@@ -357,33 +380,26 @@ const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
     if (typeof quotaInfo.value.akhwat === 'number' && quotaInfo.value.akhwat > 0 && newVal > quotaInfo.value.akhwat) return;
     if (newVal >= 0) formState.qtyAkhwat = newVal;
   }
-
   generateForms();
 };
 
 const generateForms = () => {
   const newParticipants: any[] = []; 
   const oldParticipants = [...formState.participants];
-
   const popExisting = (gender: string) => {
     const idx = oldParticipants.findIndex(p => p.Gender === gender);
-    if (idx !== -1) {
-      return oldParticipants.splice(idx, 1)[0];
-    }
+    if (idx !== -1) return oldParticipants.splice(idx, 1)[0];
     return null;
   };
 
-  // Logic Generate Form
-  let hasFilledUser = false; // Flag biar user store cuma dipake sekali di index 0
+  let hasFilledUser = false; 
 
   const createParticipant = (gender: string) => {
-      // REVISI 1: Cek apakah ini peserta pertama yang digenerate?
-      // Jika ya, ambil data dari User Store
       if (!hasFilledUser && userStore.user) {
           hasFilledUser = true;
           return {
               Name: userStore.user.fullname || '',
-              Email: userStore.user.email || '', // Email masuk ke state tapi input hidden
+              Email: userStore.user.email || '', 
               Gender: gender,
               Age: '',
               Domicile: ''
@@ -392,18 +408,16 @@ const generateForms = () => {
       return { Name: '', Email: '', Gender: gender, Age: '', Domicile: '' };
   }
 
-  // Loop Ikhwan
   for (let i = 0; i < formState.qtyIkhwan; i++) {
     const existing = popExisting('Ikhwan');
     if (existing) {
        newParticipants.push(existing);
-       if(existing.Email === userStore.user?.email) hasFilledUser = true; // Mark used if existing matches
+       if(existing.Email === userStore.user?.email) hasFilledUser = true; 
     } else {
        newParticipants.push(createParticipant('Ikhwan'));
     }
   }
 
-  // Loop Akhwat
   for (let i = 0; i < formState.qtyAkhwat; i++) {
     const existing = popExisting('Akhwat');
     if (existing) {
@@ -413,7 +427,6 @@ const generateForms = () => {
         newParticipants.push(createParticipant('Akhwat'));
     }
   }
-
   formState.participants = newParticipants;
 };
 
@@ -422,28 +435,101 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
+  // 1. Validasi Awal (Type Guard)
+  // Pastikan object dauroh dan SK-nya ada
   if (!dauroh.value || !dauroh.value.SK) return;
+
+  // --- REVISI SMART CHECK CONFLICT ---
   
+  // 2. Cari transaksi PENDING yang berhubungan dengan event ini
+  const conflictingTransaction = userStore.transactions.find(t => {
+      // Pastikan t.SK tidak null sebelum split
+      const tEventSK = (t.SK || '').split('#')[0];
+      
+      // Cocokkan ID Event
+      if (tEventSK !== dauroh.value!.SK) return false;
+      
+      // Gunakan Smart Status untuk memastikan statusnya beneran PENDING (belum expired)
+      const status = getSmartStatus(t);
+      return status === 'PENDING';
+  });
+
+  // 3. Jika ketemu konflik (User sudah punya tagihan)
+  if (conflictingTransaction) {
+      Swal.fire({
+          icon: 'info',
+          title: 'Sudah Terdaftar',
+          text: 'Anda memiliki tagihan aktif untuk event ini. Lanjutkan pembayaran?',
+          showCancelButton: true,
+          confirmButtonText: 'Lanjutkan Pembayaran',
+          cancelButtonText: 'Tutup',
+      }).then((result) => {
+          if (result.isConfirmed) {
+              
+              // [FIX ERROR 1] Mapping Manual Dauroh Object
+              // Memastikan SK selalu string (fallback ke string kosong jika null)
+              // dan menggunakan 'as any' untuk bypass strict checking properti lain yang tidak relevan
+              checkoutStore.dauroh = {
+                  ...dauroh.value!,
+                  SK: (dauroh.value?.SK || '') as string,
+                  Title: dauroh.value?.Title || '',
+                  Price: dauroh.value?.Price || 0
+              } as any;
+
+              // [FIX ERROR 2] Mapping Manual Participants
+              // Memastikan Email selalu string (fallback ke string kosong)
+              const rawParticipants = conflictingTransaction.participants || formState.participants;
+              
+              checkoutStore.participants = rawParticipants.map((p: any) => ({
+                  Name: p.Name || '',
+                  Gender: p.Gender || 'Ikhwan',
+                  // Fallback: Jika email kosong/undefined, gunakan email user yang login atau string kosong
+                  Email: p.Email || userStore.user?.email || '', 
+                  Age: p.Age || 0,
+                  Domicile: p.Domicile || ''
+              }));
+              
+              // Mapping data transaksi lama agar siap di checkout page
+              checkoutStore.transactionDetails = {
+                  ...conflictingTransaction,
+                  status: 'PENDING',
+                  // Pastikan field mapping sesuai response backend
+                  amount: conflictingTransaction.amount,
+                  vaNumber: conflictingTransaction.va_number || conflictingTransaction.receiver_bank_account?.account_number,
+                  expiryTime: conflictingTransaction.expired_date || conflictingTransaction.expiryTime,
+                  paymentMethod: conflictingTransaction.sender_bank || conflictingTransaction.paymentMethod || 'Bank',
+              };
+
+              // Set step langsung ke instruksi pembayaran
+              if (checkoutStore.setStep) {
+                  checkoutStore.setStep('instructions');
+              } else {
+                  checkoutStore.currentStep = 'instructions';
+              }
+              router.push('/checkout');
+          }
+      });
+      return; // Stop flow registrasi baru
+  }
+  
+  // 4. Flow Normal (Daftar Baru)
   if (process.client) {
     localStorage.removeItem(STORAGE_KEY.value);
   }
 
-  // REVISI 1: Logic Email
-  // Ambil email dari User Store (Logged In User) sebagai Main Email
-  const mainEmail = userStore.user?.email || formState.participants[0]?.Email;
+  const mainEmail = userStore.user?.email || formState.participants[0]?.Email || '';
   
   const finalParticipants = formState.participants.map((p) => ({
     ...p,
-    // Semua peserta pakai email akun utama
-    Email: mainEmail,
+    Email: mainEmail, // Pastikan Email terisi
     Age: Number(p.Age)
   }));
 
   const registrationData = {
     dauroh: {
-        ...dauroh.value,
-        SK: dauroh.value.SK as string 
+        ...dauroh.value!,
+        SK: (dauroh.value?.SK || '') as string // Pastikan SK string
     },
     participants: finalParticipants as any[] 
   };
@@ -452,9 +538,10 @@ const handleSubmit = () => {
     userStore.registerDauroh(registrationData);
     router.push('/dashboard');
   } else {
+    // Pastikan checkout store bersih sebelum start
+    if (checkoutStore.clearCheckout) checkoutStore.clearCheckout();
+    
     checkoutStore.startCheckout(registrationData);
-    // ✅ BENAR: Arahkan ke /checkout aja. 
-    // Store akan otomatis set step pertama jadi 'select'
     router.push('/checkout'); 
   }
 };
@@ -497,7 +584,6 @@ const handleSubmit = () => {
     padding: 0;
 }
 
-/* Animations */
 .animate-slide-up {
   animation: slideUp 0.4s ease-out forwards;
 }
@@ -506,7 +592,6 @@ const handleSubmit = () => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Sticky Bottom Bar on Mobile */
 @media (max-width: 991px) {
     .fixed-bottom-bar {
         position: fixed;
