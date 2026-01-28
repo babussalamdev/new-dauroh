@@ -2,7 +2,7 @@
   <div>
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-       <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
         <li class="breadcrumb-item active" aria-current="page">Manajemen User</li>
       </ol>
     </nav>
@@ -55,7 +55,9 @@
                 </td>
                 
                 <td class="text-center">
-                  <span :class="['badge', getRoleBadge(user.Series)]">{{ user.Series }}</span>
+                  <span :class="['badge', getRoleBadge(user.role || user.PK || user.Series)]">
+                    {{ user.role || user.PK || user.Series || 'user' }}
+                  </span>
                 </td>
 
                 <td class="text-center">
@@ -135,7 +137,7 @@
 import { onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
-import Swal from 'sweetalert2'; // Pastikan install sweetalert2
+import Swal from 'sweetalert2'; 
 
 definePageMeta({
   layout: 'admin',
@@ -153,23 +155,26 @@ onMounted(() => {
 });
 
 // Helper Badge Role
-const getRoleBadge = (series: string) => {
-  if (!series) return 'bg-light text-dark';
-  const role = series.toLowerCase();
+const getRoleBadge = (roleStr?: string) => {
+  if (!roleStr) return 'bg-light text-dark';
+  const role = roleStr.toLowerCase();
   switch (role) {
-    case 'admin':
-    case 'root': return 'bg-primary';
-    case 'user': return 'bg-secondary';
-    default: return 'bg-light text-dark';
+    case 'root': return 'bg-light text-dark';
+    case 'super_role': return 'bg-light text-dark';          // Biru buat Super Admin
+    case 'admin': return 'text-dark';        // Cyan buat Admin
+    case 'bendahara': return 'bg-dark text-white';           // Hijau buat Bendahara
+    case 'registrasi': return 'bg-dark text-white';// Kuning buat Registrasi
+    case 'user': return 'bg-dark text-white';              // Abu buat User Biasa
+    default: return 'bg-dark text-white';
   }
 };
 
-// Helper Badge Status (NEW)
+// Helper Badge Status
 const getStatusBadge = (status?: string) => {
   if (!status) return 'bg-light text-secondary border';
   const s = status.toLowerCase();
   
-  if (s === 'verified') return 'bg-success-subtle text-success border border-success-subtle';
+  if (s === 'active' || s === 'verified') return 'bg-success-subtle text-success border border-success-subtle';
   if (s === 'unverified') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
   if (s === 'banned' || s === 'blocked') return 'bg-danger-subtle text-danger border border-danger-subtle';
   
@@ -180,7 +185,7 @@ const getStatusBadge = (status?: string) => {
 const toggleBlockUser = async (user: any) => {
   const isBlocked = user.Status === 'blocked';
   const actionText = isBlocked ? 'Aktifkan' : 'Blokir';
-  const confirmColor = isBlocked ? '#198754' : '#dc3545'; // Hijau / Merah
+  const confirmColor = isBlocked ? '#198754' : '#dc3545'; 
 
   const result = await Swal.fire({
     title: `${actionText} User?`,
@@ -193,9 +198,7 @@ const toggleBlockUser = async (user: any) => {
   });
 
   if (result.isConfirmed) {
-    // Panggil Action di Store (Nanti lu buat function ini di store)
-    // await store.updateUserStatus(user.SK, isBlocked ? 'verified' : 'blocked');
-    Swal.fire('Berhasil!', `User berhasil di-${actionText}.`, 'success');
+     Swal.fire('Fitur Belum Tersedia', 'Function update status belum ada di store.', 'info');
   }
 };
 
@@ -204,7 +207,7 @@ const deleteUser = async (user: any) => {
   const result = await Swal.fire({
     title: 'Hapus User?',
     text: "Data user ini akan dihapus permanen dan tidak bisa dikembalikan!",
-    icon: 'error', // Icon silang merah
+    icon: 'error', 
     showCancelButton: true,
     confirmButtonColor: '#dc3545',
     confirmButtonText: 'Ya, Hapus Permanen',
@@ -212,9 +215,7 @@ const deleteUser = async (user: any) => {
   });
 
   if (result.isConfirmed) {
-    // Panggil Action di Store (Nanti lu buat function ini di store)
-    // await store.deleteUser(user.SK);
-    Swal.fire('Terhapus!', 'User telah dihapus.', 'success');
+     Swal.fire('Fitur Belum Tersedia', 'Function delete belum ada di store.', 'info');
   }
 };
 </script>
@@ -222,8 +223,5 @@ const deleteUser = async (user: any) => {
 <style scoped>
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
-
-.btn-sm { 
-    white-space: nowrap; 
-}
+.btn-sm { white-space: nowrap; }
 </style>

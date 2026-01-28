@@ -47,15 +47,12 @@ export const useAuth = () => {
   const logout = async () => {
     loading.value = true
     try {
-      // Ambil tipe login sebelum dihapus
       const loginType = process.client ? sessionStorage.getItem('loginType') : null;
 
-      // API call signout
       await $apiBase.post("signout-account", {
         AccessToken: localStorage.getItem("IdToken"),
       }).catch(() => {});
 
-      // 1. Bersihkan Cookies & LocalStorage
       accessToken.value = null
       localStorage.removeItem("IdToken")
       localStorage.removeItem("RefreshToken")
@@ -63,16 +60,13 @@ export const useAuth = () => {
         sessionStorage.removeItem('loginType')
       }
 
-      // 2. Reset State User & Pinia (Saran #2)
       user.value = null
       userStore.$reset()
       adminUserStore.$reset()
 
-      // 3. Redirect & Refresh
       const targetPath = loginType === 'admin' ? "/admin/login" : "/login"
       await router.push(targetPath)
       
-      // Force refresh
       if (process.client) {
         window.location.reload()
       }
@@ -90,11 +84,12 @@ export const useAuth = () => {
       throw error
     }
   }
-  
   const isAdmin = computed(() => {
-    const roleIsAdmin = user.value?.role === 'admin' || user.value?.role === 'root';
-    if (!roleIsAdmin) return false;
+    const allowedRoles = ['root', 'super_role', 'admin', 'bendahara', 'registrasi'];
+    const userRole = user.value?.role || user.value?.Series; // Cek kedua field jaga-jaga
     
+    // Kalau role user tidak ada di daftar allowedRoles, return false
+    if (!allowedRoles.includes(userRole)) return false;
     const loginType = process.client ? sessionStorage.getItem('loginType') : null;
     return loginType === 'admin';
   })

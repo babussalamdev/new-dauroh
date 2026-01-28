@@ -37,13 +37,17 @@
               <label for="password" class="form-label">Password</label>
               <input type="password" class="form-control" id="password" v-model="form.password" required minlength="6">
             </div>
+
             <div class="col-md-6">
               <label for="role" class="form-label">Role</label>
               <select id="role" class="form-select" v-model="form.role" required>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-                <option value="root">Root</option>
+                <option v-for="roleOption in availableRoles" :key="roleOption.value" :value="roleOption.value">
+                  {{ roleOption.label }}
+                </option>
               </select>
+              <div class="form-text text-primary">
+                *Opsi role disesuaikan dengan hak akses Anda ({{ user?.role }}).
+              </div>
             </div>
           </div>
           
@@ -61,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, computed, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
 import { useRouter } from 'vue-router';
@@ -76,21 +80,51 @@ definePageMeta({
   }
 });
 
+const { user } = useAuth(); // Ambil data user yang login untuk cek role
 const store = useAdminUserStore();
 const router = useRouter();
 
-// Menambahkan username dan phone_number ke state form
+// --- LOGIC HAK AKSES ---
+const availableRoles = computed(() => {
+  const myRole = user.value?.role;
+
+  // 1. Jika ROOT: Bisa bikin semua role (kecuali root lain)
+  if (myRole === 'root') {
+    return [
+      { label: 'Super Role (Admin Utama)', value: 'super_role' },
+      { label: 'Administrator', value: 'admin' },
+      { label: 'Bendahara', value: 'bendahara' },
+      { label: 'Petugas Registrasi (Scan QR)', value: 'registrasi' },
+      { label: 'User Biasa (Peserta)', value: 'user' }
+    ];
+  }
+  
+  // 2. Jika SUPER ROLE / ADMIN / LAINNYA: Hanya bisa bikin User biasa
+  // Sesuai aturan: Admin tidak bisa buat Admin lain.
+  return [
+    { label: 'User Biasa (Peserta)', value: 'user' }
+  ];
+});
+
 const form = reactive({ 
   name: '', 
   email: '', 
-  username: '',     // Baru
-  phone_number: '', // Baru
+  username: '', 
+  phone_number: '', 
   password: '', 
-  role: 'user' 
+  role: availableRoles.value[0]?.value || 'user' 
 });
 
+// Watcher: Pastikan nilai form.role selalu valid saat halaman dimuat
+// Misal: Admin login, role otomatis kekunci ke 'user', gak bisa milih 'admin'
+watch(availableRoles, (newRoles) => {
+  const isCurrentRoleValid = newRoles.find(r => r.value === form.role);
+  if (!isCurrentRoleValid) {
+    form.role = newRoles[0]?.value || 'user';
+  }
+}, { immediate: true });
+
 const handleSubmit = async () => {
-  // Kirim data form yang sudah lengkap ke store
   const success = await store.addAccount(form);
   
   if (success) {
@@ -100,7 +134,7 @@ const handleSubmit = async () => {
     form.username = '';
     form.phone_number = '';
     form.password = '';
-    form.role = 'user';
+    form.role = availableRoles.value[0]?.value || 'user'; // Reset ke default yang valid
     
     // Pindah ke halaman index
     router.push('/admin/users');

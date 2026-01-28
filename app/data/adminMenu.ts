@@ -26,7 +26,9 @@ export const dropdownMenuItems: DropdownMenu[] = [
     icon: 'bi-archive-fill',
     text: 'Manajemen Konten',
     items: [
-      { to: '/admin', text: 'Tiket Dauroh' },
+      // UBAH BARIS INI: Dari '/admin' jadi '/admin/events'
+      { to: '/admin/events', text: 'Tiket Dauroh' }, 
+      
       { to: '/admin/booths', text: 'Pengajuan Booth' },
       { to: '/admin/vouchers', text: 'Manajemen Voucher' },
     ]
