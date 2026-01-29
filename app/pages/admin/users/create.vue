@@ -91,7 +91,7 @@ const availableRoles = computed(() => {
   // 1. Jika ROOT: Bisa bikin semua role (kecuali root lain)
   if (myRole === 'root') {
     return [
-      { label: 'Super Role (Admin Utama)', value: 'super_role' },
+      { label: 'Super Role (Admin Utama)', value: 'super role' },
       { label: 'Administrator', value: 'admin' },
       { label: 'Bendahara', value: 'bendahara' },
       { label: 'Petugas Registrasi (Scan QR)', value: 'registrasi' },
@@ -134,9 +134,7 @@ const handleSubmit = async () => {
     form.username = '';
     form.phone_number = '';
     form.password = '';
-    form.role = availableRoles.value[0]?.value || 'user'; // Reset ke default yang valid
-    
-    // Pindah ke halaman index
+    form.role = availableRoles.value[0]?.value || 'user';
     router.push('/admin/users');
   }
 };

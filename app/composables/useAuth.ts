@@ -16,11 +16,15 @@ export const useAuth = () => {
   const router = useRouter()
   const { $apiBase } = useNuxtApp()
 
+  // Definisi Role Admin di sini biar bisa dipakai ulang
+  const adminRoles = ['root', 'super role', 'admin', 'bendahara', 'registrasi'];
+
   const login = async (data: any, type: 'user' | 'admin' = 'user') => {
     loading.value = true
     try {
       const res = await $apiBase.post("signin-account", data);
 
+      // 1. Set Token Dulu
       accessToken.value = res.data.AccessToken;
       localStorage.setItem("IdToken", res.data.IdToken)
       localStorage.setItem("RefreshToken", res.data.RefreshToken)
@@ -29,10 +33,24 @@ export const useAuth = () => {
         sessionStorage.setItem('loginType', type)
       }
 
+      // 2. Ambil Data Profil User
       await getUser()
-
-      // Redirect logic
       if (type === 'admin') {
+        // Cek apakah role user ada di dalam daftar adminRoles
+        const userRole = (user.value?.role || user.value?.Series || '').toLowerCase();
+        
+        if (!adminRoles.includes(userRole)) {
+           // JIKA BUKAN ADMIN:
+           // 1. Hapus token (Logout paksa)
+           accessToken.value = null;
+           localStorage.removeItem("IdToken");
+           localStorage.removeItem("RefreshToken");
+           user.value = null;
+           
+           // 2. Lempar Error agar ditangkap catch di login.vue dan muncul alert merah
+           throw new Error("Akses Ditolak: Akun Anda bukan Admin.");
+        }
+
         await router.push('/admin')
       } else {
         await router.push('/dashboard')
@@ -68,7 +86,7 @@ export const useAuth = () => {
       await router.push(targetPath)
       
       if (process.client) {
-        window.location.reload()
+        window.location.reload() // Reload biar state bersih total
       }
     } finally {
       loading.value = false
@@ -84,12 +102,12 @@ export const useAuth = () => {
       throw error
     }
   }
+
   const isAdmin = computed(() => {
-    const allowedRoles = ['root', 'super_role', 'admin', 'bendahara', 'registrasi'];
-    const userRole = user.value?.role || user.value?.Series; // Cek kedua field jaga-jaga
+    const userRole = (user.value?.role || user.value?.Series || '').toLowerCase();
     
-    // Kalau role user tidak ada di daftar allowedRoles, return false
-    if (!allowedRoles.includes(userRole)) return false;
+    if (!adminRoles.includes(userRole)) return false;
+    
     const loginType = process.client ? sessionStorage.getItem('loginType') : null;
     return loginType === 'admin';
   })

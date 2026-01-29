@@ -5,9 +5,7 @@
         <div class="auth-content">
           <div class="text-center mb-4">
             <img src="~/assets/img/Logo-Mahad.png" alt="Logo Dauroh" style="height: 60px;" class="mb-3">
-            <h1 class="auth-title">
-              Buat Akun Baru
-            </h1>
+            <h1 class="auth-title">Buat Akun Baru</h1>
             <p class="text-muted small">Daftar untuk menjadi peserta dauroh</p>
           </div>
           
@@ -49,48 +47,22 @@
             <div class="mb-3">
               <label for="password" class="form-label">Password</label>
               <div class="password-wrapper">
-                <input 
-                :type="showPassword ? 'text' : 'password'" 
-                v-model="form.password" 
-                id="password" 
-                placeholder="Masukkan password" 
-                class="form-control" 
-                required 
-                />
-                <span @click="togglePassword" class="password-toggle-icon">
-                <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
-                  <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-                  <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/>
-                  <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>
-                </svg>
-              </span>
+                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control" placeholder="Masukkan password" required />
+                <span @click="showPassword = !showPassword" class="password-toggle-icon">
+                   <i :class="showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="mb-3">
-            <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
-            <div class="password-wrapper">
-              <input 
-      :type="showConfirmPassword ? 'text' : 'password'" 
-      v-model="form.confirmPassword" 
-      id="confirmPassword" 
-      placeholder="Ulangi password" 
-      class="form-control" 
-      required 
-    />
-    <span @click="toggleConfirmPassword" class="password-toggle-icon">
-      <svg v-if="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-        <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
-        <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
-      </svg>
-      <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-        <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/>
-        <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>
-      </svg>
-    </span>
-  </div>
-</div>
+            
+            <div class="mb-3">
+              <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
+              <div class="password-wrapper">
+                <input :type="showConfirmPassword ? 'text' : 'password'" v-model="form.confirmPassword" class="form-control" placeholder="Ulangi password" required />
+                <span @click="showConfirmPassword = !showConfirmPassword" class="password-toggle-icon">
+                   <i :class="showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                </span>
+              </div>
+            </div>
 
             <div v-if="error" class="alert alert-danger mt-3 small p-2">
               {{ error }}
@@ -116,16 +88,11 @@
 
 <script setup>
 import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router'; // Pastikan import ini ada
+import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-definePageMeta({
-  layout: 'auth'
-});
-
-useHead({
-  title: 'Daftar Akun'
-});
+definePageMeta({ layout: 'auth' });
+useHead({ title: 'Daftar Akun' });
 
 const router = useRouter();
 const { $apiBase } = useNuxtApp();
@@ -135,30 +102,20 @@ const form = reactive({
   email: '',
   username: '',
   phone_number: '',
-  gender: '',      // Baru
-  birthDate: '',   // Baru
+  gender: '',      
+  birthDate: '',   
   password: '',
   confirmPassword: ''
 });
 
 const error = ref(null);
 const loading = ref(false);
-
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
-
-const togglePassword = () => {
-  showPassword.value = !showPassword.value;
-};
-
-const toggleConfirmPassword = () => {
-  showConfirmPassword.value = !showConfirmPassword.value;
-};
 
 const handleRegister = async () => {
   error.value = null;
   
-  // Validasi password
   if (form.password !== form.confirmPassword) {
     error.value = 'Password dan konfirmasi password tidak cocok.';
     return;
@@ -166,90 +123,58 @@ const handleRegister = async () => {
 
   loading.value = true;
 
+  // Siapkan data untuk disimpan
+  const userData = {
+      email: form.email,
+      name: form.name,
+      username: form.username,
+      phone_number: form.phone_number,
+      gender: form.gender,
+      birtdate: form.birthDate,
+      password: form.password
+  };
+
   try {
-    // 1. Tembak API Register (Untuk memicu pengiriman OTP ke email)
-    // Kita kirim data lengkap juga disini
-    await $apiBase.post('/signup-account?type=user-client', {
-      email: form.email,
-      password: form.password,
-      name: form.name,
-      username: form.username,
-      phone_number: form.phone_number,
-      gender: form.gender,
-      birtdate: form.birthDate // Ikuti typo backend: 'birtdate'
-    });
+    // 1. Tembak API Register
+    await $apiBase.post('/signup-account?type=user-client', userData);
 
-    // 2. SIMPAN DATA KE SESSION STORAGE (PENTING!)
-    // Ini biar halaman Verify bisa ambil data lengkap (Nama, Gender, dll) buat dikirim ulang ke backend
-    const tempUserData = {
-      email: form.email,
-      name: form.name,
-      username: form.username,
-      phone_number: form.phone_number,
-      gender: form.gender,
-      birtdate: form.birthDate // Ikuti typo backend
-    };
-    
-    sessionStorage.setItem('temp_register_data', JSON.stringify(tempUserData));
+    // 2. Jika Sukses (200 OK) -> Simpan Session & Redirect
+    sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
 
-    // 3. Notifikasi & Redirect
     Swal.fire({
-      title: 'Pendaftaran Berhasil!',
+      title: 'Berhasil!',
       text: 'Kode OTP telah dikirim ke email Anda.',
       icon: 'success',
       timer: 2000,
       showConfirmButton: false,
     }).then(() => {
-      // Redirect ke verify bawa email
-      router.push({ 
-        path: '/verify', 
-        query: { email: form.email } 
-      });
+      router.push({ path: '/verify', query: { email: form.email } });
     });
 
   } catch (err) {
     console.error(err);
     
-    // Ambil pesan error
     const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
     const msgLower = msg.toLowerCase();
 
-    // 🔥 LOGIC PINTAR: HANDLING "USER ALREADY EXISTS" 🔥
+    // 3. HANDLING "ACCOUNT ALREADY EXISTS"
+    // Sesuai request: Anggap ini sebagai "Resend OTP" dan langsung redirect ke verify
     if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar')) {
       
-      // 1. KITA TETAP SIMPAN DATA FORM KE STORAGE
-      // (Biar halaman Verify punya data lengkap buat dikirim ke backend)
-      const tempUserData = {
-        email: form.email,
-        name: form.name,
-        username: form.username,
-        phone_number: form.phone_number,
-        gender: form.gender,
-        birtdate: form.birthDate // Typo backend diikuti
-      };
-      sessionStorage.setItem('temp_register_data', JSON.stringify(tempUserData));
+      // Tetap simpan data form ke session agar verify.vue bisa ambil untuk resend
+      sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
 
-      // 2. Tawarkan ke Halaman Verifikasi
-      Swal.fire({
-        icon: 'warning',
-        title: 'Akun Sudah Ada',
-        text: 'Email/Username ini sudah terdaftar tapi sepertinya belum verifikasi. Mau masukkan OTP?',
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Input OTP',
-        cancelButtonText: 'Batal',
-        reverseButtons: true
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Redirect ke verify bawa email
-          router.push({ 
-            path: '/verify', 
-            query: { email: form.email } 
-          });
-        }
+      await Swal.fire({
+        icon: 'info',
+        title: 'Akun Sudah Terdaftar',
+        text: 'Mengirim ulang kode OTP ke email Anda...',
+        timer: 1500,
+        showConfirmButton: false
       });
+      
+      router.push({ path: '/verify', query: { email: form.email } });
 
     } else {
-      // Error lain (Server error, validasi lain)
       error.value = msg;
     }
 
@@ -260,5 +185,5 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
- @import url("~/assets/css/auth/style.css");
+@import url("~/assets/css/auth/style.css");
 </style>

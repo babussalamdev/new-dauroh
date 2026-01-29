@@ -29,15 +29,17 @@
               <input type="text" class="form-control" id="fullName" v-model="form.name" required>
             </div>
             <div class="col-md-6">
-              <label for="email" class="form-label">Alamat Email</label>
-              <input type="email" class="form-control" id="email" v-model="form.email" required disabled>
+              <label for="email" class="form-label">Alamat Email (ID)</label>
+              <input type="text" class="form-control" id="email" v-model="form.email" required disabled>
             </div>
             <div class="col-md-12">
               <label for="role" class="form-label">Role</label>
               <select id="role" class="form-select" v-model="form.role" required>
-                <option value="user">User</option>
+                <option value="user">Client</option>
                 <option value="admin">Admin</option>
-                <option value="root">Root</option>
+                <option value="super role">Super Role (Admin)</option>
+                <option value="bendahara">Bendahara</option>
+                <option value="registrasi">Registrasi</option>
               </select>
             </div>
             <div class="col-12">
@@ -63,6 +65,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useAuth } from '~/composables/useAuth';
+import { useAdminUserStore } from '~/stores/adminUser';
 import Swal from 'sweetalert2';
 
 definePageMeta({
@@ -77,7 +80,10 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
-const userId = Number(route.params.id);
+const store = useAdminUserStore();
+
+// Decode ID dari URL
+const userId = decodeURIComponent(route.params.id as string);
 
 const loading = ref(true);
 const form = reactive({
@@ -85,37 +91,49 @@ const form = reactive({
   name: '',
   email: '',
   role: 'user',
-  password: '', // Password dikosongkan secara default
+  password: '', 
 });
 
-// SIMULASI PENGAMBILAN DATA USER DARI API
-onMounted(() => {
-  // untuk bagian integrasi be nya
-  // Ganti bagian ini dengan panggilan API sesungguhnya untuk mengambil data user by ID
-  const { $apiBase } = useNuxtApp();
-  $apiBase.get(`/users/${userId}`).then(response => {
-    form.name = response.data.name;
-    form.email = response.data.email;
-    form.role = response.data.role;
+onMounted(async () => {
+  if (store.users.length === 0) {
+    try {
+      await store.getListaccount('all', true);
+    } catch (e) {
+      console.error("Gagal load list users:", e);
+    }
+  }
+
+  const foundUser = store.users.find(u => u.SK === userId);
+
+  if (foundUser) {
+    form.name = foundUser.Name;
+    form.email = foundUser.SK;
+    // Deteksi Role
+    const rawRole = foundUser.role || foundUser.Series || foundUser.Role || 'user';
+    form.role = rawRole.toLowerCase(); 
     loading.value = false;
-  }).catch(error => {
-    console.error(error);
-    // Tampilkan pesan error jika gagal mengambil data
+  } else {
     Swal.fire({
-      title: 'Error!',
-      text: 'Gagal memuat data user.',
+      title: 'User Tidak Ditemukan',
+      text: `Data user dengan ID ${userId} tidak ditemukan.`,
       icon: 'error',
     }).then(() => {
       router.push('/admin/users');
     });
-  });
+  }
 });
 
 const handleSubmit = () => {
-  // untuk bagian integrasi be nya
-  // Ganti bagian ini dengan panggilan API sesungguhnya untuk update data user
   const { $apiBase } = useNuxtApp();
-  $apiBase.put(`/users/${userId}`, form).then(() => {
+  
+  const payload = {
+     SK: form.email,
+     Name: form.name,
+     Role: form.role,
+     ...(form.password ? { Password: form.password } : {})
+  };
+
+  $apiBase.post(`/update-account`, payload).then(() => {
     Swal.fire({
       title: 'Berhasil!',
       text: 'Data user telah diperbarui.',
@@ -123,13 +141,16 @@ const handleSubmit = () => {
       timer: 2000,
       showConfirmButton: false,
     }).then(() => {
-      router.push('/admin/users');
+      // Refresh list 'all'
+      store.getListaccount('all', true).then(() => {
+        router.push('/admin/users');
+      });
     });
   }).catch(error => {
     console.error('Gagal mengupdate user:', error);
     Swal.fire({
-      title: 'Error!',
-      text: 'Gagal menyimpan perubahan.',
+      title: 'Gagal Update',
+      text: error.response?.data?.message || 'Terjadi kesalahan saat menyimpan.',
       icon: 'error',
     });
   });

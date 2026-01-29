@@ -3,13 +3,14 @@
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
-        <li class="breadcrumb-item active" aria-current="page">Manajemen User</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ pageTitle }}</li>
       </ol>
     </nav>
-
+    
     <div class="card content-card">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <h5 class="mb-0">Daftar Semua User</h5>
+        <h5 class="mb-0">{{ pageTitle }}</h5>
+
         <div class="d-flex flex-column flex-md-row gap-2" style="width: 100%; max-width: 450px;">
           <div class="input-group input-group-sm flex-grow-1">
             <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
@@ -23,10 +24,11 @@
           </div>
           <NuxtLink to="/admin/users/create" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg me-1"></i>
-            Tambah User Baru
+            Tambah User
           </NuxtLink>
         </div>
       </div>
+      
       <div class="card-body"> 
         <CommonLoadingSpinner v-if="store.loading && store.users.length === 0" class="my-5" />
 
@@ -43,7 +45,6 @@
             </thead>
             <tbody>
               <tr v-if="store.paginatedData.length > 0" v-for="user in store.paginatedData" :key="user.SK">
-                
                 <td>
                   <div class="fw-bold">{{ user.Name }}</div>
                   <small class="text-muted">{{ user.SK || '-' }}</small>
@@ -55,8 +56,8 @@
                 </td>
                 
                 <td class="text-center">
-                  <span :class="['badge', getRoleBadge(user.role || user.PK || user.Series)]">
-                    {{ user.role || user.PK || user.Series || 'user' }}
+                  <span :class="['badge', getRoleBadge(user.Role || user.role || user.Series || user.PK)]">
+                    {{ user.Role || user.role || user.Series || user.PK || 'user' }}
                   </span>
                 </td>
 
@@ -68,41 +69,34 @@
                 
                 <td class="text-center">
                   <div class="d-flex justify-content-center gap-1">
-                    <NuxtLink :to="`/admin/users/edit/${user.SK}`" class="btn btn-sm btn-light text-primary border" title="Edit">
+                    <NuxtLink :to="`/admin/users/edit/${encodeURIComponent(user.SK)}`" class="btn btn-sm btn-light text-primary border" title="Edit">
                       <i class="bi bi-pencil-square"></i>
                     </NuxtLink>
 
                     <button 
+                      v-if="canBlockUsers"
                       class="btn btn-sm btn-light border" 
-                      :class="user.Status === 'blocked' ? 'text-success' : 'text-warning'"
-                      :title="user.Status === 'blocked' ? 'Aktifkan User' : 'Blokir User'"
+                      :class="user.Status === 'inactive' ? 'text-success' : 'text-danger'"
+                      :title="user.Status === 'inactive' ? 'Buka Blokir' : 'Blokir User'"
                       @click="toggleBlockUser(user)"
                     >
-                      <i :class="user.Status === 'blocked' ? 'bi bi-check-circle' : 'bi bi-slash-circle'"></i>
+                      <i :class="user.Status === 'inactive' ? 'bi bi-unlock-fill' : 'bi bi-lock-fill'"></i>
                     </button>
 
-                    <button 
-                      class="btn btn-sm btn-light text-danger border" 
-                      title="Hapus Permanen"
-                      @click="deleteUser(user)"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
+                    </div>
                 </td>
               </tr>
               
               <tr v-if="!store.loading && store.users.length === 0">
                 <td colspan="5" class="text-center py-5"> <i class="bi bi-people fs-3 text-muted"></i>
-                  <h6 class="mt-2 mb-1">Belum Ada Data User</h6>
-                  <p class="text-muted small">Silakan tambahkan user baru untuk memulai.</p>
+                  <h6 class="mt-2 mb-1">Data Kosong</h6>
+                  <p class="text-muted small">Belum ada data untuk kategori {{ activeType }}.</p>
                 </td>
               </tr>
-
+              
               <tr v-if="!store.loading && store.users.length > 0 && store.paginatedData.length === 0">
-                <td colspan="5" class="text-center py-5"> <i class="bi bi-search fs-3 text-muted"></i>
-                  <h6 class="mt-2 mb-1">Tidak Ada Hasil</h6>
-                  <p class="text-muted small">Tidak ditemukan user dengan kata kunci "{{ store.search }}".</p>
+                <td colspan="5" class="text-center py-5">
+                   <h6 class="mt-2 mb-1">Tidak Ada Hasil</h6>
                 </td>
               </tr>
             </tbody>
@@ -134,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
 import Swal from 'sweetalert2'; 
@@ -148,48 +142,71 @@ definePageMeta({
     }
   }
 });
-const store = useAdminUserStore();
 
-onMounted(() => { 
-  store.getListaccount(true); 
+const route = useRoute();
+const store = useAdminUserStore();
+const { user } = useAuth(); // Ambil data user yang sedang login untuk cek permission
+
+// --- Permission Check ---
+// Cek apakah user yang login punya hak untuk blokir
+const canBlockUsers = computed(() => {
+  const myRole = (user.value?.role || user.value?.Role || '').toLowerCase();
+  const allowedRoles = ['root', 'super role', 'admin'];
+  return allowedRoles.includes(myRole);
+});
+const activeType = computed(() => (route.query.type as string) || 'all');
+const pageTitle = computed(() => {
+  const t = activeType.value;
+  if (t === 'admin') return 'Daftar Admin';
+  if (t === 'client') return 'Daftar Client';
+  return 'Daftar Semua User';
 });
 
-// Helper Badge Role
+watch(() => route.query.type, (newType) => {
+    const type = (newType as string) || 'all';
+    store.search = ''; 
+    store.getListaccount(type, true);
+}, { immediate: true });
+
+// --- Helpers ---
 const getRoleBadge = (roleStr?: string) => {
   if (!roleStr) return 'bg-light text-dark';
   const role = roleStr.toLowerCase();
   switch (role) {
-    case 'root': return 'bg-light text-dark';
-    case 'super_role': return 'bg-light text-dark';          // Biru buat Super Admin
-    case 'admin': return 'text-dark';        // Cyan buat Admin
-    case 'bendahara': return 'bg-dark text-white';           // Hijau buat Bendahara
-    case 'registrasi': return 'bg-dark text-white';// Kuning buat Registrasi
-    case 'user': return 'bg-dark text-white';              // Abu buat User Biasa
-    default: return 'bg-dark text-white';
+    case 'root': return 'bg-dark text-white';
+    case 'super role': return 'bg-primary text-white';          
+    case 'admin': return 'bg-info text-dark';
+    case 'bendahara': return 'bg-warning text-dark';
+    case 'registrasi': return 'bg-teal text-white';
+    case 'user': return 'bg-secondary text-white';             
+    default: return 'bg-light text-dark border';
   }
 };
 
-// Helper Badge Status
 const getStatusBadge = (status?: string) => {
   if (!status) return 'bg-light text-secondary border';
   const s = status.toLowerCase();
-  
   if (s === 'active' || s === 'verified') return 'bg-success-subtle text-success border border-success-subtle';
+  if (s === 'inactive') return 'bg-danger-subtle text-danger border border-danger-subtle'; // Merah kalau Inactive
   if (s === 'unverified') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
   if (s === 'banned' || s === 'blocked') return 'bg-danger-subtle text-danger border border-danger-subtle';
-  
   return 'bg-light text-secondary border';
 };
 
-// Action: Block / Unblock User
-const toggleBlockUser = async (user: any) => {
-  const isBlocked = user.Status === 'blocked';
-  const actionText = isBlocked ? 'Aktifkan' : 'Blokir';
-  const confirmColor = isBlocked ? '#198754' : '#dc3545'; 
+// --- LOGIKA BLOKIR USER (Updated) ---
+const toggleBlockUser = async (targetUser: any) => {
+  const isCurrentlyInactive = targetUser.Status === 'inactive';
+  
+  // Tentukan Status Baru (Kebalikannya)
+  // Jika Inactive -> Jadi Active (Buka Blokir)
+  // Jika Active/Lainnya -> Jadi Inactive (Blokir)
+  const newStatus = isCurrentlyInactive ? 'active' : 'inactive';
+  const actionText = isCurrentlyInactive ? 'Buka Blokir' : 'Blokir';
+  const confirmColor = isCurrentlyInactive ? '#198754' : '#dc3545'; // Hijau vs Merah
 
   const result = await Swal.fire({
     title: `${actionText} User?`,
-    text: `User ${user.Name} akan ${isBlocked ? 'diaktifkan kembali' : 'diblokir aksesnya'}.`,
+    text: `User ${targetUser.Name} akan diubah statusnya menjadi ${newStatus}.`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: confirmColor,
@@ -198,24 +215,9 @@ const toggleBlockUser = async (user: any) => {
   });
 
   if (result.isConfirmed) {
-     Swal.fire('Fitur Belum Tersedia', 'Function update status belum ada di store.', 'info');
-  }
-};
-
-// Action: Delete User
-const deleteUser = async (user: any) => {
-  const result = await Swal.fire({
-    title: 'Hapus User?',
-    text: "Data user ini akan dihapus permanen dan tidak bisa dikembalikan!",
-    icon: 'error', 
-    showCancelButton: true,
-    confirmButtonColor: '#dc3545',
-    confirmButtonText: 'Ya, Hapus Permanen',
-    cancelButtonText: 'Batal'
-  });
-
-  if (result.isConfirmed) {
-     Swal.fire('Fitur Belum Tersedia', 'Function delete belum ada di store.', 'info');
+    // Panggil Action di Store
+    // Gunakan SK sebagai email
+    await store.changeUserStatus(targetUser.SK, newStatus);
   }
 };
 </script>
@@ -224,4 +226,5 @@ const deleteUser = async (user: any) => {
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
 .btn-sm { white-space: nowrap; }
+.bg-teal { background-color: #20c997; }
 </style>

@@ -1,5 +1,3 @@
-// app/data/adminMenu.ts
-
 interface MenuItem {
   to: string;
   icon?: string;
@@ -16,7 +14,6 @@ interface DropdownMenu {
 
 export const mainMenuItems: MenuItem[] = [
   { to: '/admin', icon: 'bi-speedometer2', text: 'Dashboard' },
-  // TAMBAHKAN INI:
   { to: '/admin/scan', icon: 'bi-qr-code-scan', text: 'Scan Presensi' }, 
 ];
 
@@ -26,9 +23,7 @@ export const dropdownMenuItems: DropdownMenu[] = [
     icon: 'bi-archive-fill',
     text: 'Manajemen Konten',
     items: [
-      // UBAH BARIS INI: Dari '/admin' jadi '/admin/events'
       { to: '/admin/events', text: 'Tiket Dauroh' }, 
-      
       { to: '/admin/booths', text: 'Pengajuan Booth' },
       { to: '/admin/vouchers', text: 'Manajemen Voucher' },
     ]
@@ -38,7 +33,16 @@ export const dropdownMenuItems: DropdownMenu[] = [
     icon: 'bi-people-fill',
     text: 'Manajemen User',
     items: [
-      { to: '/admin/users', text: 'Semua User' },
+      // 1. MENU SEMUA USER (Default)
+      { to: '/admin/users?type=all', text: 'Semua User' },
+      
+      // 2. MENU ADMIN
+      { to: '/admin/users?type=admin', text: 'Data Admin' },
+      
+      // 3. MENU CLIENT
+      { to: '/admin/users?type=client', text: 'Data Client' },
+      
+      // 4. MENU TAMBAH
       { to: '/admin/users/create', text: 'Tambah User Baru' },
     ]
   }

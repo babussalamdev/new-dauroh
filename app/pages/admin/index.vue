@@ -33,9 +33,6 @@ const { user } = useAuth();
 
 const userRoleLabel = computed(() => {
   const role = user.value?.role;
-  
-  // KITA KASIH TIPE 'Record<string, string>' DISINI
-  // Artinya: Objek ini kuncinya string, isinya string. Aman buat di-index pake variable apa aja.
   const roles: Record<string, string> = {
     root: 'Super Root',
     super_role: 'Super Admin',
