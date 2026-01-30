@@ -15,9 +15,7 @@ export const useAuth = () => {
   const user = useState<any>("auth_user", () => null)
   const router = useRouter()
   const { $apiBase } = useNuxtApp()
-
-  // Definisi Role Admin di sini biar bisa dipakai ulang
-  const adminRoles = ['root', 'super role', 'admin', 'bendahara', 'registrasi'];
+const adminRoles = ['root', 'super_role', 'super role', 'admin', 'bendahara', 'registrasi'];
 
   const login = async (data: any, type: 'user' | 'admin' = 'user') => {
     loading.value = true
@@ -32,11 +30,9 @@ export const useAuth = () => {
       if (process.client) {
         sessionStorage.setItem('loginType', type)
       }
-
       // 2. Ambil Data Profil User
       await getUser()
       if (type === 'admin') {
-        // Cek apakah role user ada di dalam daftar adminRoles
         const userRole = (user.value?.role || user.value?.Series || '').toLowerCase();
         
         if (!adminRoles.includes(userRole)) {
@@ -86,7 +82,7 @@ export const useAuth = () => {
       await router.push(targetPath)
       
       if (process.client) {
-        window.location.reload() // Reload biar state bersih total
+        window.location.reload()
       }
     } finally {
       loading.value = false

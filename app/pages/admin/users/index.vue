@@ -57,7 +57,7 @@
                 
                 <td class="text-center">
                   <span :class="['badge', getRoleBadge(user.Role || user.role || user.Series || user.PK)]">
-                    {{ user.Role || user.role || user.Series || user.PK || 'user' }}
+                    {{ formatRoleName(user.Role || user.role || user.Series || user.PK || 'user') }}
                   </span>
                 </td>
 
@@ -96,7 +96,7 @@
               
               <tr v-if="!store.loading && store.users.length > 0 && store.paginatedData.length === 0">
                 <td colspan="5" class="text-center py-5">
-                   <h6 class="mt-2 mb-1">Tidak Ada Hasil</h6>
+                    <h6 class="mt-2 mb-1">Tidak Ada Hasil</h6>
                 </td>
               </tr>
             </tbody>
@@ -145,15 +145,16 @@ definePageMeta({
 
 const route = useRoute();
 const store = useAdminUserStore();
-const { user } = useAuth(); // Ambil data user yang sedang login untuk cek permission
+const { user } = useAuth();
 
 // --- Permission Check ---
-// Cek apakah user yang login punya hak untuk blokir
 const canBlockUsers = computed(() => {
   const myRole = (user.value?.role || user.value?.Role || '').toLowerCase();
-  const allowedRoles = ['root', 'super role', 'admin'];
+  // Pastikan 'super_role' (underscore) juga masuk sini biar aman
+  const allowedRoles = ['root', 'super role', 'super_role', 'admin'];
   return allowedRoles.includes(myRole);
 });
+
 const activeType = computed(() => (route.query.type as string) || 'all');
 const pageTitle = computed(() => {
   const t = activeType.value;
@@ -168,13 +169,21 @@ watch(() => route.query.type, (newType) => {
     store.getListaccount(type, true);
 }, { immediate: true });
 
-// --- Helpers ---
+const formatRoleName = (role: string | null | undefined) => {
+  if (!role) return '-';
+  const cleanRole = String(role).replace(/_/g, ' ');
+  return cleanRole.replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+// 2. Fungsi buat nentuin Warna Badge
 const getRoleBadge = (roleStr?: string) => {
   if (!roleStr) return 'bg-light text-dark';
   const role = roleStr.toLowerCase();
+  
   switch (role) {
     case 'root': return 'bg-dark text-white';
-    case 'super role': return 'bg-primary text-white';          
+    case 'super role': 
+    case 'super_role': return 'bg-light text-dark';
     case 'admin': return 'bg-info text-dark';
     case 'bendahara': return 'bg-warning text-dark';
     case 'registrasi': return 'bg-teal text-white';
@@ -187,22 +196,18 @@ const getStatusBadge = (status?: string) => {
   if (!status) return 'bg-light text-secondary border';
   const s = status.toLowerCase();
   if (s === 'active' || s === 'verified') return 'bg-success-subtle text-success border border-success-subtle';
-  if (s === 'inactive') return 'bg-danger-subtle text-danger border border-danger-subtle'; // Merah kalau Inactive
+  if (s === 'inactive') return 'bg-danger-subtle text-danger border border-danger-subtle'; 
   if (s === 'unverified') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
   if (s === 'banned' || s === 'blocked') return 'bg-danger-subtle text-danger border border-danger-subtle';
   return 'bg-light text-secondary border';
 };
 
-// --- LOGIKA BLOKIR USER (Updated) ---
+// --- LOGIKA BLOKIR USER ---
 const toggleBlockUser = async (targetUser: any) => {
   const isCurrentlyInactive = targetUser.Status === 'inactive';
-  
-  // Tentukan Status Baru (Kebalikannya)
-  // Jika Inactive -> Jadi Active (Buka Blokir)
-  // Jika Active/Lainnya -> Jadi Inactive (Blokir)
   const newStatus = isCurrentlyInactive ? 'active' : 'inactive';
   const actionText = isCurrentlyInactive ? 'Buka Blokir' : 'Blokir';
-  const confirmColor = isCurrentlyInactive ? '#198754' : '#dc3545'; // Hijau vs Merah
+  const confirmColor = isCurrentlyInactive ? '#198754' : '#dc3545';
 
   const result = await Swal.fire({
     title: `${actionText} User?`,
@@ -215,8 +220,6 @@ const toggleBlockUser = async (targetUser: any) => {
   });
 
   if (result.isConfirmed) {
-    // Panggil Action di Store
-    // Gunakan SK sebagai email
     await store.changeUserStatus(targetUser.SK, newStatus);
   }
 };
