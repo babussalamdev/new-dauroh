@@ -58,23 +58,72 @@
           </div>
           <div class="card-body d-flex flex-column"> 
             <p class="text-muted small mb-3">Kosongkan jika tidak ingin mengubah password.</p>
+            
             <form @submit.prevent="handleChangePassword" class="flex-grow-1" id="changePasswordForm">
+              
               <div class="mb-3">
                 <label for="currentPassword" class="form-label">Password Saat Ini</label>
-                <input type="password" class="form-control" id="currentPassword" v-model="passwordForm.oldPassword">
+                <div class="input-group">
+                  <input 
+                    :type="showOldPass ? 'text' : 'password'" 
+                    class="form-control" 
+                    id="currentPassword" 
+                    v-model="passwordForm.oldPassword"
+                    placeholder="Masukkan password lama"
+                    :required="isChangingPassword"
+                  >
+                  <button class="btn btn-outline-secondary" type="button" @click="showOldPass = !showOldPass">
+                    <i :class="showOldPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                  </button>
+                </div>
               </div>
+
               <div class="mb-3">
                 <label for="newPassword" class="form-label">Password Baru</label>
-                <input type="password" class="form-control" id="newPassword" v-model="passwordForm.newPassword">
+                <div class="input-group">
+                  <input 
+                    :type="showNewPass ? 'text' : 'password'" 
+                    class="form-control" 
+                    id="newPassword" 
+                    v-model="passwordForm.newPassword"
+                    :class="{'is-invalid': isChangingPassword && !isPasswordValid && passwordForm.newPassword.length > 0, 'is-valid': isPasswordValid}"
+                    placeholder="Min. 8 karakter, Besar, Kecil, Angka"
+                    :required="isChangingPassword"
+                  >
+                  <button class="btn btn-outline-secondary" type="button" @click="showNewPass = !showNewPass">
+                    <i :class="showNewPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                  </button>
+                </div>
+                <div class="form-text small" :class="isPasswordValid ? 'text-success' : 'text-muted'">
+                  <i v-if="isPasswordValid" class="bi bi-check-circle-fill me-1"></i>
+                  Syarat: Min. 8 Karakter, Huruf Besar, Huruf Kecil, & Angka.
+                </div>
               </div>
+
               <div class="mb-3">
                 <label for="confirmNewPassword" class="form-label">Konfirmasi Password Baru</label>
-                <input type="password" class="form-control" id="confirmNewPassword" v-model="passwordForm.confirmNewPassword">
+                <div class="input-group">
+                  <input 
+                    :type="showConfirmPass ? 'text' : 'password'" 
+                    class="form-control" 
+                    id="confirmNewPassword" 
+                    v-model="passwordForm.confirmNewPassword"
+                    :class="{'is-invalid': passwordForm.confirmNewPassword && passwordForm.newPassword !== passwordForm.confirmNewPassword}"
+                    :required="isChangingPassword"
+                  >
+                  <button class="btn btn-outline-secondary" type="button" @click="showConfirmPass = !showConfirmPass">
+                    <i :class="showConfirmPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="passwordError" class="alert alert-danger mt-3 small p-2">
+                {{ passwordError }}
               </div>
             </form>
             
             <div class="text-end mt-auto pt-3"> 
-              <button type="submit" form="changePasswordForm" class="btn btn-warning" :disabled="passwordLoading">
+              <button type="submit" form="changePasswordForm" class="btn btn-warning" :disabled="passwordLoading || !isChangingPassword">
                  <span v-if="passwordLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                 {{ passwordLoading ? 'Menyimpan...' : 'Ubah Password' }}
               </button>
@@ -87,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import Swal from 'sweetalert2';
 
@@ -105,7 +154,6 @@ useHead({ title: 'Profil Admin' });
 
 const { user, getUser } = useAuth();
 const { $apiBase } = useNuxtApp() as any;
-const router = useRouter();
 
 // Helper Format Phone (+62 -> 08)
 const formatPhoneDisplay = (phone: string | null | undefined) => {
@@ -133,6 +181,29 @@ const passwordForm = reactive({
   confirmNewPassword: ''
 });
 const passwordLoading = ref(false);
+const passwordError = ref<string | null>(null);
+
+// Visibility Toggles
+const showOldPass = ref(false);
+const showNewPass = ref(false);
+const showConfirmPass = ref(false);
+
+const isChangingPassword = computed(() => {
+  return passwordForm.newPassword !== '' || passwordForm.confirmNewPassword !== '' || passwordForm.oldPassword !== '';
+});
+
+// Regex Rules
+const isPasswordValid = computed(() => {
+  const pwd = passwordForm.newPassword;
+  if (!pwd) return false;
+  
+  const hasMinLen = pwd.length >= 8;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasLower = /[a-z]/.test(pwd);
+  const hasNumber = /\d/.test(pwd);
+
+  return hasMinLen && hasUpper && hasLower && hasNumber;
+});
 onMounted(async () => {
   if (!user.value) {
     try {
@@ -146,15 +217,10 @@ onMounted(async () => {
   if (user.value) {
     profileForm.name = user.value.name || '';
     profileForm.email = user.value.email || '';
-    
-    // Format No HP biar rapi (08xxx)
     profileForm.phone_number = formatPhoneDisplay(user.value.phone_number || user.value.Whatsapp || user.value.PhoneNumber);
-    
     profileForm.role = user.value.role || user.value.Series || user.value.Role || 'user';
   }
 });
-
-
 const handleUpdateProfile = async () => {
   profileLoading.value = true;
   profileError.value = null;
@@ -162,19 +228,17 @@ const handleUpdateProfile = async () => {
   try {
     const accessToken = useCookie('AccessToken').value;
     if (!accessToken) throw new Error("Sesi kadaluarsa.");
+
     const payload = {
       name: profileForm.name,
-      role: profileForm.role, // Kita kirim balik role dia sendiri
+      role: profileForm.role, 
       phone_number: profileForm.phone_number,
       AccessToken: accessToken
     };
 
-   
-    const response = await $apiBase.put(`/update-account?email=${profileForm.email}&type=user-admin`, payload);
+    await $apiBase.put(`/update-account?email=${profileForm.email}&type=user-admin`, payload);
 
-    console.log('Update Success:', response);
-
-      if (user.value) {
+    if (user.value) {
         user.value.name = profileForm.name;
         user.value.phone_number = profileForm.phone_number;
     }
@@ -188,18 +252,60 @@ const handleUpdateProfile = async () => {
     profileLoading.value = false;
   }
 };
-
 const handleChangePassword = async () => {
-   Swal.fire({
-    title: 'Fitur Belum Tersedia',
-    text: 'Mohon maaf, fitur ubah password sedang dalam pengembangan.',
-    icon: 'info'
-  });
-  
-  // Reset form
-  passwordForm.oldPassword = '';
-  passwordForm.newPassword = '';
-  passwordForm.confirmNewPassword = '';
+  if (!isChangingPassword.value) return;
+
+  passwordLoading.value = true;
+  passwordError.value = null;
+
+  // 1. Validasi Match
+  if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
+    passwordError.value = 'Password baru dan konfirmasi tidak cocok.';
+    passwordLoading.value = false;
+    return;
+  }
+
+  // 2. Validasi Rules
+  if (!isPasswordValid.value) {
+    passwordError.value = 'Password baru tidak memenuhi syarat.';
+    passwordLoading.value = false;
+    return;
+  }
+
+  try {
+    const accessToken = useCookie('AccessToken').value;
+    if (!accessToken) throw new Error("Sesi kadaluarsa.");
+
+    // Gunakan Payload yang sama dengan Client
+    const payload = {
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword,
+      accessToken: accessToken
+    };
+
+    // Gunakan Endpoint yang sama dengan Client
+    const response = await $apiBase.put('/change-password', payload);
+    
+    console.log('Change Password Success:', response);
+
+    Swal.fire('Berhasil', 'Password berhasil diubah. Silakan login ulang.', 'success');
+    
+    // Reset
+    passwordForm.oldPassword = '';
+    passwordForm.newPassword = '';
+    passwordForm.confirmNewPassword = '';
+
+  } catch (err: any) {
+    const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Gagal mengubah password.';
+    
+    if (msg.includes("Incorrect username or password") || msg.includes("NotAuthorizedException")) {
+        passwordError.value = "Password lama yang Anda masukkan salah.";
+    } else {
+        passwordError.value = msg;
+    }
+  } finally {
+    passwordLoading.value = false;
+  }
 };
 </script>
 

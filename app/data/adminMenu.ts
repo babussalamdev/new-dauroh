@@ -45,5 +45,23 @@ export const dropdownMenuItems: DropdownMenu[] = [
       // 4. MENU TAMBAH
       { to: '/admin/users/create', text: 'Tambah User Baru' },
     ]
-  }
+  },
+  {
+    id: 'collapseFinance',
+    icon: 'bi-cash-coin', // Icon duit biar relevan
+    text: 'Keuangan',
+    items: [
+      // Dashboard ringkas duit masuk
+      { to: '/admin/finance/dashboard', text: 'Ringkasan Omzet' }, 
+      
+      // List semua transaksi (Paid/Pending/Expired)
+      { to: '/admin/finance/transactions', text: 'Data Transaksi' }, 
+      
+      // Manajemen Voucher (Voucher ada hubungannya sama duit)
+      { to: '/admin/vouchers', text: 'Manajemen Voucher' }, 
+      
+      // Fitur Export data buat laporan
+      { to: '/admin/finance/reports', text: 'Laporan & Export' }, 
+    ]
+  },
 ];

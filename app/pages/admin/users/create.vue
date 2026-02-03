@@ -80,7 +80,7 @@ definePageMeta({
   }
 });
 
-const { user } = useAuth(); // Ambil data user yang login untuk cek role
+const { user } = useAuth();
 const store = useAdminUserStore();
 const router = useRouter();
 
@@ -88,21 +88,22 @@ const router = useRouter();
 const availableRoles = computed(() => {
   const myRole = user.value?.role;
 
-  // 1. Jika ROOT: Bisa bikin semua role (kecuali root lain)
+  // 1. Jika ROOT
   if (myRole === 'root') {
     return [
       { label: 'Super Role (Admin Utama)', value: 'super role' },
       { label: 'Administrator', value: 'admin' },
       { label: 'Bendahara', value: 'bendahara' },
       { label: 'Petugas Registrasi (Scan QR)', value: 'registrasi' },
-      { label: 'User Biasa (Peserta)', value: 'user' }
+      // Update Label: User Biasa -> Client
+      { label: 'Client', value: 'user' }
     ];
   }
   
-  // 2. Jika SUPER ROLE / ADMIN / LAINNYA: Hanya bisa bikin User biasa
-  // Sesuai aturan: Admin tidak bisa buat Admin lain.
+  // 2. Jika SUPER ROLE / ADMIN / LAINNYA
   return [
-    { label: 'User Biasa (Peserta)', value: 'user' }
+    // Update Label: User Biasa -> Client
+    { label: 'Client', value: 'user' }
   ];
 });
 
@@ -115,8 +116,6 @@ const form = reactive({
   role: availableRoles.value[0]?.value || 'user' 
 });
 
-// Watcher: Pastikan nilai form.role selalu valid saat halaman dimuat
-// Misal: Admin login, role otomatis kekunci ke 'user', gak bisa milih 'admin'
 watch(availableRoles, (newRoles) => {
   const isCurrentRoleValid = newRoles.find(r => r.value === form.role);
   if (!isCurrentRoleValid) {
@@ -128,7 +127,6 @@ const handleSubmit = async () => {
   const success = await store.addAccount(form);
   
   if (success) {
-    // Reset form
     form.name = '';
     form.email = '';
     form.username = '';

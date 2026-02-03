@@ -40,8 +40,7 @@
                 <th>Kontak</th>
                 <th class="text-center">Role</th>
                 <th class="text-center">Status</th>
-                <th class="text-center" style="width: 150px;">Aksi</th>
-              </tr>
+                <th class="text-center" style="width: 180px;">Aksi</th> </tr>
             </thead>
             <tbody>
               <tr v-if="store.paginatedData.length > 0" v-for="user in store.paginatedData" :key="user.SK">
@@ -74,7 +73,16 @@
                     </NuxtLink>
 
                     <button 
-                      v-if="canBlockUsers"
+                      v-if="canManageUsers"
+                      class="btn btn-sm btn-light text-warning border" 
+                      title="Reset Password User"
+                      @click="handleResetPassword(user)"
+                    >
+                      <i class="bi bi-key-fill"></i>
+                    </button>
+
+                    <button 
+                      v-if="canManageUsers"
                       class="btn btn-sm btn-light border" 
                       :class="user.Status === 'inactive' ? 'text-success' : 'text-danger'"
                       :title="user.Status === 'inactive' ? 'Buka Blokir' : 'Blokir User'"
@@ -146,11 +154,11 @@ definePageMeta({
 const route = useRoute();
 const store = useAdminUserStore();
 const { user } = useAuth();
+const { $apiBase } = useNuxtApp() as any; // Akses Axios
 
 // --- Permission Check ---
-const canBlockUsers = computed(() => {
+const canManageUsers = computed(() => {
   const myRole = (user.value?.role || user.value?.Role || '').toLowerCase();
-  // Pastikan 'super_role' (underscore) juga masuk sini biar aman
   const allowedRoles = ['root', 'super role', 'super_role', 'admin'];
   return allowedRoles.includes(myRole);
 });
@@ -169,13 +177,16 @@ watch(() => route.query.type, (newType) => {
     store.getListaccount(type, true);
 }, { immediate: true });
 
+// --- Helpers ---
 const formatRoleName = (role: string | null | undefined) => {
   if (!role) return '-';
+  const lowerRole = String(role).toLowerCase();
+  if (lowerRole === 'user') return 'Client';
+  
   const cleanRole = String(role).replace(/_/g, ' ');
   return cleanRole.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-// 2. Fungsi buat nentuin Warna Badge
 const getRoleBadge = (roleStr?: string) => {
   if (!roleStr) return 'bg-light text-dark';
   const role = roleStr.toLowerCase();
@@ -200,6 +211,53 @@ const getStatusBadge = (status?: string) => {
   if (s === 'unverified') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
   if (s === 'banned' || s === 'blocked') return 'bg-danger-subtle text-danger border border-danger-subtle';
   return 'bg-light text-secondary border';
+};
+
+// --- LOGIKA RESET PASSWORD (BARU) ---
+const handleResetPassword = async (targetUser: any) => {
+  const result = await Swal.fire({
+    title: 'Reset Password User?',
+    text: `Anda yakin ingin mereset password untuk user "${targetUser.Name}"? Password baru akan digenerate secara acak oleh sistem.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ffc107',
+    confirmButtonText: 'Ya, Reset Password',
+    cancelButtonText: 'Batal'
+  });
+
+  if (result.isConfirmed) {
+    Swal.showLoading();
+
+    try {
+      // Panggil API
+      const response = await $apiBase.put('/change-password', {}, {
+        params: {
+          username: targetUser.SK // Email User
+        }
+      });
+
+      // Ambil password baru dari response
+      const newPassword = response.password || response.data?.password || response.message || "Gagal mengambil password";
+
+      await Swal.fire({
+        title: 'Berhasil Direset!',
+        html: `
+          <p>Password user <b>${targetUser.Name}</b> berhasil direset.</p>
+          <div class="alert alert-success d-flex align-items-center justify-content-center gap-2 mb-0">
+            <strong class="fs-4 user-select-all" style="user-select: all;">${newPassword}</strong>
+          </div>
+          <p class="small text-muted mt-2 mb-0">Silakan copy dan berikan password ini kepada user.</p>
+        `,
+        icon: 'success',
+        confirmButtonText: 'Tutup'
+      });
+
+    } catch (err: any) {
+      console.error("Reset password error:", err);
+      const msg = err.response?.data?.message || err.message || "Terjadi kesalahan saat mereset password.";
+      Swal.fire('Gagal!', msg, 'error');
+    }
+  }
 };
 
 // --- LOGIKA BLOKIR USER ---

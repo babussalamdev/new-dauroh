@@ -25,7 +25,7 @@
                   </div>
 
                   <div class="mb-3">
-                    <label for="phoneNumber" class="form-label">No. Handphone</label>
+                    <label for="phoneNumber" class="form-label">No. Handphone (WhatsApp)</label>
                     <input type="text" id="phoneNumber" v-model="profileForm.phone_number" class="form-control" placeholder="08..." required>
                   </div>
 
@@ -64,25 +64,74 @@
               </div>
               <div class="card-body p-4 d-flex flex-column">
                  <p class="text-muted small mb-3">Kosongkan jika tidak ingin mengubah password.</p>
+                
                 <form @submit.prevent="handleChangePassword" id="changePasswordForm" class="flex-grow-1">
+                  
                   <div class="mb-3">
                     <label for="currentPassword" class="form-label">Password Saat Ini</label>
-                    <input type="password" id="currentPassword" v-model="passwordForm.oldPassword" class="form-control" placeholder="Diperlukan jika mengubah password" :required="isChangingPassword">
+                    <div class="input-group">
+                      <input 
+                        :type="showOldPass ? 'text' : 'password'" 
+                        id="currentPassword" 
+                        v-model="passwordForm.oldPassword" 
+                        class="form-control" 
+                        placeholder="Masukkan password lama"
+                        :required="isChangingPassword"
+                      >
+                      <button class="btn btn-outline-secondary" type="button" @click="showOldPass = !showOldPass">
+                        <svg v-if="showOldPass" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16"><path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/><path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/></svg>
+                      </button>
+                    </div>
                   </div>
+
                   <div class="mb-3">
                     <label for="newPassword" class="form-label">Password Baru</label>
-                    <input type="password" id="newPassword" v-model="passwordForm.newPassword" class="form-control" :required="isChangingPassword">
+                    <div class="input-group">
+                      <input 
+                        :type="showNewPass ? 'text' : 'password'" 
+                        id="newPassword" 
+                        v-model="passwordForm.newPassword" 
+                        class="form-control"
+                        :class="{'is-invalid': isChangingPassword && !isPasswordValid && passwordForm.newPassword.length > 0, 'is-valid': isPasswordValid}"
+                        placeholder="Min. 8 karakter, Besar, Kecil, Angka"
+                        :required="isChangingPassword"
+                      >
+                      <button class="btn btn-outline-secondary" type="button" @click="showNewPass = !showNewPass">
+                        <svg v-if="showNewPass" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16"><path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/><path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/></svg>
+                      </button>
+                    </div>
+                    <div class="form-text small" :class="isPasswordValid ? 'text-success' : 'text-muted'">
+                      <i v-if="isPasswordValid" class="bi bi-check-circle-fill me-1"></i>
+                      Syarat: Min. 8 Karakter, Huruf Besar, Huruf Kecil, & Angka.
+                    </div>
                   </div>
+
                   <div class="mb-3">
                     <label for="confirmPassword" class="form-label">Konfirmasi Password Baru</label>
-                   <input type="password" id="confirmPassword" v-model="passwordForm.newPassword" class="form-control" :required="isChangingPassword">
+                     <div class="input-group">
+                      <input 
+                        :type="showConfirmPass ? 'text' : 'password'" 
+                        id="confirmPassword" 
+                        v-model="passwordForm.confirmNewPassword" 
+                        class="form-control" 
+                        :class="{'is-invalid': passwordForm.confirmNewPassword && passwordForm.newPassword !== passwordForm.confirmNewPassword}"
+                        :required="isChangingPassword"
+                      >
+                      <button class="btn btn-outline-secondary" type="button" @click="showConfirmPass = !showConfirmPass">
+                        <svg v-if="showConfirmPass" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16"><path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/><path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/></svg>
+                      </button>
+                    </div>
                   </div>
 
                   <div v-if="passwordError" class="alert alert-danger mt-3 small p-2">
                     {{ passwordError }}
                   </div>
                 </form>
-                 <div class="mt-auto pt-3 text-end"> <NuxtLink to="/dashboard" class="btn btn-secondary me-2">Batal</NuxtLink>
+                 <div class="mt-auto pt-3 text-end"> 
+                    <NuxtLink to="/dashboard" class="btn btn-secondary me-2">Batal</NuxtLink>
                     <button type="submit" form="changePasswordForm" class="btn btn-warning" :disabled="passwordLoading || !isChangingPassword" title="Isi password baru untuk mengaktifkan tombol ini">
                        <span v-if="passwordLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                       {{ passwordLoading ? 'Menyimpan...' : 'Ubah Password' }}
@@ -99,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, computed, watch } from 'vue'; // Tambah 'watch'
+import { reactive, ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
 import { useAuth } from '~/composables/useAuth';
 
@@ -118,22 +167,16 @@ const router = useRouter();
 const { user, getUser } = useAuth();
 const { $apiBase } = useNuxtApp() as any; 
 
-// --- 1. Fungsi Helper Format Nomor HP (+62 -> 08) ---
+// --- Helper: Format Phone (Convert +62/62 to 0) ---
 const formatPhoneDisplay = (phone: string | null | undefined) => {
-  if (!phone) return '';
-  let str = String(phone).trim();
-  
-  // Kalau diawali +62, ganti jadi 0
-  if (str.startsWith('+62')) return '0' + str.slice(3);
-  
-  // Kalau diawali 62 (tanpa plus), ganti jadi 0
-  if (str.startsWith('62')) return '0' + str.slice(2);
-  
-  // Kalau udah 08 atau format lain, biarin aja
-  return str;
+    if (!phone) return '';
+    let p = String(phone).trim();
+    if (p.startsWith('+62')) return '0' + p.slice(3);
+    if (p.startsWith('62')) return '0' + p.slice(2);
+    return p;
 };
 
-// Profile Form State
+// Form State
 const profileForm = reactive({
   name: '',
   email: '',
@@ -141,6 +184,7 @@ const profileForm = reactive({
   birth_date: '',
   gender: ''
 });
+
 const profileLoading = ref(false);
 const profileError = ref<string | null>(null);
 
@@ -153,25 +197,38 @@ const passwordForm = reactive({
 const passwordLoading = ref(false);
 const passwordError = ref<string | null>(null);
 
+// --- Visibility Toggles (Icon Mata) ---
+const showOldPass = ref(false);
+const showNewPass = ref(false);
+const showConfirmPass = ref(false);
+
 const isChangingPassword = computed(() => {
   return passwordForm.newPassword !== '' || passwordForm.confirmNewPassword !== '' || passwordForm.oldPassword !== '';
 });
 
-// Fungsi untuk isi form (biar rapi & bisa dipanggil ulang)
+// --- Validasi Regex Password (Aturan: Min 8, Lower, Upper, Number) ---
+const isPasswordValid = computed(() => {
+  const pwd = passwordForm.newPassword;
+  if (!pwd) return false;
+  
+  const hasMinLen = pwd.length >= 8;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasLower = /[a-z]/.test(pwd);
+  const hasNumber = /\d/.test(pwd); // \d itu digit (angka)
+
+  return hasMinLen && hasUpper && hasLower && hasNumber;
+});
+
+// Populate Form Logic
 const populateForm = (userData: any) => {
     if (!userData) return;
-    
     profileForm.name = userData.name || '';
     profileForm.email = userData.email || '';
-    
-    // --- 2. Pake formatternya di sini ---
-    profileForm.phone_number = formatPhoneDisplay(userData.phone_number || userData.PhoneNumber); 
-    
+    profileForm.phone_number = formatPhoneDisplay(userData.phone_number || userData.PhoneNumber || '');
     profileForm.birth_date = userData.birth_date || userData.Birth_Date || ''; 
     profileForm.gender = userData.gender || userData.Gender || '';
 };
 
-// Fetch user data on mount
 onMounted(async () => {
     if (!user.value) {
         try {
@@ -183,16 +240,14 @@ onMounted(async () => {
             });
         }
     }
-    // Isi form saat awal buka
     populateForm(user.value);
 });
 
-// --- 3. Watcher: Jaga-jaga kalau data 'user' telat masuk dari API ---
 watch(user, (newVal) => {
     populateForm(newVal);
 });
 
-// Update Profile Info Handler (CLIENT)
+// --- UPDATE PROFILE HANDLER ---
 const handleUpdateProfile = async () => {
   profileLoading.value = true;
   profileError.value = null;
@@ -201,23 +256,23 @@ const handleUpdateProfile = async () => {
     const accessToken = useCookie('AccessToken').value;
     if (!accessToken) throw new Error("Sesi kadaluarsa, silakan login ulang.");
 
-    // Payload
+    // Payload Update Profile
     const payload = {
       name: profileForm.name,
       birth_date: profileForm.birth_date,
       gender: profileForm.gender,
-      phone_number: profileForm.phone_number, // Kirim format 08 (biasanya backend nerima2 aja)
+      phone_number: profileForm.phone_number,
       AccessToken: accessToken
     };
 
-    const response = await $apiBase.put(`/update-account?email=${profileForm.email}&type=user-client`, payload);
+    await $apiBase.put(`/update-account?email=${profileForm.email}&type=user-client`, payload);
     
-    // Update state user lokal
+    // Update local state
     if (user.value) {
         user.value.name = profileForm.name;
-        user.value.phone_number = profileForm.phone_number;
         user.value.birth_date = profileForm.birth_date;
         user.value.gender = profileForm.gender;
+        user.value.phone_number = profileForm.phone_number;
     }
 
     Swal.fire('Berhasil', 'Informasi profil berhasil diperbarui.', 'success');
@@ -230,30 +285,60 @@ const handleUpdateProfile = async () => {
   }
 };
 
-// Change Password Handler
+// --- CHANGE PASSWORD HANDLER ---
 const handleChangePassword = async () => {
   if (!isChangingPassword.value) return;
 
   passwordLoading.value = true;
   passwordError.value = null;
 
+  // 1. Cek Kecocokan Konfirmasi
   if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
     passwordError.value = 'Password baru dan konfirmasi tidak cocok.';
     passwordLoading.value = false;
     return;
   }
+  
+  // 2. Cek Rule Password (Regex)
+  if (!isPasswordValid.value) {
+    passwordError.value = 'Password baru tidak memenuhi syarat (Min. 8 karakter, Huruf Besar, Huruf Kecil, dan Angka).';
+    passwordLoading.value = false;
+    return;
+  }
 
   try {
-    // Simulasi sementara
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    Swal.fire('Info', 'Fitur ubah password belum tersedia saat ini.', 'info');
+    const accessToken = useCookie('AccessToken').value;
+    if (!accessToken) throw new Error("Sesi kadaluarsa, silakan login ulang.");
+
+    const payload = {
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword,
+      accessToken: accessToken
+    };
+
+    const response = await $apiBase.put('/change-password', payload);
     
+    console.log('Change Password Success:', response);
+
+    Swal.fire('Berhasil', 'Password berhasil diubah. Silakan login ulang dengan password baru.', 'success').then(() => {
+         // Optional: Logout kalau mau aman
+    });
+
+    // Reset form
     passwordForm.oldPassword = '';
     passwordForm.newPassword = '';
     passwordForm.confirmNewPassword = '';
 
   } catch (err: any) {
-    passwordError.value = err.message || 'Gagal mengubah password.';
+    const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Gagal mengubah password.';
+    
+    if (msg.includes("Incorrect username or password") || msg.includes("NotAuthorizedException")) {
+        passwordError.value = "Password lama yang Anda masukkan salah.";
+    } else {
+        passwordError.value = msg;
+    }
+    
+    console.error('Change password error:', err);
   } finally {
     passwordLoading.value = false;
   }
