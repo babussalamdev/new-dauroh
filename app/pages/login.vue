@@ -47,7 +47,9 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-              <a href="#" @click.prevent="openForgotPasswordModal" class="text-decoration-none small">Lupa password?</a>
+              <a href="#" class="text-decoration-none small" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+                Lupa password?
+              </a>
             </div>
 
             <div class="d-grid gap-2">
@@ -78,7 +80,7 @@
       </div>
     </div>
 
-    <ModalsForgotPasswordModal :show="showForgotModal" @close="closeForgotPasswordModal" />
+    <ModalsForgotPasswordModal />
   </div>
 </template>
 
@@ -87,49 +89,35 @@ import { ref, reactive } from "vue";
 import { useRouter } from "vue-router"; 
 import Swal from "sweetalert2";         
 import { useAuth } from "~/composables/useAuth";
+
+// Pastikan path import ini benar sesuai folder project lu
 import ModalsForgotPasswordModal from '~/components/modals/ForgotPasswordModal.vue';
 
 definePageMeta({ layout: "auth" });
 
 const router = useRouter(); 
-
-// 👇 PERBAIKAN DISINI: Hapus 'loading' dari useAuth
 const { login } = useAuth();
-
-// 👇 KITA BIKIN VARIABLE LOADING SENDIRI
 const loading = ref(false);
-
 const form = reactive({ email:'', password:'' })
 const showPassword = ref(false);
-
-// ==== State untuk modal Lupa Password ====
-const showForgotModal = ref(false);
-const openForgotPasswordModal = () => { showForgotModal.value = true; };
-const closeForgotPasswordModal = () => { showForgotModal.value = false; };
-// ==== Akhir State Modal ====
 
 function togglePasswordVisibility() {
   showPassword.value = !showPassword.value;
 }
 
 const handleLogin = async () => {
-  // 👇 Set loading nyala manual
   loading.value = true; 
   
   try {
-    // 1. Tembak API Login 
     await login({ 
       email: form.email, 
       password: form.password 
     });
 
-    // 2. Kalau sukses, redirect ke dashboard/home
     Swal.fire({ icon: 'success', title: 'Login Berhasil', timer: 1500, showConfirmButton: false });
     router.push('/'); 
 
   } catch (error: any) {
-   
-        // Prioritas: response.data.error > response.data.message > message biasa
     let errMsg = "Gagal Login";
     if (error.response && error.response.data) {
         errMsg = error.response.data.error || error.response.data.message || JSON.stringify(error.response.data);
@@ -139,10 +127,7 @@ const handleLogin = async () => {
 
     const errLower = errMsg.toLowerCase();
 
-    // 2. 🔥 DETEKSI USER BELUM VERIFIKASI 🔥
-    // Kita tambahkan kata kunci lain buat jaga-jaga
     if (errLower.includes('not verified') || errLower.includes('belum verifikasi') || errLower.includes('verification')) {
-      
       Swal.fire({
         icon: 'warning',
         title: 'Akun Belum Aktif',
@@ -155,23 +140,19 @@ const handleLogin = async () => {
         reverseButtons: true
       }).then((result) => {
         if (result.isConfirmed) {
-          // 👉 LEMPAR KE HALAMAN VERIFY
           router.push({ 
             path: '/verify', 
             query: { email: form.email } 
           });
         }
       });
-
     } else {
-      // Error biasa
       Swal.fire({
         icon: 'error',
         title: 'Gagal Masuk',
-        text: errMsg // Tampilkan pesan asli biar user tau kenapa
+        text: errMsg 
       });
     }
-
   } finally {
     loading.value = false;
   }
