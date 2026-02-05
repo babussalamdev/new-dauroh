@@ -21,7 +21,7 @@ export const dropdownMenuItems: DropdownMenu[] = [
   {
     id: 'collapseKonten',
     icon: 'bi-archive-fill',
-    text: 'Manajemen Konten',
+    text: 'Manajemen Event',
     items: [
       { to: '/admin/events', text: 'Tiket Dauroh' }, 
       { to: '/admin/booths', text: 'Pengajuan Booth' },

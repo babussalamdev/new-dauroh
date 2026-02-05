@@ -9,7 +9,7 @@
         
         <div class="alert alert-info d-inline-block">
           <i class="bi bi-info-circle me-2"></i>
-          Pilih menu <strong>"Manajemen Konten > Tiket Dauroh"</strong> di samping untuk mengelola event.
+          Pilih menu <strong>"Manajemen Event > Tiket Dauroh"</strong> di samping untuk mengelola event.
         </div>
       </div>
     </div>

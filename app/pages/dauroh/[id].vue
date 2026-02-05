@@ -94,7 +94,7 @@
                    </div>
                    <div class="card-body p-4">
                       
-                      <div v-if="dauroh.Quota_Total === 'non-quota'" class="text-center py-2">
+                      <div v-if="isNonQuota" class="text-center py-2">
                          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
                             <i class="bi bi-infinity me-1"></i> Tanpa Batas
                          </span>
@@ -143,7 +143,7 @@
                          </li>
                          
                          <li class="d-flex justify-content-between">
-                            <span>Total Kuota</span>
+                            <span>Total Kapasitas</span>
                             <span class="fw-bold text-dark text-end" style="max-width: 60%;">
                                {{ totalQuotaDisplay }}
                             </span>
@@ -184,6 +184,18 @@ const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
 // --- HELPER LOGIC ---
 
+// Helper: Cek apakah Non-Quota (REVISI: Lebih Robust)
+const isNonQuota = computed(() => {
+    const d = dauroh.value;
+    if (!d) return false;
+
+    // Fungsi cek yang aman (case insensitive & trim)
+    const check = (val: any) => String(val).toLowerCase().trim() === 'non-quota';
+
+    // Cek semua kemungkinan field
+    return check(d.Quota_Total) || check(d.Quota_Ikhwan) || check(d.Quota_Akhwat);
+});
+
 // 1. Gender Label
 const getGenderLabel = (g: string) => {
     if (!g) return 'Umum';
@@ -199,47 +211,46 @@ const getGenderLabel = (g: string) => {
 // 2. Toggles untuk baris kuota
 const showTotal = computed(() => {
     if (!dauroh.value) return false;
-    if (dauroh.value.Quota_Total === 'non-quota') return true;
+    if (isNonQuota.value) return false; 
+    
     const g = dauroh.value.Gender?.toLowerCase() || '';
     return g === 'umum' || (!g.includes('ikhwan') && !g.includes('akhwat'));
 });
 
 const showIkhwan = computed(() => {
+    if (isNonQuota.value) return false; 
     const g = dauroh.value?.Gender?.toLowerCase() || '';
     return g.includes('ikhwan') || g.includes('laki') || g.includes('pria') || g.includes('ikhwan, akhwat'); 
 });
 
 const showAkhwat = computed(() => {
+    if (isNonQuota.value) return false;
     const g = dauroh.value?.Gender?.toLowerCase() || '';
     return g.includes('akhwat') || g.includes('perempuan') || g.includes('wanita') || g.includes('ikhwan, akhwat');
 });
 
-// 3. Hitung Sisa Kuota (Quota - Sold)
+// 3. Hitung Sisa Kuota (REVISI: Handle string 'non-quota' di parameter)
 const getRemaining = (quota: number | string, sold: number | string) => {
-    if (quota === 'non-quota') return 'Tanpa Batas';
+    if (String(quota).toLowerCase() === 'non-quota') return 'Tanpa Batas';
     const q = Number(quota) || 0;
     const s = Number(sold) || 0;
     const remain = q - s;
-    return remain < 0 ? 0 : remain; // Safety check
+    return remain < 0 ? 0 : remain;
 };
 
 // 4. Format Angka Kuota
 const formatQuota = (val: string | number) => {
-    if (val === 'non-quota' || val === 'Tanpa Batas') return 'Tanpa Batas';
+    if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return 'Tanpa Batas';
     if (val === 0 || val === '0') return '0 (Penuh)';
     return `${val}`;
 };
 
-// 5. Total Kapasitas Display (Ambil Murni Quota Awal)
+// 5. Total Kapasitas Display
 const totalQuotaDisplay = computed(() => {
     if (!dauroh.value) return '-';
+    if (isNonQuota.value) return 'Tanpa Batas';
+
     const d = dauroh.value;
-
-    if (d.Quota_Total === 'non-quota') return 'Tanpa Batas';
-
-    // Karena API 'Quota' = Kapasitas Awal, kita langsung tampilkan saja.
-    // Tidak perlu ditambah Sold lagi.
-    
     let text = [];
     if (showIkhwan.value) text.push(`Ikhwan: ${d.Quota_Ikhwan}`);
     if (showAkhwat.value) text.push(`Akhwat: ${d.Quota_Akhwat}`);
@@ -256,16 +267,16 @@ const registrationStatus = computed(() => {
   
   if (d.Status !== 'active') return { canRegister: false, message: 'Event Selesai / Tutup' };
   
-  if (d.Quota_Total === 'non-quota') {
+  // Kalau Non-Quota, Langsung Lolos (Return Daftar Sekarang)
+  if (isNonQuota.value) {
      return { canRegister: true, message: 'Daftar Sekarang' };
   }
 
-  // Cek apakah masih ada sisa (Quota - Sold > 0)
   const remTotal = getRemaining(d.Quota_Total, d.Sold_Total);
   const remIkhwan = getRemaining(d.Quota_Ikhwan, d.Sold_Ikhwan);
   const remAkhwat = getRemaining(d.Quota_Akhwat, d.Sold_Akhwat);
 
-  // Jika salah satu slot masih ada sisa, tombol aktif
+  // Jika salah satu slot masih ada sisa
   if (
     (typeof remTotal === 'number' && remTotal > 0) || 
     (typeof remIkhwan === 'number' && remIkhwan > 0) || 

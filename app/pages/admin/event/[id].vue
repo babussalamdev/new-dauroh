@@ -226,7 +226,7 @@ const eventSK = String(route.params.id);
 
 const eventData = computed(() => daurohStore.currentDaurohDetail);
 const breadcrumbItems = computed(() => [
-  { text: 'Manajemen Event', to: '/admin' },
+  { text: 'Manajemen Event', to: '/admin/events' },
   { text: eventData.value?.Title || 'Detail Event' }
 ]);
 

@@ -22,7 +22,7 @@
 
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
-              <input type="text" id="username" v-model="form.username" class="form-control" placeholder="Username unik" required />
+              <input type="text" id="username" v-model="form.username" class="form-control" placeholder="Username untuk login" required />
             </div>
 
             <div class="mb-3">

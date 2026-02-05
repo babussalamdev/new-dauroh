@@ -34,7 +34,7 @@
 
             <div v-if="showIkhwan" :class="gridColClass">
                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                 <small class="text-muted d-block mb-1">Kuota Ikhwan</small>
+                 <small class="text-muted d-block mb-1">Khusus Ikhwan</small>
                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(dauroh?.Quota_Ikhwan)">
                    {{ formatQuota(dauroh?.Quota_Ikhwan) }}
                  </h5>
@@ -43,7 +43,7 @@
             
             <div v-if="showAkhwat" :class="gridColClass">
                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                 <small class="text-muted d-block mb-1">Kuota Akhwat</small>
+                 <small class="text-muted d-block mb-1">Khusus Akhwat</small>
                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(dauroh?.Quota_Akhwat)">
                    {{ formatQuota(dauroh?.Quota_Akhwat) }}
                  </h5>

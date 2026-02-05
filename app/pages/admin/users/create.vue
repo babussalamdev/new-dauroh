@@ -26,7 +26,7 @@
 
             <div class="col-md-6">
               <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" v-model="form.username" required placeholder="Username unik">
+              <input type="text" class="form-control" id="username" v-model="form.username" required placeholder="Username untuk login">
             </div>
             <div class="col-md-6">
               <label for="phone" class="form-label">Nomor Telepon</label>
