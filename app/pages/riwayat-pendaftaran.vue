@@ -191,6 +191,7 @@
 </template>
 
 <script setup lang="ts">
+import Swal from 'sweetalert2';
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '~/stores/user';
@@ -257,25 +258,43 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
   showQr.value = true;
 };
 
-const resumePayment = (ticket: any) => {
-  checkoutStore.dauroh = ticket.dauroh;
-  checkoutStore.participants = ticket.participants || [];
+const resumePayment = async (ticket: any) => {
+  // 1. Ambil SK Event secara Robust
+  // Cek ticket.dauroh.SK (ID Event) -> kalau null, cek ticket.SK (ID Transaksi/Event)
+  const skEvent = ticket.dauroh?.SK || ticket.SK || ticket.EventSK; 
   
-  checkoutStore.transactionDetails = {
-    ...ticket,
-    status: ticket.status,
-    amount: ticket.amount,
-    vaNumber: ticket.va_number || ticket.receiver_bank_account?.account_number, 
-    expiryTime: ticket.expired_date,
-    paymentMethod: ticket.sender_bank || ticket.payment_method || 'Bank',
-  };
-  
-  if (checkoutStore.setStep) {
-      checkoutStore.setStep('instructions');
-  } else {
-      checkoutStore.currentStep = 'instructions';
+  // Debugging log biar tau ID apa yang dikirim
+  console.log("Ticket Data:", ticket);
+  console.log("Extracted SK Event:", skEvent);
+
+  if (!skEvent) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error Data',
+        text: 'ID Event tidak ditemukan pada riwayat ini. Hubungi admin jika masalah berlanjut.'
+      });
+      return;
   }
-  router.push('/checkout');
+
+  // 2. Panggil Action Store
+  const checkExisting = await checkoutStore.checkExistingTransaction(skEvent);
+
+  // 3. Handle Hasil
+  if (checkExisting) {
+      // SUKSES: Data ada & status Pending -> Redirect ke Checkout
+      router.push('/checkout');
+  } else {
+      // GAGAL: Data sudah Expired di server atau tidak ditemukan
+      await Swal.fire({
+        icon: 'error',
+        title: 'Gagal Melanjutkan',
+        text: 'Transaksi untuk event ini sudah kadaluarsa atau tidak ditemukan. Silakan daftar ulang.',
+        confirmButtonColor: '#d33'
+      });
+      
+      // Refresh list riwayat agar status 'PENDING' di tabel berubah jadi 'EXPIRED'
+      // userStore.fetchUserTransactions(); // Uncomment baris ini kalau function fetch ada di userStore
+  }
 };
 
 const formatDate = (dateString: string) => {

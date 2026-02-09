@@ -120,13 +120,29 @@
                           <span class="text-muted small-8">{{ ticket.participants.length }} Peserta • {{ formatCurrency(ticket.dauroh.Price) }}</span>
                         </td>
                         <td class="text-center pe-4">
-                          <button 
-                            class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" 
-                            @click="openQrModal(ticket)"
-                          >
-                            <i class="bi bi-qr-code-scan me-2"></i>E-Ticket
-                          </button>
-                        </td>
+  <button 
+    v-if="getSmartStatus(ticket) === 'PAID'"
+    class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" 
+    @click="openQrModal(ticket)"
+  >
+    <i class="bi bi-qr-code-scan me-2"></i>E-Ticket
+  </button>
+
+  <span 
+    v-else-if="getSmartStatus(ticket) === 'PENDING'" 
+    class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill"
+  >
+    <i class="bi bi-hourglass-split me-1"></i>Belum Lunas
+  </span>
+
+  <span 
+    v-else 
+    class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill"
+  >
+    Tidak Valid
+  </span>
+
+</td>
                       </tr>
                     </tbody>
                   </table>

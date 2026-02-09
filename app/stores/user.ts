@@ -55,21 +55,13 @@ export const useUserStore = defineStore('user', {
   }),
   
   getters: {
-    // [FIX 1] Tambahkan Getter 'transactions' sebagai ALIAS untuk 'tickets'
-    // Ini supaya kode di register/[id].vue yang manggil userStore.transactions bisa jalan
     transactions: (state) => state.tickets,
-
     getAllTickets: (state) => state.tickets,
-    
-    // [FIX 2] Tambahkan tipe eksplisit (t: UserTicket) untuk mengatasi error 'implicitly has an any type'
     getUpcomingTickets: (state) => state.tickets.filter((t: UserTicket) => t.status === 'Upcoming' || t.status === 'PAID'),
-    
     getPendingTickets: (state) => state.tickets.filter((t: UserTicket) => t.status === 'PENDING'),
-    
     getDashboardData: (state) => state.tickets
       .filter((t: UserTicket) => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status))
       .sort((a: UserTicket, b: UserTicket) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-      
     getValidTickets: (state) => {
       if (!state.tickets) return [];
       return state.tickets.filter((ticket: UserTicket) => {
@@ -105,8 +97,6 @@ export const useUserStore = defineStore('user', {
     },
 
     async fetchUserTransactions() {
-      console.log("Action fetchUserTransactions DIMULAI");
-      
       const nuxtApp = useNuxtApp() as any;
       const apiBase = nuxtApp.$apiBase; 
       
@@ -122,17 +112,13 @@ export const useUserStore = defineStore('user', {
 
       try {
         if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
-            console.log(" memanggil fetchPublicTiketDauroh...");
             if (typeof daurohStore.fetchPublicTiketDauroh === 'function') {
                 await daurohStore.fetchPublicTiketDauroh();
             } else {
-               console.warn("⚠️ [DEBUG] Fungsi fetchPublicTiketDauroh tidak ditemukan!");
+        
             }
         }
-
-        console.log("Menembak API /get-payment...");
         const response = await apiBase.get('/get-payment?type=client');
-        console.log("Response API:", response.data);
         
         const mappedTickets = response.data.map((item: any) => {
           
@@ -179,10 +165,7 @@ export const useUserStore = defineStore('user', {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
 
-        console.log("✅ [DEBUG] Selesai! Data Judul & Harga berhasil di-load.");
-
       } catch (error) {
-        console.error("❌ [DEBUG] ERROR FATAL:", error);
       } finally {
         this.isLoading = false;
       }

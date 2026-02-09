@@ -2,21 +2,21 @@
   <div v-if="transactionDetails">
     <div v-if="transactionDetails.sender_bank_type !== 'wallet_account' && transactionDetails.paymentMethod !== 'wallet_account'">
       <h5 class="fw-bold text-danger" v-if="remainingTime > 0">
-        {{ days }} Hari {{ hours }}:{{ minutes }}:{{ seconds }}
+        {{ pad(hours) }}:{{ pad(minutes) }}:{{ pad(seconds) }}
       </h5>
       <span v-else class="text-danger fw-bold">
-        Expired a
+        Expired
       </span>
     </div>
 
     <div v-else>
       <small class="fw-bold text-dark" v-if="remainingTime > 0">
         Lakukan Pembayaran Dalam : <span class="text-danger fw-bold">
-          {{ days }}D {{ hours }}:{{ minutes }}:{{ seconds }}
+          {{ pad(hours) }}:{{ pad(minutes) }}:{{ pad(seconds) }}
         </span>
       </small>
       <span v-else class="text-danger fw-bold">
-        Expired b
+        Expired
       </span>
     </div>
   </div>
@@ -37,29 +37,40 @@ const transactionDetails = computed(() => checkoutStore.transactionDetails);
 // Logic Timer
 const remainingTime = ref<number>(1000); 
 const intervalId = ref<any>(null);
-
-const days = computed(() => Math.floor(remainingTime.value / (1000 * 60 * 60 * 24)));
-const hours = computed(() => Math.floor((remainingTime.value % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+const pad = (n: number) => n.toString().padStart(2, '0');
+const hours = computed(() => Math.floor(remainingTime.value / (1000 * 60 * 60))); 
 const minutes = computed(() => Math.floor((remainingTime.value % (1000 * 60 * 60)) / (1000 * 60)));
 const seconds = computed(() => Math.floor((remainingTime.value % (1000 * 60)) / 1000));
 
 const startTimer = () => {
-  // Ambil waktu expired
-  const expiryDateStr = transactionDetails.value?.expiryTime || transactionDetails.value?.expired_date;
+  let expiryDateStr = transactionDetails.value?.expiryTime || transactionDetails.value?.expired_date;
   if (!expiryDateStr) return;
 
+  // Logic Timezone (Keep this, ini penting!)
+  if (typeof expiryDateStr === 'string') {
+      expiryDateStr = expiryDateStr.replace(' ', 'T');
+      if (!expiryDateStr.includes('+') && !expiryDateStr.endsWith('Z')) {
+          expiryDateStr += '+07:00';
+      }
+  }
+
   const targetDate = new Date(expiryDateStr).getTime();
+  
+  if (isNaN(targetDate)) return;
+
   const updateTime = () => {
     const now = new Date().getTime();
     const diff = targetDate - now;
-    
+
     remainingTime.value = diff;
 
-    // Jika waktu habis
-    if (diff <= 0) {
+    if (remainingTime.value <= 0) {
+      remainingTime.value = 0;
       stopTimer();
-      remainingTime.value = 0; // Pastikan 0 biar UI gak minus
-      checkoutStore.setExpired(); // Trigger redirect di Store
+      // Buffer 2 detik sebelum trigger expired di store
+      if (diff < -2000) {
+         checkoutStore.setExpired();
+      }
     }
   };
 
@@ -71,16 +82,13 @@ const startTimer = () => {
 };
 
 const stopTimer = () => {
-  checkoutStore.setExpired();
   if (intervalId.value) clearInterval(intervalId.value);
   intervalId.value = null;
 };
 
-// Lifecycle
 onMounted(() => {
   startTimer();
 
-  // Socket Logic
   const userData = user.value as any;
   const sk = userData?.given_name || 'Guest';
   const program = userData?.profile || 'Default';

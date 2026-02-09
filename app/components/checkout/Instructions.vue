@@ -23,7 +23,7 @@
         </div>
 
         <div class="text-start">
-          <div v-if="currentStatus === 'PENDING' || currentStatus === 'pending'">
+          <div v-if="currentStatus === 'PENDING'">
              <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
              
              <component 
@@ -51,7 +51,7 @@
              </button>
           </div>
 
-          <div v-else-if="currentStatus === 'EXPIRED' || currentStatus === 'expired'" class="alert alert-danger text-center">
+          <div v-else-if="currentStatus === 'EXPIRED'" class="alert alert-danger text-center">
              <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
              <p>Sesi pembayaran telah berakhir.</p>
              <button class="btn btn-outline-danger btn-sm mt-3" @click="handleExpiredState">
@@ -99,7 +99,24 @@ const router = useRouter();
 const showQrModal = ref(false);
 
 // --- Computed Helpers ---
-const currentStatus = computed(() => store.transactionDetails?.status || 'PENDING');
+// [REVISI] Logic Status yang lebih cerdas menggunakan Store getter
+const currentStatus = computed(() => {
+  // 1. Cek apakah expired secara waktu (Realtime Calculation)
+  // Ini menghindari bug dimana backend status 'PENDING' tapi di browser waktu sudah habis
+  if (store.isExpired) {
+     return 'EXPIRED';
+  }
+
+  const rawStatus = (store.transactionDetails?.status || 'PENDING').toUpperCase();
+
+  // 2. Cek Status Sukses
+  if (['PAID', 'SUCCESS', 'SETTLED', 'LUNAS'].includes(rawStatus)) {
+     return 'PAID';
+  }
+
+  // 3. Jika tidak expired dan belum bayar, berarti PENDING
+  return 'PENDING';
+});
 
 const isPaid = computed(() => {
   const s = (currentStatus.value || '').toUpperCase();
@@ -136,7 +153,6 @@ const currentBankComponent = computed(() => {
 });
 
 // --- Helper: Handle Expired Logic ---
-// Kita pisah logic ini biar bisa dipanggil dari Watcher, onMounted, atau Tombol Manual
 const handleExpiredState = () => {
     Swal.fire({
       icon: 'error',
@@ -162,15 +178,15 @@ const handleExpiredState = () => {
 onMounted(() => {
   // 1. Cek Data
   if (store.transactionDetails && store.dauroh) {
-     userStore.registerDauroh({
-         dauroh: store.dauroh,
-         participants: store.participants,
-         transactionDetails: store.transactionDetails 
-     });
+      userStore.registerDauroh({
+          dauroh: store.dauroh,
+          participants: store.participants,
+          transactionDetails: store.transactionDetails 
+      });
   }
   const status = (currentStatus.value || '').toUpperCase();
   if (status === 'EXPIRED') {
-     handleExpiredState();
+      handleExpiredState();
   }
 });
 

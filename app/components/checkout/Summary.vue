@@ -222,23 +222,27 @@ const handlePay = async () => {
   
   try {
     const result = await store.createPayment();
-
     if (result.success) {
-      // REVISI 4: Jangan push router.
-      // Store checkout.ts sudah otomatis set `this.currentStep = 'instructions'` kalau sukses.
-      // Jadi diamkan saja, UI akan berubah sendiri.
-      
-    } else {
-      // --- LOGIC ERROR HANDLING ---
-      const errMsg = (result.message || '').toLowerCase();
-      
-      if (errMsg.includes('booking pending') || errMsg.includes('memiliki booking')) {
-         await Swal.fire({ icon: 'warning', title: 'Transaksi Sudah Ada', text: 'Anda memiliki transaksi yang belum dibayar.', confirmButtonText: 'Cek Riwayat', confirmButtonColor: '#004754' });
+      store.setStep('instructions');
+    } 
+    else {
+      const errMsg = (result.message || '').toLowerCase()
+      if (errMsg.includes('booking pending') || errMsg.includes('memiliki booking') || errMsg.includes('pending')) {
+         
+         await Swal.fire({ 
+            icon: 'warning', 
+            title: 'Transaksi Tertunda', 
+            text: 'Sistem mendeteksi Anda memiliki pendaftaran yang belum dibayar, namun data gagal diambil otomatis. Silakan cek menu Riwayat.', 
+            confirmButtonText: 'Cek Riwayat', 
+            confirmButtonColor: '#004754' 
+         });
+         
          router.push('/riwayat-pendaftaran'); 
          return;
       }
 
-      const isSoldOut = result.error?.response?.status === 400 || result.error?.response?.status === 409 || errMsg.includes('habis');
+      // Logic Sold Out
+      const isSoldOut = result.error?.response?.status === 400 && (errMsg.includes('habis') || errMsg.includes('sold'));
       
       if (isSoldOut) {
          await Swal.fire({ icon: 'error', title: 'Mohon Maaf', text: 'Kuota tiket sudah habis.', confirmButtonText: 'Kembali ke Home', confirmButtonColor: '#d33' });
