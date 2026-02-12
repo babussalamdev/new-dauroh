@@ -16,20 +16,21 @@
           <div class="d-flex card-container-flex">
             <div v-for="dauroh in chunk" :key="dauroh.SK" class="dauroh-card-wrapper">
               
-              <NuxtLink 
-                :to="`/dauroh/${dauroh.SK}`" 
-                class="text-decoration-none d-block h-100"
+              <div 
+                class="text-decoration-none d-block h-100 position-relative"
                 :class="{ 'card-disabled': getCardStatus(dauroh).isDisabled }"
+                style="cursor: pointer;"
+                @click="handleCardClick(dauroh)"
               >
                 <div class="card dauroh-card rounded-lg overflow-hidden h-100">
                   <div class="position-relative">
                    <NuxtImg
-                     :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`"
-                     class="card-img-top"
-                     :alt="dauroh.Title"
-                     loading="lazy"
-                     format="webp"
-                   />
+                      :src="`${imgUrl}/${dauroh.SK}/${dauroh.Picture}.webp`"
+                      class="card-img-top"
+                      :alt="dauroh.Title"
+                      loading="lazy"
+                      format="webp"
+                    />
                     <span v-if="dauroh.topOverlay" class="overlay-top">{{ dauroh.topOverlay }}</span>
                     
                     <div v-if="getCardStatus(dauroh).overlayText" class="status-overlay">
@@ -44,24 +45,25 @@
                     <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
                       <button 
                         class="btn btn-sm btn-outline-primary rounded-pill w-100" 
-                        @click.prevent.stop="openDetailModal(dauroh)"
+                        @click.stop="openDetailModal(dauroh)"
                       >
                         Detail
                       </button>
                       
                       <button 
-                      class="btn btn-sm rounded-pill w-100" 
-                      :class="getButtonState(dauroh).cssClass"
-                      :disabled="getButtonState(dauroh).disabled"
-                      @click.prevent.stop="handleRegisterClick(dauroh)" 
+                        class="btn btn-sm rounded-pill w-100" 
+                        :class="getButtonState(dauroh).cssClass"
+                        :disabled="getButtonState(dauroh).disabled || loadingEventId === dauroh.SK"
+                        @click.stop="handleRegisterClick(dauroh)" 
                       >
-                      {{ getButtonState(dauroh).label }}
-                    </button>
+                        <span v-if="loadingEventId === dauroh.SK" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span v-else>{{ getButtonState(dauroh).label }}</span>
+                      </button>
 
                     </div>
                   </div>
                 </div>
-              </NuxtLink>
+              </div>
 
             </div>
           </div>
@@ -111,7 +113,9 @@
   import { ref, onMounted } from "vue";
   import { useDaurohStore } from "~/stores/dauroh";
   import { useToastStore } from '~/stores/toast';
+  import { useCheckoutStore } from '~/stores/checkout'; 
   import { useAuth } from "~/composables/useAuth";
+  import { useTransactionStatus } from '~/composables/useTransactionStatus';
   import { useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   import Swal from 'sweetalert2'; 
@@ -119,15 +123,24 @@
   const isHovered = ref(false);
   const daurohStore = useDaurohStore();
   const toastStore = useToastStore();
+  const checkoutStore = useCheckoutStore(); 
   const { isLoggedIn } = useAuth();
+  const { getSmartStatus } = useTransactionStatus();
   const router = useRouter();
 
   const imgUrl = ref("");
   const config = useRuntimeConfig();
+  const loadingEventId = ref(null); 
 
   onMounted(() => {
     imgUrl.value = config.public.img;
-    daurohStore.fetchPublicTiketDauroh();
+    
+    // Pilih endpoint berdasarkan status login
+    if (isLoggedIn.value) {
+        daurohStore.fetchAuthTiketDauroh();
+    } else {
+        daurohStore.fetchPublicTiketDauroh();
+    }
   });
 
   const selectedDauroh = ref(null);
@@ -158,18 +171,20 @@
     }, 200);
   };
 
+  const handleCardClick = (dauroh) => {
+      router.push(`/dauroh/${dauroh.SK}`);
+  };
+
   // --- Status Tombol Terpusat ---
   const getButtonState = (daurohItem) => {
     if (!daurohItem) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
 
-    // 1. Cek Status
     if (daurohItem.Status === 'inactive') {
       return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
     }
 
     const now = dayjs();
 
-    // 2. Cek Tanggal Acara
     if (daurohItem.Date) {
        const dates = Object.values(daurohItem.Date);
        if (dates.length > 0) {
@@ -182,7 +197,6 @@
        }
     }
 
-    // 3. Cek Masa Pendaftaran
     const startStr = daurohItem.Registration?.start_registration?.replace(' ', 'T');
     const endStr = daurohItem.Registration?.end_registration?.replace(' ', 'T');
 
@@ -199,7 +213,6 @@
       }
     }
 
-    // 4. Cek Kuota
     let relevantQuota = 'non-quota';
     const gender = (daurohItem.Gender || '').toLowerCase().trim();
 
@@ -217,7 +230,6 @@
       return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
     }
 
-    // 5. Tombol Aktif
     return { label: 'Daftar', disabled: false, cssClass: 'btn-primary' };
   };
 
@@ -238,49 +250,31 @@
     return { isDisabled: false, overlayText: null };
   };
 
-  // --- REVISI DI SINI ---
-  const handleRegisterClick = (daurohItem) => {
+  const handleRegisterClick = async (daurohItem) => {
     const state = getButtonState(daurohItem);
     
-    // 1. Cek Status Button
     if (state.disabled) {
        toastStore.showToast({ message: `Gagal: Status ${state.label}`, type: 'warning' });
        return;
     }
 
-    // 2. Cek Login (CUSTOMIZED STYLE)
     if (!isLoggedIn.value) {
       Swal.fire({
-        // Gunakan icon kustom atau icon bawaan
         icon: 'info',
-        // Teks & Judul
         title: 'Login Diperlukan',
         text: 'Mohon login terlebih dahulu untuk mendaftar.',
-        
-        // Konfigurasi Tombol
         showCancelButton: true,
         confirmButtonText: 'Login Sekarang',
         cancelButtonText: 'Nanti',
-        reverseButtons: true, // Posisi tombol dibalik biar UX lebih modern
-        
-        // Mematikan styling bawaan SweetAlert agar bisa pakai Bootstrap Class
+        reverseButtons: true,
         buttonsStyling: false,
-        
-        // Styling Custom menggunakan Bootstrap Classes
         customClass: {
-          popup: 'rounded-4 border-0 shadow-lg p-4', // Card lebih bulat dan shadow lembut
+          popup: 'rounded-4 border-0 shadow-lg p-4',
           title: 'fs-5 fw-bold text-dark mb-2',
           htmlContainer: 'text-muted small mb-4',
-          confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium', // Tombol Login
-          cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium' // Tombol Batal
+          confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium',
+          cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium'
         },
-        
-        // Backdrop (Latar belakang) dengan efek blur
-        // backdrop: `
-        //   rgba(0,0,0,0.2)
-        //   left top
-        //   no-repeat
-        // `
       }).then((result) => {
         if (result.isConfirmed) {
            router.push('/login');
@@ -289,9 +283,38 @@
       return; 
     }
 
-    // 3. Lanjut ke Registrasi
     if (daurohItem && daurohItem.SK) {
-      router.push(`/dauroh/register/${daurohItem.SK}`);
+      // Logic Satpam menggunakan logs dari store (tanpa hit API tambahan)
+      const pendingLog = daurohStore.userLogs.find(log => {
+        const isSameEvent = String(log.Subject) === String(daurohItem.SK);
+        const status = getSmartStatus(log); 
+        return isSameEvent && status === 'PENDING';
+      });
+
+      if (pendingLog) {
+         Swal.fire({
+           icon: 'warning',
+           title: 'Transaksi Belum Selesai',
+           text: 'Anda memiliki pendaftaran yang belum dibayar untuk event ini. Silakan selesaikan pembayaran.',
+           confirmButtonText: 'Bayar Sekarang',
+           showCancelButton: true,
+           cancelButtonText: 'Nanti',
+           buttonsStyling: false,
+           customClass: {
+             popup: 'rounded-4 border-0 shadow-lg p-4',
+             title: 'fs-5 fw-bold text-dark mb-2',
+             htmlContainer: 'text-muted small mb-4',
+             confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium',
+             cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium'
+           }
+         }).then((result) => {
+           if (result.isConfirmed) {
+             router.push('/checkout');
+           }
+         });
+      } else {
+         router.push(`/dauroh/register/${daurohItem.SK}`);
+      }
     } else {
       toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
     }
@@ -305,7 +328,6 @@
     cursor: default;
   }
 
-  /* Tulisan overlay di tengah gambar */
   .status-overlay {
     position: absolute;
     top: 50%;
@@ -324,7 +346,6 @@
     border: 2px solid white;
   }
 
-  /* --- Style Existing --- */
   .carousel {
     position: relative;
     padding-left: 50px;
@@ -438,10 +459,3 @@
   .card-body { flex-grow: 1; }
   .card-body .btn { font-size: 0.8rem; padding: 0.25rem 0.75rem; }
 </style>
-
-<!-- <style>
-.swal2-backdrop-show {
-  backdrop-filter: blur(5px); /* Efek kaca buram modern */
-  -webkit-backdrop-filter: blur(5px);
-}
-</style> -->

@@ -58,101 +58,102 @@
           
           <div class="col-lg-4 ps-lg-4">
              <div class="sticky-top" style="top: 100px; z-index: 10;">
-                
-                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
-                   <div class="card-body p-4 pt-5 text-center">
-                      <p class="text-muted x-small text-uppercase fw-bold mb-1 ls-1">Harga Tiket</p>
-                      <h3 class="fw-bold text-primary mb-4">{{ formatCurrency(dauroh.Price) }}</h3>
-                      
-                      <button 
-                        class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm mb-3 transition-transform"
-                        :disabled="!registrationStatus.canRegister"
-                        @click="handleRegisterClick"
-                      >
-                        {{ registrationStatus.message }}
-                      </button>
+               
+               <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                  <div class="card-body p-4 pt-5 text-center">
+                     <p class="text-muted x-small text-uppercase fw-bold mb-1 ls-1">Harga Tiket</p>
+                     <h3 class="fw-bold text-primary mb-4">{{ formatCurrency(dauroh.Price) }}</h3>
+                     
+                     <button 
+                       class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm mb-3 transition-transform d-flex align-items-center justify-content-center gap-2"
+                       :disabled="!registrationStatus.canRegister || isLoadingCheck"
+                       @click="handleRegisterClick"
+                     >
+                       <span v-if="isLoadingCheck" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                       <span>{{ registrationStatus.message }}</span>
+                     </button>
 
-                      <div v-if="!registrationStatus.canRegister" class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis x-small py-2 mb-0 rounded-3">
-                         <i class="bi bi-info-circle me-1"></i> {{ registrationStatus.message }}
-                      </div>
-                      
-                      <span class="badge bg-light text-dark border px-3 py-2 rounded-pill text-uppercase x-small fw-bold shadow-sm mt-3">
-                           {{ getGenderLabel(dauroh.Gender) }}
+                     <div v-if="!registrationStatus.canRegister" class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis x-small py-2 mb-0 rounded-3">
+                        <i class="bi bi-info-circle me-1"></i> {{ registrationStatus.message }}
+                     </div>
+                     
+                     <span class="badge bg-light text-dark border px-3 py-2 rounded-pill text-uppercase x-small fw-bold shadow-sm mt-3">
+                          {{ getGenderLabel(dauroh.Gender) }}
                        </span>
-                   </div>
-                   
-                   <div class="card-footer bg-light p-3 text-center border-0 x-small text-muted">
-                      Ada kendala? <a href="#" class="text-dark fw-bold text-decoration-none">Hubungi Admin</a>
-                   </div>
-                </div>
+                  </div>
+                  
+                  <div class="card-footer bg-light p-3 text-center border-0 x-small text-muted">
+                     Ada kendala? <a href="#" class="text-dark fw-bold text-decoration-none">Hubungi Admin</a>
+                  </div>
+               </div>
 
-                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
-                   <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                      <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-                         <i class="bi bi-pie-chart-fill text-primary"></i> Sisa Kuota
-                      </h6>
-                   </div>
-                   <div class="card-body p-4">
-                      
-                      <div v-if="isNonQuota" class="text-center py-2">
-                         <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
-                            <i class="bi bi-infinity me-1"></i> Tanpa Batas
-                         </span>
-                      </div>
+               <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                  <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                     <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-pie-chart-fill text-primary"></i> Sisa Kuota
+                     </h6>
+                  </div>
+                  <div class="card-body p-4">
+                     
+                     <div v-if="isNonQuota" class="text-center py-2">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                           <i class="bi bi-infinity me-1"></i> Tanpa Batas
+                        </span>
+                     </div>
 
-                      <div v-else class="d-flex flex-column gap-3">
-                         <div v-if="showIkhwan" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-primary">
-                            <span class="small fw-bold text-secondary ps-1">Ikhwan</span>
-                            <span class="fw-bold text-dark">
-                               {{ formatQuota(getRemaining(dauroh.Quota_Ikhwan, dauroh.Sold_Ikhwan)) }}
-                            </span>
-                         </div>
+                     <div v-else class="d-flex flex-column gap-3">
+                        <div v-if="showIkhwan" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-primary">
+                           <span class="small fw-bold text-secondary ps-1">Ikhwan</span>
+                           <span class="fw-bold text-dark">
+                              {{ formatQuota(getRemaining(dauroh.Quota_Ikhwan, dauroh.Sold_Ikhwan)) }}
+                           </span>
+                        </div>
 
-                         <div v-if="showAkhwat" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-danger">
-                            <span class="small fw-bold text-secondary ps-1">Akhwat</span>
-                            <span class="fw-bold text-dark">
-                               {{ formatQuota(getRemaining(dauroh.Quota_Akhwat, dauroh.Sold_Akhwat)) }}
-                            </span>
-                         </div>
+                        <div v-if="showAkhwat" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-danger">
+                           <span class="small fw-bold text-secondary ps-1">Akhwat</span>
+                           <span class="fw-bold text-dark">
+                              {{ formatQuota(getRemaining(dauroh.Quota_Akhwat, dauroh.Sold_Akhwat)) }}
+                           </span>
+                        </div>
 
-                         <div v-if="showTotal && !showIkhwan && !showAkhwat" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
-                            <span class="small fw-bold text-secondary">Tiket Tersedia</span>
-                            <span class="fw-bold text-dark">
-                               {{ formatQuota(getRemaining(dauroh.Quota_Total, dauroh.Sold_Total)) }}
-                            </span>
-                         </div>
-                      </div>
-                   </div>
-                </div>
+                        <div v-if="showTotal && !showIkhwan && !showAkhwat" class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
+                           <span class="small fw-bold text-secondary">Tiket Tersedia</span>
+                           <span class="fw-bold text-dark">
+                              {{ formatQuota(getRemaining(dauroh.Quota_Total, dauroh.Sold_Total)) }}
+                           </span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
 
-                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
-                   <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                      <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-                         <i class="bi bi-info-circle-fill text-primary"></i> Detail Event
-                      </h6>
-                   </div>
-                   <div class="card-body p-4">
-                      <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
-                         <li class="d-flex justify-content-between border-bottom pb-2">
-                            <span>Hari</span>
-                            <span class="fw-bold text-dark">{{ getDayName(dauroh.Date) }}</span>
-                         </li>
-                         <li class="d-flex justify-content-between border-bottom pb-2">
-                            <span>Jam</span>
-                            <span class="fw-bold text-dark">{{ getTimeRange(dauroh.Date) }}</span>
-                         </li>
-                         
-                         <li class="d-flex justify-content-between">
-                            <span>Total Kapasitas</span>
-                            <span class="fw-bold text-dark text-end" style="max-width: 60%;">
-                               {{ totalQuotaDisplay }}
-                            </span>
-                         </li>
-                      </ul>
-                   </div>
-                </div>
+               <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                  <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                     <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-primary"></i> Detail Event
+                     </h6>
+                  </div>
+                  <div class="card-body p-4">
+                     <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
+                        <li class="d-flex justify-content-between border-bottom pb-2">
+                           <span>Hari</span>
+                           <span class="fw-bold text-dark">{{ getDayName(dauroh.Date) }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between border-bottom pb-2">
+                           <span>Jam</span>
+                           <span class="fw-bold text-dark">{{ getTimeRange(dauroh.Date) }}</span>
+                        </li>
+                        
+                        <li class="d-flex justify-content-between">
+                           <span>Total Kapasitas</span>
+                           <span class="fw-bold text-dark text-end" style="max-width: 60%;">
+                              {{ totalQuotaDisplay }}
+                           </span>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
 
-             </div>
+            </div>
           </div>
 
         </div>
@@ -165,109 +166,102 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useDaurohStore } from '~/stores/dauroh';
+import { useCheckoutStore } from '~/stores/checkout';
+import { useUserStore } from '~/stores/user'; // [BARU] Import User Store buat cek riwayat
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
+import { useTransactionStatus } from '~/composables/useTransactionStatus'; // [BARU] Buat cek status
 import Swal from 'sweetalert2'; 
+import dayjs from 'dayjs'; // [BARU] Buat cek tanggal
 import 'quill/dist/quill.snow.css'; 
 
 const route = useRoute();
 const router = useRouter();
 const daurohStore = useDaurohStore();
+const checkoutStore = useCheckoutStore();
+const userStore = useUserStore(); // Init User Store
 const { isLoggedIn } = useAuth();
+const { getSmartStatus } = useTransactionStatus(); // Init Helper Status
 const config = useRuntimeConfig();
 
 const daurohSK = String(route.params.id);
 const imgUrl = ref(config.public.img || '');
 const currentUrl = ref('');
+const isLoadingCheck = ref(false);
 
 const dauroh = computed(() => daurohStore.currentPublicDaurohDetail);
 
 // --- HELPER LOGIC ---
 
-// Helper: Cek apakah Non-Quota (REVISI: Lebih Robust)
 const isNonQuota = computed(() => {
-    const d = dauroh.value;
-    if (!d) return false;
-
-    // Fungsi cek yang aman (case insensitive & trim)
-    const check = (val: any) => String(val).toLowerCase().trim() === 'non-quota';
-
-    // Cek semua kemungkinan field
-    return check(d.Quota_Total) || check(d.Quota_Ikhwan) || check(d.Quota_Akhwat);
+   const d = dauroh.value;
+   if (!d) return false;
+   const check = (val: any) => String(val).toLowerCase().trim() === 'non-quota';
+   return check(d.Quota_Total) || check(d.Quota_Ikhwan) || check(d.Quota_Akhwat);
 });
 
-// 1. Gender Label
 const getGenderLabel = (g: string) => {
-    if (!g) return 'Umum';
-    const lower = g.toLowerCase();
-    
-    if (lower.includes('ikhwan') && lower.includes('akhwat')) return 'Umum'; 
-    if (lower.includes('ikhwan') || lower.includes('laki') || lower.includes('pria')) return 'Khusus Ikhwan';
-    if (lower.includes('akhwat') || lower.includes('perempuan') || lower.includes('wanita')) return 'Khusus Akhwat';
-    
-    return 'Umum';
+   if (!g) return 'Umum';
+   const lower = g.toLowerCase();
+   if (lower.includes('ikhwan') && lower.includes('akhwat')) return 'Umum'; 
+   if (lower.includes('ikhwan') || lower.includes('laki') || lower.includes('pria')) return 'Khusus Ikhwan';
+   if (lower.includes('akhwat') || lower.includes('perempuan') || lower.includes('wanita')) return 'Khusus Akhwat';
+   return 'Umum';
 };
 
-// 2. Toggles untuk baris kuota
 const showTotal = computed(() => {
-    if (!dauroh.value) return false;
-    if (isNonQuota.value) return false; 
-    
-    const g = dauroh.value.Gender?.toLowerCase() || '';
-    return g === 'umum' || (!g.includes('ikhwan') && !g.includes('akhwat'));
+   if (!dauroh.value) return false;
+   if (isNonQuota.value) return false; 
+   const g = dauroh.value.Gender?.toLowerCase() || '';
+   return g === 'umum' || (!g.includes('ikhwan') && !g.includes('akhwat'));
 });
 
 const showIkhwan = computed(() => {
-    if (isNonQuota.value) return false; 
-    const g = dauroh.value?.Gender?.toLowerCase() || '';
-    return g.includes('ikhwan') || g.includes('laki') || g.includes('pria') || g.includes('ikhwan, akhwat'); 
+   if (isNonQuota.value) return false; 
+   const g = dauroh.value?.Gender?.toLowerCase() || '';
+   return g.includes('ikhwan') || g.includes('laki') || g.includes('pria') || g.includes('ikhwan, akhwat'); 
 });
 
 const showAkhwat = computed(() => {
-    if (isNonQuota.value) return false;
-    const g = dauroh.value?.Gender?.toLowerCase() || '';
-    return g.includes('akhwat') || g.includes('perempuan') || g.includes('wanita') || g.includes('ikhwan, akhwat');
+   if (isNonQuota.value) return false;
+   const g = dauroh.value?.Gender?.toLowerCase() || '';
+   return g.includes('akhwat') || g.includes('perempuan') || g.includes('wanita') || g.includes('ikhwan, akhwat');
 });
 
-// 3. Hitung Sisa Kuota (REVISI: Handle string 'non-quota' di parameter)
 const getRemaining = (quota: number | string, sold: number | string) => {
-    if (String(quota).toLowerCase() === 'non-quota') return 'Tanpa Batas';
-    const q = Number(quota) || 0;
-    const s = Number(sold) || 0;
-    const remain = q - s;
-    return remain < 0 ? 0 : remain;
+   if (String(quota).toLowerCase() === 'non-quota') return 'Tanpa Batas';
+   const q = Number(quota) || 0;
+   const s = Number(sold) || 0;
+   const remain = q - s;
+   return remain < 0 ? 0 : remain;
 };
 
-// 4. Format Angka Kuota
 const formatQuota = (val: string | number) => {
-    if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return 'Tanpa Batas';
-    if (val === 0 || val === '0') return '0 (Penuh)';
-    return `${val}`;
+   if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return 'Tanpa Batas';
+   if (val === 0 || val === '0') return '0 (Penuh)';
+   return `${val}`;
 };
 
-// 5. Total Kapasitas Display
 const totalQuotaDisplay = computed(() => {
-    if (!dauroh.value) return '-';
-    if (isNonQuota.value) return 'Tanpa Batas';
+   if (!dauroh.value) return '-';
+   if (isNonQuota.value) return 'Tanpa Batas';
 
-    const d = dauroh.value;
-    let text = [];
-    if (showIkhwan.value) text.push(`Ikhwan: ${d.Quota_Ikhwan}`);
-    if (showAkhwat.value) text.push(`Akhwat: ${d.Quota_Akhwat}`);
-    
-    if (text.length > 0) return text.join(', ');
-    
-    return `${d.Quota_Total} Kursi`;
+   const d = dauroh.value;
+   let text = [];
+   if (showIkhwan.value) text.push(`Ikhwan: ${d.Quota_Ikhwan}`);
+   if (showAkhwat.value) text.push(`Akhwat: ${d.Quota_Akhwat}`);
+   
+   if (text.length > 0) return text.join(', ');
+   
+   return `${d.Quota_Total} Kursi`;
 });
 
-// 6. Cek Status Registrasi
 const registrationStatus = computed(() => {
   const d = dauroh.value;
   if (!d) return { canRegister: false, message: 'Loading...' };
   
   if (d.Status !== 'active') return { canRegister: false, message: 'Event Selesai / Tutup' };
   
-  // Kalau Non-Quota, Langsung Lolos (Return Daftar Sekarang)
   if (isNonQuota.value) {
      return { canRegister: true, message: 'Daftar Sekarang' };
   }
@@ -276,7 +270,6 @@ const registrationStatus = computed(() => {
   const remIkhwan = getRemaining(d.Quota_Ikhwan, d.Sold_Ikhwan);
   const remAkhwat = getRemaining(d.Quota_Akhwat, d.Sold_Akhwat);
 
-  // Jika salah satu slot masih ada sisa
   if (
     (typeof remTotal === 'number' && remTotal > 0) || 
     (typeof remIkhwan === 'number' && remIkhwan > 0) || 
@@ -339,7 +332,9 @@ const getTimeRange = (dateObj: any) => {
   return `${s} - ${e} WIB`;
 };
 
-const handleRegisterClick = () => {
+// [REVISI] Logic Double Order lebih AKURAT menggunakan UserStore (Riwayat)
+const handleRegisterClick = async () => {
+  // 1. Cek Login
   if (!isLoggedIn.value) {
     Swal.fire({
         icon: 'info',
@@ -362,8 +357,57 @@ const handleRegisterClick = () => {
            router.push('/login');
         }
       });
-  } else {
-    router.push(`/dauroh/register/${daurohSK}`);
+      return;
+  }
+
+  // 2. [UPDATE] Cek Double Order via Riwayat Lokal (Lebih Akurat)
+  try {
+     isLoadingCheck.value = true;
+
+     // A. Pastikan data riwayat terbaru
+     await userStore.fetchUserTransactions();
+     
+     // B. Cari di list riwayat: ID Event cocok AND Status masih PENDING
+     const pendingTicket = userStore.tickets.find(ticket => {
+        const ticketEventSK = ticket.dauroh?.SK || ticket.EventSK || ticket.SK;
+        const status = getSmartStatus(ticket);
+        
+        // Cek Expired Realtime juga (biar gak nge-blok kalau udah basi)
+        const isTimeUp = ticket.Expired_Date ? dayjs().isAfter(dayjs(ticket.Expired_Date)) : false;
+
+        // Kunci: ID Sama, Status PENDING, dan Belum Expired Waktu
+        return (String(ticketEventSK) === String(daurohSK)) && (status === 'PENDING') && !isTimeUp;
+     });
+
+     if (pendingTicket) {
+        // [BLOCK] Munculin Swal Aja (Sesuai Request)
+        Swal.fire({
+           icon: 'warning',
+           title: 'Pendaftaran Terdeteksi',
+           text: 'Anda sudah mendaftar event ini dan statusnya masih Menunggu Pembayaran. Silakan cek riwayat Anda.',
+           confirmButtonText: 'Cek Riwayat',
+           buttonsStyling: false,
+           customClass: {
+             popup: 'rounded-4 border-0 shadow-lg p-4',
+             title: 'fs-5 fw-bold text-dark mb-2',
+             htmlContainer: 'text-muted small mb-4',
+             confirmButton: 'btn btn-primary rounded-pill px-4 shadow-sm fw-medium'
+           }
+        }).then(() => {
+           // Opsional: Redirect ke riwayat biar user bayar disana
+           router.push('/riwayat-pendaftaran');
+        });
+     } else {
+        // [PASS] Tidak ada tagihan pending -> Boleh daftar
+        router.push(`/dauroh/register/${daurohSK}`);
+     }
+
+  } catch (error) {
+     console.error("Error checking transaction:", error);
+     // Fallback aman: Tetap bolehkan daftar kalau validasi error
+     router.push(`/dauroh/register/${daurohSK}`);
+  } finally {
+     isLoadingCheck.value = false;
   }
 };
 </script>

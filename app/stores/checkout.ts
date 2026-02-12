@@ -201,33 +201,36 @@ export const useCheckoutStore = defineStore('checkout', {
                
                const recoverRes = await $apiFlip.get(`/get-flip-dauroh?skEvent=${skEvent}`);
                
-               // [FIX 1] Pastikan kita ambil object data yang benar
-               // Kadang response dibungkus { data: { ... } }, kadang langsung { ... }
                let recoverData = recoverRes.data;
+               
+               // [REVISI] Unwrap Standard
                if (recoverData && recoverData.data) {
                    recoverData = recoverData.data;
+               }
+
+               // [REVISI] Unwrap Payment Object (CRITICAL FIX)
+               // Ini ditambahin biar recovery ga error karena struktur nested
+               if (recoverData && recoverData.Payment) {
+                   console.log("📦 Unwrapping 'Payment' object for recovery...");
+                   recoverData = recoverData.Payment;
                }
 
                if (recoverData) {
                  console.log("✅ Data berhasil dipulihkan!", recoverData);
 
-                 // [FIX 2] Auto-Detect Payment Method dari JSON ('sender_bank': 'bni')
-                 // Kalau this.paymentMethod kosong, kita ambil dari 'sender_bank'
                  let recoveredMethod = this.paymentMethod;
+                 // Ambil method dari data server jika lokal kosong
                  if (!recoveredMethod && recoverData.sender_bank) {
                     recoveredMethod = recoverData.sender_bank.toUpperCase();
                  }
-                 // Handle kasus QRIS/Wallet
                  if (recoverData.sender_bank_type === 'wallet_account') {
                     recoveredMethod = 'QRIS';
                  }
                  
-                 // Simpan ke state biar UI select bank juga sync (opsional)
                  if (recoveredMethod) this.paymentMethod = recoveredMethod;
 
                  this.transactionDetails = {
                     ...recoverData,
-                    // [FIX 3] Mapping VA Number yang lebih robust
                     vaNumber: recoverData.receiver_bank_account?.account_number || recoverData.va_number, 
                     expiryTime: recoverData.expired_date,
                     paymentMethod: recoveredMethod || 'Bank'
@@ -256,75 +259,146 @@ export const useCheckoutStore = defineStore('checkout', {
         this.isLoading = false;
       }
     },
+
+    // [BARU] Action untuk memulihkan data transaksi Expired/Cancel buat Bayar Ulang
+async restoreTransactionData(skEvent: string) {
+      const { $apiFlip } = useNuxtApp();
+  
+      if (!skEvent) return false;
+  
+      try {
+        this.isLoading = true;
+        console.log("♻️ Restoring data for Event SK:", skEvent);
+  
+        const response = await $apiFlip.get('/get-flip-dauroh', {
+            params: { skEvent: skEvent }
+        });
+  
+        let data = response.data;
+        
+        // Unwrap logic
+        if (data && data.data) data = data.data;
+        if (data && data.Payment) data = data.Payment;
+  
+        if (!data) {
+          console.error("❌ Gagal restore data: Response kosong.");
+          return false;
+        }
+  
+        console.log("📦 Data Restore Ditemukan:", data);
+
+        // [REVISI MAPPING BIAR SESUAI JSON BARU]
+        // 1. Coba ambil nama dari 'account_holder' kalau field nama lain kosong
+        const fallbackName = data.receiver_bank_account?.account_holder || '';
+        
+        // 2. Coba ambil email dari 'SK' (karena di JSON SK-nya bentuk email)
+        const fallbackEmail = (data.SK && data.SK.includes('@')) ? data.SK : '';
+
+        // 3. Logic Peserta
+        // Karena di JSON gak ada array 'participants', kita anggap ini single participant
+        const participantsList: Participant[] = (data.participants || []).map((p: any) => ({
+            Name: p.name || p.nama_peserta || p.Name || '',
+            Email: p.email || '', 
+            Gender: p.gender || p.jenis_kelamin || p.Gender || 'Ikhwan',
+            Age: p.age || p.Age || 0,
+            Domicile: p.domicile || p.Domicile || ''
+        }));
+
+        // Kalau list kosong, ambil data dari User Utama / Fallback tadi
+        if (participantsList.length === 0) {
+            participantsList.push({
+                Name: data.user_name || data.customer_name || data.sender_name || fallbackName || '', // Pake fallbackName
+                Email: data.user_email || data.sender_email || fallbackEmail || '', // Pake fallbackEmail
+                Gender: 'Ikhwan', // Default karena di JSON gak ada info gender
+                Age: 0,
+                Domicile: '-'
+            });
+        }
+
+        this.participants = participantsList;
+  
+        this.dauroh = {
+          SK: data.PK || skEvent, // Note: Di JSON SK event itu ada di 'PK' ("event#369776") atau 'SK' user.
+          Title: data.title || 'Event Dauroh',
+          Price: data.amount ? (data.amount / (this.participants.length || 1)) : 0,
+        };
+  
+        this.transactionDetails = null;
+        this.removeVoucher();
+        this.setStep('select'); 
+  
+        return true;
+  
+      } catch (error) {
+        console.error("🔥 Error restoreTransactionData:", error);
+        return false;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
 async checkExistingTransaction(skEvent: string) {
-    const { $apiFlip } = useNuxtApp();
-    
-    if (!skEvent) return false;
+      const { $apiFlip } = useNuxtApp();
+      // Import Composable Status tadi
+      const { getSmartStatus } = useTransactionStatus(); 
+      
+      if (!skEvent) return false;
 
-    try {
-      this.isLoading = true;
-      console.log("🔍 Checking transaction for Event SK:", skEvent); 
+      try {
+        this.isLoading = true;
+        
+        const response = await $apiFlip.get('/get-flip-dauroh', {
+            params: { skEvent: skEvent }
+        });
 
-      const response = await $apiFlip.get('/get-flip-dauroh', {
-          params: { skEvent: skEvent }
-      });
+        let result = response.data;
 
-      console.log("📥 API Response:", response.data);
+        // Unwrap logic standard
+        if (result && result.data) result = result.data;
+        if (result && result.Payment) result = result.Payment;
 
-      let result = response.data;
+        let activeTransaction = null;
 
-      // 1. Unwrap standard (jika dibungkus 'data')
-      if (result && result.data) result = result.data;
+        // LOGIC PENCARIAN BARU (LEBIH PINTAR)
+        if (Array.isArray(result)) {
+            // Cari transaksi yang status PINTAR-nya adalah 'PENDING'
+            activeTransaction = result.find((item: any) => {
+               const smartStatus = getSmartStatus(item); // Pake fungsi manipulasi tadi
+               return smartStatus === 'PENDING'; 
+            });
+        } else if (result && typeof result === 'object') {
+            const smartStatus = getSmartStatus(result);
+            if (smartStatus === 'PENDING') {
+               activeTransaction = result;
+            }
+        }
 
-      // [FIX BARU] 2. Unwrap khusus structure API lu (Ada key 'Payment')
-      // Kalau di dalem result ada key 'Payment', berarti itu data utamanya.
-      if (result && result.Payment) {
-          console.log("📦 Unwrapping 'Payment' object...");
-          result = result.Payment;
+        // Kalau ketemu transaksi yang beneran PENDING (Waktu belum abis)
+        if (activeTransaction) {
+           console.log("✅ Valid Pending Transaction Found!", activeTransaction);
+
+           this.transactionDetails = {
+              ...activeTransaction,
+              vaNumber: activeTransaction.receiver_bank_account?.account_number || activeTransaction.va_number || '-',
+              expiryTime: activeTransaction.expired_date || activeTransaction.expiry_date,
+              paymentMethod: activeTransaction.sender_bank ? activeTransaction.sender_bank.toUpperCase() : 'BANK'
+           };
+
+           this.setStep('instructions');
+           return true; // ARTINYA: ADA TAGIHAN, JANGAN KASIH DAFTAR BARU
+        } else {
+           // Kalau gak ada transaksi, ATAU ada transaksi tapi statusnya udah kita paksa jadi CANCELLED/EXPIRED
+           console.log("ℹ️ No active transaction (All expired/cancelled). Allowed to register.");
+           return false; // ARTINYA: AMAN, BOLEH DAFTAR BARU
+        }
+
+      } catch (error) {
+        console.error("🔥 Error checkExistingTransaction:", error);
+        return false;
+      } finally {
+        this.isLoading = false;
       }
-
-      let pendingTx = null;
-
-      // 3. Logic pencarian (Sama kayak sebelumnya)
-      if (Array.isArray(result)) {
-          pendingTx = result.find((item: any) => 
-             (item.status || item.Status || '').toUpperCase() === 'PENDING'
-          );
-      } else if (result && typeof result === 'object') {
-          const status = (result.status || result.Status || '').toUpperCase();
-          if (status === 'PENDING') {
-             pendingTx = result;
-          }
-      }
-
-      // 4. Eksekusi
-      if (pendingTx) {
-         console.log("✅ PENDING Transaction Found!", pendingTx);
-
-         this.transactionDetails = {
-            ...pendingTx,
-            // Mapping VA Number (Sesuai response lu: receiver_bank_account.account_number)
-            vaNumber: pendingTx.receiver_bank_account?.account_number || pendingTx.va_number || '-',
-            // Mapping Expired (Sesuai response lu: expired_date)
-            expiryTime: pendingTx.expired_date || pendingTx.expiry_date,
-            // Mapping Bank (Sesuai response lu: sender_bank)
-            paymentMethod: pendingTx.sender_bank ? pendingTx.sender_bank.toUpperCase() : 'BANK'
-         };
-
-         this.setStep('instructions');
-         return true;
-      } else {
-         console.warn("⚠️ Transaction not found or not PENDING.");
-         return false;
-      }
-
-    } catch (error) {
-      console.error("🔥 Error checkExistingTransaction:", error);
-      return false;
-    } finally {
-      this.isLoading = false;
-    }
-  },
+    },
     
     updatePaymentStatus(data: any) {
       if (this.transactionDetails) {

@@ -36,7 +36,7 @@
               
               <td class="ps-4 py-3">
                 <div class="d-flex flex-column">
-                  <span class="fw-bold text-dark mb-1">{{ formatDate(ticket.created_at || ticket.date) }}</span>
+                  <span class="fw-bold text-dark mb-1">{{ formatDate(ticket.CreatedAt || ticket.created_at || ticket.date) }}</span>
                   <span class="badge bg-light text-secondary border rounded-1 fw-normal text-start" style="width: fit-content;">
                     {{ ticket.SK }}
                   </span>
@@ -44,8 +44,8 @@
               </td>
 
               <td class="py-3" style="max-width: 200px;">
-                <span class="d-block fw-bold text-primary text-truncate mb-1" :title="ticket.title || ticket.dauroh?.Title">
-                  {{ ticket.title || ticket.dauroh?.Title || 'Event Dauroh' }}
+                <span class="d-block fw-bold text-primary text-truncate mb-1" :title="ticket.Title || ticket.title || ticket.dauroh?.Title">
+                  {{ ticket.Title || ticket.title || ticket.dauroh?.Title || 'Event Dauroh' }}
                 </span>
                 <small class="text-muted d-flex align-items-center text-truncate">
                   <i class="bi bi-geo-alt-fill me-1 text-secondary opacity-50"></i>
@@ -59,15 +59,30 @@
                 </span>
               </td>
 
-              <td class="py-3 text-center">
-                <span class="badge rounded-pill px-3 py-2 status-badge" :class="getStatusClass(getSmartStatus(ticket))">
-                  <span v-if="getSmartStatus(ticket) === 'PENDING'">Menunggu Pembayaran</span>
-                  <span v-else-if="getSmartStatus(ticket) === 'EXPIRED'">Kadaluarsa</span>
-                  <span v-else-if="getSmartStatus(ticket) === 'CANCELLED'">Dibatalkan</span>
-                  <span v-else-if="getSmartStatus(ticket) === 'PAID'">Lunas</span>
-                  <span v-else>{{ ticket.status }}</span>
-                </span>
-              </td>
+<td class="py-3 text-center">
+  <span class="fw-bold text-primary small">#{{ ticket.SK.slice(-6).toUpperCase() }}</span>
+
+  <span v-if="getSmartStatus(ticket) === 'PAID'" class="text-success small-8 fw-medium">
+    <i class="bi bi-check-circle-fill me-1"></i>Pembayaran Lunas
+  </span>
+
+  <span v-else-if="['EXPIRED', 'CANCELLED', 'FAILED'].includes(getSmartStatus(ticket))" class="text-danger small-8 fw-medium">
+    <i class="bi bi-x-circle-fill me-1"></i>Kadaluarsa
+  </span>
+
+  <div v-else-if="getSmartStatus(ticket) === 'PENDING'" class="d-flex flex-column">
+    <span class="text-warning small-8 fw-medium">
+      <i class="bi bi-hourglass-split me-1"></i>Menunggu Pembayaran
+    </span>
+    <span class="text-muted small-7" style="font-size: 0.75rem;">
+      Bayar sebelum: {{ formatTime(ticket.Expired_Date || ticket.expired_date) }}
+    </span>
+  </div>
+
+  <span v-else class="text-secondary small-8 fw-medium">
+    {{ getSmartStatus(ticket) }}
+  </span>
+</td>
 
               <td class="py-3 text-end">
                 <span class="fw-bold text-dark fs-6">
@@ -87,18 +102,26 @@
                   </button>
 
                   <button 
-                    v-if="getSmartStatus(ticket) === 'PENDING'"
-                    @click="resumePayment(ticket)" 
-                    class="btn btn-sm btn-primary fw-bold shadow-sm w-100 d-flex align-items-center justify-content-center gap-2"
+                    v-if="['EXPIRED', 'CANCELLED', 'FAILED'].includes(getSmartStatus(ticket))"
+                    class="btn btn-sm btn-danger shadow-sm w-100 d-flex align-items-center justify-content-center gap-2 text-white"
+                    @click="resumePayment(ticket)"
+                  >
+                    <i class="bi bi-arrow-clockwise"></i> Bayar Ulang
+                  </button>
+
+                  <button 
+                    v-else-if="getSmartStatus(ticket) === 'PENDING'"
+                    class="btn btn-sm btn-primary shadow-sm w-100 d-flex align-items-center justify-content-center gap-2 text-white"
+                    @click="resumePayment(ticket)"
                   >
                     <i class="bi bi-credit-card-2-front"></i> Bayar
                   </button>
 
                   <span 
-                    v-else-if="['EXPIRED', 'FAILED', 'CANCELLED'].includes(getSmartStatus(ticket))"
-                    class="text-muted x-small fst-italic mt-1"
+                    v-else-if="getSmartStatus(ticket) === 'PAID'"
+                    class="text-success x-small fst-italic mt-1"
                   >
-                    Tidak Tersedia
+                    <i class="bi bi-check-all"></i> Selesai
                   </span>
 
                   </div>
@@ -134,7 +157,7 @@
 
           <div class="modal-body">
             <div v-if="selectedTicketDetail" class="mb-3">
-              <h6 class="text-primary fw-bold mb-1">{{ selectedTicketDetail.title || selectedTicketDetail.dauroh?.Title }}</h6>
+              <h6 class="text-primary fw-bold mb-1">{{ selectedTicketDetail.Title || selectedTicketDetail.title || selectedTicketDetail.dauroh?.Title }}</h6>
               <small class="text-muted">ID: {{ selectedTicketDetail.SK }}</small>
             </div>
 
@@ -154,21 +177,21 @@
                     </td>
                     <td class="text-end pe-3">
                       <button 
-                        v-if="['PAID', 'Upcoming', 'Selesai', 'active', 'CHECKED_IN'].includes(getSmartStatus(selectedTicketDetail))"
+                        v-if="getSmartStatus(selectedTicketDetail) === 'PAID'"
                         @click="showIndividualQr(selectedTicketDetail, p)"
                         class="btn btn-sm btn-primary py-1 px-3 rounded-pill"
                         style="font-size: 0.75rem;"
                       >
                         <i class="bi bi-qr-code me-1"></i> QR
                       </button>
-                      <span v-else class="badge bg-secondary">Belum Lunas</span>
+                      <span v-else class="badge bg-secondary opacity-50">Belum Lunas</span>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-             <div v-if="getSmartStatus(selectedTicketDetail) === 'PENDING'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
+             <div v-if="getSmartStatus(selectedTicketDetail) !== 'PAID'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <div>Selesaikan pembayaran untuk melihat QR Tiket.</div>
              </div>
@@ -233,11 +256,16 @@ const qrPayload = ref<any>(null);
 const sortedTickets = computed(() => {
   if (!userStore.tickets) return [];
   return [...userStore.tickets].sort((a, b) => {
-    const dateA = new Date(a.created_at || a.date).getTime();
-    const dateB = new Date(b.created_at || b.date).getTime();
+    const dateA = new Date(a.CreatedAt || a.created_at || a.date).getTime();
+    const dateB = new Date(b.CreatedAt || b.created_at || b.date).getTime();
     return dateB - dateA;
   });
 });
+
+const formatTime = (dateString: string) => {
+  if (!dateString) return '-';
+  return dayjs(dateString).format('DD MMM • HH:mm');
+};
 
 const openDetailModal = (ticket: any) => {
   selectedTicketDetail.value = ticket;
@@ -259,41 +287,67 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
 };
 
 const resumePayment = async (ticket: any) => {
-  // 1. Ambil SK Event secara Robust
-  // Cek ticket.dauroh.SK (ID Event) -> kalau null, cek ticket.SK (ID Transaksi/Event)
   const skEvent = ticket.dauroh?.SK || ticket.SK || ticket.EventSK; 
   
-  // Debugging log biar tau ID apa yang dikirim
-  console.log("Ticket Data:", ticket);
-  console.log("Extracted SK Event:", skEvent);
-
   if (!skEvent) {
       Swal.fire({
         icon: 'error',
         title: 'Error Data',
-        text: 'ID Event tidak ditemukan pada riwayat ini. Hubungi admin jika masalah berlanjut.'
+        text: 'ID Event tidak ditemukan pada riwayat ini.'
       });
       return;
   }
 
-  // 2. Panggil Action Store
-  const checkExisting = await checkoutStore.checkExistingTransaction(skEvent);
+  const smartStatus = getSmartStatus(ticket);
 
-  // 3. Handle Hasil
-  if (checkExisting) {
-      // SUKSES: Data ada & status Pending -> Redirect ke Checkout
-      router.push('/checkout');
-  } else {
-      // GAGAL: Data sudah Expired di server atau tidak ditemukan
-      await Swal.fire({
+  if (smartStatus === 'PENDING') {
+      const checkExisting = await checkoutStore.checkExistingTransaction(skEvent);
+      if (checkExisting) {
+          router.push('/checkout');
+      } else {
+          handleExpiredFlow(skEvent);
+      }
+  } else if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
+      handleExpiredFlow(skEvent);
+  }
+};
+
+const handleExpiredFlow = async (skEvent: string) => {
+  const result = await Swal.fire({
+    title: 'Pembayaran Telah Berakhir',
+    text: 'Sesi pembayaran sebelumnya sudah kadaluarsa. Data peserta Anda aman! Silakan pilih metode pembayaran ulang untuk melanjutkan.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#0d6efd',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Bayar Ulang',
+    cancelButtonText: 'Tutup',
+    reverseButtons: true
+  });
+
+  if (result.isConfirmed) {
+    Swal.fire({
+      title: 'Memulihkan Data...',
+      text: 'Mohon tunggu sebentar',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    const success = await checkoutStore.restoreTransactionData(skEvent);
+
+    if (success) {
+      Swal.close();
+      router.push('/checkout'); 
+    } else {
+      Swal.fire({
         icon: 'error',
-        title: 'Gagal Melanjutkan',
-        text: 'Transaksi untuk event ini sudah kadaluarsa atau tidak ditemukan. Silakan daftar ulang.',
-        confirmButtonColor: '#d33'
+        title: 'Gagal Memulihkan Data',
+        text: 'Maaf, terjadi kesalahan saat mengambil data peserta. Silakan coba daftar manual.',
+        confirmButtonText: 'Tutup'
       });
-      
-      // Refresh list riwayat agar status 'PENDING' di tabel berubah jadi 'EXPIRED'
-      // userStore.fetchUserTransactions(); // Uncomment baris ini kalau function fetch ada di userStore
+    }
   }
 };
 
@@ -305,25 +359,9 @@ const formatDate = (dateString: string) => {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
-
-const getStatusClass = (status: string) => {
-  if (!status) return 'bg-light text-secondary';
-  const s = status.toLowerCase();
-  
-  if (['upcoming', 'paid', 'success', 'active', 'checked_in'].includes(s)) {
-    return 'bg-success-subtle text-success border border-success-subtle';
-  } else if (['pending', 'waiting'].includes(s)) {
-    return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
-  } else if (['cancelled', 'failed', 'expired'].includes(s)) {
-    return 'bg-danger-subtle text-danger border border-danger-subtle';
-  } else {
-    return 'bg-light text-secondary border';
-  }
-};
 </script>
 
 <style scoped>
-/* Table Styles */
 .table thead th {
   font-size: 0.75rem; 
   letter-spacing: 0.5px;
@@ -335,10 +373,6 @@ const getStatusClass = (status: string) => {
 }
 .table-hover tbody tr:hover {
   background-color: #fcfcfc;
-}
-.status-badge {
-  font-weight: 600;
-  font-size: 0.75rem;
 }
 .fs-7 {
   font-size: 0.75rem !important;
