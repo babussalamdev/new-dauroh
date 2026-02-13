@@ -136,50 +136,72 @@ export const useCheckoutStore = defineStore('checkout', {
       this.paymentMethod = null;
     },
 
-    async createPayment() {
-      this.isLoading = true;
-      const { $apiFlip } = useNuxtApp(); 
-      const { accessToken, user } = useAuth();
+async createPayment() {
+    this.isLoading = true;
+    const { $apiFlip } = useNuxtApp();
+    const { accessToken, user } = useAuth();
 
-      try {
+    try {
+        // --- FIX MASALAH 1: EVENT NOT FOUND ---
+        // Cari SK Event sekuat tenaga. Kalau ga ada di dauroh, cari di transactionDetails
+        const eventSK = this.dauroh?.SK || 
+                        this.dauroh?.id || 
+                        this.transactionDetails?.event_sk || 
+                        this.transactionDetails?.dauroh?.SK;
+
+        if (!eventSK) {
+            throw new Error("Data Event (SK) tidak ditemukan. Silakan ulangi dari awal.");
+        }
+
+        // Siapkan Data Peserta
         const objectPerson: Record<string, any> = {};
         this.participants.forEach((p, index) => {
-          objectPerson[`person${index + 1}`] = {
-            Name: p.Name,           
-            Gender: p.Gender.toLowerCase(),
-            Age: Number(p.Age),
-            Domicile: p.Domicile
-          };
+            objectPerson[`person${index + 1}`] = {
+                Name: p.Name,
+                Gender: p.Gender?.toLowerCase() || '-',
+                Age: Number(p.Age || 0),
+                Domicile: p.Domicile || '-'
+            };
         });
 
+        // Tentukan Bank
         let bankCode = this.paymentMethod?.toLowerCase() || 'bsi';
-        let paymentType = 'virtual_account'; 
-
-        if (bankCode === 'qris' || bankCode === 'gopay') {
-            bankCode = 'qris'; 
-            paymentType = 'wallet_account'; 
+        let paymentType = 'virtual_account';
+        if (['qris', 'gopay', 'shopeepay'].includes(bankCode)) {
+            bankCode = 'qris';
+            paymentType = 'wallet_account';
         }
+
+        // Susun Payload
         const payload: any = {
             Amount: String(this.finalAmount),
             Name: user.value?.name || 'Guest',
-            Bank: bankCode, 
-            EventSK: this.dauroh?.SK,
-            objectPerson: objectPerson, 
+            Bank: bankCode,
+            EventSK: eventSK, // <--- Pake variabel eventSK yang udah kita cari di atas
+            objectPerson: objectPerson,
             AccessToken: accessToken.value,
-            PaymentType: paymentType, 
-            sender_bank_type: paymentType 
+            PaymentType: paymentType,
+            sender_bank_type: paymentType
         };
 
         if (this.voucherCode) {
             payload.VoucherCode = this.voucherCode;
         }
-       
-        const response = await $apiFlip.post('/flip-dauroh', payload);
-        const result = response.data; 
-        
+
+        console.log("🚀 Mengirim Payload ke Flip:", payload);
+
+        // Config Header Auth (Biar ga mental ke Login)
+        const config = {
+            headers: { Authorization: `Bearer ${accessToken.value}` }
+        };
+
+        const response = await $apiFlip.post('/flip-dauroh', payload, config);
+        const result = response.data;
+
+        // Update State Sukses
         this.transactionDetails = {
-            ...result, 
-            vaNumber: result.receiver_bank_account?.account_number, 
+            ...result,
+            vaNumber: result.receiver_bank_account?.account_number,
             expiryTime: result.expired_date,
             paymentMethod: this.paymentMethod || 'Bank'
         };
@@ -187,78 +209,33 @@ export const useCheckoutStore = defineStore('checkout', {
 
         return { success: true, data: result };
 
-      } catch (error: any) {
-        console.error("Payment Flip Error:", error);
-        
+    } catch (error: any) {
+        console.error("❌ Payment Error:", error);
+
+        // --- FIX MASALAH 2: ERROR PENDING ---
         const errData = error.response?.data || {};
-        const errMsg = (errData.error || errData.message || '').toUpperCase();
-
-        if (errMsg.includes('PENDING') || errMsg.includes('MEMILIKI BOOKING')) {
-           try {
-             const skEvent = this.dauroh?.SK; 
-             if (skEvent) {
-               console.log("⚠️ Booking Pending terdeteksi. Recovering...");
-               
-               const recoverRes = await $apiFlip.get(`/get-flip-dauroh?skEvent=${skEvent}`);
-               
-               let recoverData = recoverRes.data;
-               
-               // [REVISI] Unwrap Standard
-               if (recoverData && recoverData.data) {
-                   recoverData = recoverData.data;
-               }
-
-               // [REVISI] Unwrap Payment Object (CRITICAL FIX)
-               // Ini ditambahin biar recovery ga error karena struktur nested
-               if (recoverData && recoverData.Payment) {
-                   console.log("📦 Unwrapping 'Payment' object for recovery...");
-                   recoverData = recoverData.Payment;
-               }
-
-               if (recoverData) {
-                 console.log("✅ Data berhasil dipulihkan!", recoverData);
-
-                 let recoveredMethod = this.paymentMethod;
-                 // Ambil method dari data server jika lokal kosong
-                 if (!recoveredMethod && recoverData.sender_bank) {
-                    recoveredMethod = recoverData.sender_bank.toUpperCase();
-                 }
-                 if (recoverData.sender_bank_type === 'wallet_account') {
-                    recoveredMethod = 'QRIS';
-                 }
-                 
-                 if (recoveredMethod) this.paymentMethod = recoveredMethod;
-
-                 this.transactionDetails = {
-                    ...recoverData,
-                    vaNumber: recoverData.receiver_bank_account?.account_number || recoverData.va_number, 
-                    expiryTime: recoverData.expired_date,
-                    paymentMethod: recoveredMethod || 'Bank'
-                 };
-                 this.currentStep = 'instructions';
-                 
-                 return { success: true, recovered: true, data: recoverData };
-               }
-             }
-           } catch (recoverErr) {
-             console.error("❌ Gagal recover:", recoverErr);
-           }
+        
+        // Prioritas Error Message:
+        // 1. errData.error ("Anda memiliki booking PENDING.")
+        // 2. errData.message
+        // 3. String error biasa
+        let errorMessage = errData.error || errData.message || "Terjadi kesalahan saat memproses pembayaran.";
+        
+        // Pastikan error message berupa string biar ga object [Object object]
+        if (typeof errorMessage !== 'string') {
+            errorMessage = JSON.stringify(errorMessage);
         }
 
-        let errorMessage = "Terjadi kesalahan saat memproses pembayaran.";
-        if (typeof errData === 'object' && errData.error) {
-           errorMessage = errData.error;
-        } else if (errData.message) {
-           errorMessage = errData.message;
-        } else if (typeof errData === 'string') {
-           errorMessage = errData;
-        }
+        return { 
+            success: false, 
+            message: errorMessage, // Pesan ini nanti ditangkep Summary.vue buat SWAL
+            error: error 
+        };
 
-        return { success: false, message: errorMessage, error: error };
-      } finally {
+    } finally {
         this.isLoading = false;
-      }
-    },
+    }
+},
 
     // [BARU] Action untuk memulihkan data transaksi Expired/Cancel buat Bayar Ulang
 async restoreTransactionData(skEvent: string) {

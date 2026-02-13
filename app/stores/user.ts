@@ -96,80 +96,106 @@ export const useUserStore = defineStore('user', {
         }
     },
 
-    async fetchUserTransactions() {
-      const nuxtApp = useNuxtApp() as any;
-      const apiBase = nuxtApp.$apiBase; 
-      
-      if (!apiBase) {
-        console.error("⛔ STOP: $apiBase tidak ditemukan.");
-        return; 
-      }
-      
-      const daurohStore = useDaurohStore() as any;
-      const { user } = useAuth(); 
+async fetchUserTransactions() {
+  const nuxtApp = useNuxtApp() as any;
+  const apiBase = nuxtApp.$apiBase;
+  
+  if (!apiBase) return;
+  
+  const daurohStore = useDaurohStore() as any;
+  const { user } = useAuth(); 
 
-      this.isLoading = true;
+  this.isLoading = true;
 
-      try {
-        if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
-            if (typeof daurohStore.fetchPublicTiketDauroh === 'function') {
-                await daurohStore.fetchPublicTiketDauroh();
-            } else {
-        
-            }
+  try {
+    // Pastikan data tiket publik ada buat referensi judul/harga
+    if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
+        if (typeof daurohStore.fetchPublicTiketDauroh === 'function') {
+            await daurohStore.fetchPublicTiketDauroh();
         }
-        const response = await apiBase.get('/get-payment?type=client');
-        
-        const mappedTickets = response.data.map((item: any) => {
+    }
+    
+    const response = await apiBase.get('/get-payment?type=client');
+    
+    const mappedTickets = response.data.map((item: any) => {
+      
+      const parts = (item.SK || '').split('#');
+      const eventId = parts[0]; 
+      const ticketId = parts[1] || item.SK; 
+
+      const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
+
+      // --- LOGIC PARSING PESERTA (FIX BUG DISINI) ---
+      let parsedParticipants: any[] = [];
+
+      // Cek apakah backend ngirim data 'objectPerson' (biasanya string JSON atau object)
+      const rawPerson = item.objectPerson || item.ObjectPerson;
+
+      if (rawPerson) {
+        try {
+          // Kalau string, parse dulu jadi object
+          const personObj = typeof rawPerson === 'string' ? JSON.parse(rawPerson) : rawPerson;
           
-          const parts = (item.SK || '').split('#');
-          const eventId = parts[0]; 
-          const ticketId = parts[1] || item.SK; 
-
-          const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
-
-          const title = foundEvent?.Title || item.Title || 'Event Tidak Dikenal / Sudah Lewat';
-          const place = foundEvent?.Place || 'Lokasi Online / Tidak Diketahui';
-          const amount = foundEvent?.Price || 0; 
-
-          const participants = [
-            { 
-              Name: item.PIC || user.value?.name || 'Peserta', 
-              Gender: '-' 
-            }
-          ];
-
-          return {
-             SK: ticketId,
-             full_sk: item.SK,
-             status: item.Status,
-             created_at: item.CreatedAt,
-             date: item.CreatedAt, 
-             
-             dauroh: { 
-               Title: title,
-               Place: place,
-               SK: eventId
-             },
-             
-             amount: amount,
-             participants: participants,
-             total_participants: 1,
-
-             va_number: '-', 
-             expired_date: '-'
-          } as UserTicket;
-        });
-
-        this.tickets = mappedTickets.sort((a: any, b: any) => {
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
-
-      } catch (error) {
-      } finally {
-        this.isLoading = false;
+          // Loop object keys (person1, person2, dst)
+          Object.keys(personObj).forEach(key => {
+             const p = personObj[key];
+             if (p && p.Name) { // Pastikan ada namanya
+               parsedParticipants.push({
+                 Name: p.Name,
+                 Gender: p.Gender || '-',
+                 Age: p.Age || 0,
+                 Domicile: p.Domicile || '-'
+               });
+             }
+          });
+        } catch (e) {
+          console.error("Gagal parse participants:", e);
+        }
       }
-    },
+
+      // Fallback: Kalau parsing gagal atau kosong, pake logic lama (ambil PIC)
+      if (parsedParticipants.length === 0) {
+         parsedParticipants = [{ 
+           Name: item.PIC || user.value?.name || 'Peserta Utama', 
+           Gender: '-' 
+         }];
+      }
+      // ----------------------------------------------
+
+      return {
+          SK: ticketId,
+          full_sk: item.SK,
+          status: item.Status,
+          created_at: item.CreatedAt,
+          date: item.CreatedAt, 
+          
+          dauroh: { 
+            Title: foundEvent?.Title || item.Title || 'Event Dauroh',
+            Place: foundEvent?.Place || 'Lokasi Online',
+            SK: eventId
+          },
+          
+          amount: item.Amount || foundEvent?.Price || 0,
+          
+          // Pake hasil parsing kita tadi
+          participants: parsedParticipants,
+          total_participants: parsedParticipants.length,
+
+          va_number: item.va_number || '-', 
+          Expired_Date: item.Expired_Date || item.expired_date || '-' 
+      } as UserTicket;
+    });
+
+    this.tickets = mappedTickets.sort((a: any, b: any) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+  } catch (error) {
+    console.error("Fetch Transactions Error:", error);
+  } finally {
+    this.isLoading = false;
+  }
+},
 
     registerDauroh(payload: any) {
       const { dauroh, participants, transactionDetails } = payload;
