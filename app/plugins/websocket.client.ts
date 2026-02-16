@@ -19,9 +19,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       try {
         const result = JSON.parse(event.data);
         const { store, mutation, data } = result;
-        if (store === 'formulir' && mutation === 'statusPayment') {
-          checkoutStore.updatePaymentStatus(data);
-        }
+        console.log(result)
+        navigateTo('/riwayat-pendaftaran');
 
       } catch (error) {
         console.error("WS Parse Error:", error);

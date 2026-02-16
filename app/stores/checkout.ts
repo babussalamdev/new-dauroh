@@ -142,7 +142,6 @@ async createPayment() {
     const { accessToken, user } = useAuth();
 
     try {
-        // --- FIX MASALAH 1: EVENT NOT FOUND ---
         // Cari SK Event sekuat tenaga. Kalau ga ada di dauroh, cari di transactionDetails
         const eventSK = this.dauroh?.SK || 
                         this.dauroh?.id || 
@@ -165,19 +164,20 @@ async createPayment() {
         });
 
         // Tentukan Bank
-        let bankCode = this.paymentMethod?.toLowerCase() || 'bsi';
+        let bankCode = this.paymentMethod === 'BSI' ? 'bsm' : this.paymentMethod?.toLowerCase() || 'bsm';
+
         let paymentType = 'virtual_account';
         if (['qris', 'gopay', 'shopeepay'].includes(bankCode)) {
             bankCode = 'qris';
             paymentType = 'wallet_account';
         }
 
-        // Susun Payload
+        // Payload
         const payload: any = {
             Amount: String(this.finalAmount),
             Name: user.value?.name || 'Guest',
             Bank: bankCode,
-            EventSK: eventSK, // <--- Pake variabel eventSK yang udah kita cari di atas
+            EventSK: eventSK,
             objectPerson: objectPerson,
             AccessToken: accessToken.value,
             PaymentType: paymentType,

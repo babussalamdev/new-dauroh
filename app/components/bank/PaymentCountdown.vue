@@ -88,15 +88,14 @@ const stopTimer = () => {
 
 onMounted(() => {
   startTimer();
-
   const userData = user.value as any;
-  const sk = userData?.given_name || 'Guest';
-  const program = userData?.profile || 'Default';
+  const sk = userData?.email || 'Guest';
   const wsBaseUrl = config.public.websocketUrl || ''; 
-  
+
   if (wsBaseUrl) {
-    const wsUrl = `${wsBaseUrl}?sk=${sk}&program=${program}`;
+    const wsUrl = `${wsBaseUrl}?sk=${sk}`;
     if ($connectSocket) $connectSocket(wsUrl);
+    
   }
 });
 

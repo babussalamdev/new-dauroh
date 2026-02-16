@@ -117,29 +117,28 @@ async fetchUserTransactions() {
     
     const response = await apiBase.get('/get-payment?type=client');
     
-    const mappedTickets = response.data.map((item: any) => {
-      
-      const parts = (item.SK || '').split('#');
-      const eventId = parts[0]; 
-      const ticketId = parts[1] || item.SK; 
-
-      const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
-
-      // --- LOGIC PARSING PESERTA (FIX BUG DISINI) ---
-      let parsedParticipants: any[] = [];
-
-      // Cek apakah backend ngirim data 'objectPerson' (biasanya string JSON atau object)
-      const rawPerson = item.objectPerson || item.ObjectPerson;
-
-      if (rawPerson) {
-        try {
-          // Kalau string, parse dulu jadi object
+ const mappedTickets = response.data.map((item: any) => {
+  
+  const parts = (item.SK || '').split('#');
+  const eventId = parts[0]; 
+  const ticketId = parts[1] || item.SK; 
+  const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
+  let parsedParticipants: any[] = [];
+  if (Array.isArray(item.Participant)) {
+      parsedParticipants = item.Participant.map((p: any) => ({
+          Name: p.Name || p.name || item.PIC || 'Peserta', 
+          Gender: p.Gender || p.gender || '-',             
+          Age: Number(p.Age || p.age || 0),                
+          Domicile: p.Domicile || p.domicile || '-'        
+      }));
+  }
+  else if (item.objectPerson || item.ObjectPerson) {
+      try {
+          const rawPerson = item.objectPerson || item.ObjectPerson;
           const personObj = typeof rawPerson === 'string' ? JSON.parse(rawPerson) : rawPerson;
-          
-          // Loop object keys (person1, person2, dst)
           Object.keys(personObj).forEach(key => {
              const p = personObj[key];
-             if (p && p.Name) { // Pastikan ada namanya
+             if (p && p.Name) {
                parsedParticipants.push({
                  Name: p.Name,
                  Gender: p.Gender || '-',
@@ -148,43 +147,40 @@ async fetchUserTransactions() {
                });
              }
           });
-        } catch (e) {
-          console.error("Gagal parse participants:", e);
-        }
-      }
+      } catch (e) { console.error("Gagal parse lama:", e); }
+  }
+  if (parsedParticipants.length === 0) {
+      parsedParticipants = [{ 
+        Name: item.PIC || user.value?.name || 'Peserta Utama', 
+        Gender: '-',
+        Age: 0 
+      }];
+  }
+  // ----------------------------------------------------
 
-      // Fallback: Kalau parsing gagal atau kosong, pake logic lama (ambil PIC)
-      if (parsedParticipants.length === 0) {
-         parsedParticipants = [{ 
-           Name: item.PIC || user.value?.name || 'Peserta Utama', 
-           Gender: '-' 
-         }];
-      }
-      // ----------------------------------------------
+  return {
+      SK: ticketId,
+      full_sk: item.SK,
+      status: item.Status || 'PENDING', 
+      created_at: item.CreatedAt,
+      date: item.CreatedAt, 
+      
+      dauroh: { 
+        Title: foundEvent?.Title || 'Event Dauroh', 
+        Place: foundEvent?.Place || 'Lokasi Online',
+        SK: eventId,
+        Picture: foundEvent?.Picture,
+        Date: foundEvent?.Date
+      },
+      
+      amount: item.Amount || foundEvent?.Price || 0,
+      participants: parsedParticipants,
+      total_participants: parsedParticipants.length,
 
-      return {
-          SK: ticketId,
-          full_sk: item.SK,
-          status: item.Status,
-          created_at: item.CreatedAt,
-          date: item.CreatedAt, 
-          
-          dauroh: { 
-            Title: foundEvent?.Title || item.Title || 'Event Dauroh',
-            Place: foundEvent?.Place || 'Lokasi Online',
-            SK: eventId
-          },
-          
-          amount: item.Amount || foundEvent?.Price || 0,
-          
-          // Pake hasil parsing kita tadi
-          participants: parsedParticipants,
-          total_participants: parsedParticipants.length,
-
-          va_number: item.va_number || '-', 
-          Expired_Date: item.Expired_Date || item.expired_date || '-' 
-      } as UserTicket;
-    });
+      va_number: item.va_number || '-', 
+      Expired_Date: item.Expired_Date || '-' 
+  } as UserTicket;
+});
 
     this.tickets = mappedTickets.sort((a: any, b: any) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();

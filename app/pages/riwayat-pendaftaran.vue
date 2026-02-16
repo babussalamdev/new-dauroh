@@ -286,9 +286,35 @@ const formatCurrency = (val: number) => {
 };
 
 // Actions Modal
-const openDetailModal = (ticket: any) => {
+const openDetailModal = async (ticket: any) => {
   selectedTicketDetail.value = ticket;
   showDetail.value = true;
+  try {
+     const { $apiBase } = useNuxtApp();
+     const skRaw = ticket.full_sk || ticket.SK; 
+     const res = await $apiBase.get('/get-payment', {
+        params: {
+           type: 'payment-detail', 
+           sk: skRaw               
+        }
+     });
+     const newData = res.data;
+     if (newData && Array.isArray(newData.Participant)) {
+         const freshParticipants = newData.Participant.map((p: any) => ({
+             Name: p.Name || p.name,
+             Gender: p.Gender || p.gender || '-',
+             Age: Number(p.Age || p.age || 0),
+             Domicile: p.Domicile || p.domicile || '-'
+         }));
+         selectedTicketDetail.value = {
+            ...selectedTicketDetail.value,
+            participants: freshParticipants
+         };
+     }
+
+  } catch (error) {
+     console.error("Gagal update detail:", error);
+  }
 };
 
 const closeDetailModal = () => {

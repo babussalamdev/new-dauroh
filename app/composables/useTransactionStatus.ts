@@ -4,7 +4,7 @@ export const useTransactionStatus = () => {
   const getSmartStatus = (transaction: any) => {
     if (!transaction) return 'UNKNOWN';
     const rawStatus = (transaction.Status || transaction.status || 'PENDING').toUpperCase();
-    if (['PAID', 'SUCCESS', 'DONE', 'ACTIVE', 'CHECKED_IN'].includes(rawStatus)) {
+    if (['SUCCESSFUL'].includes(rawStatus)) {
       return 'PAID';
     }
     const expDateRaw = transaction.Expired_Date || transaction.expired_date;

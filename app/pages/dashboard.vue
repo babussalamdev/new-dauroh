@@ -120,13 +120,13 @@
                           <span class="text-muted small-8">{{ ticket.participants.length }} Peserta • {{ formatCurrency(ticket.dauroh.Price) }}</span>
                         </td>
                         <td class="text-center pe-4">
-  <button 
-    v-if="getSmartStatus(ticket) === 'PAID'"
-    class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" 
-    @click="openQrModal(ticket)"
-  >
-    <i class="bi bi-qr-code-scan me-2"></i>E-Ticket
-  </button>
+                          <button 
+                          v-if="getSmartStatus(ticket) === 'PAID' || ['SUCCESSFUL', 'SUCCESS'].includes((ticket.Status || ticket.status || '').toUpperCase())"
+                          class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" 
+                          @click="openQrModal(ticket)"
+                          >
+                          <i class="bi bi-qr-code-scan me-2"></i>E-Ticket
+                        </button>
 
   <span 
     v-else-if="getSmartStatus(ticket) === 'PENDING'" 
@@ -182,13 +182,22 @@ const activeTab = ref('active');
 const showQrModal = ref(false);
 const selectedTicket = ref(null);
 const upcomingTickets = computed(() => {
-  const allTickets = userStore.getDashboardData || [];
+  const allTickets = userStore.tickets || userStore.getDashboardData || [];
+  if (!Array.isArray(allTickets)) return [];
+
   return allTickets.filter(item => {
-    const status = getSmartStatus(item);
-    return status === 'PENDING' || status === 'PAID';
+    const smartStatus = getSmartStatus(item);
+    const rawStatus = (item.status || '').toUpperCase();
+    const isPaid = smartStatus === 'PAID' || 'SUCCESSFUL'.includes(rawStatus);
+    const isPending = smartStatus === 'PENDING';
+
+    return isPaid || isPending;
   });
 });
 onMounted(async () => {
+  if (isLoggedIn.value) {
+      await userStore.fetchUserTransactions(); 
+  }
     if (daurohStore.tiketDauroh.length === 0) {
         await daurohStore.fetchPublicTiketDauroh();
     }
