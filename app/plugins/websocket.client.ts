@@ -2,39 +2,65 @@ import { useCheckoutStore } from "~/stores/checkout";
 
 export default defineNuxtPlugin((nuxtApp) => {
   let socket: WebSocket | null = null;
+  
+const connectWebSocket = (wsUrl: string) => {
   const checkoutStore = useCheckoutStore(); 
 
-  const connectWebSocket = (wsUrl: string) => {
-    // Cek jika socket sudah ada dan terbuka, jangan konek lagi
-    if (socket && socket.readyState === WebSocket.OPEN) return;
+  // 1. PROTEKSI: Cek apakah URL valid (harus ada parameter 'sk' sesuai log error tadi)
+  if (!wsUrl || !wsUrl.includes('sk=')) {
+    console.warn("⚠️ WS URL tidak valid atau parameter 'sk' hilang. Koneksi dibatalkan.");
+    return;
+  }
 
-    console.log("Connecting WS to:", wsUrl);
-    socket = new WebSocket(wsUrl);
+  // 2. PROTEKSI: Cek jika socket sedang CONNECTING atau sudah OPEN
+  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    console.log("ℹ️ WS sudah tersambung atau sedang proses menyambung.");
+    return;
+  }
 
-    socket.onopen = () => {
-      console.log("WS Connected");
-    };
+  // 3. TUTUP: Jika ada socket lama yang statusnya 'Closing', bersihkan dulu
+  if (socket) {
+    socket.close();
+  }
 
-    socket.onmessage = (event) => {
-      try {
-        const result = JSON.parse(event.data);
-        const { store, mutation, data } = result;
-        console.log(result)
-        navigateTo('/riwayat-pendaftaran');
+  console.log("🔌 Connecting WS to:", wsUrl);
+  socket = new WebSocket(wsUrl);
 
-      } catch (error) {
-        console.error("WS Parse Error:", error);
+  socket.onopen = () => {
+    console.log("✅ WS Connected");
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      // Pastikan data tidak kosong
+      if (!event.data) return;
+
+      const result = JSON.parse(event.data);
+      console.log("📩 WS Message:", result);
+      
+      const { store, mutation, data } = result;
+
+      // Logic update store
+      if (store === 'formulir' && mutation === 'statusPayment') {
+        console.log("⚡ Mengupdate status pembayaran ke store...");
+        checkoutStore.updatePaymentStatus(data);
       }
-    };
-
-    socket.onclose = () => {
-      console.log("WS Disconnected");
-    };
-    
-    socket.onerror = (err) => {
-      console.error("WS Error:", err);
+      
+    } catch (error) {
+      // Abaikan jika pesan bukan JSON (misalnya pesan 'ping' dari server)
+      console.error("❌ WS Parse Error:", error);
     }
   };
+
+  socket.onclose = (event) => {
+    console.log(`⚠️ WS Disconnected (Code: ${event.code})`);
+    socket = null; // Reset variable agar bisa konek ulang nanti
+  };
+  
+  socket.onerror = (err) => {
+    console.error("❌ WS Error detect:", err);
+  }
+};
 
   const closeWebSocket = () => {
     if (socket) {

@@ -81,7 +81,9 @@ import { ref, onMounted, computed, watch, defineAsyncComponent } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import { useNuxtApp, useRuntimeConfig } from '#app';
 import Swal from 'sweetalert2';
+import ModalsQrCodeModal from '~/components/modals/QrCodeModal.vue'; 
 
 // Import Assets
 import bniLogo from '~/assets/img/bank/bni.png';
@@ -93,35 +95,27 @@ import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
+const { $connectSocket, $closeSocket } = useNuxtApp(); // Ambil plugin socket
+const config = useRuntimeConfig();
 const store = useCheckoutStore();
 const userStore = useUserStore();
 const router = useRouter();
 const showQrModal = ref(false);
 
 // --- Computed Helpers ---
-// [REVISI] Logic Status yang lebih cerdas menggunakan Store getter
 const currentStatus = computed(() => {
-  // 1. Cek apakah expired secara waktu (Realtime Calculation)
-  // Ini menghindari bug dimana backend status 'PENDING' tapi di browser waktu sudah habis
-  if (store.isExpired) {
-     return 'EXPIRED';
-  }
-
+  if (store.isExpired) return 'EXPIRED';
+  
+  // Pastikan status aman dari null
   const rawStatus = (store.transactionDetails?.status || 'PENDING').toUpperCase();
+  
+  if (['SUCCESSFUL', 'PAID', 'SETTLED'].includes(rawStatus)) return 'SUCCESSFUL';
+  if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(rawStatus)) return 'EXPIRED';
 
-  // 2. Cek Status Sukses
-  if (['PAID', 'SUCCESS', 'SETTLED', 'LUNAS'].includes(rawStatus)) {
-     return 'PAID';
-  }
-
-  // 3. Jika tidak expired dan belum bayar, berarti PENDING
   return 'PENDING';
 });
 
-const isPaid = computed(() => {
-  const s = (currentStatus.value || '').toUpperCase();
-  return ['PAID', 'SUCCESS', 'SETTLED', 'LUNAS'].includes(s);
-});
+const isPaid = computed(() => currentStatus.value === 'SUCCESSFUL');
 
 const newlyCreatedTicket = computed(() => {
   if (!store.dauroh || !store.participants.length) return undefined;
@@ -129,9 +123,16 @@ const newlyCreatedTicket = computed(() => {
 });
 
 const paymentLogoUrl = computed(() => {
-  const logos: { [key: string]: string } = { 'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo };
-  const method = store.transactionDetails?.paymentMethod;
-  return method ? logos[method.toUpperCase()] : null;
+  const logos: { [key: string]: string } = { 
+    'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 
+    'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo 
+  };
+  
+  // [FIX 2] MAPPING BSM -> BSI BIAR LOGO MUNCUL
+  let method = (store.transactionDetails?.paymentMethod || '').toUpperCase();
+  if (method === 'BSM') method = 'BSI'; 
+  
+  return logos[method] || null;
 });
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
@@ -140,7 +141,7 @@ const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 
 const BankComponents: any = {
   'BNI': defineAsyncComponent(() => import('~/components/bank/BNI.vue')),
   'BRI': defineAsyncComponent(() => import('~/components/bank/BRI.vue')),
-  'BSI': defineAsyncComponent(() => import('~/components/bank/BSI.vue')),
+  'BSI': defineAsyncComponent(() => import('~/components/bank/BSI.vue')), // Key tetap BSI
   'CIMB': defineAsyncComponent(() => import('~/components/bank/CIMB.vue')),
   'DANAMON': defineAsyncComponent(() => import('~/components/bank/Danamon.vue')),
   'MANDIRI': defineAsyncComponent(() => import('~/components/bank/Mandiri.vue')),
@@ -148,8 +149,11 @@ const BankComponents: any = {
 };
 
 const currentBankComponent = computed(() => {
-  const method = store.transactionDetails?.paymentMethod?.toUpperCase(); 
-  return method ? BankComponents[method] : null;
+  // [FIX 3] MAPPING BSM -> BSI BIAR PANDUAN MUNCUL
+  let method = (store.transactionDetails?.paymentMethod || '').toUpperCase();
+  if (method === 'BSM') method = 'BSI';
+  
+  return BankComponents[method] || null;
 });
 
 // --- Helper: Handle Expired Logic ---
@@ -157,36 +161,46 @@ const handleExpiredState = () => {
     Swal.fire({
       icon: 'error',
       title: 'Waktu Habis!',
-      text: 'Sesi pembayaran Anda telah berakhir. Silakan pilih metode pembayaran ulang.',
+      text: 'Sesi pembayaran Anda telah berakhir.',
       timer: 2000,
       showConfirmButton: false
     }).then(() => {
-      // 1. Reset Transaksi
-      if (store.resetTransaction) {
-        store.resetTransaction(); 
-      } else {
+      if (store.resetTransaction) store.resetTransaction(); 
+      else {
         store.transactionDetails = null;
         store.paymentMethod = null;
       }
-      
-      // 2. Paksa Pindah Step
       store.setStep('select');
     });
 };
 
 // --- Lifecycle & Watcher ---
 onMounted(() => {
-  // 1. Cek Data
-  if (store.transactionDetails && store.dauroh) {
-      userStore.registerDauroh({
-          dauroh: store.dauroh,
-          participants: store.participants,
-          transactionDetails: store.transactionDetails 
-      });
+  // 1. Register data pendaftaran (Existing)
+  if (store.transactionDetails && store.dauroh && currentStatus.value !== 'SUCCESSFUL') {
+    userStore.registerDauroh({
+      dauroh: store.dauroh,
+      participants: store.participants,
+      transactionDetails: store.transactionDetails 
+    });
   }
-  const status = (currentStatus.value || '').toUpperCase();
-  if (status === 'EXPIRED') {
-      handleExpiredState();
+
+  // 2. Handle Expired State (Existing)
+  if (currentStatus.value === 'EXPIRED') {
+   handleExpiredState();
+  }
+
+  // 3. [BARU] Konek ke WebSocket AWS lu
+ const wsUrl = config.public.websocketUrl;
+  const userEmail = userStore.user?.email || ''; // Atau ambil dari store mana lu simpen email
+
+  if (wsUrl && userEmail) {
+      // GABUNGKAN URL DENGAN PARAMETER SK
+      // Hasilnya: wss://.../stage/?sk=email@gmail.com
+      const finalUrl = `${wsUrl}${wsUrl.includes('?') ? '&' : '?'}sk=${userEmail}`;
+      
+      console.log("🔌 Menghubungkan ke WebSocket dengan SK:", finalUrl);
+      $connectSocket(finalUrl);
   }
 });
 
@@ -194,18 +208,15 @@ onMounted(() => {
 watch(currentStatus, (newStatus) => {
   const status = (newStatus || '').toUpperCase();
 
-  // 1. Handle Expired (Realtime change)
   if (status === 'EXPIRED') {
     handleExpiredState();
   }
-  
-  // 2. Handle Paid
-  else if (['PAID', 'SUCCESS', 'SETTLED', 'LUNAS'].includes(status)) {
-    const registrationData = {
-      dauroh: store.dauroh as any, 
-      participants: store.participants as any[],
-    };
-    userStore.registerDauroh(registrationData); 
+  else if (status === 'SUCCESSFUL') {
+    // Register ulang/update status saat sukses
+    userStore.registerDauroh({
+      dauroh: store.dauroh, 
+      participants: store.participants,
+    }); 
 
     setTimeout(() => {
       Swal.fire({
@@ -219,7 +230,7 @@ watch(currentStatus, (newStatus) => {
       });
     }, 500);
   }
-}, { immediate: true });
+});
 
 const handleCloseQr = () => {
   showQrModal.value = false;
@@ -236,8 +247,6 @@ onBeforeRouteLeave((to, from, next) => {
     next();
     return;
   }
-  
-  // Izinkan navigasi internal (ganti step)
   if (to.path === from.path) {
     next();
     return;

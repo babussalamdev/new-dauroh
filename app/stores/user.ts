@@ -22,169 +22,146 @@ export interface Participant {
 }
 
 export interface UserTicket {
-  SK: string;        
-  id?: string;       
-  full_sk?: string; 
-  date: string;      
-  created_at?: string; 
-
-  dauroh: any;       
-  participants: Participant[]; 
-  title?: string;              
-  total_participants?: number; 
-  
-  // Status
-  status: 'Upcoming' | 'Selesai' | 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED' | 'active' | 'CHECKED_IN';
-  paymentStatus?: string;
-
-  // Data Pembayaran
+  SK: string;
+  id?: string;
+  full_sk?: string;
+  date: string;
+  created_at?: string;
+  dauroh: any;
+  participants: Participant[];
+  title?: string;
+  total_participants?: number;
+  status: 'Upcoming' | 'Selesai' | 'PENDING' | 'SUCCESSFUL' | 'EXPIRED' | 'FAILED' | 'active' | 'CHECKED_IN';
   amount?: number;
   va_number?: string;
   receiver_bank_account?: any;
   sender_bank?: string;
   expired_date?: string;
-  [key: string]: any; 
+  [key: string]: any;
 }
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    // State asli bernama 'tickets'
     tickets: useStorage<UserTicket[]>('user_tickets_v2', [], localStorage),
     user: null as UserProfile | null,
     isLoading: false,
   }),
-  
+
   getters: {
     transactions: (state) => state.tickets,
     getAllTickets: (state) => state.tickets,
-    getUpcomingTickets: (state) => state.tickets.filter((t: UserTicket) => t.status === 'Upcoming' || t.status === 'PAID'),
-    getPendingTickets: (state) => state.tickets.filter((t: UserTicket) => t.status === 'PENDING'),
-    getDashboardData: (state) => state.tickets
-      .filter((t: UserTicket) => ['PENDING', 'PAID', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status))
-      .sort((a: UserTicket, b: UserTicket) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    getValidTickets: (state) => {
-      if (!state.tickets) return [];
-      return state.tickets.filter((ticket: UserTicket) => {
-        const isEventExist = ticket.dauroh && ticket.dauroh.Title;
-        const isNotExpired = ticket.status !== 'EXPIRED';
-        return isEventExist && isNotExpired;
-      });
-    },
+    getUpcomingTickets: (state) => state.tickets.filter((t) => t.status === 'Upcoming' || t.status === 'SUCCESSFUL'),
+    getPendingTickets: (state) => state.tickets.filter((t) => t.status === 'PENDING'),
+    getDashboardData: (state) => [...state.tickets]
+      .filter((t) => ['PENDING', 'SUCCESSFUL', 'Upcoming', 'active', 'CHECKED_IN'].includes(t.status))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   },
 
   actions: {
-    async fetchUserProfile() {
-        this.isLoading = true;
-        try {
-            const { user, getUser } = useAuth();
-            
-            if (!user.value) {
-               await getUser(); 
-            }
-
-            if (user.value) {
-                this.user = {
-                    ...user.value, 
-                    fullname: user.value.name || '', 
-                    phone: user.value.phone_number,
-                };
-            }
-        } catch (error) {
-            console.error('Gagal mengambil profil user:', error);
-        } finally {
-            this.isLoading = false;
-        }
-    },
-
-async fetchUserTransactions() {
-  const nuxtApp = useNuxtApp() as any;
+    async fetchUserTransactions() {
+      const nuxtApp = useNuxtApp() as any;
   const apiBase = nuxtApp.$apiBase;
-  
   if (!apiBase) return;
-  
+
   const daurohStore = useDaurohStore() as any;
-  const { user } = useAuth(); 
+  const { user: authUser } = useAuth();
 
   this.isLoading = true;
 
   try {
-    // Pastikan data tiket publik ada buat referensi judul/harga
     if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
-        if (typeof daurohStore.fetchPublicTiketDauroh === 'function') {
-            await daurohStore.fetchPublicTiketDauroh();
-        }
+      await daurohStore.fetchPublicTiketDauroh();
     }
-    
+
     const response = await apiBase.get('/get-payment?type=client');
-    
- const mappedTickets = response.data.map((item: any) => {
-  
-  const parts = (item.SK || '').split('#');
-  const eventId = parts[0]; 
-  const ticketId = parts[1] || item.SK; 
-  const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
-  let parsedParticipants: any[] = [];
-  if (Array.isArray(item.Participant)) {
-      parsedParticipants = item.Participant.map((p: any) => ({
-          Name: p.Name || p.name || item.PIC || 'Peserta', 
-          Gender: p.Gender || p.gender || '-',             
-          Age: Number(p.Age || p.age || 0),                
-          Domicile: p.Domicile || p.domicile || '-'        
-      }));
-  }
-  else if (item.objectPerson || item.ObjectPerson) {
-      try {
-          const rawPerson = item.objectPerson || item.ObjectPerson;
-          const personObj = typeof rawPerson === 'string' ? JSON.parse(rawPerson) : rawPerson;
-          Object.keys(personObj).forEach(key => {
-             const p = personObj[key];
-             if (p && p.Name) {
-               parsedParticipants.push({
-                 Name: p.Name,
-                 Gender: p.Gender || '-',
-                 Age: p.Age || 0,
-                 Domicile: p.Domicile || '-'
-               });
-             }
-          });
-      } catch (e) { console.error("Gagal parse lama:", e); }
-  }
-  if (parsedParticipants.length === 0) {
-      parsedParticipants = [{ 
-        Name: item.PIC || user.value?.name || 'Peserta Utama', 
-        Gender: '-',
-        Age: 0 
-      }];
-  }
-  // ----------------------------------------------------
+    let rawData = response.data;
+    if (rawData && rawData.data) rawData = rawData.data;
 
-  return {
-      SK: ticketId,
-      full_sk: item.SK,
-      status: item.Status || 'PENDING', 
-      created_at: item.CreatedAt,
-      date: item.CreatedAt, 
+    if (!Array.isArray(rawData)) {
+      this.tickets = [];
+      return;
+    }
+
+    const mappedTickets = rawData.map((item: any) => {
+      const parts = (item.SK || '').split('#');
+      const eventId = parts[0];
+      const foundEvent = daurohStore.tiketDauroh?.find((d: any) => d.SK === eventId);
+
+      // --- STEP 1: HITUNG PESERTA DULU (Kunci Utama) ---
+      let participantsList: Participant[] = [];
+      let rawP = item.Participant || item.participant || item.Participants || item.objectPerson || item.ObjectPerson;
+
+      // Jika dibungkus string JSON (ini sering terjadi di backend), bongkar dulu
+      if (typeof rawP === 'string' && (rawP.startsWith('[') || rawP.startsWith('{'))) {
+          try {
+              rawP = JSON.parse(rawP);
+          } catch (e) { console.error("Gagal parse data peserta:", e); }
+      }
+
+      // Pastikan jadi Array yang bersih
+      if (Array.isArray(rawP)) {
+        participantsList = rawP.map((p: any) => ({
+          Name: p.Name || p.name || 'Peserta',
+          Gender: p.Gender || p.gender || '-',
+          Age: Number(p.Age || p.age || 0),
+          Domicile: p.Domicile || p.domicile || '-'
+        }));
+      } else if (rawP && typeof rawP === 'object') {
+        // Jika objectPerson formatnya { person1: {}, person2: {} }
+        Object.values(rawP).forEach((p: any) => {
+          if (p && (p.Name || p.name)) {
+            participantsList.push({
+              Name: p.Name || p.name,
+              Gender: p.Gender || '-',
+              Age: p.Age || 0,
+              Domicile: p.Domicile || '-'
+            });
+          }
+        });
+      }
+
+      // Fallback minimal 1 orang kalau beneran kosong
+      if (participantsList.length === 0) {
+        participantsList = [{
+          Name: item.PIC || authUser.value?.name || 'Peserta Utama',
+          Gender: '-', Age: 0
+        }];
+      }
+
+      // --- STEP 2: HITUNG TOTAL BERDASARKAN JUMLAH PESERTA ---
+      const totalPeserta = participantsList.length; // Sekarang ini harusnya sudah 3
+      const hargaSatuan = Number(foundEvent?.Price || 250000);
       
-      dauroh: { 
-        Title: foundEvent?.Title || 'Event Dauroh', 
-        Place: foundEvent?.Place || 'Lokasi Online',
-        SK: eventId,
-        Picture: foundEvent?.Picture,
-        Date: foundEvent?.Date
-      },
-      
-      amount: item.Amount || foundEvent?.Price || 0,
-      participants: parsedParticipants,
-      total_participants: parsedParticipants.length,
+      // Hitung total: Prioritaskan Amount dari API, kalau 0/salah, pakai hitungan manual
+      let totalAmount = Number(item.Amount || item.amount || 0);
 
-      va_number: item.va_number || '-', 
-      Expired_Date: item.Expired_Date || '-' 
-  } as UserTicket;
-});
+      // Jika totalAmount dari API cuma harga satuan (misal 250rb) padahal peserta 3,
+      // atau jika totalAmount-nya 0, kita kalikan manual.
+      if (totalAmount === 0 || (totalAmount <= hargaSatuan && totalPeserta > 1)) {
+          totalAmount = hargaSatuan * totalPeserta;
+      }
 
-    this.tickets = mappedTickets.sort((a: any, b: any) => {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return {
+        SK: item.SK,
+        full_sk: item.SK,
+        status: item.Status || 'PENDING',
+        created_at: item.CreatedAt,
+        date: item.CreatedAt,
+        dauroh: {
+          Title: foundEvent?.Title || item.Subject || 'Event Dauroh',
+          Place: foundEvent?.Place || 'Lokasi Online',
+          SK: eventId
+        },
+        amount: totalAmount, // <--- Hasil perkalian step 1 & harga satuan
+        participants: participantsList,
+        total_participants: totalPeserta,
+        Expired_Date: item.Expired_Date || item.expired_date || '-'
+      } as UserTicket;
     });
+
+    this.tickets = mappedTickets.sort((a, b) => 
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
 
   } catch (error) {
     console.error("Fetch Transactions Error:", error);
@@ -192,7 +169,6 @@ async fetchUserTransactions() {
     this.isLoading = false;
   }
 },
-
     registerDauroh(payload: any) {
       const { dauroh, participants, transactionDetails } = payload;
       const daurohStore = useDaurohStore() as any; 

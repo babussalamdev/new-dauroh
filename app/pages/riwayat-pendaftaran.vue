@@ -61,7 +61,7 @@
 
               <td class="py-3 text-center">
                 <div class="d-flex flex-column align-items-center gap-1">
-                  <template v-if="getSmartStatus(ticket) === 'PAID'">
+                  <template v-if="getSmartStatus(ticket) === 'SUCCESSFUL'">
                     <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1 small-7">
                       <i class="bi bi-check-circle-fill me-1"></i>Lunas
                     </span>
@@ -120,7 +120,7 @@
                   </button>
 
                   <span 
-                    v-else-if="getSmartStatus(ticket) === 'PAID'"
+                    v-else-if="getSmartStatus(ticket) === 'SUCCESSFUL'"
                     class="text-success fw-bold p-1"
                     style="font-size: 0.7rem;"
                   >
@@ -179,7 +179,7 @@
                     </td>
                     <td class="text-end pe-3">
                       <button 
-                        v-if="getSmartStatus(selectedTicketDetail) === 'PAID'"
+                        v-if="getSmartStatus(selectedTicketDetail) === 'SUCCESSFUL'"
                         @click="showIndividualQr(selectedTicketDetail, p)"
                         class="btn btn-sm btn-primary py-1 px-3 rounded-pill"
                         style="font-size: 0.75rem;"
@@ -193,7 +193,7 @@
               </table>
             </div>
             
-            <div v-if="selectedTicketDetail && getSmartStatus(selectedTicketDetail) !== 'PAID'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
+            <div v-if="selectedTicketDetail && getSmartStatus(selectedTicketDetail) !== 'SUCCESSFUL'" class="alert alert-warning d-flex align-items-center mt-3 mb-0 p-2 small">
                <i class="bi bi-exclamation-triangle-fill me-2"></i>
                <div>Selesaikan pembayaran untuk melihat QR Tiket.</div>
             </div>
@@ -284,6 +284,28 @@ const formatDate = (dateString: string) => {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
+const calculateRealTotal = (ticket: any) => {
+  // 1. Ambil Jumlah Peserta (Kalau array kosong, anggap 1)
+  const count = ticket.participants?.length || 1;
+
+  // 2. Tentukan Harga Satuan
+  // Prioritas A: Ambil dari Master Data (Dauroh Store) biar akurat
+  const eventId = (ticket.SK || '').split('#')[0];
+  const masterEvent = daurohStore.tiketDauroh.find((e: any) => e.SK === eventId);
+  
+  let unitPrice = 0;
+  
+  if (masterEvent) {
+     unitPrice = Number(masterEvent.Price);
+  } else {
+     // Prioritas B: Kalau master ga ada, pake harga yang nempel di tiket
+     // Kita asumsikan ticket.amount yg skrg tampil salah itu adalah harga satuan
+     unitPrice = Number(ticket.dauroh?.Price || ticket.amount || 0);
+  }
+
+  // 3. Total = Harga Satuan x Jumlah Orang
+  return unitPrice * count;
+};
 
 // Actions Modal
 const openDetailModal = async (ticket: any) => {
@@ -333,41 +355,41 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
 
 // Payment Logic
 const resumePayment = async (ticket: any) => {
-  const skEvent = ticket.dauroh?.SK || ticket.SK || ticket.EventSK; 
+  // [FIX] Pake full_sk atau SK yang ada pagarnya (#), JANGAN ID EVENT DOANG
+  const skTransaksi = ticket.full_sk || ticket.SK; 
+
+  console.log("🚀 Resume Payment SK:", skTransaksi); // Debugging
   
-  if (!skEvent) {
+  if (!skTransaksi || !skTransaksi.includes('#')) {
       Swal.fire({
         icon: 'error',
         title: 'Data Tidak Lengkap',
-        text: 'ID Event tidak ditemukan pada riwayat ini. Silakan hubungi admin.'
+        text: 'ID Transaksi tidak valid (Harus ada #). Silakan hubungi admin.'
       });
       return;
   }
 
   const smartStatus = getSmartStatus(ticket);
 
-  // Jika Pending -> Langsung Bayar
-  if (smartStatus === 'PENDING') {
+  // LOGIC BAYAR / RE-PAY
+  if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
+      // Pass SK Transaksi Lengkap ke fungsi expired
+      await handleExpiredFlow(skTransaksi);
+  } 
+  else if (smartStatus === 'PENDING') {
       try {
-        // Asumsi checkExistingTransaction mengembalikan boolean
-        // true: transaksi ada di backend -> lanjut checkout
-        // false: transaksi ga ada/expired -> handleExpiredFlow
-        const isTransactionValid = await checkoutStore.checkExistingTransaction(skEvent);
+        // Cek pakai SK Transaksi
+        const isTransactionValid = await checkoutStore.checkExistingTransaction(skTransaksi);
         
         if (isTransactionValid) {
            router.push('/checkout');
         } else {
-           // Kalau ternyata di backend invalid (meski frontend bilang pending), anggap expired
-           await handleExpiredFlow(skEvent);
+           await handleExpiredFlow(skTransaksi);
         }
       } catch (error) {
          console.error("Gagal cek transaksi:", error);
          Swal.fire({icon: 'error', title: 'Kesalahan Sistem', text: 'Gagal memverifikasi status transaksi.'});
       }
-  } 
-  // Jika Expired/Cancelled -> Handle Restore Flow
-  else if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
-      await handleExpiredFlow(skEvent);
   }
 };
 

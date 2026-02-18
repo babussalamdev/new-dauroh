@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useNuxtApp } from '#app';
 import { useAuth } from '~/composables/useAuth';
+import { useDaurohStore } from '~/stores/dauroh';
 
 export type CheckoutStep = 'select' | 'summary' | 'instructions';
 
@@ -31,6 +32,7 @@ interface TransactionDetails {
   sender_bank_type?: string; 
   [key: string]: any;
 }
+
 
 export const useCheckoutStore = defineStore('checkout', {
   state: () => ({
@@ -136,35 +138,39 @@ export const useCheckoutStore = defineStore('checkout', {
       this.paymentMethod = null;
     },
 
-async createPayment() {
+  async createPayment() {
     this.isLoading = true;
     const { $apiFlip } = useNuxtApp();
     const { accessToken, user } = useAuth();
 
     try {
-        // Cari SK Event sekuat tenaga. Kalau ga ada di dauroh, cari di transactionDetails
-        const eventSK = this.dauroh?.SK || 
-                        this.dauroh?.id || 
-                        this.transactionDetails?.event_sk || 
-                        this.transactionDetails?.dauroh?.SK;
-
-        if (!eventSK) {
+        const rawSK = [
+            this.transactionDetails?.event_sk,
+            this.transactionDetails?.dauroh?.SK,
+            this.transactionDetails?.Subject,
+            this.dauroh?.SK,
+            this.dauroh?.id
+        ].find(s => s && typeof s === 'string' && !s.includes('@'));
+        if (!rawSK) {
             throw new Error("Data Event (SK) tidak ditemukan. Silakan ulangi dari awal.");
         }
+        const eventSK = (rawSK as string).split('#')[0];
+        if (!eventSK) throw new Error("ID Event tidak valid.");
 
-        // Siapkan Data Peserta
+        console.log("💳 Create Payment Event ID (Clean):", eventSK);
+
         const objectPerson: Record<string, any> = {};
         this.participants.forEach((p, index) => {
             objectPerson[`person${index + 1}`] = {
                 Name: p.Name,
                 Gender: p.Gender?.toLowerCase() || '-',
-                Age: Number(p.Age || 0),
+                Age: Number(p.Age),
                 Domicile: p.Domicile || '-'
             };
         });
 
-        // Tentukan Bank
-        let bankCode = this.paymentMethod === 'BSI' ? 'bsm' : this.paymentMethod?.toLowerCase() || 'bsm';
+        let bankCode = (this.paymentMethod || 'bsm').toLowerCase();
+        if (bankCode === 'bsi') bankCode = 'bsm';
 
         let paymentType = 'virtual_account';
         if (['qris', 'gopay', 'shopeepay'].includes(bankCode)) {
@@ -172,7 +178,6 @@ async createPayment() {
             paymentType = 'wallet_account';
         }
 
-        // Payload
         const payload: any = {
             Amount: String(this.finalAmount),
             Name: user.value?.name || 'Guest',
@@ -188,9 +193,6 @@ async createPayment() {
             payload.VoucherCode = this.voucherCode;
         }
 
-        console.log("🚀 Mengirim Payload ke Flip:", payload);
-
-        // Config Header Auth (Biar ga mental ke Login)
         const config = {
             headers: { Authorization: `Bearer ${accessToken.value}` }
         };
@@ -198,7 +200,6 @@ async createPayment() {
         const response = await $apiFlip.post('/flip-dauroh', payload, config);
         const result = response.data;
 
-        // Update State Sukses
         this.transactionDetails = {
             ...result,
             vaNumber: result.receiver_bank_account?.account_number,
@@ -211,189 +212,137 @@ async createPayment() {
 
     } catch (error: any) {
         console.error("❌ Payment Error:", error);
-
-        // --- FIX MASALAH 2: ERROR PENDING ---
         const errData = error.response?.data || {};
-        
-        // Prioritas Error Message:
-        // 1. errData.error ("Anda memiliki booking PENDING.")
-        // 2. errData.message
-        // 3. String error biasa
         let errorMessage = errData.error || errData.message || "Terjadi kesalahan saat memproses pembayaran.";
-        
-        // Pastikan error message berupa string biar ga object [Object object]
-        if (typeof errorMessage !== 'string') {
-            errorMessage = JSON.stringify(errorMessage);
-        }
+        if (typeof errorMessage !== 'string') errorMessage = JSON.stringify(errorMessage);
 
-        return { 
-            success: false, 
-            message: errorMessage, // Pesan ini nanti ditangkep Summary.vue buat SWAL
-            error: error 
-        };
-
+        return { success: false, message: errorMessage, error: error };
     } finally {
         this.isLoading = false;
     }
 },
 
-    // [BARU] Action untuk memulihkan data transaksi Expired/Cancel buat Bayar Ulang
-async restoreTransactionData(skEvent: string) {
-      const { $apiFlip } = useNuxtApp();
-  
-      if (!skEvent) return false;
-  
-      try {
-        this.isLoading = true;
-        console.log("♻️ Restoring data for Event SK:", skEvent);
-  
-        const response = await $apiFlip.get('/get-flip-dauroh', {
-            params: { skEvent: skEvent }
-        });
-  
-        let data = response.data;
+async restoreTransactionData(skTransaction: string) {
+        const { $apiBase } = useNuxtApp();
+        const daurohStore = useDaurohStore(); 
         
-        // Unwrap logic
-        if (data && data.data) data = data.data;
-        if (data && data.Payment) data = data.Payment;
-  
-        if (!data) {
-          console.error("❌ Gagal restore data: Response kosong.");
-          return false;
-        }
-  
-        console.log("📦 Data Restore Ditemukan:", data);
+        console.log("♻️ Restore SK:", skTransaction);
 
-        // [REVISI MAPPING BIAR SESUAI JSON BARU]
-        // 1. Coba ambil nama dari 'account_holder' kalau field nama lain kosong
-        const fallbackName = data.receiver_bank_account?.account_holder || '';
-        
-        // 2. Coba ambil email dari 'SK' (karena di JSON SK-nya bentuk email)
-        const fallbackEmail = (data.SK && data.SK.includes('@')) ? data.SK : '';
-
-        // 3. Logic Peserta
-        // Karena di JSON gak ada array 'participants', kita anggap ini single participant
-        const participantsList: Participant[] = (data.participants || []).map((p: any) => ({
-            Name: p.name || p.nama_peserta || p.Name || '',
-            Email: p.email || '', 
-            Gender: p.gender || p.jenis_kelamin || p.Gender || 'Ikhwan',
-            Age: p.age || p.Age || 0,
-            Domicile: p.domicile || p.Domicile || ''
-        }));
-
-        // Kalau list kosong, ambil data dari User Utama / Fallback tadi
-        if (participantsList.length === 0) {
-            participantsList.push({
-                Name: data.user_name || data.customer_name || data.sender_name || fallbackName || '', // Pake fallbackName
-                Email: data.user_email || data.sender_email || fallbackEmail || '', // Pake fallbackEmail
-                Gender: 'Ikhwan', // Default karena di JSON gak ada info gender
-                Age: 0,
-                Domicile: '-'
-            });
+        if (!skTransaction || !skTransaction.includes('#')) {
+           return false;
         }
 
-        this.participants = participantsList;
-  
-        this.dauroh = {
-          SK: data.PK || skEvent, // Note: Di JSON SK event itu ada di 'PK' ("event#369776") atau 'SK' user.
-          Title: data.title || 'Event Dauroh',
-          Price: data.amount ? (data.amount / (this.participants.length || 1)) : 0,
-        };
-  
-        this.transactionDetails = null;
-        this.removeVoucher();
-        this.setStep('select'); 
-  
-        return true;
-  
-      } catch (error) {
-        console.error("🔥 Error restoreTransactionData:", error);
-        return false;
-      } finally {
-        this.isLoading = false;
-      }
-    },
+        try {
+          this.isLoading = true;
 
-async checkExistingTransaction(skEvent: string) {
-      const { $apiFlip } = useNuxtApp();
-      // Import Composable Status tadi
-      const { getSmartStatus } = useTransactionStatus(); 
-      
-      if (!skEvent) return false;
-
-      try {
-        this.isLoading = true;
-        
-        const response = await $apiFlip.get('/get-flip-dauroh', {
-            params: { skEvent: skEvent }
-        });
-
-        let result = response.data;
-
-        // Unwrap logic standard
-        if (result && result.data) result = result.data;
-        if (result && result.Payment) result = result.Payment;
-
-        let activeTransaction = null;
-
-        // LOGIC PENCARIAN BARU (LEBIH PINTAR)
-        if (Array.isArray(result)) {
-            // Cari transaksi yang status PINTAR-nya adalah 'PENDING'
-            activeTransaction = result.find((item: any) => {
-               const smartStatus = getSmartStatus(item); // Pake fungsi manipulasi tadi
-               return smartStatus === 'PENDING'; 
-            });
-        } else if (result && typeof result === 'object') {
-            const smartStatus = getSmartStatus(result);
-            if (smartStatus === 'PENDING') {
-               activeTransaction = result;
+          // 1. Tembak API
+          const response = await $apiBase.get('/get-payment', {
+            params: { 
+                type: 'payment-detail', // Sesuai instruksi
+                sk: skTransaction 
             }
+          });
+
+          // Ambil raw data
+          let data = response.data?.data || response.data;
+
+          // Validasi Data Peserta (Sesuai JSON: key-nya "Participant")
+          if (!data || !data.Participant || data.Participant.length === 0) {
+             return false;
+          }
+
+          // 2. AMBIL HARGA DARI MASTER DATA (Pake "Subject")
+          // Karena JSON lu ga ada harga, kita cari event pake ID dari "Subject"
+          const eventId = data.Subject; // Isinya "c923b0"
+          
+          // Pastikan store dauroh ke-load
+          if (daurohStore.tiketDauroh.length === 0) {
+              await daurohStore.fetchPublicTiketDauroh();
+          }
+
+          // Cari Event-nya di master
+          const foundEvent = daurohStore.tiketDauroh.find((d: any) => d.SK === eventId);
+          
+          // Ambil Harga Asli dari Master Event
+          const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
+
+          // 3. MASUKIN DATA KE STATE (Mapping Sesuai JSON)
+          this.participants = data.Participant.map((p: any) => ({
+              Name: p.Name,       // Sesuai JSON
+              Gender: p.Gender,   // Sesuai JSON
+              Age: p.Age,         // Sesuai JSON
+              Domicile: p.Domicile // Sesuai JSON
+          }));
+
+          // 4. SET INFO DAUROH (Gabungan Data JSON + Master Price)
+          this.dauroh = {
+              SK: data.Subject,        // "c923b0"
+              Title: foundEvent?.Title || 'Event Dauroh', // Judul dari Master
+              Place: foundEvent?.Place || 'Lokasi Online',
+              Price: realPrice         // 👈 INI KUNCINYA (Harga 250.000 masuk sini)
+          };
+
+          // Pindah ke halaman pilih metode
+          this.setStep('select');
+          return true;
+
+        } catch (error) {
+          console.error("🔥 Error Restore:", error);
+          return false;
+        } finally {
+          this.isLoading = false;
         }
-
-        // Kalau ketemu transaksi yang beneran PENDING (Waktu belum abis)
-        if (activeTransaction) {
-           console.log("✅ Valid Pending Transaction Found!", activeTransaction);
-
-           this.transactionDetails = {
-              ...activeTransaction,
-              vaNumber: activeTransaction.receiver_bank_account?.account_number || activeTransaction.va_number || '-',
-              expiryTime: activeTransaction.expired_date || activeTransaction.expiry_date,
-              paymentMethod: activeTransaction.sender_bank ? activeTransaction.sender_bank.toUpperCase() : 'BANK'
-           };
-
-           this.setStep('instructions');
-           return true; // ARTINYA: ADA TAGIHAN, JANGAN KASIH DAFTAR BARU
-        } else {
-           // Kalau gak ada transaksi, ATAU ada transaksi tapi statusnya udah kita paksa jadi CANCELLED/EXPIRED
-           console.log("ℹ️ No active transaction (All expired/cancelled). Allowed to register.");
-           return false; // ARTINYA: AMAN, BOLEH DAFTAR BARU
-        }
-
-      } catch (error) {
-        console.error("🔥 Error checkExistingTransaction:", error);
-        return false;
-      } finally {
-        this.isLoading = false;
-      }
     },
+
+ async checkExistingTransaction(skEvent: string) {
+    const { $apiFlip } = useNuxtApp();
     
-    updatePaymentStatus(data: any) {
-      if (this.transactionDetails) {
-        this.transactionDetails = { ...this.transactionDetails, ...data };
-      } else {
-        this.transactionDetails = data;
-      }
+    try {
+        const response = await $apiFlip.get('/get-flip-dauroh', {
+            params: { skEvent: skEvent }
+        });
+
+        const result = response.data;
+        const paymentData = result?.Payment;
+
+        if (paymentData) {
+            this.transactionDetails = {
+                ...paymentData,
+                paymentMethod: (paymentData.sender_bank || paymentData.bank_code || 'bsm').toLowerCase(),
+                vaNumber: paymentData.receiver_bank_account?.account_number || paymentData.va_number,
+                expiryTime: paymentData.expired_date || paymentData.expiry_date,
+                amount: paymentData.amount || paymentData.bill_amount
+            };
+            this.setStep('instructions');
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Error check transaction:", error);
+        return false;
+    }
+},
+    
+   updatePaymentStatus(payload: any) {
+        if (this.transactionDetails) {
+            console.log("⚡ WebSocket Update Received:", payload.status);
+            this.transactionDetails = { 
+                ...this.transactionDetails, 
+                ...payload,
+                status: payload.status || this.transactionDetails.status 
+            };
+        } else {
+            this.transactionDetails = payload;
+        }
     },
-    setExpired() {
-      // No-op (Handled by UI)
-    },
+
+    setExpired() { },
 
     clearCheckout() {
-      this.$reset();
-      this.currentStep = 'select';
+        this.$reset();
+        this.currentStep = 'select';
     }
   },
 
-  // @ts-ignore
   persist: true,
 });

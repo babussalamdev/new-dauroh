@@ -31,7 +31,7 @@
 
         <div class="alert alert-warning small p-2" role="alert">
           <i class="bi bi-clock me-1"></i> 
-          Untuk pembayaran hanya aktif selama 1x24 jam.
+          Untuk pembayaran hanya aktif selama 30 menit.
           Pastikan anda sudah siap membayar sebelum menekan tombol bayar.
         </div>
 

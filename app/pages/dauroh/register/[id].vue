@@ -215,18 +215,9 @@ const formState = reactive({
 const STORAGE_KEY = computed(() => `dauroh_reg_draft_${daurohSK.value}`);
 
 onMounted(async () => {
-  // 1. Fetch data User & Transaksi (PENTING)
-  if (!userStore.user) await userStore.fetchUserProfile();
-  
-  // Fetch transaksi biar kita tau ada yg nyangkut gak
-  await userStore.fetchUserTransactions(); 
-
-  // 2. Fetch data Dauroh (buat cek status Ghost Event)
   if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
       await daurohStore.fetchPublicTiketDauroh();
   }
-
-  // 3. Bersihkan Checkout Store jika ada transaksi 'Zombie'
   if (checkoutStore.transactionDetails) {
       const zombieStatus = getSmartStatus(checkoutStore.transactionDetails);
       // Kalau statusnya EXPIRED/CANCELLED, bersihkan store biar bisa buat baru

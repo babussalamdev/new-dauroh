@@ -188,7 +188,7 @@ const upcomingTickets = computed(() => {
   return allTickets.filter(item => {
     const smartStatus = getSmartStatus(item);
     const rawStatus = (item.status || '').toUpperCase();
-    const isPaid = smartStatus === 'PAID' || 'SUCCESSFUL'.includes(rawStatus);
+    const isPaid = smartStatus === 'SUCCESSFUL' || rawStatus === 'SUCCESSFUL';
     const isPending = smartStatus === 'PENDING';
 
     return isPaid || isPending;
