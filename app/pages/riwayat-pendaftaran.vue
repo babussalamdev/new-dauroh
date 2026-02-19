@@ -1,6 +1,5 @@
 <template>
   <div class="container py-5">
-    
     <div class="d-flex align-items-center justify-content-between mb-4">
       <div>
         <h3 class="fw-bold text-dark m-0"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat Pendaftaran</h3>
@@ -11,8 +10,9 @@
         </span>
       </div>
     </div>
-
+    
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
       
       <div v-if="userStore.isLoading" class="text-center py-5">
          <div class="spinner-border text-primary" role="status"></div>
@@ -33,7 +33,6 @@
           </thead>
           <tbody>
             <tr v-for="(ticket, index) in sortedTickets" :key="ticket.SK || index">
-              
               <td class="ps-4 py-3">
                 <div class="d-flex flex-column">
                   <span class="fw-bold text-dark mb-1">{{ formatDate(ticket.CreatedAt || ticket.created_at || ticket.date) }}</span>
@@ -86,7 +85,7 @@
 
               <td class="py-3 text-center">
                 <span class="fw-bold text-dark fs-6">
-                  {{ formatCurrency(ticket.amount || 0) }}
+                  {{ formatCurrency(calculateRealTotal(ticket)) }}
                 </span>
               </td>
 
@@ -151,7 +150,7 @@
     <div v-if="showDetail" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog" aria-modal="true">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content rounded-4 border-0 shadow-lg">
-          
+                
           <div class="modal-header border-bottom-0 pb-0">
             <h5 class="modal-title fw-bold">Detail Peserta</h5>
             <button type="button" class="btn-close" @click="closeDetailModal" aria-label="Close"></button>
@@ -285,26 +284,21 @@ const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
 const calculateRealTotal = (ticket: any) => {
-  // 1. Ambil Jumlah Peserta (Kalau array kosong, anggap 1)
-  const count = ticket.participants?.length || 1;
+  // 1. Ambil Jumlah Peserta
+  const qty = ticket.participants?.length || 0;
 
-  // 2. Tentukan Harga Satuan
-  // Prioritas A: Ambil dari Master Data (Dauroh Store) biar akurat
-  const eventId = (ticket.SK || '').split('#')[0];
-  const masterEvent = daurohStore.tiketDauroh.find((e: any) => e.SK === eventId);
+  // 2. Ambil Harga Satuan (Logic Samain Summary)
+  // Cek di tiket dulu, kalau gak ada/0 baru cek ke Master Data (Store)
+  let price = Number(ticket.dauroh?.Price || 0);
   
-  let unitPrice = 0;
-  
-  if (masterEvent) {
-     unitPrice = Number(masterEvent.Price);
-  } else {
-     // Prioritas B: Kalau master ga ada, pake harga yang nempel di tiket
-     // Kita asumsikan ticket.amount yg skrg tampil salah itu adalah harga satuan
-     unitPrice = Number(ticket.dauroh?.Price || ticket.amount || 0);
+  if (price === 0 && ticket.SK) {
+      const pureSK = (ticket.SK || '').split('#')[0];
+      const match = daurohStore.tiketDauroh.find((d: any) => d.SK === pureSK);
+      if (match) price = Number(match.Price || 0);
   }
 
-  // 3. Total = Harga Satuan x Jumlah Orang
-  return unitPrice * count;
+  // 3. Return Total (Harga x Qty)
+  return price * qty;
 };
 
 // Actions Modal
@@ -356,9 +350,7 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
 // Payment Logic
 const resumePayment = async (ticket: any) => {
   // [FIX] Pake full_sk atau SK yang ada pagarnya (#), JANGAN ID EVENT DOANG
-  const skTransaksi = ticket.full_sk || ticket.SK; 
-
-  console.log("🚀 Resume Payment SK:", skTransaksi); // Debugging
+  const skTransaksi = ticket.SK; 
   
   if (!skTransaksi || !skTransaksi.includes('#')) {
       Swal.fire({
@@ -375,15 +367,13 @@ const resumePayment = async (ticket: any) => {
   if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
       // Pass SK Transaksi Lengkap ke fungsi expired
       await handleExpiredFlow(skTransaksi);
-  } 
-  else if (smartStatus === 'PENDING') {
+  } else {
       try {
         // Cek pakai SK Transaksi
         const isTransactionValid = await checkoutStore.checkExistingTransaction(skTransaksi);
-        
         if (isTransactionValid) {
            router.push('/checkout');
-        } else {
+        } else {          
            await handleExpiredFlow(skTransaksi);
         }
       } catch (error) {

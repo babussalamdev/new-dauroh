@@ -114,7 +114,6 @@ const handleLogin = async () => {
       password: form.password 
     });
 
-    Swal.fire({ icon: 'success', title: 'Login Berhasil', timer: 1500, showConfirmButton: false });
     router.push('/'); 
 
   } catch (error: any) {

@@ -16,6 +16,10 @@
     <CheckoutInstructions 
       v-else-if="checkoutStore.currentStep === 'instructions'" 
     />
+
+    <CheckoutSuccess
+    v-else-if="checkoutStore.currentStep === 'success'" 
+    />
   </div>
 </div>
 </div>

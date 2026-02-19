@@ -12,7 +12,11 @@
       </div>
     </div>
 
-    <div class="d-flex justify-content-end mt-4">
+<div class="d-flex justify-content-between mt-4">
+      
+      <button class="btn btn-secondary" @click="handleBack">Kembali
+      </button>
+
       <button class="btn btn-primary" @click="handleSelect" :disabled="!selectedMethod">
         Pilih
       </button>
@@ -63,6 +67,9 @@ onMounted(() => {
   }
   selectedMethod.value = store.paymentMethod;
 });
+const handleBack = () => {
+  router.back(); 
+};
 
 const handleSelect = () => {
   if (selectedMethod.value) {

@@ -41,14 +41,11 @@
               <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
               <span class="ms-2 text-muted small fst-italic">Menunggu pembayaran otomatis...</span>
             </div>
-          </div>
-          
-          <div v-else-if="isPaid" class="alert alert-success text-center">
-             <h5 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Pembayaran Berhasil!</h5>
-             <p class="mb-2">Terima kasih, pendaftaran Anda telah dikonfirmasi.</p>
-             <button class="btn btn-primary w-100 mt-2" @click="goToDashboard">
-                Selesai & Ke Dashboard
-             </button>
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary" @click="handleExit">Bayar Nanti
+                </button>
+            </div>
+
           </div>
 
           <div v-else-if="currentStatus === 'EXPIRED'" class="alert alert-danger text-center">
@@ -173,6 +170,12 @@ const handleExpiredState = () => {
       store.setStep('select');
     });
 };
+const handleExit = () => {
+    // Arahkan ke dashboard. 
+    // Navigation Guard (onBeforeRouteLeave) di bawah 
+    // SUDAH menghandle kasus ke '/dashboard' dengan next() langsung (tanpa tanya-tanya).
+    router.push('/dashboard'); 
+};
 
 // --- Lifecycle & Watcher ---
 onMounted(() => {
@@ -217,28 +220,12 @@ watch(currentStatus, (newStatus) => {
       dauroh: store.dauroh, 
       participants: store.participants,
     }); 
-
-    setTimeout(() => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Alhamdulillah!',
-        text: 'Pembayaran telah diterima.',
-        timer: 2000,
-        showConfirmButton: false
-      }).then(() => {
-          showQrModal.value = true;
-      });
-    }, 500);
+    store.setStep('success'); 
   }
 });
 
 const handleCloseQr = () => {
   showQrModal.value = false;
-};
-
-const goToDashboard = () => {
-  store.clearCheckout();
-  router.push('/dashboard');
 };
 
 // Guard Navigation

@@ -2,77 +2,85 @@ import { useCheckoutStore } from "~/stores/checkout";
 
 export default defineNuxtPlugin((nuxtApp) => {
   let socket: WebSocket | null = null;
-  
-const connectWebSocket = (wsUrl: string) => {
-  const checkoutStore = useCheckoutStore(); 
+  let reconnectTimeout: any = null;
 
-  // 1. PROTEKSI: Cek apakah URL valid (harus ada parameter 'sk' sesuai log error tadi)
-  if (!wsUrl || !wsUrl.includes('sk=')) {
-    console.warn("⚠️ WS URL tidak valid atau parameter 'sk' hilang. Koneksi dibatalkan.");
-    return;
-  }
+  const connectWebSocket = (wsUrl: string) => {
+    if (!process.client) return;
+    if (!wsUrl || !wsUrl.includes("sk=")) {
+      console.warn("⚠️ WS URL tidak valid atau parameter 'sk' hilang.");
+      return;
+    }
 
-  // 2. PROTEKSI: Cek jika socket sedang CONNECTING atau sudah OPEN
-  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-    console.log("ℹ️ WS sudah tersambung atau sedang proses menyambung.");
-    return;
-  }
-
-  // 3. TUTUP: Jika ada socket lama yang statusnya 'Closing', bersihkan dulu
-  if (socket) {
-    socket.close();
-  }
-
-  console.log("🔌 Connecting WS to:", wsUrl);
-  socket = new WebSocket(wsUrl);
-
-  socket.onopen = () => {
-    console.log("✅ WS Connected");
-  };
-
-  socket.onmessage = (event) => {
-    try {
-      // Pastikan data tidak kosong
-      if (!event.data) return;
-
-      const result = JSON.parse(event.data);
-      console.log("📩 WS Message:", result);
-      
-      const { store, mutation, data } = result;
-
-      // Logic update store
-      if (store === 'formulir' && mutation === 'statusPayment') {
-        console.log("⚡ Mengupdate status pembayaran ke store...");
-        checkoutStore.updatePaymentStatus(data);
+    // 2. Proteksi Double Connection
+    if (socket) {
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+        console.log("ℹ️ WS sudah aktif atau sedang menyambung.");
+        return;
       }
-      
-    } catch (error) {
-      // Abaikan jika pesan bukan JSON (misalnya pesan 'ping' dari server)
-      console.error("❌ WS Parse Error:", error);
+      socket.close();
+    }
+
+    try {
+      console.log("🔌 Menginisialisasi WS...");
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => {
+        console.log("✅ WS Connected");
+        if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          if (!event.data) return;
+          const checkOut = useCheckoutStore();        
+          checkOut.setStep('success');
+        } catch (error) {
+          console.error("❌ WS Message Error:", error);
+        }
+      };
+
+      socket.onclose = (event) => {
+        if (event.code !== 1000 && event.code !== 1001) {
+          console.warn(`⚠️ WS Terputus (Code: ${event.code}). Mencoba menyambung ulang dalam 5 detik...`);          
+          reconnectTimeout = setTimeout(() => {
+            connectWebSocket(wsUrl);
+          }, 5000);
+        } else {
+          console.log("🔌 WS ditutup secara normal.");
+        }
+        socket = null;
+      };
+
+      socket.onerror = (err) => {
+        if (socket?.readyState === WebSocket.CLOSING || socket?.readyState === WebSocket.CLOSED) {
+          return;
+        }
+        console.error("❌ WS Error detected:", err);
+      };
+
+    } catch (e) {
+      console.error("❌ Gagal membuat instance WebSocket:", e);
     }
   };
-
-  socket.onclose = (event) => {
-    console.log(`⚠️ WS Disconnected (Code: ${event.code})`);
-    socket = null; // Reset variable agar bisa konek ulang nanti
-  };
-  
-  socket.onerror = (err) => {
-    console.error("❌ WS Error detect:", err);
-  }
-};
 
   const closeWebSocket = () => {
+    if (reconnectTimeout) clearTimeout(reconnectTimeout);
     if (socket) {
-      socket.close();
+      socket.close(1000, "Normal Closure");
       socket = null;
+      console.log("🔌 WS manual close dipanggil.");
     }
   };
+
+  if (process.client) {
+    window.addEventListener('beforeunload', closeWebSocket);
+  }
 
   return {
     provide: {
       connectSocket: connectWebSocket,
       closeSocket: closeWebSocket,
+      getSocket: () => socket
     },
   };
 });

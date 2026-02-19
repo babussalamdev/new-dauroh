@@ -1,9 +1,11 @@
-import { defineStore } from 'pinia';
-import { useNuxtApp } from '#app';
-import { useAuth } from '~/composables/useAuth';
-import { useDaurohStore } from '~/stores/dauroh';
+import { defineStore } from "pinia";
+import { ref, computed, watch } from "vue";
+import { useNuxtApp } from "#app";
+import { useAuth } from "~/composables/useAuth";
+import { useDaurohStore } from "~/stores/dauroh";
 
-export type CheckoutStep = 'select' | 'summary' | 'instructions';
+// Types tetap sama
+export type CheckoutStep = "select" | "summary" | "instructions" | "success";
 
 interface Participant {
   Name: string;
@@ -16,7 +18,7 @@ interface Participant {
 interface Dauroh {
   SK: string;
   Price: number;
-  Title: string; 
+  Title: string;
   [key: string]: any;
 }
 
@@ -29,320 +31,326 @@ interface TransactionDetails {
   vaNumber?: string;
   expiryTime?: string;
   expired_date?: string;
-  sender_bank_type?: string; 
+  sender_bank_type?: string;
   [key: string]: any;
 }
 
+export const useCheckoutStore = defineStore(
+  "checkout",
+  () => {
+    // --- STATE ---
+    const currentStep = ref<CheckoutStep>("select");
+    const dauroh = ref<Dauroh | null>(null);
+    const participants = ref<Participant[]>([]);
+    const paymentMethod = ref<string | null>(null);
+    const transactionDetails = ref<TransactionDetails | null>(null);
+    const voucherCode = ref<string | null>(null);
+    const discountAmount = ref(0);
+    const voucherApplied = ref(false);
+    const isLoading = ref(false);
 
-export const useCheckoutStore = defineStore('checkout', {
-  state: () => ({
-    currentStep: 'select' as CheckoutStep,
-    dauroh: null as Dauroh | null,
-    participants: [] as Participant[],
-    paymentMethod: null as string | null,
-    transactionDetails: null as TransactionDetails | null, 
-    
-    voucherCode: null as string | null,
-    discountAmount: 0,
-    voucherApplied: false,
-    
-    isLoading: false,
-  }),
+    // --- GETTERS (Computed) ---
+    const totalAmount = computed(() => {
+      if (!dauroh.value || !participants.value) return 0;
+      return (dauroh.value.Price || 0) * participants.value.length;
+    });
 
-  getters: {
-    totalAmount(state): number {
-      if (!state.dauroh || !state.participants) return 0;
-      return (state.dauroh.Price || 0) * state.participants.length;
-    },
-    
-    finalAmount(state): number {
-      // @ts-ignore 
-      const total = (state.dauroh?.Price || 0) * state.participants.length;
-      const final = total - state.discountAmount;
-      return final < 0 ? 0 : final; 
-    },
+    const finalAmount = computed(() => {
+      const total = (dauroh.value?.Price || 0) * participants.value.length;
+      const final = total - discountAmount.value;
+      return final < 0 ? 0 : final;
+    });
 
-    hasVoucher(state): boolean {
-      return !!state.voucherCode && state.voucherApplied;
-    },
+    const hasVoucher = computed(
+      () => !!voucherCode.value && voucherApplied.value,
+    );
 
-    step(state): CheckoutStep {
-       return state.currentStep;
-    },
+    const step = computed(() => currentStep.value);
 
-    timeRemaining(state): number {
-      if (!state.transactionDetails?.expiryTime) return 0;
-      
-      let timeString = state.transactionDetails.expiryTime;
-      
-      if (typeof timeString === 'string') {
-          timeString = timeString.replace(' ', 'T');
-          if (!timeString.includes('+') && !timeString.endsWith('Z')) {
-              timeString += '+07:00'; // FORCE WIB
-          }
+    const timeRemaining = computed(() => {
+      if (!transactionDetails.value?.expiryTime) return 0;
+
+      let timeString = transactionDetails.value.expiryTime;
+      if (typeof timeString === "string") {
+        timeString = timeString.replace(" ", "T");
+        if (!timeString.includes("+") && !timeString.endsWith("Z")) {
+          timeString += "+07:00"; // FORCE WIB
+        }
       }
 
       const expireDate = new Date(timeString).getTime();
       const now = new Date().getTime();
-      
-      if (isNaN(expireDate)) return 0;
 
-      return expireDate - now;
-    },
+      return isNaN(expireDate) ? 0 : expireDate - now;
+    });
 
-    isExpired(): boolean {
-      const status = (this.transactionDetails?.status || '').toUpperCase();
-      
-      if (status === 'EXPIRED' || status === 'CANCELLED' || status === 'FAILED') return true;
-      
-      if (status === 'PENDING') {
-         return this.timeRemaining <= -2000;
-      }
-
+    const isExpired = computed(() => {
+      const status = (transactionDetails.value?.status || "").toUpperCase();
+      if (["EXPIRED", "CANCELLED", "FAILED"].includes(status)) return true;
+      if (status === "PENDING") return timeRemaining.value <= -2000;
       return false;
+    });
+
+    const activeEventSK = computed(() => {
+      const sk = transactionDetails.value?.event_sk || dauroh.value?.SK || "";
+      return sk.split("#")[0];
+    });
+
+    // --- ACTIONS (Functions) ---
+    function setStep(step: CheckoutStep) {
+      currentStep.value = step;
     }
-  },
 
-  actions: {
-    setStep(step: CheckoutStep) {
-      this.currentStep = step;
-    },
+    function startCheckout(registrationData: {
+      dauroh: Dauroh;
+      participants: Participant[];
+    }) {
+      dauroh.value = registrationData.dauroh;
+      participants.value = registrationData.participants;
+      paymentMethod.value = null;
+      transactionDetails.value = null;
+      removeVoucher();
+      currentStep.value = "select";
+    }
 
-    startCheckout(registrationData: { dauroh: Dauroh; participants: Participant[] }) {
-      this.dauroh = registrationData.dauroh;
-      this.participants = registrationData.participants;
-      this.paymentMethod = null;
-      this.transactionDetails = null;
-      this.removeVoucher(); 
-      this.currentStep = 'select';
-    },
+    function setPaymentMethod(method: string) {
+      paymentMethod.value = method;
+    }
 
-    setPaymentMethod(method: string) {
-      this.paymentMethod = method;
-    },
-    
-    setVoucher(code: string, amount: number) {
-      this.voucherCode = code;
-      this.discountAmount = amount;
-      this.voucherApplied = true;
-    },
+    function setVoucher(code: string, amount: number) {
+      voucherCode.value = code;
+      discountAmount.value = amount;
+      voucherApplied.value = true;
+    }
 
-    removeVoucher() {
-      this.voucherCode = null;
-      this.discountAmount = 0;
-      this.voucherApplied = false;
-    },
+    function removeVoucher() {
+      voucherCode.value = null;
+      discountAmount.value = 0;
+      voucherApplied.value = false;
+    }
 
-    resetTransaction() {
-      this.transactionDetails = null;
-      this.paymentMethod = null;
-    },
+    function resetTransaction() {
+      transactionDetails.value = null;
+      paymentMethod.value = null;
+    }
 
-  async createPayment() {
-    this.isLoading = true;
-    const { $apiFlip } = useNuxtApp();
-    const { accessToken, user } = useAuth();
+    async function createPayment() {
+      isLoading.value = true;
+      const { $apiFlip } = useNuxtApp();
+      const { accessToken, user } = useAuth();
 
-    try {
+      try {
         const rawSK = [
-            this.transactionDetails?.event_sk,
-            this.transactionDetails?.dauroh?.SK,
-            this.transactionDetails?.Subject,
-            this.dauroh?.SK,
-            this.dauroh?.id
-        ].find(s => s && typeof s === 'string' && !s.includes('@'));
-        if (!rawSK) {
-            throw new Error("Data Event (SK) tidak ditemukan. Silakan ulangi dari awal.");
-        }
-        const eventSK = (rawSK as string).split('#')[0];
-        if (!eventSK) throw new Error("ID Event tidak valid.");
+          transactionDetails.value?.event_sk,
+          transactionDetails.value?.dauroh?.SK,
+          transactionDetails.value?.Subject,
+          dauroh.value?.SK,
+          dauroh.value?.id,
+        ].find((s) => s && typeof s === "string" && !s.includes("@"));
 
-        console.log("💳 Create Payment Event ID (Clean):", eventSK);
+        if (!rawSK)
+          throw new Error(
+            "Data Event (SK) tidak ditemukan. Silakan ulangi dari awal.",
+          );
+        const eventSK = (rawSK as string).split("#")[0];
 
         const objectPerson: Record<string, any> = {};
-        this.participants.forEach((p, index) => {
-            objectPerson[`person${index + 1}`] = {
-                Name: p.Name,
-                Gender: p.Gender?.toLowerCase() || '-',
-                Age: Number(p.Age),
-                Domicile: p.Domicile || '-'
-            };
+        participants.value.forEach((p, index) => {
+          objectPerson[`person${index + 1}`] = {
+            Name: p.Name,
+            Gender: p.Gender?.toLowerCase() || "-",
+            Age: Number(p.Age),
+            Domicile: p.Domicile || "-",
+          };
         });
 
-        let bankCode = (this.paymentMethod || 'bsm').toLowerCase();
-        if (bankCode === 'bsi') bankCode = 'bsm';
+        let bankCode = (paymentMethod.value || "bsm").toLowerCase();
+        if (bankCode === "bsi") bankCode = "bsm";
 
-        let paymentType = 'virtual_account';
-        if (['qris', 'gopay', 'shopeepay'].includes(bankCode)) {
-            bankCode = 'qris';
-            paymentType = 'wallet_account';
+        let paymentType = "virtual_account";
+        if (["qris", "gopay", "shopeepay"].includes(bankCode)) {
+          bankCode = "qris";
+          paymentType = "wallet_account";
         }
 
         const payload: any = {
-            Amount: String(this.finalAmount),
-            Name: user.value?.name || 'Guest',
-            Bank: bankCode,
-            EventSK: eventSK,
-            objectPerson: objectPerson,
-            AccessToken: accessToken.value,
-            PaymentType: paymentType,
-            sender_bank_type: paymentType
+          Amount: String(finalAmount.value),
+          Name: user.value?.name || "Guest",
+          Bank: bankCode,
+          EventSK: eventSK,
+          objectPerson: objectPerson,
+          AccessToken: accessToken.value,
+          PaymentType: paymentType,
+          sender_bank_type: paymentType,
+          ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
-        if (this.voucherCode) {
-            payload.VoucherCode = this.voucherCode;
-        }
-
-        const config = {
-            headers: { Authorization: `Bearer ${accessToken.value}` }
-        };
-
-        const response = await $apiFlip.post('/flip-dauroh', payload, config);
-        const result = response.data;
-
-        this.transactionDetails = {
-            ...result,
-            vaNumber: result.receiver_bank_account?.account_number,
-            expiryTime: result.expired_date,
-            paymentMethod: this.paymentMethod || 'Bank'
-        };
-        this.currentStep = 'instructions';
-
-        return { success: true, data: result };
-
-    } catch (error: any) {
-        console.error("❌ Payment Error:", error);
-        const errData = error.response?.data || {};
-        let errorMessage = errData.error || errData.message || "Terjadi kesalahan saat memproses pembayaran.";
-        if (typeof errorMessage !== 'string') errorMessage = JSON.stringify(errorMessage);
-
-        return { success: false, message: errorMessage, error: error };
-    } finally {
-        this.isLoading = false;
-    }
-},
-
-async restoreTransactionData(skTransaction: string) {
-        const { $apiBase } = useNuxtApp();
-        const daurohStore = useDaurohStore(); 
-        
-        console.log("♻️ Restore SK:", skTransaction);
-
-        if (!skTransaction || !skTransaction.includes('#')) {
-           return false;
-        }
-
-        try {
-          this.isLoading = true;
-
-          // 1. Tembak API
-          const response = await $apiBase.get('/get-payment', {
-            params: { 
-                type: 'payment-detail', // Sesuai instruksi
-                sk: skTransaction 
-            }
-          });
-
-          // Ambil raw data
-          let data = response.data?.data || response.data;
-
-          // Validasi Data Peserta (Sesuai JSON: key-nya "Participant")
-          if (!data || !data.Participant || data.Participant.length === 0) {
-             return false;
-          }
-
-          // 2. AMBIL HARGA DARI MASTER DATA (Pake "Subject")
-          // Karena JSON lu ga ada harga, kita cari event pake ID dari "Subject"
-          const eventId = data.Subject; // Isinya "c923b0"
-          
-          // Pastikan store dauroh ke-load
-          if (daurohStore.tiketDauroh.length === 0) {
-              await daurohStore.fetchPublicTiketDauroh();
-          }
-
-          // Cari Event-nya di master
-          const foundEvent = daurohStore.tiketDauroh.find((d: any) => d.SK === eventId);
-          
-          // Ambil Harga Asli dari Master Event
-          const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
-
-          // 3. MASUKIN DATA KE STATE (Mapping Sesuai JSON)
-          this.participants = data.Participant.map((p: any) => ({
-              Name: p.Name,       // Sesuai JSON
-              Gender: p.Gender,   // Sesuai JSON
-              Age: p.Age,         // Sesuai JSON
-              Domicile: p.Domicile // Sesuai JSON
-          }));
-
-          // 4. SET INFO DAUROH (Gabungan Data JSON + Master Price)
-          this.dauroh = {
-              SK: data.Subject,        // "c923b0"
-              Title: foundEvent?.Title || 'Event Dauroh', // Judul dari Master
-              Place: foundEvent?.Place || 'Lokasi Online',
-              Price: realPrice         // 👈 INI KUNCINYA (Harga 250.000 masuk sini)
-          };
-
-          // Pindah ke halaman pilih metode
-          this.setStep('select');
-          return true;
-
-        } catch (error) {
-          console.error("🔥 Error Restore:", error);
-          return false;
-        } finally {
-          this.isLoading = false;
-        }
-    },
-
- async checkExistingTransaction(skEvent: string) {
-    const { $apiFlip } = useNuxtApp();
-    
-    try {
-        const response = await $apiFlip.get('/get-flip-dauroh', {
-            params: { skEvent: skEvent }
+        const response = await $apiFlip.post("/flip-dauroh", payload, {
+          headers: { Authorization: `Bearer ${accessToken.value}` },
         });
 
         const result = response.data;
-        const paymentData = result?.Payment;
+        transactionDetails.value = {
+          ...result,
+          vaNumber: result.receiver_bank_account?.account_number,
+          expiryTime: result.expired_date,
+          paymentMethod: paymentMethod.value || "Bank",
+        };
 
+        currentStep.value = "instructions";
+        return { success: true, data: result };
+      } catch (error: any) {
+        console.error("❌ Payment Error:", error);
+        const errData = error.response?.data || {};
+        const errorMessage =
+          errData.error ||
+          errData.message ||
+          "Terjadi kesalahan saat memproses pembayaran.";
+        return { success: false, message: String(errorMessage), error };
+      } finally {
+        isLoading.value = false;
+      }
+    }
+
+    async function restoreTransactionData(skTransaction: string) {
+      const { $apiBase } = useNuxtApp();
+      const daurohStore = useDaurohStore();
+
+      if (!skTransaction || !skTransaction.includes("#")) return false;
+
+      try {
+        isLoading.value = true;
+        const response = await $apiBase.get("/get-payment", {
+          params: { type: "payment-detail", sk: skTransaction },
+        });
+
+        const data = response.data?.data || response.data;
+        if (!data || !data.Participant) return false;
+
+        if (daurohStore.tiketDauroh.length === 0) {
+          await daurohStore.fetchPublicTiketDauroh();
+        }
+
+        const foundEvent = daurohStore.tiketDauroh.find(
+          (d: any) => d.SK === data.Subject,
+        );
+        const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
+
+        participants.value = data.Participant.map((p: any) => ({
+          Name: p.Name,
+          Gender: p.Gender,
+          Age: p.Age,
+          Domicile: p.Domicile,
+        }));
+
+        dauroh.value = {
+          SK: data.Subject,
+          Title: foundEvent?.Title || "Event Dauroh",
+          Place: foundEvent?.Place || "Lokasi Online",
+          Price: realPrice,
+        };
+
+        setStep("select");
+        return true;
+      } catch (error) {
+        console.error("🔥 Error Restore:", error);
+        return false;
+      } finally {
+        isLoading.value = false;
+      }
+    }
+
+    async function checkExistingTransaction(skEvent: string) {
+      const { $apiFlip } = useNuxtApp();
+      try {   
+        const skHash = skEvent.split('#')[0]
+        const response = await $apiFlip.get("/get-flip-dauroh", {
+          params: { skEvent: skHash },
+        });
+        const paymentData = response.data?.Payment;
+        console.log(paymentData)
         if (paymentData) {
-            this.transactionDetails = {
-                ...paymentData,
-                paymentMethod: (paymentData.sender_bank || paymentData.bank_code || 'bsm').toLowerCase(),
-                vaNumber: paymentData.receiver_bank_account?.account_number || paymentData.va_number,
-                expiryTime: paymentData.expired_date || paymentData.expiry_date,
-                amount: paymentData.amount || paymentData.bill_amount
-            };
-            this.setStep('instructions');
-            return true;
+          transactionDetails.value = {
+            ...paymentData,
+            paymentMethod: (
+              paymentData.sender_bank ||
+              paymentData.bank_code ||
+              "bsm"
+            ).toLowerCase(),
+            vaNumber:
+              paymentData.receiver_bank_account?.account_number ||
+              paymentData.va_number,
+            expiryTime: paymentData.expired_date || paymentData.expiry_date,
+            amount: paymentData.amount || paymentData.bill_amount,
+          };
+          setStep("instructions");
+          return true;
         }
         return false;
-    } catch (error) {
-        console.error("Error check transaction:", error);
+      } catch (error) {
         return false;
+      }
     }
-},
-    
-   updatePaymentStatus(payload: any) {
-        if (this.transactionDetails) {
-            console.log("⚡ WebSocket Update Received:", payload.status);
-            this.transactionDetails = { 
-                ...this.transactionDetails, 
-                ...payload,
-                status: payload.status || this.transactionDetails.status 
-            };
-        } else {
-            this.transactionDetails = payload;
-        }
-    },
 
-    setExpired() { },
-
-    clearCheckout() {
-        this.$reset();
-        this.currentStep = 'select';
+    function updatePaymentStatus(payload: any) {
+      if (transactionDetails.value) {
+        transactionDetails.value = {
+          ...transactionDetails.value,
+          ...payload,
+          status: payload.status || transactionDetails.value.status,
+        };
+      } else {
+        transactionDetails.value = payload;
+      }
     }
+
+    function clearCheckout() {
+      // Reset manual karena $reset() tidak bekerja otomatis di setup store
+      currentStep.value = "select";
+      dauroh.value = null;
+      participants.value = [];
+      paymentMethod.value = null;
+      transactionDetails.value = null;
+      voucherCode.value = null;
+      discountAmount.value = 0;
+      voucherApplied.value = false;
+      isLoading.value = false;
+    }
+
+    return {
+      // State
+      currentStep,
+      dauroh,
+      participants,
+      paymentMethod,
+      transactionDetails,
+      voucherCode,
+      discountAmount,
+      voucherApplied,
+      isLoading,
+      // Getters
+      totalAmount,
+      finalAmount,
+      hasVoucher,
+      step,
+      timeRemaining,
+      isExpired,
+      activeEventSK,
+      // Actions
+      setStep,
+      startCheckout,
+      setPaymentMethod,
+      setVoucher,
+      removeVoucher,
+      resetTransaction,
+      createPayment,
+      restoreTransactionData,
+      checkExistingTransaction,
+      updatePaymentStatus,
+      clearCheckout,
+    };
   },
-
-  persist: true,
-});
+  {
+    persist: true, // Tetap mendukung pinia-plugin-persistedstate
+  },
+);

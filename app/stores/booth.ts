@@ -1,3 +1,5 @@
+
+
 // app/stores/booth.ts
 
 import { defineStore } from "pinia";

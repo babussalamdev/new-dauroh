@@ -1,115 +1,174 @@
-import { useUserStore } from '~/stores/user'
-import { useAdminUserStore } from '~/stores/adminUser'
+import { useUserStore } from "~/stores/user";
+import { useAdminUserStore } from "~/stores/adminUser";
 
 export const useAuth = () => {
-  const loading = useLoading()
-  const userStore = useUserStore()
-  const adminUserStore = useAdminUserStore()
-  
+  const loading = useLoading();
+  const userStore = useUserStore();
+  const adminUserStore = useAdminUserStore();
+
   const accessToken = useCookie("AccessToken", {
     maxAge: 60 * 60 * 24,
     path: "/",
     sameSite: "lax",
-  })
+  });
 
-  const user = useState<any>("auth_user", () => null)
-  const router = useRouter()
-  const { $apiBase } = useNuxtApp()
-const adminRoles = ['root', 'super_role', 'super role', 'admin', 'bendahara', 'registrasi'];
+  const user = useState<any>("auth_user", () => null);
+  const router = useRouter();
+  const { $apiBase } = useNuxtApp();
 
-  const login = async (data: any, type: 'user' | 'admin' = 'user') => {
-    loading.value = true
+  const adminRoles = [
+    "root",
+    "super_role",
+    "super role",
+    "admin",
+    "bendahara",
+    "registrasi",
+  ];
+
+  /**
+   * Fungsi Login
+   */
+  const login = async (data: any, type: "user" | "admin" = "user") => {
+    loading.value = true;
     try {
       const res = await $apiBase.post("signin-account", data);
 
-      // 1. Set Token Dulu
       accessToken.value = res.data.AccessToken;
-      localStorage.setItem("IdToken", res.data.IdToken)
-      localStorage.setItem("RefreshToken", res.data.RefreshToken)
-
       if (process.client) {
-        sessionStorage.setItem('loginType', type)
+        localStorage.setItem("IdToken", res.data.IdToken);
+        localStorage.setItem("RefreshToken", res.data.RefreshToken);
+        sessionStorage.setItem("loginType", type);
       }
-      // 2. Ambil Data Profil User
-      await getUser()
-      if (type === 'admin') {
-        const userRole = (user.value?.role || user.value?.Series || '').toLowerCase();
-        
-        if (!adminRoles.includes(userRole)) {
-           // JIKA BUKAN ADMIN:
-           // 1. Hapus token (Logout paksa)
-           accessToken.value = null;
-           localStorage.removeItem("IdToken");
-           localStorage.removeItem("RefreshToken");
-           user.value = null;
-           
-           // 2. Lempar Error agar ditangkap catch di login.vue dan muncul alert merah
-           throw new Error("Akses Ditolak: Akun Anda bukan Admin.");
-        }
 
-        await router.push('/admin')
+      await getUser();
+
+      if (type === "admin") {
+        const userRole = (
+          user.value?.role ||
+          user.value?.Series ||
+          ""
+        ).toLowerCase();
+
+        if (!adminRoles.includes(userRole)) {
+          accessToken.value = null;
+          if (process.client) {
+            localStorage.removeItem("IdToken");
+            localStorage.removeItem("RefreshToken");
+          }
+          user.value = null;
+
+          throw new Error(
+            "Akses Ditolak: Akun Anda tidak memiliki otoritas Admin.",
+          );
+        }
+        await router.push("/admin");
       } else {
-        await router.push('/dashboard')
+        await router.push("/dashboard");
       }
     } catch (error: any) {
-      throw error 
+      throw error;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
+  /**
+   * Fungsi Logout
+   */
   const logout = async () => {
-    loading.value = true
+    loading.value = true;
+
     try {
-      const loginType = process.client ? sessionStorage.getItem('loginType') : null;
+      const loginType = process.client
+        ? sessionStorage.getItem("loginType")
+        : null;
 
-      await $apiBase.post("signout-account", {
-        AccessToken: localStorage.getItem("IdToken"),
-      }).catch(() => {});
-
-      accessToken.value = null
-      localStorage.removeItem("IdToken")
-      localStorage.removeItem("RefreshToken")
+      // --- 1. CLEANUP WEBSOCKET (Mencegah WS Error saat reload) ---
       if (process.client) {
-        sessionStorage.removeItem('loginType')
+        const { $socket } = useNuxtApp() as any;
+        if ($socket && typeof $socket.close === "function") {
+          console.log("🔌 Closing WebSocket connection...");
+          // Gunakan status code 1000 (Normal Closure)
+          $socket.close(1000, "Logout");
+        }
       }
 
-      user.value = null
-      userStore.$reset()
-      adminUserStore.$reset()
-
-      const targetPath = loginType === 'admin' ? "/admin/login" : "/login"
-      await router.push(targetPath)
-      
-      if (process.client) {
-        window.location.reload()
+      // Hit API Signout
+      if (process.client && localStorage.getItem("IdToken")) {
+        try {
+          await $apiBase.post("signout-account", {
+            AccessToken: localStorage.getItem("IdToken"),
+          });
+        } catch (e) {
+          console.warn(
+            "API Signout gagal, tetap melanjutkan pembersihan lokal.",
+          );
+        }
       }
+
+      // --- 2. CLEAR SESSION & TOKENS ---
+      accessToken.value = null;
+      if (process.client) {
+        localStorage.removeItem("IdToken");
+        localStorage.removeItem("RefreshToken");
+        sessionStorage.removeItem("loginType");
+      }
+
+      user.value = null;
+
+      // --- 3. RESET PINIA STORES ---
+      // Menggunakan try-catch dan pengecekan ketat untuk menghindari Uncaught Error
+      const stores = [userStore, adminUserStore];
+      stores.forEach((s: any) => {
+        try {
+          if (s && typeof s.$reset === "function") {
+            s.$reset();
+          }
+        } catch (err) {
+          console.warn(`Gagal reset store ${s?.$id}:`, err);
+        }
+      });
+
+      // --- 4. REDIRECT & RELOAD ---
+      const targetPath = loginType === "admin" ? "/admin/login" : "/login";
+      await router.push(targetPath);
+
+    } catch (error) {
+      console.error("Logout fatal error:", error);
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
   const getUser = async () => {
     try {
-      const res = await $apiBase.get("get-account")
-      user.value = res.data
+      const res = await $apiBase.get("get-account");
+      user.value = res.data;
+      return res.data;
     } catch (error) {
-      user.value = null
-      throw error
+      user.value = null;
+      throw error;
     }
-  }
+  };
 
   const isAdmin = computed(() => {
-    const userRole = (user.value?.role || user.value?.Series || '').toLowerCase();
-    
-    if (!adminRoles.includes(userRole)) return false;
-    
-    const loginType = process.client ? sessionStorage.getItem('loginType') : null;
-    return loginType === 'admin';
-  })
+    if (!user.value) return false;
+    const userRole = (
+      user.value?.role ||
+      user.value?.Series ||
+      ""
+    ).toLowerCase();
+    const hasAdminRole = adminRoles.includes(userRole);
+    const loginType = process.client
+      ? sessionStorage.getItem("loginType")
+      : null;
+    return hasAdminRole && loginType === "admin";
+  });
 
-  const isLoggedIn = computed(() => !!user.value?.name)
-  
+  const isLoggedIn = computed(
+    () => !!user.value?.name || !!user.value?.fullname,
+  );
+
   return {
     user,
     login,
@@ -118,6 +177,6 @@ const adminRoles = ['root', 'super_role', 'super role', 'admin', 'bendahara', 'r
     isLoggedIn,
     isAdmin,
     accessToken,
-    loading
-  }
-}
+    loading,
+  };
+};
