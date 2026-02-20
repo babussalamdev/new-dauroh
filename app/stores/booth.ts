@@ -5,17 +5,7 @@
 import { defineStore } from "pinia";
 import { useNuxtApp } from "#app";
 import { useToastStore } from "./toast";
-
-// Definisikan tipe data untuk satu pengajuan booth
-export interface BoothSubmission {
-  SK: string; // Harus ada ID unik dari database
-  boothName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  status: 'Menunggu' | 'Disetujui' | 'Ditolak';
-  createdAt: string; // Sebaiknya ada timestamp
-}
+import type { BoothSubmission } from "~/types/booth";
 
 export const useBoothStore = defineStore("booth", {
   state: () => ({

@@ -1,99 +1,33 @@
 import { defineStore } from "pinia";
+import { ref, computed, reactive } from "vue";
 import { useToastStore } from "./toast";
 import { useNuxtApp, useCookie } from "#app";
-import dayjs from "dayjs";
-
-// 1. Interface API Raw
-export interface ApiDaurohRaw {
-  SK: string;
-  Title: string;
-  Gender: string;
-  Date?: { [key: string]: DaurohDayDetail };
-  Registration?: DaurohRegistration;
-  Place: string;
-  Price: number | string;
-  Quota_Ikhwan_Akhwat: number | string | null;
-  Quota_Ikhwan: number | string | null;
-  Quota_Akhwat: number | string | null;
-  Sold_Ikhwan_Akhwat?: number | string | null;
-  Sold_Ikhwan?: number | string | null;
-  Sold_Akhwat?: number | string | null;
-  Picture?: string;
-  Status?: string;
-  Description?: string;
-}
-
-export interface DaurohDayDetail {
-  date: string;
-  start_time: string;
-  end_time: string;
-}
-
-export interface DaurohRegistration {
-  start_registration: string;
-  end_registration: string;
-}
-
-// 2. Interface UI
-export interface Dauroh {
-  SK: string | null;
-  id?: number | null;
-  Title: string;
-  Gender: string;
-  Date?: { [key: string]: DaurohDayDetail };
-  Registration?: DaurohRegistration;
-  Place: string;
-  Price: number;
-  Quota_Ikhwan: number | 'non-quota';
-  Quota_Akhwat: number | 'non-quota';
-  Quota_Total: number | 'non-quota';
-  Sold_Ikhwan: number;
-  Sold_Akhwat: number;
-  Sold_Total: number;
-  Picture?: string;
-  Status: string;
-  Description?: string;
-}
-
-// 3. Interface Form
-export interface DaurohBasicData {
-  SK?: string | null;
-  Title: string;
-  Gender: string;
-  Place: string;
-  Price: number;
-  Registration?: DaurohRegistration;
-  Quota_Ikhwan: number | 'non-quota';
-  Quota_Akhwat: number | 'non-quota';
-  Quota_Total: number | 'non-quota';
-  Status: string;
-  Description?: string;
-}
-
-export interface DaurohSchedulePayload {
-  [key: string]: DaurohDayDetail;
-}
+import type { 
+  ApiDaurohRaw, 
+  Dauroh, 
+  DaurohBasicData, 
+  DaurohSchedulePayload 
+} from "~/types/dauroh";
 
 // --- Helpers ---
-const parseQuota = (val: number | string | null | undefined): number | 'non-quota' => {
+const parseQuota = (val: any): number | 'non-quota' => {
   if (val === 'non-quota' || val === 'non quota') return 'non-quota';
   const num = Number(val);
   return isNaN(num) ? 0 : num;
 };
 
-const parseSold = (val: number | string | null | undefined): number => {
+const parseSold = (val: any): number => {
   const num = Number(val);
   return isNaN(num) ? 0 : num;
 };
 
 const serializeQuota = (val: number | string | 'non-quota'): string => {
-  if (val === 'non-quota') return 'non-quota';
-  return String(val);
+  return val === 'non-quota' ? 'non-quota' : String(val);
 };
 
 const capitalizeText = (text: string): string => {
   if (!text) return "";
-  return text.toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  return text.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 };
 
 const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
@@ -141,294 +75,267 @@ const createEventPayload = (data: DaurohBasicData, accessToken: string, existing
 };
 
 // --- Store ---
-export const useDaurohStore = defineStore("dauroh", {
-  state: () => ({
-    searchQuery: "",
-    loading: {
-      tiketDauroh: false,
-      adminTiketDauroh: false,
-      uploadPhoto: false,
-      detail: false,
-      savingBasic: false,
-      savingSchedule: false,
-      detailPublic: false,
-    },
-    tiketDauroh: [] as Dauroh[],
-    adminTiketDauroh: [] as Dauroh[],
-    userLogs: [] as any[], // [BARU] Untuk menampung riwayat transaksi dari API homepage
-    currentDaurohDetail: null as Dauroh | null,
-    currentPublicDaurohDetail: null as Dauroh | null,
-  }),
+export const useDaurohStore = defineStore("dauroh", () => {
+  // State
+  const searchQuery = ref("");
+  const tiketDauroh = ref<Dauroh[]>([]);
+  const adminTiketDauroh = ref<Dauroh[]>([]);
+  const userLogs = ref<any[]>([]);
+  const currentDaurohDetail = ref<Dauroh | null>(null);
+  const currentPublicDaurohDetail = ref<Dauroh | null>(null);
+  
+  const loading = reactive({
+    tiketDauroh: false,
+    adminTiketDauroh: false,
+    uploadPhoto: false,
+    detail: false,
+    savingBasic: false,
+    savingSchedule: false,
+    detailPublic: false,
+  });
 
-  getters: {
-    filteredTiketDauroh: (state): Dauroh[] => {
-      if (!state.searchQuery) return state.tiketDauroh || [];
-      return state.tiketDauroh.filter((d) => d.Title.toLowerCase().includes(state.searchQuery.toLowerCase()));
-    },
-    tiketDaurohChunks(state): Dauroh[][] {
-      const filtered = this.filteredTiketDauroh; 
-      const chunks: Dauroh[][] = [];
-      for (let i = 0; i < filtered.length; i += 4) {
-        chunks.push(filtered.slice(i, i + 4));
-      }
-      return chunks;
-    },
-    filteredAdminTiketDauroh: (state): Dauroh[] => {
-      const data = Array.isArray(state.adminTiketDauroh) ? state.adminTiketDauroh : [];
-      return [...data].sort((a, b) => (b.SK ?? "").localeCompare(a.SK ?? ""));
-    },
-  },
+  // Getters
+  const filteredTiketDauroh = computed(() => {
+    if (!searchQuery.value) return tiketDauroh.value || [];
+    return tiketDauroh.value.filter((d) => 
+      d.Title.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  });
 
-  actions: {
-    setSearchQuery(query: string) {
-      this.searchQuery = query;
-    },
+  const tiketDaurohChunks = computed(() => {
+    const filtered = filteredTiketDauroh.value;
+    const chunks: Dauroh[][] = [];
+    for (let i = 0; i < filtered.length; i += 4) {
+      chunks.push(filtered.slice(i, i + 4));
+    }
+    return chunks;
+  });
 
-    // [UPDATE] Mendukung struktur { event: [], logs: [] } - Public
-    async fetchPublicTiketDauroh() {
-      if (this.loading.tiketDauroh) return;
-      this.loading.tiketDauroh = true;
-      try {
-        const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get<any>("/get-view?type=homepage");
-        const rawData = Array.isArray(res.data?.event) ? res.data.event : [];
-        this.userLogs = [];
-        this.tiketDauroh = rawData
+  const filteredAdminTiketDauroh = computed(() => {
+    const data = Array.isArray(adminTiketDauroh.value) ? adminTiketDauroh.value : [];
+    return [...data].sort((a, b) => (b.SK ?? "").localeCompare(a.SK ?? ""));
+  });
+
+  // Actions
+  function setSearchQuery(query: string) {
+    searchQuery.value = query;
+  }
+
+  async function fetchPublicTiketDauroh() {
+    if (loading.tiketDauroh) return;
+    loading.tiketDauroh = true;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get("/get-view?type=homepage");
+      const rawData = Array.isArray(res.data?.event) ? res.data.event : [];
+      userLogs.value = [];
+      tiketDauroh.value = rawData
         .filter((event: ApiDaurohRaw) => event.Status !== 'inactive')
         .map((event: ApiDaurohRaw) => mapApiToDauroh(event));
-      } catch (error) { console.error(error); } 
-      finally { this.loading.tiketDauroh = false; }
-    },
-    async fetchAuthTiketDauroh() {
-      if (this.loading.tiketDauroh) return;
-      this.loading.tiketDauroh = true;
-      try {
-        const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get<any>("/get-default?type=homepage");
-        
-        const rawEvents = Array.isArray(res.data?.event) ? res.data.event : [];
-        const rawLogs = Array.isArray(res.data?.logs) ? res.data.logs : [];
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loading.tiketDauroh = false;
+    }
+  }
 
-        this.tiketDauroh = rawEvents
-          .filter((event: ApiDaurohRaw) => event.Status !== 'inactive')
-          .map((event: ApiDaurohRaw) => mapApiToDauroh(event));
+  async function fetchAuthTiketDauroh() {
+    if (loading.tiketDauroh) return;
+    loading.tiketDauroh = true;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get("/get-default?type=homepage");
+      const rawEvents = Array.isArray(res.data?.event) ? res.data.event : [];
+      const rawLogs = Array.isArray(res.data?.logs) ? res.data.logs : [];
 
-        this.userLogs = rawLogs;
-      } catch (error) { console.error(error); } 
-      finally { this.loading.tiketDauroh = false; }
-    },
+      tiketDauroh.value = rawEvents
+        .filter((event: ApiDaurohRaw) => event.Status !== 'inactive')
+        .map((event: ApiDaurohRaw) => mapApiToDauroh(event));
+      userLogs.value = rawLogs;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loading.tiketDauroh = false;
+    }
+  }
 
-    async fetchAdminTiketDauroh() {
-      if (this.loading.adminTiketDauroh) return;
-      this.loading.adminTiketDauroh = true;
-      try {
-        const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get<any>("/get-default?type=event");
-        const data = res.data?.event || res.data;
-        this.adminTiketDauroh = Array.isArray(data) ? data.map(mapApiToDauroh) : [];
-      } catch (error) { console.error(error); } 
-      finally { this.loading.adminTiketDauroh = false; }
-    },
+  async function fetchAdminTiketDauroh() {
+    if (loading.adminTiketDauroh) return;
+    loading.adminTiketDauroh = true;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get("/get-default?type=event");
+      const data = res.data?.event || res.data;
+      adminTiketDauroh.value = Array.isArray(data) ? data.map(mapApiToDauroh) : [];
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loading.adminTiketDauroh = false;
+    }
+  }
 
-    async fetchPublicDaurohDetail(SK: string) {
-      this.loading.detailPublic = true;
-      this.currentPublicDaurohDetail = null;
-      try {
-        const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get<any>(`/get-view?type=event&sk=${SK}`);
-        const data = res.data?.event || res.data;
-        let eventRaw: ApiDaurohRaw | undefined;
-        
-        if (Array.isArray(data)) {
-          eventRaw = data.find((e) => String(e.SK) === String(SK)) || data[0];
-        } else {
-          eventRaw = data;
-        }
+  async function fetchPublicDaurohDetail(SK: string) {
+    loading.detailPublic = true;
+    currentPublicDaurohDetail.value = null;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get(`/get-view?type=event&sk=${SK}`);
+      const data = res.data?.event || res.data;
+      const eventRaw = Array.isArray(data) ? (data.find(e => String(e.SK) === SK) || data[0]) : data;
 
-        if (eventRaw) {
-            if (eventRaw.Status === 'inactive') throw new Error("Event ini sedang tidak aktif.");
-            this.currentPublicDaurohDetail = mapApiToDauroh(eventRaw);
-        } else { throw new Error("Event tidak ditemukan"); }
-      } catch (error: any) {
-        const toast = useToastStore();
-        toast.showToast({ message: error.message || "Gagal mengambil event", type: "danger" });
-      } finally { this.loading.detailPublic = false; }
-    },
-
-    async fetchDaurohDetail(SK: string) {
-      this.loading.detail = true;
-      this.currentDaurohDetail = null;
-      try {
-        const { $apiBase } = useNuxtApp();
-        const res = await $apiBase.get<any>(`/get-default?type=event&sk=${SK}`);
-        const data = res.data?.event || res.data;
-        let eventRaw: ApiDaurohRaw | undefined;
-        if (Array.isArray(data)) {
-          eventRaw = data.find((e) => String(e.SK) === String(SK)) || data[0];
-        } else { eventRaw = data; }
-        if (eventRaw) this.currentDaurohDetail = mapApiToDauroh(eventRaw);
-        else throw new Error("Event tidak ditemukan");
-      } catch (error) { console.error(error); } 
-      finally { this.loading.detail = false; }
-    },
-
-    // --- Actions CRUD (Tetap sesuai struktur lama) ---
-    async addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, "SK">): Promise<boolean> {
-      const token = useCookie("AccessToken").value;
-      if (!token) return false;
-      this.loading.savingBasic = true;
-      const toast = useToastStore();
-      try {
-        const { $apiBase } = useNuxtApp();
-        const payload = createEventPayload(daurohData as DaurohBasicData, token); 
-        const res = await $apiBase.post<any>("/input-default?type=event", payload);
-        const newEventData = res.data?.event || res.data;
-        if (newEventData && newEventData.SK) {
-          this.adminTiketDauroh.unshift(mapApiToDauroh(newEventData));
-          toast.showToast({ message: "Event baru berhasil ditambahkan.", type: "success" });
-          return true;
-        }
-        return false;
-      } catch (error: any) {
-        const msg = error.response?.data?.message || error.message || "Gagal menambah event.";
-        toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
-        return false;
-      } finally { this.loading.savingBasic = false; }
-    },
-
-    async updateTiketDaurohBasic(daurohData: Partial<DaurohBasicData> & { SK: string }): Promise<boolean> {
-      const token = useCookie("AccessToken").value;
-      if (!token || !daurohData.SK) return false;
-      this.loading.savingBasic = true;
-      const toast = useToastStore();
-      const currentEvent = this.adminTiketDauroh.find((d) => d.SK === daurohData.SK) || this.currentDaurohDetail;
-      if (!currentEvent) {
-        this.loading.savingBasic = false;
-        toast.showToast({ message: "Data event tidak ditemukan di lokal.", type: "danger" });
-        return false;
+      if (eventRaw) {
+        if (eventRaw.Status === 'inactive') throw new Error("Event ini sedang tidak aktif.");
+        currentPublicDaurohDetail.value = mapApiToDauroh(eventRaw);
+      } else {
+        throw new Error("Event tidak ditemukan");
       }
-      try {
-        const { $apiBase } = useNuxtApp();
-        const mergedData: DaurohBasicData = {
-            SK: currentEvent.SK,
-            Title: daurohData.Title ?? currentEvent.Title,
-            Gender: daurohData.Gender ?? currentEvent.Gender,
-            Place: daurohData.Place ?? currentEvent.Place,
-            Price: daurohData.Price ?? currentEvent.Price,
-            Quota_Total: daurohData.Quota_Total ?? currentEvent.Quota_Total,
-            Quota_Ikhwan: daurohData.Quota_Ikhwan ?? currentEvent.Quota_Ikhwan,
-            Quota_Akhwat: daurohData.Quota_Akhwat ?? currentEvent.Quota_Akhwat,
-            Registration: daurohData.Registration ?? currentEvent.Registration,
-            Status: daurohData.Status ?? currentEvent.Status,
-            Description: daurohData.Description ?? currentEvent.Description,
-        };
-        const payload = createEventPayload(mergedData, token, currentEvent.Date || {}); 
-        await $apiBase.put(`/update-default?type=event&sk=${daurohData.SK}`, payload);
-        const updateState = (target: Dauroh) => {
-          Object.assign(target, {
-            Title: capitalizeText(mergedData.Title),
-            Place: mergedData.Place,
-            Price: mergedData.Price,
-            Gender: mergedData.Gender,
-            Quota_Total: mergedData.Quota_Total,
-            Quota_Ikhwan: mergedData.Quota_Ikhwan,
-            Quota_Akhwat: mergedData.Quota_Akhwat,
-            Registration: mergedData.Registration, 
-            Status: mergedData.Status,
-            Description: mergedData.Description,
-          });
-        };
-        const targetInList = this.adminTiketDauroh.find((d) => d.SK === daurohData.SK);
-        if (targetInList) updateState(targetInList);
-        if (this.currentDaurohDetail?.SK === daurohData.SK) updateState(this.currentDaurohDetail);
-        const msg = daurohData.Title ? 'Info dasar Event berhasil diperbarui.' : 'Deskripsi berhasil disimpan.';
-        toast.showToast({ message: msg, type: "success" });
+    } catch (error: any) {
+      useToastStore().showToast({ message: error.message || "Gagal mengambil event", type: "danger" });
+    } finally {
+      loading.detailPublic = false;
+    }
+  }
+
+  async function fetchDaurohDetail(SK: string) {
+    loading.detail = true;
+    currentDaurohDetail.value = null;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get(`/get-default?type=event&sk=${SK}`);
+      const data = res.data?.event || res.data;
+      const eventRaw = Array.isArray(data) ? (data.find(e => String(e.SK) === SK) || data[0]) : data;
+      if (eventRaw) currentDaurohDetail.value = mapApiToDauroh(eventRaw);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loading.detail = false;
+    }
+  }
+
+  async function addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, "SK">): Promise<boolean> {
+    const token = useCookie("AccessToken").value;
+    if (!token) return false;
+    loading.savingBasic = true;
+    const toast = useToastStore();
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const payload = createEventPayload(daurohData as DaurohBasicData, token);
+      const res = await $apiBase.post("/input-default?type=event", payload);
+      const newEventData = res.data?.event || res.data;
+      if (newEventData?.SK) {
+        adminTiketDauroh.value.unshift(mapApiToDauroh(newEventData));
+        toast.showToast({ message: "Event baru berhasil ditambahkan.", type: "success" });
         return true;
-      } catch (error: any) {
-        const msg = error.response?.data?.message || error.message || "Gagal memperbarui event.";
-        toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
-        return false;
-      } finally { this.loading.savingBasic = false; }
-    },
+      }
+      return false;
+    } catch (error: any) {
+      toast.showToast({ message: `Gagal: ${error.message}`, type: "danger" });
+      return false;
+    } finally {
+      loading.savingBasic = false;
+    }
+  }
 
-    async updateDaurohSchedule(eventSK: string, scheduleData: DaurohSchedulePayload): Promise<boolean> {
-      const token = useCookie("AccessToken").value;
-      if (!token) return false;
-      this.loading.savingSchedule = true;
-      const toast = useToastStore();
-      const currentData = this.adminTiketDauroh.find(d => d.SK === eventSK) || this.currentDaurohDetail;
-      if (!currentData) { this.loading.savingSchedule = false; return false; }
-      try {
-        const { $apiBase } = useNuxtApp();
-        const basicData: DaurohBasicData = { ...currentData, SK: currentData.SK, Registration: currentData.Registration }; 
-        const payload = createEventPayload(basicData, token, scheduleData);
-        await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
-        const updateSchedule = (target: Dauroh) => { target.Date = scheduleData; };
-        const targetAdmin = this.adminTiketDauroh.find(d => d.SK === eventSK);
-        if (targetAdmin) updateSchedule(targetAdmin);
-        if (this.currentDaurohDetail?.SK === eventSK) updateSchedule(this.currentDaurohDetail);
-        toast.showToast({ message: `Jadwal Event berhasil diperbarui.`, type: "success" });
-        return true;
-      } catch (error: any) {
-        const msg = error.response?.data?.message || error.message || "Gagal menyimpan jadwal.";
-        toast.showToast({ message: `Gagal: ${msg}`, type: "danger" });
-        return false;
-      } finally { this.loading.savingSchedule = false; }
-    },
+  async function updateTiketDaurohBasic(daurohData: Partial<DaurohBasicData> & { SK: string }): Promise<boolean> {
+    const token = useCookie("AccessToken").value;
+    if (!token || !daurohData.SK) return false;
+    loading.savingBasic = true;
+    const toast = useToastStore();
+    
+    const currentEvent = adminTiketDauroh.value.find(d => d.SK === daurohData.SK) || currentDaurohDetail.value;
+    if (!currentEvent) {
+      loading.savingBasic = false;
+      toast.showToast({ message: "Data event tidak ditemukan.", type: "danger" });
+      return false;
+    }
 
-    async uploadEventPhoto(eventSK: string, photoBase64: string): Promise<boolean> {
-      const token = useCookie("AccessToken").value;
-      if (!token || !photoBase64) return false;
-      this.loading.uploadPhoto = true;
-      const toast = useToastStore();
-      try {
-        const { $apiBase } = useNuxtApp();
-        const base64Data = photoBase64.split(",")[1];
-        const payload = { AccessToken: token, OldPicture: "", Picture: base64Data };
-        const res = await $apiBase.put<any>(`/update-default?type=photo-event&sk=${eventSK}`, payload);
-        const newPic = (res.data?.Picture || res.data?.event?.Picture);
-        const updatePic = (target: Dauroh) => { if (newPic) target.Picture = newPic; };
-        const target = this.adminTiketDauroh.find(d => d.SK === eventSK);
-        if (target) updatePic(target);
-        if (this.currentDaurohDetail?.SK === eventSK) updatePic(this.currentDaurohDetail);
-        toast.showToast({ message: "Foto berhasil diperbarui.", type: "success" });
-        return true;
-      } catch (error: any) {
-        toast.showToast({ message: "Gagal upload foto.", type: "danger" });
-        return false;
-      } finally { this.loading.uploadPhoto = false; }
-    },
-
-    async deleteTiketDauroh(SK: string) {
-      const token = useCookie("AccessToken").value;
-      if (!token) return;
-      try {
-        const { $apiBase } = useNuxtApp();
-        const toast = useToastStore();
-        await $apiBase.delete(`/delete-default?pk=event&sk=${SK}`, { data: { AccessToken: token } });
-        this.adminTiketDauroh = this.adminTiketDauroh.filter((d) => d.SK !== SK);
-        this.tiketDauroh = this.tiketDauroh.filter((d) => d.SK !== SK);
-        toast.showToast({ message: `Event berhasil dihapus.`, type: "success" });
-      } catch (error) { console.error(error); }
-    },
-
-    decrementQuota(sk: string, totalPeserta: number, jumlahIkhwan: number, jumlahAkhwat: number) {
-      const kurangi = (currentVal: number | 'non-quota', amount: number): number | 'non-quota' => {
-        if (currentVal === 'non-quota') return 'non-quota';
-        const num = Number(currentVal);
-        return num >= amount ? num - amount : 0;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const mergedData: DaurohBasicData = {
+        ...currentEvent,
+        ...daurohData,
+        SK: currentEvent.SK as string
       };
-      const eventDiList = this.tiketDauroh.find(e => e.SK === sk);
-      if (eventDiList) {
-        eventDiList.Quota_Total = kurangi(eventDiList.Quota_Total, totalPeserta);
-        eventDiList.Quota_Ikhwan = kurangi(eventDiList.Quota_Ikhwan, jumlahIkhwan);
-        eventDiList.Quota_Akhwat = kurangi(eventDiList.Quota_Akhwat, jumlahAkhwat);
+      const payload = createEventPayload(mergedData, token, currentEvent.Date || {});
+      await $apiBase.put(`/update-default?type=event&sk=${daurohData.SK}`, payload);
+
+      const updateLocal = (target: Dauroh) => {
+        Object.assign(target, { ...mergedData, Title: capitalizeText(mergedData.Title) });
+      };
+
+      const targetInList = adminTiketDauroh.value.find(d => d.SK === daurohData.SK);
+      if (targetInList) updateLocal(targetInList);
+      if (currentDaurohDetail.value?.SK === daurohData.SK) updateLocal(currentDaurohDetail.value);
+
+      toast.showToast({ message: "Berhasil diperbarui.", type: "success" });
+      return true;
+    } catch (error: any) {
+      toast.showToast({ message: "Gagal memperbarui.", type: "danger" });
+      return false;
+    } finally {
+      loading.savingBasic = false;
+    }
+  }
+
+  async function uploadEventPhoto(eventSK: string, photoBase64: string): Promise<boolean> {
+    const token = useCookie("AccessToken").value;
+    if (!token || !photoBase64) return false;
+    loading.uploadPhoto = true;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const payload = { AccessToken: token, OldPicture: "", Picture: photoBase64.split(",")[1] };
+      const res = await $apiBase.put(`/update-default?type=photo-event&sk=${eventSK}`, payload);
+      const newPic = res.data?.Picture || res.data?.event?.Picture;
+      
+      if (newPic) {
+        const target = adminTiketDauroh.value.find(d => d.SK === eventSK);
+        if (target) target.Picture = newPic;
+        if (currentDaurohDetail.value?.SK === eventSK) currentDaurohDetail.value.Picture = newPic;
       }
-      if (this.currentPublicDaurohDetail && this.currentPublicDaurohDetail.SK === sk) {
-        this.currentPublicDaurohDetail.Quota_Total = kurangi(this.currentPublicDaurohDetail.Quota_Total, totalPeserta);
-        this.currentPublicDaurohDetail.Quota_Ikhwan = kurangi(this.currentPublicDaurohDetail.Quota_Ikhwan, jumlahIkhwan);
-        this.currentPublicDaurohDetail.Quota_Akhwat = kurangi(this.currentPublicDaurohDetail.Quota_Akhwat, jumlahAkhwat);
-      }
-    },
-  },
+      useToastStore().showToast({ message: "Foto diperbarui.", type: "success" });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      loading.uploadPhoto = false;
+    }
+  }
+
+  async function deleteTiketDauroh(SK: string) {
+    const token = useCookie("AccessToken").value;
+    if (!token) return;
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      await $apiBase.delete(`/delete-default?pk=event&sk=${SK}`, { data: { AccessToken: token } });
+      adminTiketDauroh.value = adminTiketDauroh.value.filter(d => d.SK !== SK);
+      tiketDauroh.value = tiketDauroh.value.filter(d => d.SK !== SK);
+      useToastStore().showToast({ message: "Event dihapus.", type: "success" });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  function decrementQuota(sk: string, total: number, ikhwan: number, akhwat: number) {
+    const sub = (val: any, amt: number) => (val === 'non-quota' ? 'non-quota' : Math.max(0, Number(val) - amt));
+    
+    const apply = (target: Dauroh | null) => {
+      if (!target || target.SK !== sk) return;
+      target.Quota_Total = sub(target.Quota_Total, total);
+      target.Quota_Ikhwan = sub(target.Quota_Ikhwan, ikhwan);
+      target.Quota_Akhwat = sub(target.Quota_Akhwat, akhwat);
+    };
+
+    apply(tiketDauroh.value.find(e => e.SK === sk) || null);
+    apply(currentPublicDaurohDetail.value);
+  }
+
+  return {
+    searchQuery, loading, tiketDauroh, adminTiketDauroh, userLogs,
+    currentDaurohDetail, currentPublicDaurohDetail,
+    filteredTiketDauroh, tiketDaurohChunks, filteredAdminTiketDauroh,
+    setSearchQuery, fetchPublicTiketDauroh, fetchAuthTiketDauroh,
+    fetchAdminTiketDauroh, fetchPublicDaurohDetail, fetchDaurohDetail,
+    addTiketDaurohBasic, updateTiketDaurohBasic, uploadEventPhoto,
+    deleteTiketDauroh, decrementQuota
+  };
 });

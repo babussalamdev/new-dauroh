@@ -3,44 +3,14 @@ import { ref, computed, watch } from "vue";
 import { useNuxtApp } from "#app";
 import { useAuth } from "~/composables/useAuth";
 import { useDaurohStore } from "~/stores/dauroh";
-
-// Types tetap sama
-export type CheckoutStep = "select" | "summary" | "instructions" | "success";
-
-interface Participant {
-  Name: string;
-  Email: string;
-  Gender: string;
-  Age: number | string;
-  Domicile: string;
-}
-
-interface Dauroh {
-  SK: string;
-  Price: number;
-  Title: string;
-  [key: string]: any;
-}
-
-interface TransactionDetails {
-  link_id?: string;
-  link_url?: string;
-  amount?: number;
-  status?: string;
-  paymentMethod?: string;
-  vaNumber?: string;
-  expiryTime?: string;
-  expired_date?: string;
-  sender_bank_type?: string;
-  [key: string]: any;
-}
+import type { Participant, DaurohInfo, TransactionDetails, CheckoutStep } from "~/types/participant";
 
 export const useCheckoutStore = defineStore(
   "checkout",
   () => {
     // --- STATE ---
     const currentStep = ref<CheckoutStep>("select");
-    const dauroh = ref<Dauroh | null>(null);
+    const dauroh = ref<DaurohInfo| null>(null);
     const participants = ref<Participant[]>([]);
     const paymentMethod = ref<string | null>(null);
     const transactionDetails = ref<TransactionDetails | null>(null);
@@ -102,7 +72,7 @@ export const useCheckoutStore = defineStore(
     }
 
     function startCheckout(registrationData: {
-      dauroh: Dauroh;
+      dauroh: DaurohInfo;
       participants: Participant[];
     }) {
       dauroh.value = registrationData.dauroh;

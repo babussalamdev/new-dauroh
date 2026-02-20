@@ -1,10 +1,7 @@
 import { defineStore } from 'pinia';
+import type { ToastState } from '~/types/toast';
 
-interface ToastState {
-  show: boolean;
-  message: string;
-  type: 'success' | 'danger' | 'info';
-}
+
 
 export const useToastStore = defineStore('toast', {
   state: (): ToastState => ({
