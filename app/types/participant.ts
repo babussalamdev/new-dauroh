@@ -1,4 +1,6 @@
 export interface Participant {
+  PK: string;
+  SK: string;
   Name: string;
   Email: string;
   Gender: string;

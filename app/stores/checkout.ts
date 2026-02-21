@@ -18,6 +18,7 @@ export const useCheckoutStore = defineStore(
     const discountAmount = ref(0);
     const voucherApplied = ref(false);
     const isLoading = ref(false);
+    const repay = ref<boolean>(false)
 
     // --- GETTERS (Computed) ---
     const totalAmount = computed(() => {
@@ -122,11 +123,15 @@ export const useCheckoutStore = defineStore(
           throw new Error(
             "Data Event (SK) tidak ditemukan. Silakan ulangi dari awal.",
           );
-        const eventSK = (rawSK as string).split("#")[0];
-
+        
+        const eventSK = repay.value === true ? rawSK : (rawSK as string).split("#")[0];
+        console.log(rawSK)
+        console.log(dauroh.value)
         const objectPerson: Record<string, any> = {};
         participants.value.forEach((p, index) => {
           objectPerson[`person${index + 1}`] = {
+            PK: p.PK,
+            SK : p.SK,
             Name: p.Name,
             Gender: p.Gender?.toLowerCase() || "-",
             Age: Number(p.Age),
@@ -152,23 +157,24 @@ export const useCheckoutStore = defineStore(
           AccessToken: accessToken.value,
           PaymentType: paymentType,
           sender_bank_type: paymentType,
+          repay : repay.value,
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
-        const response = await $apiFlip.post("/flip-dauroh", payload, {
-          headers: { Authorization: `Bearer ${accessToken.value}` },
-        });
+        // const response = await $apiFlip.post("/flip-dauroh", payload, {
+        //   headers: { Authorization: `Bearer ${accessToken.value}` },
+        // });
 
-        const result = response.data;
-        transactionDetails.value = {
-          ...result,
-          vaNumber: result.receiver_bank_account?.account_number,
-          expiryTime: result.expired_date,
-          paymentMethod: paymentMethod.value || "Bank",
-        };
+        // const result = response.data;
+        // transactionDetails.value = {
+        //   ...result,
+        //   vaNumber: result.receiver_bank_account?.account_number,
+        //   expiryTime: result.expired_date,
+        //   paymentMethod: paymentMethod.value || "Bank",
+        // };
 
-        currentStep.value = "instructions";
-        return { success: true, data: result };
+        // currentStep.value = "instructions";
+        // return { success: true, data: result };
       } catch (error: any) {
         console.error("❌ Payment Error:", error);
         const errData = error.response?.data || {};
@@ -207,6 +213,8 @@ export const useCheckoutStore = defineStore(
         const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
 
         participants.value = data.Participant.map((p: any) => ({
+          PK : p.PK,
+          SK : p.SK,
           Name: p.Name,
           Gender: p.Gender,
           Age: p.Age,
@@ -219,7 +227,7 @@ export const useCheckoutStore = defineStore(
           Place: foundEvent?.Place || "Lokasi Online",
           Price: realPrice,
         };
-
+        repay.value = true
         setStep("select");
         return true;
       } catch (error) {

@@ -54,6 +54,7 @@
 
               <td class="py-3 text-center">
                 <span class="text-dark fs-10">
+                  {{ ticket }}
                   {{ ticket.participants?.length || 1 }} Peserta
                 </span>
               </td>
@@ -350,7 +351,7 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
 // Payment Logic
 const resumePayment = async (ticket: any) => {
   // [FIX] Pake full_sk atau SK yang ada pagarnya (#), JANGAN ID EVENT DOANG
-  const skTransaksi = ticket.SK; 
+  const skTransaksi = ticket.SK;
   
   if (!skTransaksi || !skTransaksi.includes('#')) {
       Swal.fire({
@@ -409,12 +410,10 @@ const handleExpiredFlow = async (skEvent: string) => {
     try {
         const success = await checkoutStore.restoreTransactionData(skEvent);
 
-        if (success) {
+      if (success) {          
           Swal.close();
           router.push('/checkout'); 
         } else {
-          // Error handling sudah di-handle di dalam restoreTransactionData biasanya,
-          // tapi fallback di sini tetap perlu
           throw new Error('Gagal restore data.'); 
         }
     } catch (error) {

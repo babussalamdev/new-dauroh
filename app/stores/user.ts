@@ -67,6 +67,8 @@ export const useUserStore = defineStore("user", () => {
       const response = await $apiBase.get("/get-payment?type=client");
       let rawData = response.data?.data || response.data;
 
+      console.log(rawData)
+
       if (!Array.isArray(rawData)) {
         tickets.value = [];
         return;
