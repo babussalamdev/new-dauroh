@@ -158,7 +158,7 @@ export const useCheckoutStore = defineStore(
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
-        const response = await $apiFlip.post("/flip-event", payload, {
+        const response = await $apiFlip.post("/flip-dauroh", payload, {
           headers: { Authorization: `Bearer ${accessToken.value}` },
         });
 
