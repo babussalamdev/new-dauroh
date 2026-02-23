@@ -1,8 +1,8 @@
 <template>
   <div>
-    
+
     <h5 class="mb-3">Silahkan pilih metode pembayaran berikut:</h5>
-    
+
     <div class="row g-3">
       <div v-for="bank in banks" :key="bank.code" class="col-6 col-md-4">
         <label class="payment-method-label" :class="{ active: selectedMethod === bank.code }">
@@ -12,8 +12,8 @@
       </div>
     </div>
 
-<div class="d-flex justify-content-between mt-4">
-      
+    <div class="d-flex justify-content-between mt-4">
+
       <button class="btn btn-secondary" @click="handleBack">Kembali
       </button>
 
@@ -22,7 +22,7 @@
       </button>
     </div>
   </div>
-  
+
   <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
     <i class="bi bi-whatsapp me-1"></i> Whatsapp
   </a>
@@ -31,8 +31,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
-import { onBeforeRouteLeave, useRouter } from 'vue-router'; 
-import Swal from 'sweetalert2'; 
+import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 
 // Import Gambar
 import bniLogo from '~/assets/img/bank/bni.png';
@@ -45,7 +45,7 @@ import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
 const store = useCheckoutStore();
-const router = useRouter(); 
+const router = useRouter();
 const selectedMethod = ref<string | null>(null);
 
 // Data Bank
@@ -63,12 +63,12 @@ const banks = [
 onMounted(() => {
   // Cek validasi peserta
   if (!store.participants || store.participants.length === 0) {
-    router.replace('/'); 
+    router.replace('/');
   }
   selectedMethod.value = store.paymentMethod;
 });
 const handleBack = () => {
-  router.back(); 
+  router.back();
 };
 
 const handleSelect = () => {
@@ -93,11 +93,11 @@ onBeforeRouteLeave((to, from, next) => {
   }
 
   // 3. [SOLUSI UTAMA] Cek apakah Data Checkout Masih Ada?
-  // Kalau dauroh/participants kosong (artinya udah di-clearCheckout di Instructions sebelumnya),
+  // Kalau event/participants kosong (artinya udah di-clearCheckout di Instructions sebelumnya),
   // JANGAN TAHAN USER. Langsung next().
-  if (!store.dauroh || !store.participants || store.participants.length === 0) {
-     next();
-     return;
+  if (!store.event || !store.participants || store.participants.length === 0) {
+    next();
+    return;
   }
 
   // 4. Kalau data masih ada dan user mau keluar halaman lain, baru tanya
@@ -111,10 +111,10 @@ onBeforeRouteLeave((to, from, next) => {
     cancelButtonText: 'Lanjut Bayar'
   }).then((result) => {
     if (result.isConfirmed) {
-      store.clearCheckout(); 
-      next(); 
+      store.clearCheckout();
+      next();
     } else {
-      next(false); 
+      next(false);
     }
   });
 });
@@ -132,23 +132,28 @@ onBeforeRouteLeave((to, from, next) => {
   transition: all 0.2s ease;
   height: 100%;
 }
+
 .payment-method-label:hover {
   border-color: #aaa;
 }
+
 .payment-method-label.active {
-  border-color: var(--color-primary); 
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(0, 155, 77, 0.2);
 }
+
 .payment-method-label img {
   max-width: 100%;
   max-height: 40px;
   filter: grayscale(100%);
-  opacity: 0.7; 
+  opacity: 0.7;
 }
+
 .payment-method-label.active img {
   filter: grayscale(0%);
   opacity: 1;
 }
+
 .form-check-input {
   display: none;
 }

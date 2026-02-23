@@ -1,28 +1,18 @@
 <template>
   <div class="card shadow-sm">
-      <div class="card-body p-4">
-  <div class="checkout-container">
+    <div class="card-body p-4">
+      <div class="checkout-container">
 
-{{ checkoutStore.currentStep }}
-    
-    <CheckoutSelectMethod 
-      v-if="checkoutStore.currentStep === 'select'" 
-    />
+        <CheckoutSelectMethod v-if="checkoutStore.currentStep === 'select'" />
 
-    <CheckoutSummary 
-      v-else-if="checkoutStore.currentStep === 'summary'" 
-    />
+        <CheckoutSummary v-else-if="checkoutStore.currentStep === 'summary'" />
 
-    <CheckoutInstructions 
-      v-else-if="checkoutStore.currentStep === 'instructions'" 
-    />
+        <CheckoutInstructions v-else-if="checkoutStore.currentStep === 'instructions'" />
 
-    <CheckoutSuccess
-    v-else-if="checkoutStore.currentStep === 'success'" 
-    />
+        <CheckoutSuccess v-else-if="checkoutStore.currentStep === 'success'" />
+      </div>
+    </div>
   </div>
-</div>
-</div>
 </template>
 
 <script setup lang="ts">
@@ -35,7 +25,7 @@ definePageMeta({
   // Pastikan middleware auth aktif di sini
   middleware: (_to, _from) => {
     const { isLoggedIn } = useAuth();
-    if (!isLoggedIn.value) return navigateTo('/login');
+    if (!isLoggedIn.value) return navigateTo('/auth/login');
   }
 });
 

@@ -8,9 +8,9 @@
           </div>
           <div class="card-body p-4">
             <p class="lead text-center mb-4">
-              Tertarik untuk membuka booth di dauroh? Silakan isi formulir di bawah ini.
+              Tertarik untuk membuka booth di event? Silakan isi formulir di bawah ini.
             </p>
-            
+
             <div v-if="submitted" class="alert alert-success mt-4">
               Terima kasih! Pengajuan Anda telah kami terima. Kami akan segera menghubungi Anda.
             </div>
@@ -32,14 +32,15 @@
                 <label for="phone" class="form-label">Nomor Telepon (WhatsApp) *</label>
                 <input type="tel" class="form-control" id="phone" v-model="form.phone" required>
               </div>
-              
+
               <div v-if="error" class="alert alert-danger small p-2 mt-3">
                 {{ error }}
               </div>
 
               <div class="d-grid mt-4">
                 <button type="submit" class="btn btn-primary" :disabled="loading">
-                  <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
+                    aria-hidden="true"></span>
                   {{ loading ? 'Mengirim...' : 'Kirim Pengajuan' }}
                 </button>
               </div>
@@ -76,11 +77,11 @@ const form = reactive({
 const handleSubmit = async () => {
   loading.value = true;
   error.value = null;
-  
+
   try {
     // const response = await $apiBase.post('/api/booth-requests', form);
     // console.log('API Response:', response.data);
-    
+
     // Simulasi penundaan API
     await new Promise(resolve => setTimeout(resolve, 1000));
 

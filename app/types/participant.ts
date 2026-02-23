@@ -1,6 +1,6 @@
 export interface Participant {
-  PK: string;
-  SK: string;
+  PK?: string;
+  SK?: string;
   Name: string;
   Email: string;
   Gender: string;
@@ -8,7 +8,7 @@ export interface Participant {
   Domicile: string;
 }
 
-export interface DaurohInfo {
+export interface EventInfo {
   SK: string;
   Price: number;
   Title: string;

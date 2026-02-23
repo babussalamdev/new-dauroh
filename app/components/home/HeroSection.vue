@@ -2,7 +2,7 @@
   <section class="hero-section">
     <div class="container text-center">
       <h1 class="display-5 fw-bold mb-5" style="font-family: 'Montserrat', sans-serif;">
-        Dauroh <span class="text-primary">Babussalam</span>
+        Event <span class="text-primary">Babussalam</span>
       </h1>
       <div class="search-bar-hero mx-auto" style="max-width: 600px;">
         <CommonSearchBar />
@@ -13,20 +13,18 @@
           <ButtonHeroButton :icon="QrCode" bgClass="btn-hero-custom" />
           <p class="mt-1">QR Code</p>
         </div>
-        
         <div class="button-item" @click="handleButtonClick('/jadwal')">
           <ButtonHeroButton :icon="JadwalIcon" bgClass="btn-hero-custom" />
           <p class="mt-1">Jadwal</p>
         </div>
-
         <div class="button-item" @click="handleButtonClick('/sewa-booth')">
           <ButtonHeroButton :icon="BoothIcon" bgClass="btn-hero-custom" />
-          <p class="mt-1">Sewa Booth</p>
+          <p class="mt-1">Booth</p>
         </div>
       </div>
     </div>
 
-    </section>
+  </section>
 </template>
 
 <script setup>
@@ -35,14 +33,12 @@ import { useAuth } from '~/composables/useAuth';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-// Icons
-import QrCode from '~/components/icons/QrIcon.vue';
-import JadwalIcon from '~/components/icons/JadwalIcon.vue';
-import BoothIcon from '~/components/icons/BoothIcon.vue';
-
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
 const router = useRouter();
+const QrCode = ref('ic:baseline-qr-code-scanner')
+const JadwalIcon = ref('ic:baseline-edit-calendar')
+const BoothIcon = ref('ic:baseline-storefront')
 const swalConfig = {
   customClass: {
     popup: 'rounded-4 border-0 shadow-lg p-4',
@@ -68,7 +64,7 @@ const handleButtonClick = (path) => {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        router.push('/login');
+        router.push('/auth/login');
       }
     });
     return;
@@ -84,28 +80,28 @@ const handleButtonClick = (path) => {
       } else {
         Swal.fire({
           ...swalConfig,
-          icon: 'question', 
+          icon: 'question',
           iconColor: '#dee2e6',
           title: 'Belum Ada Tiket',
           text: 'Anda belum memiliki tiket aktif. Yuk cari kajian menarik!',
-          confirmButtonText: 'Cari Dauroh',
+          confirmButtonText: 'Cari Event',
           showCancelButton: true,
           cancelButtonText: 'Tutup',
           reverseButtons: true
         }).then((result) => {
-           // Jika user klik 'Cari Dauroh', scroll ke list dauroh (opsional)
-           if (result.isConfirmed) {
-             const element = document.getElementById('tiketDauroh');
-             if(element) element.scrollIntoView({ behavior: 'smooth' });
-           }
+          // Jika user klik 'Cari Event', scroll ke list event (opsional)
+          if (result.isConfirmed) {
+            const element = document.getElementById('tiketEvent');
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
+          }
         });
       }
       break;
-      
+
     case '/jadwal':
       router.push('/jadwal');
       break;
-      
+
     case '/sewa-booth':
       router.push('/sewa-booth');
       break;

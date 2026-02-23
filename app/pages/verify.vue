@@ -3,7 +3,7 @@
     <div class="auth-overlay">
       <div class="auth-box">
         <div class="auth-content text-center">
-          
+
           <div class="mb-4">
             <h2 class="auth-title">Verifikasi <span class="text-primary">Akun</span></h2>
             <p class="text-muted small">
@@ -13,48 +13,35 @@
           </div>
 
           <div class="mb-4">
-            <input 
-              type="text" 
-              class="form-control form-control-lg text-center fw-bold fs-4" 
-              v-model="otpCode" 
-              placeholder="X X X X X X"
-              maxlength="6"
-              style="letter-spacing: 0.5em;"
-            >
+            <input type="text" class="form-control form-control-lg text-center fw-bold fs-4" v-model="otpCode"
+              placeholder="X X X X X X" maxlength="6" style="letter-spacing: 0.5em;">
           </div>
 
           <div class="d-grid gap-2">
-            <button 
-              class="btn btn-primary btn-lg" 
-              @click="handleVerify" 
-              :disabled="loading || !otpCode"
-            >
+            <button class="btn btn-primary btn-lg" @click="handleVerify" :disabled="loading || !otpCode">
               <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
               {{ loading ? 'Memverifikasi...' : 'Verifikasi Sekarang' }}
             </button>
           </div>
 
           <div class="mt-4 pt-3 border-top">
-             <div v-if="countdown > 0" class="text-muted small">
-                Belum terima kode? Kirim ulang dalam <span class="fw-bold text-danger">{{ formatTime(countdown) }}</span>
-             </div>
-             
-             <div v-else>
-                <small class="text-muted">Belum terima kode?</small>
-                <button 
-                  @click="handleResendOtp" 
-                  class="btn btn-link text-decoration-none btn-sm fw-bold p-0 ms-1"
-                  :disabled="resendLoading"
-                >
-                  {{ resendLoading ? 'Mengirim...' : 'Kirim Ulang' }}
-                </button>
-             </div>
+            <div v-if="countdown > 0" class="text-muted small">
+              Belum terima kode? Kirim ulang dalam <span class="fw-bold text-danger">{{ formatTime(countdown) }}</span>
+            </div>
+
+            <div v-else>
+              <small class="text-muted">Belum terima kode?</small>
+              <button @click="handleResendOtp" class="btn btn-link text-decoration-none btn-sm fw-bold p-0 ms-1"
+                :disabled="resendLoading">
+                {{ resendLoading ? 'Mengirim...' : 'Kirim Ulang' }}
+              </button>
+            </div>
           </div>
 
           <div class="mt-3">
-             <small class="text-muted">Salah email? 
-                <NuxtLink to="/register" class="text-decoration-none">Daftar Ulang</NuxtLink>
-             </small>
+            <small class="text-muted">Salah email?
+              <NuxtLink to="/auth/register" class="text-decoration-none">Daftar Ulang</NuxtLink>
+            </small>
           </div>
 
         </div>
@@ -69,10 +56,10 @@ import { useRoute, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 import { useNuxtApp } from '#app';
 
-definePageMeta({ 
+definePageMeta({
   layout: "auth",
   auth: false,
-  middleware: [] 
+  middleware: []
 });
 
 const route = useRoute();
@@ -91,7 +78,7 @@ let timerInterval: any = null;
 const startTimer = () => {
   countdown.value = 180; // Reset ke 3 menit
   if (timerInterval) clearInterval(timerInterval);
-  
+
   timerInterval = setInterval(() => {
     if (countdown.value > 0) {
       countdown.value--;
@@ -153,15 +140,15 @@ const handleResendOtp = async () => {
     console.error("Resend Error:", error);
     const msg = error.response?.data?.message || 'Gagal mengirim ulang kode.';
     if (msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('sudah terdaftar')) {
-       startTimer(); // Reset timer
-       Swal.fire({
-          icon: 'success',
-          title: 'Terkirim!',
-          text: 'Kode OTP baru telah dikirim (Akun Terdaftar).',
-          timer: 2000, showConfirmButton: false
-       });
+      startTimer(); // Reset timer
+      Swal.fire({
+        icon: 'success',
+        title: 'Terkirim!',
+        text: 'Kode OTP baru telah dikirim (Akun Terdaftar).',
+        timer: 2000, showConfirmButton: false
+      });
     } else {
-       Swal.fire('Gagal', msg, 'error');
+      Swal.fire('Gagal', msg, 'error');
     }
   } finally {
     resendLoading.value = false;
@@ -169,20 +156,20 @@ const handleResendOtp = async () => {
 };
 const handleVerify = async () => {
   loading.value = true;
-  
+
   try {
     if (!storedData.value) {
-        throw new Error("Data registrasi hilang. Mohon daftar ulang agar data lengkap.");
+      throw new Error("Data registrasi hilang. Mohon daftar ulang agar data lengkap.");
     }
 
     const payload = {
-        email: storedData.value.email,
-        code: otpCode.value,
-        name: storedData.value.name,
-        gender: storedData.value.gender,
-        birtdate: storedData.value.birtdate, 
-        phone_number: storedData.value.phone_number,
-        username: storedData.value.username
+      email: storedData.value.email,
+      code: otpCode.value,
+      name: storedData.value.name,
+      gender: storedData.value.gender,
+      birtdate: storedData.value.birtdate,
+      phone_number: storedData.value.phone_number,
+      username: storedData.value.username
     };
 
     await $apiBase.post('/verify-email', payload);
@@ -196,26 +183,26 @@ const handleVerify = async () => {
     });
 
     sessionStorage.removeItem('temp_register_data');
-    router.push('/login');
+    router.push('/auth/login');
 
   } catch (error: any) {
     console.error("Verify Error:", error);
     let msg = error.response?.data?.message || error.message || 'Verifikasi gagal.';
     if (error.message.includes('Data registrasi hilang')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Sesi Habis',
-            text: 'Data registrasi tidak ditemukan. Silakan daftar ulang.',
-            confirmButtonText: 'Daftar Ulang',
-        }).then((res) => {
-            if(res.isConfirmed) router.push('/register');
-        });
+      Swal.fire({
+        icon: 'error',
+        title: 'Sesi Habis',
+        text: 'Data registrasi tidak ditemukan. Silakan daftar ulang.',
+        confirmButtonText: 'Daftar Ulang',
+      }).then((res) => {
+        if (res.isConfirmed) router.push('/register');
+      });
     } else {
-        Swal.fire({
-            icon: 'error',
-            title: 'Gagal',
-            text: msg
-        });
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: msg
+      });
     }
   } finally {
     loading.value = false;

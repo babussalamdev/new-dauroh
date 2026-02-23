@@ -4,30 +4,34 @@
       <div class="auth-box">
         <div class="auth-content">
           <div class="text-center mb-4">
-            <img src="~/assets/img/Logo-Mahad.png" alt="Logo Dauroh" style="height: 60px;" class="mb-3">
+            <img src="~/assets/img/Logo-Mahad.png" alt="Logo Event" style="height: 60px;" class="mb-3">
             <h1 class="auth-title">Buat Akun Baru</h1>
-            <p class="text-muted small">Daftar untuk menjadi peserta dauroh</p>
+            <p class="text-muted small">Daftar untuk menjadi peserta event</p>
           </div>
-          
+
           <form @submit.prevent="handleRegister">
             <div class="mb-3">
               <label for="fullName" class="form-label">Nama Lengkap</label>
-              <input type="text" id="fullName" v-model="form.name" class="form-control" placeholder="Masukkan nama lengkap Anda" required />
+              <input type="text" id="fullName" v-model="form.name" class="form-control"
+                placeholder="Masukkan nama lengkap Anda" required />
             </div>
 
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
-              <input type="email" id="email" v-model="form.email" class="form-control" placeholder="contoh: peserta@dauroh.com" required />
+              <input type="email" id="email" v-model="form.email" class="form-control"
+                placeholder="contoh: peserta@event.com" required />
             </div>
 
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
-              <input type="text" id="username" v-model="form.username" class="form-control" placeholder="Username untuk login" required />
+              <input type="text" id="username" v-model="form.username" class="form-control"
+                placeholder="Username untuk login" required />
             </div>
 
             <div class="mb-3">
               <label for="phone" class="form-label">Nomor HP</label>
-              <input type="tel" id="phone" v-model="form.phone_number" class="form-control" placeholder="08..." required />
+              <input type="tel" id="phone" v-model="form.phone_number" class="form-control" placeholder="08..."
+                required />
             </div>
 
             <div class="mb-3">
@@ -47,19 +51,21 @@
             <div class="mb-3">
               <label for="password" class="form-label">Password</label>
               <div class="password-wrapper">
-                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control" placeholder="Masukkan password" required />
+                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control"
+                  placeholder="Masukkan password" required />
                 <span @click="showPassword = !showPassword" class="password-toggle-icon">
-                   <i :class="showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                  <i :class="showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                 </span>
               </div>
             </div>
-            
+
             <div class="mb-3">
               <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
               <div class="password-wrapper">
-                <input :type="showConfirmPassword ? 'text' : 'password'" v-model="form.confirmPassword" class="form-control" placeholder="Ulangi password" required />
+                <input :type="showConfirmPassword ? 'text' : 'password'" v-model="form.confirmPassword"
+                  class="form-control" placeholder="Ulangi password" required />
                 <span @click="showConfirmPassword = !showConfirmPassword" class="password-toggle-icon">
-                   <i :class="showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                  <i :class="showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                 </span>
               </div>
             </div>
@@ -70,14 +76,15 @@
 
             <div class="d-grid gap-2 mt-4">
               <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
-                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
+                  aria-hidden="true"></span>
                 {{ loading ? 'Memproses...' : 'Daftar' }}
               </button>
             </div>
-            
+
             <div class="text-center mt-4 pt-3 border-top">
               <p class="text-muted small mb-1">Sudah punya akun?</p>
-              <NuxtLink to="/login" class="text-decoration-none fw-bold">Login di sini</NuxtLink>
+              <NuxtLink to="/auth/login" class="text-decoration-none fw-bold">Login di sini</NuxtLink>
             </div>
           </form>
         </div>
@@ -102,8 +109,8 @@ const form = reactive({
   email: '',
   username: '',
   phone_number: '',
-  gender: '',      
-  birthDate: '',   
+  gender: '',
+  birthDate: '',
   password: '',
   confirmPassword: ''
 });
@@ -115,7 +122,7 @@ const showConfirmPassword = ref(false);
 
 const handleRegister = async () => {
   error.value = null;
-  
+
   if (form.password !== form.confirmPassword) {
     error.value = 'Password dan konfirmasi password tidak cocok.';
     return;
@@ -125,13 +132,13 @@ const handleRegister = async () => {
 
   // Siapkan data untuk disimpan
   const userData = {
-      email: form.email,
-      name: form.name,
-      username: form.username,
-      phone_number: form.phone_number,
-      gender: form.gender,
-      birtdate: form.birthDate,
-      password: form.password
+    email: form.email,
+    name: form.name,
+    username: form.username,
+    phone_number: form.phone_number,
+    gender: form.gender,
+    birtdate: form.birthDate,
+    password: form.password
   };
 
   try {
@@ -153,14 +160,14 @@ const handleRegister = async () => {
 
   } catch (err) {
     console.error(err);
-    
+
     const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
     const msgLower = msg.toLowerCase();
 
     // 3. HANDLING "ACCOUNT ALREADY EXISTS"
     // Sesuai request: Anggap ini sebagai "Resend OTP" dan langsung redirect ke verify
     if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar')) {
-      
+
       // Tetap simpan data form ke session agar verify.vue bisa ambil untuk resend
       sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
 
@@ -171,7 +178,7 @@ const handleRegister = async () => {
         timer: 1500,
         showConfirmButton: false
       });
-      
+
       router.push({ path: '/verify', query: { email: form.email } });
 
     } else {

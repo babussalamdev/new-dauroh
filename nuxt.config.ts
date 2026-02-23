@@ -28,16 +28,7 @@ export default defineNuxtConfig({
       ],
     },
   },
-  modules: [
-    "@nuxt/content",
-    "@nuxt/image",
-    "@nuxt/scripts",
-    "@nuxt/test-utils",
-    "@pinia/nuxt",
-    "@pinia-plugin-persistedstate/nuxt",
-    "@nuxt/fonts",
-    "@nuxt/icon",
-  ],
+  modules: ["@nuxt/icon", "@pinia/nuxt", "@pinia-plugin-persistedstate/nuxt", "@nuxt/image"],
   pinia: {
     storesDirs: ["./app/stores/**"],
   },

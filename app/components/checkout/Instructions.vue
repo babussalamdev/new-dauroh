@@ -3,15 +3,11 @@
     <div class="card shadow-sm">
       <div class="card-body p-4 text-center">
 
-        <img 
-          v-if="paymentLogoUrl" 
-          :src="paymentLogoUrl" 
-          :alt="store.transactionDetails?.paymentMethod || 'Bank'" 
-          class="payment-logo-summary mb-3"
-        >
-        
+        <img v-if="paymentLogoUrl" :src="paymentLogoUrl" :alt="store.transactionDetails?.paymentMethod || 'Bank'"
+          class="payment-logo-summary mb-3">
+
         <p class="text-muted mb-1">Jumlah yang harus dibayar</p>
-        
+
         <h2 class="fw-bold mb-3 text-primary">
           {{ formatCurrency(Number(store.transactionDetails?.amount || 0)) }}
         </h2>
@@ -19,20 +15,17 @@
         <hr class="my-4">
 
         <div class="mb-4">
-           <BankPaymentCountdown />
+          <BankPaymentCountdown />
         </div>
 
         <div class="text-start">
           <div v-if="currentStatus === 'PENDING'">
-             <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
-             
-             <component 
-              :is="currentBankComponent" 
-              v-if="currentBankComponent"
+            <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
+
+            <component :is="currentBankComponent" v-if="currentBankComponent"
               :vaNumber="store.transactionDetails?.vaNumber || 'ERROR'"
-              :amount="Number(store.transactionDetails?.amount || 0)"
-            />
-            
+              :amount="Number(store.transactionDetails?.amount || 0)" />
+
             <div v-else class="alert alert-warning text-center">
               Gunakan No. VA: <strong>{{ store.transactionDetails?.vaNumber || '-' }}</strong>
             </div>
@@ -42,34 +35,29 @@
               <span class="ms-2 text-muted small fst-italic">Menunggu pembayaran otomatis...</span>
             </div>
             <div class="text-center mt-4">
-                <button class="btn btn-secondary" @click="handleExit">Bayar Nanti
-                </button>
+              <button class="btn btn-secondary" @click="handleExit">Bayar Nanti
+              </button>
             </div>
 
           </div>
 
           <div v-else-if="currentStatus === 'EXPIRED'" class="alert alert-danger text-center">
-             <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
-             <p>Sesi pembayaran telah berakhir.</p>
-             <button class="btn btn-outline-danger btn-sm mt-3" @click="handleExpiredState">
-                Pilih Metode Pembayaran Ulang
-             </button>
+            <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
+            <p>Sesi pembayaran telah berakhir.</p>
+            <button class="btn btn-outline-danger btn-sm mt-3" @click="handleExpiredState">
+              Pilih Metode Pembayaran Ulang
+            </button>
           </div>
 
         </div>
       </div>
     </div>
-    
+
     <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
       <i class="bi bi-whatsapp me-1"></i> Whatsapp
     </a>
 
-    <ModalsQrCodeModal 
-      v-if="showQrModal"
-      :show="showQrModal" 
-      :ticket="newlyCreatedTicket" 
-      @close="handleCloseQr" 
-    />
+    <ModalsQrCodeModal v-if="showQrModal" :show="showQrModal" :ticket="newlyCreatedTicket" @close="handleCloseQr" />
   </div>
 </template>
 
@@ -80,7 +68,7 @@ import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useNuxtApp, useRuntimeConfig } from '#app';
 import Swal from 'sweetalert2';
-import ModalsQrCodeModal from '~/components/modals/QrCodeModal.vue'; 
+import ModalsQrCodeModal from '~/components/modals/QrCodeModal.vue';
 
 // Import Assets
 import bniLogo from '~/assets/img/bank/bni.png';
@@ -102,10 +90,10 @@ const showQrModal = ref(false);
 // --- Computed Helpers ---
 const currentStatus = computed(() => {
   if (store.isExpired) return 'EXPIRED';
-  
+
   // Pastikan status aman dari null
   const rawStatus = (store.transactionDetails?.status || 'PENDING').toUpperCase();
-  
+
   if (['SUCCESSFUL', 'PAID', 'SETTLED'].includes(rawStatus)) return 'SUCCESSFUL';
   if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(rawStatus)) return 'EXPIRED';
 
@@ -115,20 +103,20 @@ const currentStatus = computed(() => {
 const isPaid = computed(() => currentStatus.value === 'SUCCESSFUL');
 
 const newlyCreatedTicket = computed(() => {
-  if (!store.dauroh || !store.participants.length) return undefined;
-  return { dauroh: store.dauroh, participants: store.participants };
+  if (!store.event || !store.participants.length) return undefined;
+  return { event: store.event, participants: store.participants };
 });
 
 const paymentLogoUrl = computed(() => {
-  const logos: { [key: string]: string } = { 
-    'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo, 
-    'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo 
+  const logos: { [key: string]: string } = {
+    'BNI': bniLogo, 'BRI': briLogo, 'BSI': bsiLogo, 'CIMB': cimbLogo,
+    'DANAMON': danamonLogo, 'MANDIRI': mandiriLogo, 'PERMATA': permataLogo, 'QRIS': qrisLogo
   };
-  
+
   // [FIX 2] MAPPING BSM -> BSI BIAR LOGO MUNCUL
   let method = (store.transactionDetails?.paymentMethod || '').toUpperCase();
-  if (method === 'BSM') method = 'BSI'; 
-  
+  if (method === 'BSM') method = 'BSI';
+
   return logos[method] || null;
 });
 
@@ -149,61 +137,61 @@ const currentBankComponent = computed(() => {
   // [FIX 3] MAPPING BSM -> BSI BIAR PANDUAN MUNCUL
   let method = (store.transactionDetails?.paymentMethod || '').toUpperCase();
   if (method === 'BSM') method = 'BSI';
-  
+
   return BankComponents[method] || null;
 });
 
 // --- Helper: Handle Expired Logic ---
 const handleExpiredState = () => {
-    Swal.fire({
-      icon: 'error',
-      title: 'Waktu Habis!',
-      text: 'Sesi pembayaran Anda telah berakhir.',
-      timer: 2000,
-      showConfirmButton: false
-    }).then(() => {
-      if (store.resetTransaction) store.resetTransaction(); 
-      else {
-        store.transactionDetails = null;
-        store.paymentMethod = null;
-      }
-      store.setStep('select');
-    });
+  Swal.fire({
+    icon: 'error',
+    title: 'Waktu Habis!',
+    text: 'Sesi pembayaran Anda telah berakhir.',
+    timer: 2000,
+    showConfirmButton: false
+  }).then(() => {
+    if (store.resetTransaction) store.resetTransaction();
+    else {
+      store.transactionDetails = null;
+      store.paymentMethod = null;
+    }
+    store.setStep('select');
+  });
 };
 const handleExit = () => {
-    // Arahkan ke dashboard. 
-    // Navigation Guard (onBeforeRouteLeave) di bawah 
-    // SUDAH menghandle kasus ke '/dashboard' dengan next() langsung (tanpa tanya-tanya).
-    router.push('/dashboard'); 
+  // Arahkan ke dashboard. 
+  // Navigation Guard (onBeforeRouteLeave) di bawah 
+  // SUDAH menghandle kasus ke '/dashboard' dengan next() langsung (tanpa tanya-tanya).
+  router.push('/dashboard');
 };
 
 // --- Lifecycle & Watcher ---
 onMounted(() => {
   // 1. Register data pendaftaran (Existing)
-  if (store.transactionDetails && store.dauroh && currentStatus.value !== 'SUCCESSFUL') {
-    userStore.registerDauroh({
-      dauroh: store.dauroh,
+  if (store.transactionDetails && store.event && currentStatus.value !== 'SUCCESSFUL') {
+    userStore.registerEvent({
+      event: store.event,
       participants: store.participants,
-      transactionDetails: store.transactionDetails 
+      transactionDetails: store.transactionDetails
     });
   }
 
   // 2. Handle Expired State (Existing)
   if (currentStatus.value === 'EXPIRED') {
-   handleExpiredState();
+    handleExpiredState();
   }
 
   // 3. [BARU] Konek ke WebSocket AWS lu
- const wsUrl = config.public.websocketUrl;
+  const wsUrl = config.public.websocketUrl;
   const userEmail = userStore.user?.email || ''; // Atau ambil dari store mana lu simpen email
 
   if (wsUrl && userEmail) {
-      // GABUNGKAN URL DENGAN PARAMETER SK
-      // Hasilnya: wss://.../stage/?sk=email@gmail.com
-      const finalUrl = `${wsUrl}${wsUrl.includes('?') ? '&' : '?'}sk=${userEmail}`;
-      
-      console.log("🔌 Menghubungkan ke WebSocket dengan SK:", finalUrl);
-      $connectSocket(finalUrl);
+    // GABUNGKAN URL DENGAN PARAMETER SK
+    // Hasilnya: wss://.../stage/?sk=email@gmail.com
+    const finalUrl = `${wsUrl}${wsUrl.includes('?') ? '&' : '?'}sk=${userEmail}`;
+
+    console.log("🔌 Menghubungkan ke WebSocket dengan SK:", finalUrl);
+    $connectSocket(finalUrl);
   }
 });
 
@@ -216,11 +204,11 @@ watch(currentStatus, (newStatus) => {
   }
   else if (status === 'SUCCESSFUL') {
     // Register ulang/update status saat sukses
-    userStore.registerDauroh({
-      dauroh: store.dauroh, 
+    userStore.registerEvent({
+      event: store.event,
       participants: store.participants,
-    }); 
-    store.setStep('success'); 
+    });
+    store.setStep('success');
   }
 });
 
@@ -238,7 +226,7 @@ onBeforeRouteLeave((to, from, next) => {
     next();
     return;
   }
-  
+
   Swal.fire({
     title: 'Keluar halaman?',
     text: "Anda bisa melanjutkan pembayaran nanti lewat menu Riwayat.",
@@ -249,7 +237,7 @@ onBeforeRouteLeave((to, from, next) => {
     cancelButtonText: 'Batal'
   }).then((result) => {
     if (result.isConfirmed) {
-      store.clearCheckout(); 
+      store.clearCheckout();
       next();
     } else {
       next(false);
@@ -259,5 +247,9 @@ onBeforeRouteLeave((to, from, next) => {
 </script>
 
 <style scoped>
-.payment-logo-summary { max-height: 60px; max-width: 180px; object-fit: contain; }
+.payment-logo-summary {
+  max-height: 60px;
+  max-width: 180px;
+  object-fit: contain;
+}
 </style>

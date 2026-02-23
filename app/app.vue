@@ -9,9 +9,9 @@
 <script setup lang="ts">
 
 useHead({
-  titleTemplate: '%s - Dauroh',
+  titleTemplate: '%s - Event',
   meta: [
-    { name: 'description', content: 'Web pendaftaran dauroh' }
+    { name: 'description', content: 'Web pendaftaran event' }
   ],
   link: [
     { rel: 'icon', type: 'image/png', href: '/favicon.ico' }

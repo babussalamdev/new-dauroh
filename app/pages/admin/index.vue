@@ -6,10 +6,10 @@
         <p class="text-muted fs-5 mb-4">
           Anda login sebagai <span class="badge bg-primary rounded-pill">{{ userRoleLabel }}</span>
         </p>
-        
+
         <div class="alert alert-info d-inline-block">
           <i class="bi bi-info-circle me-2"></i>
-          Pilih menu <strong>"Manajemen Event > Tiket Dauroh"</strong> di samping untuk mengelola event.
+          Pilih menu <strong>"Manajemen Event > Tiket Event"</strong> di samping untuk mengelola event.
         </div>
       </div>
     </div>

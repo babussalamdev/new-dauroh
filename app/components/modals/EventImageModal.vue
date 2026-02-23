@@ -3,20 +3,16 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0">
-          <h5 class="modal-title">{{ dauroh?.Title || 'Gambar Event' }}</h5>
+          <h5 class="modal-title">{{ event?.Title || 'Gambar Event' }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body text-center">
-          <img 
-            v-if="dauroh?.Picture"
-            :src="`${imgBaseUrl}/${dauroh. SK}/${dauroh.Picture}.webp`" 
-            :alt="dauroh.Title" 
-            class="img-fluid rounded"
-            @error="($event.target as HTMLImageElement).style.display = 'none'"
-          />
-          <div v-else class="Picture-preview-placeholder d-flex flex-column justify-content-center align-items-center text-muted mx-auto">
+          <img v-if="event?.Picture" :src="`${imgBaseUrl}/${event.SK}/${event.Picture}.webp`" :alt="event.Title"
+            class="img-fluid rounded" @error="($event.target as HTMLImageElement).style.display = 'none'" />
+          <div v-else
+            class="Picture-preview-placeholder d-flex flex-column justify-content-center align-items-center text-muted mx-auto">
             <i class="bi bi-image fs-1"></i>
-            <span>Picture Dauroh</span>
+            <span>Picture Event</span>
           </div>
         </div>
         <div class="modal-footer border-0">
@@ -30,7 +26,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Dauroh } from '~/stores/dauroh'
+import type { Event } from '~/types/event'
 
 // Ambil config runtime
 const config = useRuntimeConfig();
@@ -38,7 +34,7 @@ const imgBaseUrl = ref(config.public.img || '');
 
 const props = defineProps<{
   show: boolean
-  dauroh?: Dauroh
+  event?: Event
 }>()
 
 const emit = defineEmits<{
@@ -50,8 +46,9 @@ const close = () => emit('close')
 
 <style scoped>
 @import url("~/assets/css/components/modals.css");
-.img-fluid {
-  max-height: 50vh; /* Batasi tinggi gambar agar pas di layar */
-}
 
+.img-fluid {
+  max-height: 50vh;
+  /* Batasi tinggi gambar agar pas di layar */
+}
 </style>

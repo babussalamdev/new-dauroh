@@ -20,7 +20,7 @@ export interface UserTicket {
   full_sk?: string;
   date: string;
   created_at?: string;
-  dauroh: any;
+  event: any;
   participants: Participant[];
   title?: string;
   total_participants?: number;

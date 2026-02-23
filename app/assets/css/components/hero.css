@@ -19,7 +19,7 @@
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease-in-out;
-  display:flexbox;
+  display: flexbox;
   align-items: center;
   justify-content: center;
 }
@@ -34,16 +34,21 @@
 }
 
 .button-container {
-  padding-top: 2rem; /* Tambah jarak dikit */
+  padding-top: 2rem;
+  /* Tambah jarak dikit */
   display: flex;
   justify-content: center;
-  flex-wrap: wrap; /* PENTING: Biar turun ke bawah kalau sempit */
-  gap: 1.5rem; /* Pake gap biar rapi, ganti margin manual */
+  flex-wrap: wrap;
+  /* PENTING: Biar turun ke bawah kalau sempit */
+  gap: 1.5rem;
+  /* Pake gap biar rapi, ganti margin manual */
 }
 
 .button-item {
-  flex: 0 0 auto; /* Jangan membesar/mengecil sembarangan */
-  width: 90px; /* Set fixed width biar konsisten */
+  flex: 0 0 auto;
+  /* Jangan membesar/mengecil sembarangan */
+  width: 90px;
+  /* Set fixed width biar konsisten */
   display: flex;
   flex-direction: column;
   align-items: center;

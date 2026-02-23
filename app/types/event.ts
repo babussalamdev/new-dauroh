@@ -1,20 +1,20 @@
-export interface DaurohDayDetail {
+export interface EventDayDetail {
   date: string;
   start_time: string;
   end_time: string;
 }
 
-export interface DaurohRegistration {
+export interface EventRegistration {
   start_registration: string;
   end_registration: string;
 }
 
-export interface ApiDaurohRaw {
+export interface ApiEventRaw {
   SK: string;
   Title: string;
   Gender: string;
-  Date?: { [key: string]: DaurohDayDetail };
-  Registration?: DaurohRegistration;
+  Date?: { [key: string]: EventDayDetail };
+  Registration?: EventRegistration;
   Place: string;
   Price: number | string;
   Quota_Ikhwan_Akhwat: number | string | null;
@@ -28,13 +28,13 @@ export interface ApiDaurohRaw {
   Description?: string;
 }
 
-export interface Dauroh {
+export interface Event {
   SK: string | null;
   id?: number | null;
   Title: string;
   Gender: string;
-  Date?: { [key: string]: DaurohDayDetail };
-  Registration?: DaurohRegistration;
+  Date?: { [key: string]: EventDayDetail };
+  Registration?: EventRegistration;
   Place: string;
   Price: number;
   Quota_Ikhwan: number | 'non-quota';
@@ -48,13 +48,13 @@ export interface Dauroh {
   Description?: string;
 }
 
-export interface DaurohBasicData {
+export interface EventBasicData {
   SK?: string | null;
   Title: string;
   Gender: string;
   Place: string;
   Price: number;
-  Registration?: DaurohRegistration;
+  Registration?: EventRegistration;
   Quota_Ikhwan: number | 'non-quota';
   Quota_Akhwat: number | 'non-quota';
   Quota_Total: number | 'non-quota';
@@ -62,6 +62,6 @@ export interface DaurohBasicData {
   Description?: string;
 }
 
-export interface DaurohSchedulePayload {
-  [key: string]: DaurohDayDetail;
+export interface EventSchedulePayload {
+  [key: string]: EventDayDetail;
 }

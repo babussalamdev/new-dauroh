@@ -1,7 +1,7 @@
 <template>
   <div class="homepage">
     <HomeHeroSection />
-    <DaurohTiketDauroh />
+    <EventTiketEvent />
   </div>
 </template>
 

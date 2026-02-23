@@ -3,11 +3,11 @@ import { ref, computed, reactive } from "vue";
 import { useToastStore } from "./toast";
 import { useNuxtApp, useCookie } from "#app";
 import type { 
-  ApiDaurohRaw, 
-  Dauroh, 
-  DaurohBasicData, 
-  DaurohSchedulePayload 
-} from "~/types/dauroh";
+  ApiEventRaw, 
+  Event, 
+  EventBasicData, 
+  EventSchedulePayload 
+} from "~/types/event";
 
 // --- Helpers ---
 const parseQuota = (val: any): number | 'non-quota' => {
@@ -30,7 +30,7 @@ const capitalizeText = (text: string): string => {
   return text.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 };
 
-const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
+const mapApiToEvent = (event: ApiEventRaw): Event => ({
   SK: event.SK,
   Title: capitalizeText(event.Title || ""),
   Gender: event.Gender || "",
@@ -49,7 +49,7 @@ const mapApiToDauroh = (event: ApiDaurohRaw): Dauroh => ({
   Description: event.Description || "",
 });
 
-const createEventPayload = (data: DaurohBasicData, accessToken: string, existingDate: any = {}) => {
+const createEventPayload = (data: EventBasicData, accessToken: string, existingDate: any = {}) => {
   const payload: any = {
     Title: data.Title,
     Gender: (data.Gender || "ikhwan, akhwat").toLowerCase(),
@@ -75,18 +75,18 @@ const createEventPayload = (data: DaurohBasicData, accessToken: string, existing
 };
 
 // --- Store ---
-export const useDaurohStore = defineStore("dauroh", () => {
+export const useEventStore = defineStore("event", () => {
   // State
   const searchQuery = ref("");
-  const tiketDauroh = ref<Dauroh[]>([]);
-  const adminTiketDauroh = ref<Dauroh[]>([]);
+  const tiketEvent = ref<Event[]>([]);
+  const adminTiketEvent = ref<Event[]>([]);
   const userLogs = ref<any[]>([]);
-  const currentDaurohDetail = ref<Dauroh | null>(null);
-  const currentPublicDaurohDetail = ref<Dauroh | null>(null);
+  const currentEventDetail = ref<Event | null>(null);
+  const currentPublicEventDetail = ref<Event | null>(null);
   
   const loading = reactive({
-    tiketDauroh: false,
-    adminTiketDauroh: false,
+    tiketEvent: false,
+    adminTiketEvent: false,
     uploadPhoto: false,
     detail: false,
     savingBasic: false,
@@ -95,24 +95,24 @@ export const useDaurohStore = defineStore("dauroh", () => {
   });
 
   // Getters
-  const filteredTiketDauroh = computed(() => {
-    if (!searchQuery.value) return tiketDauroh.value || [];
-    return tiketDauroh.value.filter((d) => 
+  const filteredTiketEvent = computed(() => {
+    if (!searchQuery.value) return tiketEvent.value || [];
+    return tiketEvent.value.filter((d) => 
       d.Title.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
   });
 
-  const tiketDaurohChunks = computed(() => {
-    const filtered = filteredTiketDauroh.value;
-    const chunks: Dauroh[][] = [];
+  const tiketEventChunks = computed(() => {
+    const filtered = filteredTiketEvent.value;
+    const chunks: Event[][] = [];
     for (let i = 0; i < filtered.length; i += 4) {
       chunks.push(filtered.slice(i, i + 4));
     }
     return chunks;
   });
 
-  const filteredAdminTiketDauroh = computed(() => {
-    const data = Array.isArray(adminTiketDauroh.value) ? adminTiketDauroh.value : [];
+  const filteredAdminTiketEvent = computed(() => {
+    const data = Array.isArray(adminTiketEvent.value) ? adminTiketEvent.value : [];
     return [...data].sort((a, b) => (b.SK ?? "").localeCompare(a.SK ?? ""));
   });
 
@@ -121,62 +121,62 @@ export const useDaurohStore = defineStore("dauroh", () => {
     searchQuery.value = query;
   }
 
-  async function fetchPublicTiketDauroh() {
-    if (loading.tiketDauroh) return;
-    loading.tiketDauroh = true;
+  async function fetchPublicTiketEvent() {
+    if (loading.tiketEvent) return;
+    loading.tiketEvent = true;
     try {
       const { $apiBase } = useNuxtApp() as any;
       const res = await $apiBase.get("/get-view?type=homepage");
       const rawData = Array.isArray(res.data?.event) ? res.data.event : [];
       userLogs.value = [];
-      tiketDauroh.value = rawData
-        .filter((event: ApiDaurohRaw) => event.Status !== 'inactive')
-        .map((event: ApiDaurohRaw) => mapApiToDauroh(event));
+      tiketEvent.value = rawData
+        .filter((event: ApiEventRaw) => event.Status !== 'inactive')
+        .map((event: ApiEventRaw) => mapApiToEvent(event));
     } catch (error) {
       console.error(error);
     } finally {
-      loading.tiketDauroh = false;
+      loading.tiketEvent = false;
     }
   }
 
-  async function fetchAuthTiketDauroh() {
-    if (loading.tiketDauroh) return;
-    loading.tiketDauroh = true;
+  async function fetchAuthTiketEvent() {
+    if (loading.tiketEvent) return;
+    loading.tiketEvent = true;
     try {
       const { $apiBase } = useNuxtApp() as any;
       const res = await $apiBase.get("/get-default?type=homepage");
       const rawEvents = Array.isArray(res.data?.event) ? res.data.event : [];
       const rawLogs = Array.isArray(res.data?.logs) ? res.data.logs : [];
 
-      tiketDauroh.value = rawEvents
-        .filter((event: ApiDaurohRaw) => event.Status !== 'inactive')
-        .map((event: ApiDaurohRaw) => mapApiToDauroh(event));
+      tiketEvent.value = rawEvents
+        .filter((event: ApiEventRaw) => event.Status !== 'inactive')
+        .map((event: ApiEventRaw) => mapApiToEvent(event));
       userLogs.value = rawLogs;
     } catch (error) {
       console.error(error);
     } finally {
-      loading.tiketDauroh = false;
+      loading.tiketEvent = false;
     }
   }
 
-  async function fetchAdminTiketDauroh() {
-    if (loading.adminTiketDauroh) return;
-    loading.adminTiketDauroh = true;
+  async function fetchAdminTiketEvent() {
+    if (loading.adminTiketEvent) return;
+    loading.adminTiketEvent = true;
     try {
       const { $apiBase } = useNuxtApp() as any;
       const res = await $apiBase.get("/get-default?type=event");
       const data = res.data?.event || res.data;
-      adminTiketDauroh.value = Array.isArray(data) ? data.map(mapApiToDauroh) : [];
+      adminTiketEvent.value = Array.isArray(data) ? data.map(mapApiToEvent) : [];
     } catch (error) {
       console.error(error);
     } finally {
-      loading.adminTiketDauroh = false;
+      loading.adminTiketEvent = false;
     }
   }
 
-  async function fetchPublicDaurohDetail(SK: string) {
+  async function fetchPublicEventDetail(SK: string) {
     loading.detailPublic = true;
-    currentPublicDaurohDetail.value = null;
+    currentPublicEventDetail.value = null;
     try {
       const { $apiBase } = useNuxtApp() as any;
       const res = await $apiBase.get(`/get-view?type=event&sk=${SK}`);
@@ -185,7 +185,7 @@ export const useDaurohStore = defineStore("dauroh", () => {
 
       if (eventRaw) {
         if (eventRaw.Status === 'inactive') throw new Error("Event ini sedang tidak aktif.");
-        currentPublicDaurohDetail.value = mapApiToDauroh(eventRaw);
+        currentPublicEventDetail.value = mapApiToEvent(eventRaw);
       } else {
         throw new Error("Event tidak ditemukan");
       }
@@ -196,15 +196,15 @@ export const useDaurohStore = defineStore("dauroh", () => {
     }
   }
 
-  async function fetchDaurohDetail(SK: string) {
+  async function fetchEventDetail(SK: string) {
     loading.detail = true;
-    currentDaurohDetail.value = null;
+    currentEventDetail.value = null;
     try {
       const { $apiBase } = useNuxtApp() as any;
       const res = await $apiBase.get(`/get-default?type=event&sk=${SK}`);
       const data = res.data?.event || res.data;
       const eventRaw = Array.isArray(data) ? (data.find(e => String(e.SK) === SK) || data[0]) : data;
-      if (eventRaw) currentDaurohDetail.value = mapApiToDauroh(eventRaw);
+      if (eventRaw) currentEventDetail.value = mapApiToEvent(eventRaw);
     } catch (error) {
       console.error(error);
     } finally {
@@ -212,18 +212,18 @@ export const useDaurohStore = defineStore("dauroh", () => {
     }
   }
 
-  async function addTiketDaurohBasic(daurohData: Omit<DaurohBasicData, "SK">): Promise<boolean> {
+  async function addTiketEventBasic(eventData: Omit<EventBasicData, "SK">): Promise<boolean> {
     const token = useCookie("AccessToken").value;
     if (!token) return false;
     loading.savingBasic = true;
     const toast = useToastStore();
     try {
       const { $apiBase } = useNuxtApp() as any;
-      const payload = createEventPayload(daurohData as DaurohBasicData, token);
+      const payload = createEventPayload(eventData as EventBasicData, token);
       const res = await $apiBase.post("/input-default?type=event", payload);
       const newEventData = res.data?.event || res.data;
       if (newEventData?.SK) {
-        adminTiketDauroh.value.unshift(mapApiToDauroh(newEventData));
+        adminTiketEvent.value.unshift(mapApiToEvent(newEventData));
         toast.showToast({ message: "Event baru berhasil ditambahkan.", type: "success" });
         return true;
       }
@@ -236,13 +236,13 @@ export const useDaurohStore = defineStore("dauroh", () => {
     }
   }
 
-  async function updateTiketDaurohBasic(daurohData: Partial<DaurohBasicData> & { SK: string }): Promise<boolean> {
+  async function updateTiketEventBasic(eventData: Partial<EventBasicData> & { SK: string }): Promise<boolean> {
     const token = useCookie("AccessToken").value;
-    if (!token || !daurohData.SK) return false;
+    if (!token || !eventData.SK) return false;
     loading.savingBasic = true;
     const toast = useToastStore();
     
-    const currentEvent = adminTiketDauroh.value.find(d => d.SK === daurohData.SK) || currentDaurohDetail.value;
+    const currentEvent = adminTiketEvent.value.find(d => d.SK === eventData.SK) || currentEventDetail.value;
     if (!currentEvent) {
       loading.savingBasic = false;
       toast.showToast({ message: "Data event tidak ditemukan.", type: "danger" });
@@ -251,21 +251,21 @@ export const useDaurohStore = defineStore("dauroh", () => {
 
     try {
       const { $apiBase } = useNuxtApp() as any;
-      const mergedData: DaurohBasicData = {
+      const mergedData: EventBasicData = {
         ...currentEvent,
-        ...daurohData,
+        ...eventData,
         SK: currentEvent.SK as string
       };
       const payload = createEventPayload(mergedData, token, currentEvent.Date || {});
-      await $apiBase.put(`/update-default?type=event&sk=${daurohData.SK}`, payload);
+      await $apiBase.put(`/update-default?type=event&sk=${eventData.SK}`, payload);
 
-      const updateLocal = (target: Dauroh) => {
+      const updateLocal = (target: Event) => {
         Object.assign(target, { ...mergedData, Title: capitalizeText(mergedData.Title) });
       };
 
-      const targetInList = adminTiketDauroh.value.find(d => d.SK === daurohData.SK);
+      const targetInList = adminTiketEvent.value.find(d => d.SK === eventData.SK);
       if (targetInList) updateLocal(targetInList);
-      if (currentDaurohDetail.value?.SK === daurohData.SK) updateLocal(currentDaurohDetail.value);
+      if (currentEventDetail.value?.SK === eventData.SK) updateLocal(currentEventDetail.value);
 
       toast.showToast({ message: "Berhasil diperbarui.", type: "success" });
       return true;
@@ -288,9 +288,9 @@ export const useDaurohStore = defineStore("dauroh", () => {
       const newPic = res.data?.Picture || res.data?.event?.Picture;
       
       if (newPic) {
-        const target = adminTiketDauroh.value.find(d => d.SK === eventSK);
+        const target = adminTiketEvent.value.find(d => d.SK === eventSK);
         if (target) target.Picture = newPic;
-        if (currentDaurohDetail.value?.SK === eventSK) currentDaurohDetail.value.Picture = newPic;
+        if (currentEventDetail.value?.SK === eventSK) currentEventDetail.value.Picture = newPic;
       }
       useToastStore().showToast({ message: "Foto diperbarui.", type: "success" });
       return true;
@@ -301,14 +301,14 @@ export const useDaurohStore = defineStore("dauroh", () => {
     }
   }
 
-  async function deleteTiketDauroh(SK: string) {
+  async function deleteTiketEvent(SK: string) {
     const token = useCookie("AccessToken").value;
     if (!token) return;
     try {
       const { $apiBase } = useNuxtApp() as any;
       await $apiBase.delete(`/delete-default?pk=event&sk=${SK}`, { data: { AccessToken: token } });
-      adminTiketDauroh.value = adminTiketDauroh.value.filter(d => d.SK !== SK);
-      tiketDauroh.value = tiketDauroh.value.filter(d => d.SK !== SK);
+      adminTiketEvent.value = adminTiketEvent.value.filter(d => d.SK !== SK);
+      tiketEvent.value = tiketEvent.value.filter(d => d.SK !== SK);
       useToastStore().showToast({ message: "Event dihapus.", type: "success" });
     } catch (error) {
       console.error(error);
@@ -318,24 +318,24 @@ export const useDaurohStore = defineStore("dauroh", () => {
   function decrementQuota(sk: string, total: number, ikhwan: number, akhwat: number) {
     const sub = (val: any, amt: number) => (val === 'non-quota' ? 'non-quota' : Math.max(0, Number(val) - amt));
     
-    const apply = (target: Dauroh | null) => {
+    const apply = (target: Event | null) => {
       if (!target || target.SK !== sk) return;
       target.Quota_Total = sub(target.Quota_Total, total);
       target.Quota_Ikhwan = sub(target.Quota_Ikhwan, ikhwan);
       target.Quota_Akhwat = sub(target.Quota_Akhwat, akhwat);
     };
 
-    apply(tiketDauroh.value.find(e => e.SK === sk) || null);
-    apply(currentPublicDaurohDetail.value);
+    apply(tiketEvent.value.find(e => e.SK === sk) || null);
+    apply(currentPublicEventDetail.value);
   }
 
   return {
-    searchQuery, loading, tiketDauroh, adminTiketDauroh, userLogs,
-    currentDaurohDetail, currentPublicDaurohDetail,
-    filteredTiketDauroh, tiketDaurohChunks, filteredAdminTiketDauroh,
-    setSearchQuery, fetchPublicTiketDauroh, fetchAuthTiketDauroh,
-    fetchAdminTiketDauroh, fetchPublicDaurohDetail, fetchDaurohDetail,
-    addTiketDaurohBasic, updateTiketDaurohBasic, uploadEventPhoto,
-    deleteTiketDauroh, decrementQuota
+    searchQuery, loading, tiketEvent, adminTiketEvent, userLogs,
+    currentEventDetail, currentPublicEventDetail,
+    filteredTiketEvent, tiketEventChunks, filteredAdminTiketEvent,
+    setSearchQuery, fetchPublicTiketEvent, fetchAuthTiketEvent,
+    fetchAdminTiketEvent, fetchPublicEventDetail, fetchEventDetail,
+    addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
+    deleteTiketEvent, decrementQuota
   };
 });

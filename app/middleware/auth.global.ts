@@ -24,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const userOnlyPaths = ['/dashboard', '/profile', '/riwayat-pendaftaran'];
   if (userOnlyPaths.some(path => to.path.startsWith(path))) {
     if (!accessToken.value) {
-      return navigateTo('/login');
+      return navigateTo('/auth/login');
     }
   }
 });

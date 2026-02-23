@@ -8,16 +8,16 @@
               <i class="bi bi-qr-code-scan me-2 text-primary"></i>E-Ticket Peserta
             </h5>
             <small class="text-muted text-truncate d-block" style="max-width: 250px;">
-              {{ ticket?.dauroh?.Title || 'Detail Tiket' }}
+              {{ ticket?.event?.Title || 'Detail Tiket' }}
             </small>
           </div>
           <button type="button" class="btn-close shadow-none" @click="close"></button>
         </div>
-        
+
         <div class="modal-body p-0">
           <div class="p-3 bg-primary-subtle border-bottom border-primary-subtle text-center">
             <p class="mb-0 small text-primary-emphasis fw-medium">
-              <i class="bi bi-info-circle-fill me-1"></i> 
+              <i class="bi bi-info-circle-fill me-1"></i>
               Pilih ikon QR untuk memunculkan kode absen peserta.
             </p>
           </div>
@@ -39,9 +39,7 @@
                     </div>
                   </td>
                   <td class="text-center">
-                    <button 
-                      @click="toggleQr(Number(index))"
-                    >
+                    <button @click="toggleQr(Number(index))">
                       <i class="bi bi-qr-code fs-5"></i>
                     </button>
                   </td>
@@ -51,24 +49,19 @@
           </div>
 
           <Transition name="slide-up">
-            <div v-if="activeQrIndex !== null && participantList[activeQrIndex]" class="qr-display-section bg-light p-4 text-center border-top">
-              <h6 class="fw-bold mb-3">Barcode Absen: {{ participantList[activeQrIndex].Name || participantList[activeQrIndex].name }}</h6>
-              
+            <div v-if="activeQrIndex !== null && participantList[activeQrIndex]"
+              class="qr-display-section bg-light p-4 text-center border-top">
+              <h6 class="fw-bold mb-3">Barcode Absen: {{ participantList[activeQrIndex].Name ||
+                participantList[activeQrIndex].name }}</h6>
+
               <div class="qr-frame p-3 bg-white d-inline-block rounded-4 shadow-sm border mb-3">
-                <img 
-                  :src="getQrUrl(participantList[activeQrIndex], 400)" 
-                  alt="QR Code" 
-                  class="img-fluid"
-                  style="width: 200px; height: 200px;"
-                >
+                <img :src="getQrUrl(participantList[activeQrIndex], 400)" alt="QR Code" class="img-fluid"
+                  style="width: 200px; height: 200px;">
               </div>
 
               <div class="d-flex justify-content-center gap-2">
-                <button 
-                  class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm" 
-                  @click="downloadQr(participantList[activeQrIndex])"
-                  :disabled="isDownloading"
-                >
+                <button class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm"
+                  @click="downloadQr(participantList[activeQrIndex])" :disabled="isDownloading">
                   <span v-if="isDownloading" class="spinner-border spinner-border-sm me-1"></span>
                   <i v-else class="bi bi-download me-1"></i> Simpan QR
                 </button>
@@ -81,7 +74,8 @@
         </div>
 
         <div class="modal-footer border-0 p-3 bg-light">
-          <button type="button" class="btn btn-secondary w-100 rounded-pill fw-bold" @click="close">Tutup E-Ticket</button>
+          <button type="button" class="btn btn-secondary w-100 rounded-pill fw-bold" @click="close">Tutup
+            E-Ticket</button>
         </div>
       </div>
     </div>
@@ -94,7 +88,7 @@ import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
   show: boolean;
-  ticket: any; 
+  ticket: any;
 }>();
 
 const emit = defineEmits(['close']);
@@ -126,7 +120,7 @@ const getQrUrl = (person: any, size: number = 300) => {
   const data = {
     trx: String(props.ticket?.SK || 'NEW'),
     name: person.Name || person.name,
-    event: props.ticket?.dauroh?.Title
+    event: props.ticket?.event?.Title
   };
   const encodedData = encodeURIComponent(JSON.stringify(data));
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedData}`;
@@ -140,10 +134,10 @@ const downloadQr = async (person: any) => {
     const response = await fetch(url);
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = objectUrl;
-    link.download = `Tiket-${name}.png`; 
+    link.download = `Tiket-${name}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -167,20 +161,27 @@ const close = () => {
   backdrop-filter: blur(4px);
   z-index: 1070;
 }
+
 .qr-frame {
   border: 2px solid #f8f9fa;
 }
+
 .rounded-4 {
   border-radius: 1.25rem !important;
 }
-.slide-up-enter-active, .slide-up-leave-active {
+
+.slide-up-enter-active,
+.slide-up-leave-active {
   transition: all 0.3s ease-out;
 }
-.slide-up-enter-from, .slide-up-leave-to {
+
+.slide-up-enter-from,
+.slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
 }
-.table > :not(caption) > * > * {
+
+.table> :not(caption)>*>* {
   padding: 1rem 0.5rem;
 }
 </style>

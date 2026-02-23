@@ -23,7 +23,7 @@ export const dropdownMenuItems: DropdownMenu[] = [
     icon: 'bi-archive-fill',
     text: 'Manajemen Event',
     items: [
-      { to: '/admin/events', text: 'Tiket Dauroh' }, 
+      { to: '/admin/events', text: 'Tiket Event' }, 
       { to: '/admin/booths', text: 'Pengajuan Booth' },
       { to: '/admin/vouchers', text: 'Manajemen Voucher' },
     ]

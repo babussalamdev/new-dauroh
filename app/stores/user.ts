@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useStorage } from "@vueuse/core";
-import { useDaurohStore } from "~/stores/dauroh";
+import { useEventStore } from "~/stores/event";
 import { useCheckoutStore } from "./checkout";
 import { useToastStore } from "./toast";
 import { useAuth } from "~/composables/useAuth";
@@ -54,20 +54,18 @@ export const useUserStore = defineStore("user", () => {
     const { $apiBase } = useNuxtApp();
     if (!$apiBase) return;
 
-    const daurohStore = useDaurohStore();
+    const eventStore = useEventStore();
     const { user: authUser } = useAuth();
 
     isLoading.value = true;
 
     try {
-      if (!daurohStore.tiketDauroh || daurohStore.tiketDauroh.length === 0) {
-        await daurohStore.fetchPublicTiketDauroh();
+      if (!eventStore.tiketEvent || eventStore.tiketEvent.length === 0) {
+        await eventStore.fetchPublicTiketEvent();
       }
 
       const response = await $apiBase.get("/get-payment?type=client");
       let rawData = response.data?.data || response.data;
-
-      console.log(rawData)
 
       if (!Array.isArray(rawData)) {
         tickets.value = [];
@@ -77,7 +75,7 @@ export const useUserStore = defineStore("user", () => {
       const mappedTickets = rawData.map((item: any) => {
         const parts = (item.SK || "").split("#");
         const eventId = parts[0];
-        const foundEvent = (daurohStore.tiketDauroh as any[])?.find(
+        const foundEvent = (eventStore.tiketEvent as any[])?.find(
           (d: any) => d.SK === eventId,
         );
 
@@ -149,8 +147,8 @@ export const useUserStore = defineStore("user", () => {
           status: item.Status || "PENDING",
           created_at: item.CreatedAt,
           date: item.CreatedAt,
-          dauroh: {
-            Title: foundEvent?.Title || item.Subject || "Event Dauroh",
+          event: {
+            Title: foundEvent?.Title || item.Subject || "Event Event",
             Place: foundEvent?.Place || "Lokasi Online",
             SK: eventId,
           },
@@ -173,9 +171,9 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  function registerDauroh(payload: any) {
-    const { dauroh, participants, transactionDetails } = payload;
-    const daurohStore = useDaurohStore();
+  function registerEvent(payload: any) {
+    const { event, participants, transactionDetails } = payload;
+    const eventStore = useEventStore();
 
     let initialStatus: UserTicket["status"] = "Upcoming";
     let trxAmount = 0;
@@ -195,12 +193,12 @@ export const useUserStore = defineStore("user", () => {
       id: finalId,
       date: new Date().toISOString(),
       created_at: new Date().toISOString(),
-      title: dauroh?.Title || "Event Dauroh",
-      dauroh: dauroh,
+      title: event?.Title || "Event Event",
+      event: event,
       participants: participants || [],
       total_participants: participants?.length || 0,
       status: initialStatus,
-      amount: trxAmount || (dauroh?.Price || 0) * (participants?.length || 1),
+      amount: trxAmount || (event?.Price || 0) * (participants?.length || 1),
       va_number:
         transactionDetails?.vaNumber ||
         transactionDetails?.receiver_bank_account?.account_number,
@@ -218,7 +216,7 @@ export const useUserStore = defineStore("user", () => {
       Object.assign(exists, newTicket);
     }
 
-    if (dauroh?.SK && initialStatus !== "PENDING") {
+    if (event?.SK && initialStatus !== "PENDING") {
       const total = participants.length;
       const ikhwan = participants.filter(
         (p: any) => p.Gender?.toLowerCase() === "ikhwan",
@@ -227,8 +225,8 @@ export const useUserStore = defineStore("user", () => {
         (p: any) => p.Gender?.toLowerCase() === "akhwat",
       ).length;
 
-      if (typeof (daurohStore as any).decrementQuota === "function") {
-        (daurohStore as any).decrementQuota(dauroh.SK, total, ikhwan, akhwat);
+      if (typeof (eventStore as any).decrementQuota === "function") {
+        (eventStore as any).decrementQuota(event.SK, total, ikhwan, akhwat);
       }
     }
   }
@@ -265,7 +263,7 @@ export const useUserStore = defineStore("user", () => {
     // Actions
     $reset, // <--- INI KUNCINYA, HARUS DI-RETURN
     fetchUserTransactions,
-    registerDauroh,
+    registerEvent,
     removeTicket,
     statusPayment,
   };

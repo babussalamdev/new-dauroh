@@ -2,15 +2,15 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useNuxtApp } from "#app";
 import { useAuth } from "~/composables/useAuth";
-import { useDaurohStore } from "~/stores/dauroh";
-import type { Participant, DaurohInfo, TransactionDetails, CheckoutStep } from "~/types/participant";
+import { useEventStore } from "~/stores/event";
+import type { Participant, EventInfo, TransactionDetails, CheckoutStep } from "~/types/participant";
 
 export const useCheckoutStore = defineStore(
   "checkout",
   () => {
     // --- STATE ---
     const currentStep = ref<CheckoutStep>("select");
-    const dauroh = ref<DaurohInfo| null>(null);
+    const event = ref<EventInfo| null>(null);
     const participants = ref<Participant[]>([]);
     const paymentMethod = ref<string | null>(null);
     const transactionDetails = ref<TransactionDetails | null>(null);
@@ -22,12 +22,12 @@ export const useCheckoutStore = defineStore(
 
     // --- GETTERS (Computed) ---
     const totalAmount = computed(() => {
-      if (!dauroh.value || !participants.value) return 0;
-      return (dauroh.value.Price || 0) * participants.value.length;
+      if (!event.value || !participants.value) return 0;
+      return (event.value.Price || 0) * participants.value.length;
     });
 
     const finalAmount = computed(() => {
-      const total = (dauroh.value?.Price || 0) * participants.value.length;
+      const total = (event.value?.Price || 0) * participants.value.length;
       const final = total - discountAmount.value;
       return final < 0 ? 0 : final;
     });
@@ -63,7 +63,7 @@ export const useCheckoutStore = defineStore(
     });
 
     const activeEventSK = computed(() => {
-      const sk = transactionDetails.value?.event_sk || dauroh.value?.SK || "";
+      const sk = transactionDetails.value?.event_sk || event.value?.SK || "";
       return sk.split("#")[0];
     });
 
@@ -73,10 +73,10 @@ export const useCheckoutStore = defineStore(
     }
 
     function startCheckout(registrationData: {
-      dauroh: DaurohInfo;
+      event: EventInfo;
       participants: Participant[];
     }) {
-      dauroh.value = registrationData.dauroh;
+      event.value = registrationData.event;
       participants.value = registrationData.participants;
       paymentMethod.value = null;
       transactionDetails.value = null;
@@ -113,20 +113,17 @@ export const useCheckoutStore = defineStore(
       try {
         const rawSK = [
           transactionDetails.value?.event_sk,
-          transactionDetails.value?.dauroh?.SK,
+          transactionDetails.value?.event?.SK,
           transactionDetails.value?.Subject,
-          dauroh.value?.SK,
-          dauroh.value?.id,
+          event.value?.SK,
+          event.value?.id,
         ].find((s) => s && typeof s === "string" && !s.includes("@"));
 
         if (!rawSK)
           throw new Error(
             "Data Event (SK) tidak ditemukan. Silakan ulangi dari awal.",
           );
-        
         const eventSK = repay.value === true ? rawSK : (rawSK as string).split("#")[0];
-        console.log(rawSK)
-        console.log(dauroh.value)
         const objectPerson: Record<string, any> = {};
         participants.value.forEach((p, index) => {
           objectPerson[`person${index + 1}`] = {
@@ -138,7 +135,7 @@ export const useCheckoutStore = defineStore(
             Domicile: p.Domicile || "-",
           };
         });
-
+        console.log(repay.value)
         let bankCode = (paymentMethod.value || "bsm").toLowerCase();
         if (bankCode === "bsi") bankCode = "bsm";
 
@@ -161,20 +158,20 @@ export const useCheckoutStore = defineStore(
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
-        // const response = await $apiFlip.post("/flip-dauroh", payload, {
-        //   headers: { Authorization: `Bearer ${accessToken.value}` },
-        // });
+        const response = await $apiFlip.post("/flip-event", payload, {
+          headers: { Authorization: `Bearer ${accessToken.value}` },
+        });
 
-        // const result = response.data;
-        // transactionDetails.value = {
-        //   ...result,
-        //   vaNumber: result.receiver_bank_account?.account_number,
-        //   expiryTime: result.expired_date,
-        //   paymentMethod: paymentMethod.value || "Bank",
-        // };
+        const result = response.data;
+        transactionDetails.value = {
+          ...result,
+          vaNumber: result.receiver_bank_account?.account_number,
+          expiryTime: result.expired_date,
+          paymentMethod: paymentMethod.value || "Bank",
+        };
 
-        // currentStep.value = "instructions";
-        // return { success: true, data: result };
+        currentStep.value = "instructions";
+        return { success: true, data: result };
       } catch (error: any) {
         console.error("❌ Payment Error:", error);
         const errData = error.response?.data || {};
@@ -190,7 +187,7 @@ export const useCheckoutStore = defineStore(
 
     async function restoreTransactionData(skTransaction: string) {
       const { $apiBase } = useNuxtApp();
-      const daurohStore = useDaurohStore();
+      const eventStore = useEventStore();
 
       if (!skTransaction || !skTransaction.includes("#")) return false;
 
@@ -203,11 +200,11 @@ export const useCheckoutStore = defineStore(
         const data = response.data?.data || response.data;
         if (!data || !data.Participant) return false;
 
-        if (daurohStore.tiketDauroh.length === 0) {
-          await daurohStore.fetchPublicTiketDauroh();
+        if (eventStore.tiketEvent.length === 0) {
+          await eventStore.fetchPublicTiketEvent();
         }
 
-        const foundEvent = daurohStore.tiketDauroh.find(
+        const foundEvent = eventStore.tiketEvent.find(
           (d: any) => d.SK === data.Subject,
         );
         const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
@@ -220,10 +217,10 @@ export const useCheckoutStore = defineStore(
           Age: p.Age,
           Domicile: p.Domicile,
         }));
-
-        dauroh.value = {
-          SK: data.Subject,
-          Title: foundEvent?.Title || "Event Dauroh",
+        
+        event.value = {
+          SK: data.SK,
+          Title: foundEvent?.Title || "Event Event",
           Place: foundEvent?.Place || "Lokasi Online",
           Price: realPrice,
         };
@@ -238,15 +235,18 @@ export const useCheckoutStore = defineStore(
       }
     }
 
+    function noRepay() {
+      repay.value = false
+    }
+
     async function checkExistingTransaction(skEvent: string) {
       const { $apiFlip } = useNuxtApp();
       try {   
         const skHash = skEvent.split('#')[0]
-        const response = await $apiFlip.get("/get-flip-dauroh", {
+        const response = await $apiFlip.get("/get-flip-event", {
           params: { skEvent: skHash },
         });
         const paymentData = response.data?.Payment;
-        console.log(paymentData)
         if (paymentData) {
           transactionDetails.value = {
             ...paymentData,
@@ -270,6 +270,10 @@ export const useCheckoutStore = defineStore(
       }
     }
 
+    function setExpired() {
+      
+    }
+
     function updatePaymentStatus(payload: any) {
       if (transactionDetails.value) {
         transactionDetails.value = {
@@ -285,7 +289,7 @@ export const useCheckoutStore = defineStore(
     function clearCheckout() {
       // Reset manual karena $reset() tidak bekerja otomatis di setup store
       currentStep.value = "select";
-      dauroh.value = null;
+      event.value = null;
       participants.value = [];
       paymentMethod.value = null;
       transactionDetails.value = null;
@@ -298,7 +302,7 @@ export const useCheckoutStore = defineStore(
     return {
       // State
       currentStep,
-      dauroh,
+      event,
       participants,
       paymentMethod,
       transactionDetails,
@@ -306,6 +310,7 @@ export const useCheckoutStore = defineStore(
       discountAmount,
       voucherApplied,
       isLoading,
+      repay,
       // Getters
       totalAmount,
       finalAmount,
@@ -325,7 +330,9 @@ export const useCheckoutStore = defineStore(
       restoreTransactionData,
       checkExistingTransaction,
       updatePaymentStatus,
+      setExpired,
       clearCheckout,
+      noRepay
     };
   },
   {
