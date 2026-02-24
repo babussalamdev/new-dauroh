@@ -196,7 +196,6 @@ const isLoadingCheck = ref(false);
 
 const event = computed(() => eventStore.currentPublicEventDetail);
 
-// --- HELPER LOGIC (Koneksi ke Store) ---
 const isNonQuota = computed(() => eventStore.isNonQuota(event.value));
 const showTotal = computed(() => eventStore.showTotal(event.value));
 const showIkhwan = computed(() => eventStore.showIkhwan(event.value));
@@ -207,11 +206,9 @@ const registrationStatus = computed(() => eventStore.registrationStatus(event.va
 const getGenderLabel = eventStore.getGenderLabel;
 const getRemaining = eventStore.getRemaining;
 const formatQuota = eventStore.formatQuota;
-// ---------------------------------------
 
 onMounted(() => {
    currentUrl.value = window.location.href;
-   // API untuk memanggil data detail event dipicu di sini
    if (eventSK) {
       eventStore.fetchPublicEventDetail(eventSK);
    }
@@ -261,7 +258,6 @@ const getTimeRange = (dateObj: any) => {
    return `${s} - ${e} WIB`;
 };
 
-// [REVISI] Logic Double Order 
 const handleRegisterClick = async () => {
    if (!isLoggedIn.value) {
       Swal.fire({
