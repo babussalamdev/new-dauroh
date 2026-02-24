@@ -28,30 +28,50 @@
                   <i class="bi bi-geo-alt-fill fs-5"></i>
                 </div>
                 <div>
-                  <small class="text-muted fw-bold text-uppercase ls-1 d-block" style="font-size: 0.7rem;">Lokasi
-                    Event</small>
+                  <small class="text-muted fw-bold text-uppercase ls-1 d-block" style="font-size: 0.7rem;">Lokasi Event</small>
                   <span class="fw-medium text-dark">{{ event?.Place || 'Informasi menyusul' }}</span>
                 </div>
               </div>
             </div>
 
-            <div v-if="showIkhwan" :class="gridColClass">
+            <div v-if="eventStore.isNonQuota(event)" class="col-12">
               <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                <small class="text-muted d-block mb-1">Khusus Ikhwan</small>
-                <h5 class="mb-0 fw-bold" :class="getQuotaColor(event?.Quota_Ikhwan)">
-                  {{ formatQuota(event?.Quota_Ikhwan) }}
+                <small class="text-muted d-block mb-1">Sisa Tiket</small>
+                <h5 class="mb-0 fw-bold text-success">
+                  <i class="bi bi-infinity me-1"></i> Tanpa Batas
                 </h5>
               </div>
             </div>
 
-            <div v-if="showAkhwat" :class="gridColClass">
-              <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                <small class="text-muted d-block mb-1">Khusus Akhwat</small>
-                <h5 class="mb-0 fw-bold" :class="getQuotaColor(event?.Quota_Akhwat)">
-                  {{ formatQuota(event?.Quota_Akhwat) }}
-                </h5>
+            <template v-else>
+              <div v-if="showIkhwan" :class="gridColClass">
+                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
+                  <small class="text-muted d-block mb-1">Sisa Ikhwan</small>
+                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(eventStore.getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan))">
+                    {{ formatModalQuota(eventStore.getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan)) }}
+                  </h5>
+                </div>
               </div>
-            </div>
+
+              <div v-if="showAkhwat" :class="gridColClass">
+                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
+                  <small class="text-muted d-block mb-1">Sisa Akhwat</small>
+                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(eventStore.getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat))">
+                    {{ formatModalQuota(eventStore.getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat)) }}
+                  </h5>
+                </div>
+              </div>
+
+              <div v-if="eventStore.showTotal(event) && !showIkhwan && !showAkhwat" class="col-12">
+                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
+                  <small class="text-muted d-block mb-1">Tiket Tersedia</small>
+                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(eventStore.getRemaining(event?.Quota_Total, event?.Sold_Total))">
+                    {{ formatModalQuota(eventStore.getRemaining(event?.Quota_Total, event?.Sold_Total)) }}
+                  </h5>
+                </div>
+              </div>
+            </template>
+
           </div>
           <div class="modal-footer border-top bg-white p-3">
             <button type="button" class="btn btn-light text-muted fw-medium px-4 rounded-pill" @click="close">
@@ -76,6 +96,7 @@ import { computed } from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id'
 import type { Event, EventDayDetail } from '~/types/event'
+import { useEventStore } from '~/stores/event'
 
 dayjs.locale('id')
 
@@ -89,47 +110,37 @@ const emit = defineEmits<{
   (e: 'register', val: Event | undefined): void
 }>()
 
-// --- LOGIC DISPLAY GENDER ---
-const showIkhwan = computed(() => {
-  if (!props.event) return false
-  const g = props.event.Gender?.toLowerCase() || ''
-  return g.includes('ikhwan') || g.includes('laki') || g.includes('umum') || g === ''
-})
+const eventStore = useEventStore()
 
-const showAkhwat = computed(() => {
-  if (!props.event) return false
-  const g = props.event.Gender?.toLowerCase() || ''
-  return g.includes('akhwat') || g.includes('perempuan') || g.includes('wanita') || g.includes('umum') || g === ''
-})
+// --- KONEKSI GRID LAYOUT ---
+const showIkhwan = computed(() => eventStore.showIkhwan(props.event));
+const showAkhwat = computed(() => eventStore.showAkhwat(props.event));
 
 const gridColClass = computed(() => {
   return (showIkhwan.value && showAkhwat.value) ? 'col-6' : 'col-12'
 })
 
-// --- [CORE LOGIC] BUTTON STATE (Fixed & Type Safe) ---
+// --- [CORE LOGIC] BUTTON STATE ---
 const buttonState = computed(() => {
   const item = props.event;
   if (!item) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
 
-  // 1. Cek Active
+  // 1. Ambil status pendaftaran dari store
+  const storeStatus = eventStore.registrationStatus(item);
+
   if (item.Status === 'inactive') {
     return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
   }
 
-
   const now = dayjs();
 
-  // 2. Cek Tanggal Acara (Safety Net: Event Selesai)
+  // 2. Cek Tanggal Acara
   if (item.Date) {
     const dates = Object.values(item.Date) as EventDayDetail[];
-
     if (dates.length > 0) {
-      // Logic Aman: Map ke string -> Sort -> Ambil Terakhir
       const allDates = dates.map(d => d.date);
-      allDates.sort(); // Sort String YYYY-MM-DD aman secara leksikal
-
+      allDates.sort();
       const lastEventDateStr = allDates[allDates.length - 1];
-
       if (lastEventDateStr) {
         const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
         if (eventEndTime.isValid() && now.isAfter(eventEndTime)) {
@@ -156,20 +167,8 @@ const buttonState = computed(() => {
     }
   }
 
-  // 4. Cek Kuota
-  let relevantQuota: any = 'non-quota';
-  const gender = (item.Gender || '').toLowerCase().trim();
-
-  if (gender.includes('ikhwan') && gender.includes('akhwat')) relevantQuota = item.Quota_Total;
-  else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
-    relevantQuota = item.Quota_Akhwat;
-  } else if (gender.includes('ikhwan') || gender.includes('laki') || gender.includes('pria')) {
-    relevantQuota = item.Quota_Ikhwan;
-  } else {
-    relevantQuota = item.Quota_Total;
-  }
-
-  if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
+  // 4. Jika store menyatakan tidak bisa daftar (misal Kuota Penuh)
+  if (!storeStatus.canRegister && storeStatus.message === 'Kuota Penuh') {
     return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
   }
 
@@ -178,28 +177,17 @@ const buttonState = computed(() => {
 });
 
 // --- LOGIC LAINNYA ---
-const sortedSchedule = computed(() => {
-  if (!props.event?.Date || typeof props.event.Date !== 'object') {
-    return [];
-  }
-  const scheduleArray = Object.values(props.event.Date) as EventDayDetail[];
-  return scheduleArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-});
-
-const formatDate = (dateStr: string) => {
-  return dayjs(dateStr).format('dddd, D MMMM YYYY');
-}
-
-const formatQuota = (val: number | 'non-quota' | undefined) => {
-  if (val === 'non-quota') return '∞';
-  if (val === 0) return '0';
+const formatModalQuota = (val: number | string) => {
+  if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return '∞';
+  if (val === 0 || val === '0') return 'Habis';
   return `${val}`;
 };
 
-const getQuotaColor = (val: number | 'non-quota' | undefined) => {
-  if (val === 'non-quota') return 'text-success';
-  if (val === 0) return 'text-danger';
-  if (typeof val === 'number' && val < 10) return 'text-warning';
+const getQuotaColor = (val: number | string) => {
+  if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return 'text-success';
+  const numVal = Number(val);
+  if (numVal <= 0) return 'text-danger';
+  if (numVal < 10) return 'text-warning';
   return 'text-primary';
 };
 

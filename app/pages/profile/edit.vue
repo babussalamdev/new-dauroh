@@ -39,8 +39,8 @@
                     <label for="gender" class="form-label">Jenis Kelamin</label>
                     <select id="gender" v-model="profileForm.gender" class="form-select" required>
                       <option value="" disabled>Pilih Gender</option>
-                      <option value="male">Laki-laki (Male)</option>
-                      <option value="female">Perempuan (Female)</option>
+                      <option value="male">Ikhwan (Laki-laki)</option>
+                      <option value="female">Akhwat (Perempuan)</option>
                     </select>
                   </div>
 

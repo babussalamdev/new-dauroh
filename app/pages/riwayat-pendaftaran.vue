@@ -42,6 +42,7 @@
                   <span class="badge bg-light text-secondary border rounded-1 fw-normal text-start"
                     style="width: fit-content;">
                     {{ ticket.SK }}
+
                   </span>
                 </div>
               </td>
@@ -59,8 +60,7 @@
 
               <td class="py-3 text-center">
                 <span class="text-dark fs-10">
-                  {{ ticket }}
-                  {{ ticket.participants?.length || 1 }} Peserta
+                  {{ ticket.participants || 0 }} Orang
                 </span>
               </td>
 
@@ -94,7 +94,7 @@
 
               <td class="py-3 text-center">
                 <span class="fw-bold text-dark fs-6">
-                  {{ formatCurrency(calculateRealTotal(ticket)) }}
+                  {{ formatCurrency(ticket.amount) }}
                 </span>
               </td>
 
@@ -277,23 +277,6 @@ const formatDate = (dateString: string) => {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
-const calculateRealTotal = (ticket: any) => {
-  // 1. Ambil Jumlah Peserta
-  const qty = ticket.participants?.length || 0;
-
-  // 2. Ambil Harga Satuan (Logic Samain Summary)
-  // Cek di tiket dulu, kalau gak ada/0 baru cek ke Master Data (Store)
-  let price = Number(ticket.event?.Price || 0);
-
-  if (price === 0 && ticket.SK) {
-    const pureSK = (ticket.SK || '').split('#')[0];
-    const match = eventStore.tiketEvent.find((d: any) => d.SK === pureSK);
-    if (match) price = Number(match.Price || 0);
-  }
-
-  // 3. Return Total (Harga x Qty)
-  return price * qty;
-};
 
 // Actions Modal
 const openDetailModal = async (ticket: any) => {
@@ -358,8 +341,7 @@ const resumePayment = async (ticket: any) => {
   const smartStatus = getSmartStatus(ticket);
 
   // LOGIC BAYAR / RE-PAY
-  if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
-    // Pass SK Transaksi Lengkap ke fungsi expired
+  if (['EXPIRED', 'CANCELLED'].includes(smartStatus)) {
     await handleExpiredFlow(skTransaksi);
   } else {
     try {

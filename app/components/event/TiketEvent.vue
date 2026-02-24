@@ -118,8 +118,9 @@ const closeImageModal = () => {
   showImageModal.value = false;
 };
 
-const openDetailModal = (event) => {
-  selectedEvent.value = event;
+const openDetailModal = async (eventItem) => {
+  await eventStore.fetchPublicEventDetail(eventItem.SK);
+  selectedEvent.value = eventStore.currentPublicEventDetail;
   showDetailModal.value = true;
 };
 const closeDetailModal = () => {

@@ -73,88 +73,14 @@ export const useUserStore = defineStore("user", () => {
       }
 
       const mappedTickets = rawData.map((item: any) => {
-        const parts = (item.SK || "").split("#");
-        const eventId = parts[0];
-        const foundEvent = (eventStore.tiketEvent as any[])?.find(
-          (d: any) => d.SK === eventId,
-        );
-
-        // 1. Parsing Peserta
-        let participantsList: Participant[] = [];
-        let rawP =
-          item.Participant ||
-          item.participant ||
-          item.Participants ||
-          item.objectPerson ||
-          item.ObjectPerson;
-
-        if (
-          typeof rawP === "string" &&
-          (rawP.startsWith("[") || rawP.startsWith("{"))
-        ) {
-          try {
-            rawP = JSON.parse(rawP);
-          } catch (e) {
-            console.error("Parse Error:", e);
-          }
-        }
-
-        if (Array.isArray(rawP)) {
-          participantsList = rawP.map((p: any) => ({
-            Name: p.Name || p.name || "Peserta",
-            Gender: p.Gender || p.gender || "-",
-            Age: Number(p.Age || p.age || 0),
-            Domicile: p.Domicile || p.domicile || "-",
-          }));
-        } else if (rawP && typeof rawP === "object") {
-          Object.values(rawP).forEach((p: any) => {
-            if (p && (p.Name || p.name)) {
-              participantsList.push({
-                Name: p.Name || p.name,
-                Gender: p.Gender || "-",
-                Age: p.Age || 0,
-                Domicile: p.Domicile || "-",
-              });
-            }
-          });
-        }
-
-        if (participantsList.length === 0) {
-          participantsList = [
-            {
-              Name: item.PIC || authUser.value?.name || "Peserta Utama",
-              Gender: "-",
-              Age: 0,
-            },
-          ];
-        }
-
-        // 2. Kalkulasi Harga
-        const totalPeserta = participantsList.length;
-        const hargaSatuan = Number(foundEvent?.Price || 250000);
-        let totalAmount = Number(item.Amount || item.amount || 0);
-
-        if (
-          totalAmount === 0 ||
-          (totalAmount <= hargaSatuan && totalPeserta > 1)
-        ) {
-          totalAmount = hargaSatuan * totalPeserta;
-        }
-
         return {
           SK: item.SK,
-          full_sk: item.SK,
           status: item.Status || "PENDING",
           created_at: item.CreatedAt,
           date: item.CreatedAt,
-          event: {
-            Title: foundEvent?.Title || item.Subject || "Event Event",
-            Place: foundEvent?.Place || "Lokasi Online",
-            SK: eventId,
-          },
-          amount: totalAmount,
-          participants: participantsList,
-          total_participants: totalPeserta,
+          amount: item.Amount,
+          participants: item.Participant,
+          title: item.Title,
           Expired_Date: item.Expired_Date || item.expired_date || "-",
         } as UserTicket;
       });

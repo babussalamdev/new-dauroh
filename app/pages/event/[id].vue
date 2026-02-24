@@ -17,7 +17,6 @@
       </div>
 
       <div v-else>
-
          <div class="container pt-5 pb-4 text-center" style="max-width: 900px;">
             <h1 class="display-5 fw-bold text-dark mb-3 lh-sm">{{ event.Title }}</h1>
 
@@ -173,21 +172,21 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useEventStore } from '~/stores/event';
 import { useCheckoutStore } from '~/stores/checkout';
-import { useUserStore } from '~/stores/user'; // [BARU] Import User Store buat cek riwayat
+import { useUserStore } from '~/stores/user'; 
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
-import { useTransactionStatus } from '~/composables/useTransactionStatus'; // [BARU] Buat cek status
+import { useTransactionStatus } from '~/composables/useTransactionStatus'; 
 import Swal from 'sweetalert2';
-import dayjs from 'dayjs'; // [BARU] Buat cek tanggal
+import dayjs from 'dayjs'; 
 import 'quill/dist/quill.snow.css';
 
 const route = useRoute();
 const router = useRouter();
 const eventStore = useEventStore();
 const checkoutStore = useCheckoutStore();
-const userStore = useUserStore(); // Init User Store
+const userStore = useUserStore(); 
 const { isLoggedIn } = useAuth();
-const { getSmartStatus } = useTransactionStatus(); // Init Helper Status
+const { getSmartStatus } = useTransactionStatus(); 
 const config = useRuntimeConfig();
 
 const eventSK = String(route.params.id);
@@ -197,98 +196,22 @@ const isLoadingCheck = ref(false);
 
 const event = computed(() => eventStore.currentPublicEventDetail);
 
-// --- HELPER LOGIC ---
+// --- HELPER LOGIC (Koneksi ke Store) ---
+const isNonQuota = computed(() => eventStore.isNonQuota(event.value));
+const showTotal = computed(() => eventStore.showTotal(event.value));
+const showIkhwan = computed(() => eventStore.showIkhwan(event.value));
+const showAkhwat = computed(() => eventStore.showAkhwat(event.value));
+const totalQuotaDisplay = computed(() => eventStore.totalQuotaDisplay(event.value));
+const registrationStatus = computed(() => eventStore.registrationStatus(event.value));
 
-const isNonQuota = computed(() => {
-   const d = event.value;
-   if (!d) return false;
-   const check = (val: any) => String(val).toLowerCase().trim() === 'non-quota';
-   return check(d.Quota_Total) || check(d.Quota_Ikhwan) || check(d.Quota_Akhwat);
-});
-
-const getGenderLabel = (g: string) => {
-   if (!g) return 'Umum';
-   const lower = g.toLowerCase();
-   if (lower.includes('ikhwan') && lower.includes('akhwat')) return 'Umum';
-   if (lower.includes('ikhwan') || lower.includes('laki') || lower.includes('pria')) return 'Khusus Ikhwan';
-   if (lower.includes('akhwat') || lower.includes('perempuan') || lower.includes('wanita')) return 'Khusus Akhwat';
-   return 'Umum';
-};
-
-const showTotal = computed(() => {
-   if (!event.value) return false;
-   if (isNonQuota.value) return false;
-   const g = event.value.Gender?.toLowerCase() || '';
-   return g === 'umum' || (!g.includes('ikhwan') && !g.includes('akhwat'));
-});
-
-const showIkhwan = computed(() => {
-   if (isNonQuota.value) return false;
-   const g = event.value?.Gender?.toLowerCase() || '';
-   return g.includes('ikhwan') || g.includes('laki') || g.includes('pria') || g.includes('ikhwan, akhwat');
-});
-
-const showAkhwat = computed(() => {
-   if (isNonQuota.value) return false;
-   const g = event.value?.Gender?.toLowerCase() || '';
-   return g.includes('akhwat') || g.includes('perempuan') || g.includes('wanita') || g.includes('ikhwan, akhwat');
-});
-
-const getRemaining = (quota: number | string, sold: number | string) => {
-   if (String(quota).toLowerCase() === 'non-quota') return 'Tanpa Batas';
-   const q = Number(quota) || 0;
-   const s = Number(sold) || 0;
-   const remain = q - s;
-   return remain < 0 ? 0 : remain;
-};
-
-const formatQuota = (val: string | number) => {
-   if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return 'Tanpa Batas';
-   if (val === 0 || val === '0') return '0 (Penuh)';
-   return `${val}`;
-};
-
-const totalQuotaDisplay = computed(() => {
-   if (!event.value) return '-';
-   if (isNonQuota.value) return 'Tanpa Batas';
-
-   const d = event.value;
-   let text = [];
-   if (showIkhwan.value) text.push(`Ikhwan: ${d.Quota_Ikhwan}`);
-   if (showAkhwat.value) text.push(`Akhwat: ${d.Quota_Akhwat}`);
-
-   if (text.length > 0) return text.join(', ');
-
-   return `${d.Quota_Total} Kursi`;
-});
-
-const registrationStatus = computed(() => {
-   const d = event.value;
-   if (!d) return { canRegister: false, message: 'Loading...' };
-
-   if (d.Status !== 'active') return { canRegister: false, message: 'Event Selesai / Tutup' };
-
-   if (isNonQuota.value) {
-      return { canRegister: true, message: 'Daftar Sekarang' };
-   }
-
-   const remTotal = getRemaining(d.Quota_Total, d.Sold_Total);
-   const remIkhwan = getRemaining(d.Quota_Ikhwan, d.Sold_Ikhwan);
-   const remAkhwat = getRemaining(d.Quota_Akhwat, d.Sold_Akhwat);
-
-   if (
-      (typeof remTotal === 'number' && remTotal > 0) ||
-      (typeof remIkhwan === 'number' && remIkhwan > 0) ||
-      (typeof remAkhwat === 'number' && remAkhwat > 0)
-   ) {
-      return { canRegister: true, message: 'Daftar Sekarang' };
-   }
-
-   return { canRegister: false, message: 'Kuota Penuh' };
-});
+const getGenderLabel = eventStore.getGenderLabel;
+const getRemaining = eventStore.getRemaining;
+const formatQuota = eventStore.formatQuota;
+// ---------------------------------------
 
 onMounted(() => {
    currentUrl.value = window.location.href;
+   // API untuk memanggil data detail event dipicu di sini
    if (eventSK) {
       eventStore.fetchPublicEventDetail(eventSK);
    }
@@ -338,9 +261,8 @@ const getTimeRange = (dateObj: any) => {
    return `${s} - ${e} WIB`;
 };
 
-// [REVISI] Logic Double Order lebih AKURAT menggunakan UserStore (Riwayat)
+// [REVISI] Logic Double Order 
 const handleRegisterClick = async () => {
-   // 1. Cek Login
    if (!isLoggedIn.value) {
       Swal.fire({
          icon: 'info',
@@ -366,27 +288,18 @@ const handleRegisterClick = async () => {
       return;
    }
 
-   // 2. [UPDATE] Cek Double Order via Riwayat Lokal (Lebih Akurat)
    try {
       isLoadingCheck.value = true;
-
-      // A. Pastikan data riwayat terbaru
       await userStore.fetchUserTransactions();
 
-      // B. Cari di list riwayat: ID Event cocok AND Status masih PENDING
       const pendingTicket = userStore.tickets.find(ticket => {
          const ticketEventSK = ticket.event?.SK || ticket.EventSK || ticket.SK;
          const status = getSmartStatus(ticket);
-
-         // Cek Expired Realtime juga (biar gak nge-blok kalau udah basi)
          const isTimeUp = ticket.Expired_Date ? dayjs().isAfter(dayjs(ticket.Expired_Date)) : false;
-
-         // Kunci: ID Sama, Status PENDING, dan Belum Expired Waktu
          return (String(ticketEventSK) === String(eventSK)) && (status === 'PENDING') && !isTimeUp;
       });
 
       if (pendingTicket) {
-         // [BLOCK] Munculin Swal Aja (Sesuai Request)
          Swal.fire({
             icon: 'warning',
             title: 'Pendaftaran Terdeteksi',
@@ -400,17 +313,14 @@ const handleRegisterClick = async () => {
                confirmButton: 'btn btn-primary rounded-pill px-4 shadow-sm fw-medium'
             }
          }).then(() => {
-            // Opsional: Redirect ke riwayat biar user bayar disana
             router.push('/riwayat-pendaftaran');
          });
       } else {
-         // [PASS] Tidak ada tagihan pending -> Boleh daftar
          router.push(`/event/register/${eventSK}`);
       }
 
    } catch (error) {
       console.error("Error checking transaction:", error);
-      // Fallback aman: Tetap bolehkan daftar kalau validasi error
       router.push(`/event/register/${eventSK}`);
    } finally {
       isLoadingCheck.value = false;
