@@ -240,7 +240,7 @@ const handleRegisterClick = async (eventItem) => {
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        router.push('/auth/login');
+        router.push('/auth');
       }
     });
     return;

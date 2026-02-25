@@ -130,7 +130,7 @@ export const useAuth = () => {
       });
 
       // --- 4. REDIRECT & RELOAD ---
-      const targetPath = loginType === "admin" ? "/admin/login" : "/auth/login";
+      const targetPath = loginType === "admin" ? "/admin/login" : "/auth";
       await router.push(targetPath);
 
     } catch (error) {

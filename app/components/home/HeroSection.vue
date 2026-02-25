@@ -17,7 +17,7 @@
           <ButtonHeroButton :icon="JadwalIcon" bgClass="btn-hero-custom" />
           <p class="mt-1">Jadwal</p>
         </div>
-        <div class="button-item" @click="handleButtonClick('/sewa-booth')">
+        <div class="button-item" @click="handleButtonClick('/booth')">
           <ButtonHeroButton :icon="BoothIcon" bgClass="btn-hero-custom" />
           <p class="mt-1">Booth</p>
         </div>
@@ -64,7 +64,7 @@ const handleButtonClick = (path) => {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        router.push('/auth/login');
+        router.push('/auth');
       }
     });
     return;
@@ -102,8 +102,8 @@ const handleButtonClick = (path) => {
       router.push('/jadwal');
       break;
 
-    case '/sewa-booth':
-      router.push('/sewa-booth');
+    case '/booth':
+      router.push('/booth');
       break;
   }
 };

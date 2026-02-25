@@ -60,7 +60,7 @@
 
             <div class="text-center mt-4 pt-3 border-top">
               <p class="text-muted small mb-1">Belum punya akun?</p>
-              <NuxtLink to="/auth/register" class="text-decoration-none fw-bold">Daftar Sekarang</NuxtLink>
+              <a href="#" @click.prevent="$emit('switch', 'register')" class="text-decoration-none fw-bold">Daftar Sekarang</a>
             </div>
           </form>
         </div>
@@ -80,7 +80,11 @@ import { useAuth } from "~/composables/useAuth";
 // Pastikan path import ini benar sesuai folder project lu
 import ModalsForgotPasswordModal from '~/components/modals/ForgotPasswordModal.vue';
 
-definePageMeta({ layout: "auth" });
+useHead({
+  title: 'Login'
+});
+
+defineEmits(['switch']);
 
 const router = useRouter();
 const { login } = useAuth();

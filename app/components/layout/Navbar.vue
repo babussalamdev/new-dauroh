@@ -41,8 +41,8 @@
 
           <li class="nav-item" v-if="!isLoggedIn">
             <div class="d-flex align-items-center gap-3">
-              <NuxtLink class="nav-link text-dark fw-medium" to="/auth/login">Login</NuxtLink>
-              <NuxtLink to="/auth/register" class="btn btn-primary px-4 rounded-pill">Buat Akun</NuxtLink>
+              <NuxtLink class="nav-link text-dark fw-medium" to="/auth">Login</NuxtLink>
+              <NuxtLink to="/auth" class="btn btn-primary px-4 rounded-pill">Buat Akun</NuxtLink>
             </div>
           </li>
 
@@ -55,13 +55,13 @@
 
             <ul class="dropdown-menu dropdown-menu-end text-small shadow">
               <li>
-                <NuxtLink class="dropdown-item" to="/profile/edit">
+                <NuxtLink class="dropdown-item" to="/profile">
                   <i class="bi bi-person-gear me-2"></i> Profil Saya
                 </NuxtLink>
               </li>
 
               <li v-if="!isAdmin">
-                <NuxtLink class="dropdown-item" to="/riwayat-pendaftaran">
+                <NuxtLink class="dropdown-item" to="/history">
                   <i class="bi bi-clock-history me-2"></i> Riwayat Pendaftaran
                 </NuxtLink>
               </li>
@@ -111,13 +111,13 @@
           </li>
 
           <li class="nav-item mb-2" v-if="!isAdmin">
-            <NuxtLink class="nav-link" to="/riwayat-pendaftaran" active-class="active" @click="closeOffcanvas">
+            <NuxtLink class="nav-link" to="/history" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-clock-history me-2"></i>Riwayat Pendaftaran
             </NuxtLink>
           </li>
 
           <li class="nav-item mb-2">
-            <NuxtLink class="nav-link" to="/profile/edit" active-class="active" @click="closeOffcanvas">
+            <NuxtLink class="nav-link" to="/profile" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-person-circle me-2"></i>Profil Saya
             </NuxtLink>
           </li>
@@ -133,12 +133,12 @@
 
         <template v-else>
           <li class="nav-item mb-2">
-            <NuxtLink class="nav-link" to="/auth/login" active-class="active" @click="closeOffcanvas">
+            <NuxtLink class="nav-link" to="/auth" active-class="active" @click="closeOffcanvas">
               <i class="bi bi-box-arrow-in-right me-2"></i>Login
             </NuxtLink>
           </li>
           <li class="nav-item mt-2">
-            <NuxtLink to="/auth/register" class="btn btn-primary w-100 rounded-pill" @click="closeOffcanvas">Buat Akun
+            <NuxtLink to="/auth" class="btn btn-primary w-100 rounded-pill" @click="closeOffcanvas">Buat Akun
             </NuxtLink>
           </li>
         </template>

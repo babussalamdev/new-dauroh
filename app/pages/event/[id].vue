@@ -309,7 +309,7 @@ const handleRegisterClick = async () => {
                confirmButton: 'btn btn-primary rounded-pill px-4 shadow-sm fw-medium'
             }
          }).then(() => {
-            router.push('/riwayat-pendaftaran');
+            router.push('/history');
          });
       } else {
          router.push(`/event/register/${eventSK}`);

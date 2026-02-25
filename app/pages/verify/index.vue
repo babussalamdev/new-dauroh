@@ -183,7 +183,7 @@ const handleVerify = async () => {
     });
 
     sessionStorage.removeItem('temp_register_data');
-    router.push('/auth/login');
+    router.push('/auth');
 
   } catch (error: any) {
     console.error("Verify Error:", error);

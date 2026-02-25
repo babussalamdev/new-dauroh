@@ -227,7 +227,7 @@ const handlePay = async () => {
           confirmButtonColor: '#004754'
         });
 
-        router.push('/riwayat-pendaftaran');
+        router.push('/history');
         return;
       }
 

@@ -125,8 +125,8 @@
                         </td>
                         <td>
                           <span class="fw-bold d-block text-dark">{{ ticket.event.Title }}</span>
-                          <span class="text-muted small-8">{{ ticket.participants.length }} Peserta • {{
-                            formatCurrency(ticket.event.Price) }}</span>
+                          <span class="text-muted small-8">{{ ticket.participants }} Peserta • {{
+                            formatCurrency(ticket.amount) }}</span>
                         </td>
                         <td class="text-center pe-4">
                           <button
@@ -175,6 +175,9 @@ import { useAuth } from '~/composables/useAuth';
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import dayjs from 'dayjs';
 
+useHead({ title: 'Dashboard' });
+
+
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 const { isLoggedIn } = useAuth();
@@ -189,19 +192,32 @@ const upcomingTickets = computed(() => {
   const allTickets = userStore.tickets || userStore.getDashboardData || [];
   if (!Array.isArray(allTickets)) return [];
 
-  return allTickets.filter(item => {
-    const smartStatus = getSmartStatus(item);
-    const rawStatus = (item.status || '').toUpperCase();
-    const isPaid = smartStatus === 'SUCCESSFUL' || rawStatus === 'SUCCESSFUL';
-    const isPending = smartStatus === 'PENDING';
+  return allTickets
+    .map(item => {
+      if (!item.event || Object.keys(item.event).length === 0) {
+        const eventSK = (item.SK || '').split('#')[0];
+        const foundEvent = eventStore.tiketEvent.find(e => e.SK === eventSK);
+        return { ...item, event: foundEvent || {} };
+      }
+      return item;
+    })
+    .filter(item => {
+      const smartStatus = getSmartStatus(item);
+      const rawStatus = (item.status || '').toUpperCase();
+      const isPaid = smartStatus === 'SUCCESSFUL' || rawStatus === 'SUCCESSFUL';
+      const isPending = smartStatus === 'PENDING';
 
-    return isPaid || isPending;
-  });
+      return isPaid || isPending;
+    });
 });
+
 onMounted(async () => {
   if (isLoggedIn.value) {
-    await userStore.fetchUserTransactions();
+    if (userStore.tickets.length === 0) {
+      await userStore.fetchUserTransactions();
+    }
   }
+  
   if (eventStore.tiketEvent.length === 0) {
     await eventStore.fetchPublicTiketEvent();
   }
@@ -304,7 +320,6 @@ const formatDate = (dateObj) => {
   letter-spacing: 0.5px;
 }
 
-/* Custom shadow & border radius for cards */
 .rounded-4 {
   border-radius: 1rem !important;
 }

@@ -21,10 +21,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  const userOnlyPaths = ['/dashboard', '/profile', '/riwayat-pendaftaran'];
+  const userOnlyPaths = ['/dashboard', '/profile', '/history'];
   if (userOnlyPaths.some(path => to.path.startsWith(path))) {
     if (!accessToken.value) {
-      return navigateTo('/auth/login');
+      return navigateTo('/auth');
     }
   }
 });

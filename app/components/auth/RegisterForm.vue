@@ -84,7 +84,7 @@
 
             <div class="text-center mt-4 pt-3 border-top">
               <p class="text-muted small mb-1">Sudah punya akun?</p>
-              <NuxtLink to="/auth/login" class="text-decoration-none fw-bold">Login di sini</NuxtLink>
+              <a href="#" @click.prevent="$emit('switch', 'login')" class="text-decoration-none fw-bold">Login di sini</a>
             </div>
           </form>
         </div>
@@ -98,8 +98,9 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
-definePageMeta({ layout: 'auth' });
 useHead({ title: 'Daftar Akun' });
+
+defineEmits(['switch']);
 
 const router = useRouter();
 const { $apiBase } = useNuxtApp();
