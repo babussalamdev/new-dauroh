@@ -270,10 +270,6 @@ export const useCheckoutStore = defineStore(
       }
     }
 
-    function setExpired() {
-      
-    }
-
     function updatePaymentStatus(payload: any) {
       if (transactionDetails.value) {
         transactionDetails.value = {
@@ -330,7 +326,6 @@ export const useCheckoutStore = defineStore(
       restoreTransactionData,
       checkExistingTransaction,
       updatePaymentStatus,
-      setExpired,
       clearCheckout,
       noRepay
     };

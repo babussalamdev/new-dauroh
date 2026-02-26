@@ -2,16 +2,15 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useStorage } from "@vueuse/core";
 import { useEventStore } from "~/stores/event";
-import { useCheckoutStore } from "./checkout";
+// import { useCheckoutStore } from "./checkout";
 import { useToastStore } from "./toast";
-import { useAuth } from "~/composables/useAuth";
-import type { UserProfile, Participant, UserTicket } from "~/types/user";
-
+// import { useAuth } from "~/composables/useAuth";
+import type { Participant, UserTicket } from "~/types/user";
 
 export const useUserStore = defineStore("user", () => {
   // --- STATE ---
   const tickets = useStorage<UserTicket[]>("user_tickets_v2", []);
-  const user = ref<UserProfile | null>(null);
+  // const user = ref<UserProfile | null>(null);
   const isLoading = ref(false);
 
   // --- GETTERS (Computed) ---
@@ -45,7 +44,7 @@ export const useUserStore = defineStore("user", () => {
    */
   function $reset() {
     tickets.value = [];
-    user.value = null;
+    // user.value = null;
     isLoading.value = false;
     console.log("♻️ User Store has been reset");
   }
@@ -55,15 +54,11 @@ export const useUserStore = defineStore("user", () => {
     if (!$apiBase) return;
 
     const eventStore = useEventStore();
-    const { user: authUser } = useAuth();
+    // const { user: authUser } = useAuth();
 
     isLoading.value = true;
 
     try {
-      if (!eventStore.tiketEvent || eventStore.tiketEvent.length === 0) {
-        await eventStore.fetchPublicTiketEvent();
-      }
-
       const response = await $apiBase.get("/get-payment?type=client");
       let rawData = response.data?.data || response.data;
 
@@ -170,15 +165,15 @@ export const useUserStore = defineStore("user", () => {
     });
   }
 
-  function statusPayment(data: any) {
-    const storeCheckout = useCheckoutStore();
-    storeCheckout.setStep("success");
-  }
+  // function statusPayment(data: any) {
+  //   const storeCheckout = useCheckoutStore();
+  //   storeCheckout.setStep("success");
+  // }
 
   return {
     // State
     tickets,
-    user,
+    // user,
     isLoading,
     // Getters
     transactions,
@@ -187,10 +182,10 @@ export const useUserStore = defineStore("user", () => {
     getPendingTickets,
     getDashboardData,
     // Actions
-    $reset, // <--- INI KUNCINYA, HARUS DI-RETURN
+    $reset,
     fetchUserTransactions,
     registerEvent,
-    removeTicket,
-    statusPayment,
+    removeTicket
+    // statusPayment,
   };
 });

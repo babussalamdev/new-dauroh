@@ -14,7 +14,6 @@ export const useVoucherStore = defineStore("voucher", () => {
   const search = ref("");
   const perPage = ref(10);
   const currentPage = ref(1);
-  const showModalAdd = ref(false);
   const form = ref({
     jumlah: "",
     nominal: "",
@@ -184,7 +183,6 @@ export const useVoucherStore = defineStore("voucher", () => {
     search,
     perPage,
     currentPage,
-    showModalAdd,
     form,
 
     // Getters

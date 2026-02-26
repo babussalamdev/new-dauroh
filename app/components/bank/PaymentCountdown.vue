@@ -67,9 +67,6 @@ const startTimer = () => {
     if (remainingTime.value <= 0) {
       remainingTime.value = 0;
       stopTimer();
-      // Buffer 2 detik sebelum trigger expired di store
-      if (diff < -2000) {
-         checkoutStore.setExpired();
       }
     }
   };

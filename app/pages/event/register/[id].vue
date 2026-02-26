@@ -110,8 +110,8 @@
                 </div>
                 <div>
                   <h5 class="text-primary fw-bold d-block">Data Peserta</h5>
-                  <div class="small text-muted mb-1">{{ userStore.user?.fullname }}</div>
-                  <div class="x-small text-muted opacity-75">{{ userStore.user?.email }}</div>
+                  <div class="small text-muted mb-1">{{ user?.fullname }}</div>
+                  <div class="x-small text-muted opacity-75">{{ user?.email }}</div>
                   <input type="hidden" v-model="participant.Email">
                 </div>
               </div>
@@ -205,10 +205,12 @@ const checkoutStore = useCheckoutStore();
 const userStore = useUserStore();
 const config = useRuntimeConfig();
 const { getSmartStatus } = useTransactionStatus();
+const { user } = useAuth();
 
 const eventSK = computed(() => String(route.params.id));
 const imgBaseUrl = ref(config.public.img || '');
 const event = computed(() => eventStore.currentPublicEventDetail);
+
 
 const formState = reactive({
   qtyIkhwan: 0,
@@ -390,14 +392,14 @@ const generateForms = () => {
   let hasFilledUser = false;
 
   const createParticipant = (gender: string) => {
-    if (!hasFilledUser && userStore.user) {
+    if (!hasFilledUser && user.value) {
       hasFilledUser = true;
       return {
-        Name: userStore.user.fullname || '',
-        Email: userStore.user.email || '',
+        Name: user.value.name || '',
+        Email: user.value.email || '',
         Gender: gender,
-        Age: '',
-        Domicile: ''
+        Age: user.value.Age || '',
+        Domicile: user.value.domicile || ''
       }
     }
     return { Name: '', Email: '', Gender: gender, Age: '', Domicile: '' };
@@ -407,7 +409,7 @@ const generateForms = () => {
     const existing = popExisting('Ikhwan');
     if (existing) {
       newParticipants.push(existing);
-      if (existing.Email === userStore.user?.email) hasFilledUser = true;
+      if (existing.Email === user.value?.email) hasFilledUser = true;
     } else {
       newParticipants.push(createParticipant('Ikhwan'));
     }
@@ -417,7 +419,7 @@ const generateForms = () => {
     const existing = popExisting('Akhwat');
     if (existing) {
       newParticipants.push(existing);
-      if (existing.Email === userStore.user?.email) hasFilledUser = true;
+      if (existing.Email === user.value?.email) hasFilledUser = true;
     } else {
       newParticipants.push(createParticipant('Akhwat'));
     }
@@ -465,7 +467,7 @@ const handleSubmit = async () => {
         checkoutStore.participants = rawParticipants.map((p: any) => ({
           Name: p.Name || '',
           Gender: p.Gender || 'Ikhwan',
-          Email: p.Email || userStore.user?.email || '',
+          Email: p.Email || user.value?.email || '',
           Age: p.Age || 0,
           Domicile: p.Domicile || ''
         }));

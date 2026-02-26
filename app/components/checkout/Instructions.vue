@@ -69,6 +69,7 @@ import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useNuxtApp, useRuntimeConfig } from '#app';
 import Swal from 'sweetalert2';
 import ModalsQrCodeModal from '~/components/modals/QrCodeModal.vue';
+import { useAuth } from '~/composables/useAuth';
 
 // Import Assets
 import bniLogo from '~/assets/img/bank/bni.png';
@@ -183,7 +184,7 @@ onMounted(() => {
 
   // 3. [BARU] Konek ke WebSocket AWS lu
   const wsUrl = config.public.websocketUrl;
-  const userEmail = userStore.user?.email || ''; // Atau ambil dari store mana lu simpen email
+  const userEmail = user.value?.email || ''; // Atau ambil dari store mana lu simpen email
 
   if (wsUrl && userEmail) {
     // GABUNGKAN URL DENGAN PARAMETER SK
