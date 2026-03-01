@@ -10,7 +10,7 @@ export const useCheckoutStore = defineStore(
   () => {
     // --- STATE ---
     const currentStep = ref<CheckoutStep>("select");
-    const event = ref<EventInfo| null>(null);
+    const event = ref<EventInfo | null>(null);
     const participants = ref<Participant[]>([]);
     const paymentMethod = ref<string | null>(null);
     const transactionDetails = ref<TransactionDetails | null>(null);
@@ -128,7 +128,7 @@ export const useCheckoutStore = defineStore(
         participants.value.forEach((p, index) => {
           objectPerson[`person${index + 1}`] = {
             PK: p.PK,
-            SK : p.SK,
+            SK: p.SK,
             Name: p.Name,
             Gender: p.Gender?.toLowerCase() || "-",
             Age: Number(p.Age),
@@ -154,7 +154,7 @@ export const useCheckoutStore = defineStore(
           AccessToken: accessToken.value,
           PaymentType: paymentType,
           sender_bank_type: paymentType,
-          repay : repay.value,
+          repay: repay.value,
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
@@ -210,14 +210,14 @@ export const useCheckoutStore = defineStore(
         const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
 
         participants.value = data.Participant.map((p: any) => ({
-          PK : p.PK,
-          SK : p.SK,
+          PK: p.PK,
+          SK: p.SK,
           Name: p.Name,
           Gender: p.Gender,
           Age: p.Age,
           Domicile: p.Domicile,
         }));
-        
+
         event.value = {
           SK: data.SK,
           Title: foundEvent?.Title || "Event Event",
@@ -241,7 +241,7 @@ export const useCheckoutStore = defineStore(
 
     async function checkExistingTransaction(skEvent: string) {
       const { $apiFlip } = useNuxtApp();
-      try {   
+      try {
         const skHash = skEvent.split('#')[0]
         const response = await $apiFlip.get("/get-flip-event", {
           params: { skEvent: skHash },
@@ -283,7 +283,6 @@ export const useCheckoutStore = defineStore(
     }
 
     function clearCheckout() {
-      // Reset manual karena $reset() tidak bekerja otomatis di setup store
       currentStep.value = "select";
       event.value = null;
       participants.value = [];
@@ -331,6 +330,6 @@ export const useCheckoutStore = defineStore(
     };
   },
   {
-    persist: true, // Tetap mendukung pinia-plugin-persistedstate
+    persist: true,
   },
 );

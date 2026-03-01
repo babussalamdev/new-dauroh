@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ToastState } from '~/types/toast';
 
-
-
 export const useToastStore = defineStore('toast', {
   state: (): ToastState => ({
     show: false,

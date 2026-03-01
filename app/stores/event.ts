@@ -2,11 +2,10 @@ import { defineStore } from "pinia";
 import { ref, computed, reactive } from "vue";
 import { useToastStore } from "./toast";
 import { useNuxtApp, useCookie } from "#app";
-import type { 
-  ApiEventRaw, 
-  Event, 
-  EventBasicData, 
-  EventSchedulePayload 
+import type {
+  ApiEventRaw,
+  Event,
+  EventBasicData
 } from "~/types/event";
 
 // --- Helpers ---
@@ -83,7 +82,7 @@ export const useEventStore = defineStore("event", () => {
   const userLogs = ref<any[]>([]);
   const currentEventDetail = ref<Event | null>(null);
   const currentPublicEventDetail = ref<Event | null>(null);
-  
+
   const loading = reactive({
     tiketEvent: false,
     adminTiketEvent: false,
@@ -97,7 +96,7 @@ export const useEventStore = defineStore("event", () => {
   // Getters
   const filteredTiketEvent = computed(() => {
     if (!searchQuery.value) return tiketEvent.value || [];
-    return tiketEvent.value.filter((d) => 
+    return tiketEvent.value.filter((d) =>
       d.Title.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
   });
@@ -116,17 +115,17 @@ export const useEventStore = defineStore("event", () => {
     return [...data].sort((a, b) => (b.SK ?? "").localeCompare(a.SK ?? ""));
   });
 
-const isNonQuota = (eventObj: Event | null | undefined) => {
+  const isNonQuota = (eventObj: Event | null | undefined) => {
     if (!eventObj) return false;
     const check = (val: any) => String(val).toLowerCase().trim() === 'non-quota';
     return check(eventObj.Quota_Total) || check(eventObj.Quota_Ikhwan) || check(eventObj.Quota_Akhwat);
   };
 
-  const getGenderLabel = (g: string | undefined) =>{
+  const getGenderLabel = (g: string | undefined) => {
     if (!g) return "Umum"
     const lower = g.toLowerCase();
     if (lower.includes('ikhwan') && lower.includes('akhwat')) return "Umum";
-    if (lower.includes('ikhwan') || lower.includes('laki') || lower.includes('pria')) return "Khusus Ikhwan"; 
+    if (lower.includes('ikhwan') || lower.includes('laki') || lower.includes('pria')) return "Khusus Ikhwan";
     if (lower.includes('akhwat') || lower.includes('perempuan') || lower.includes('wanita')) return 'Khusus Akhwat';
     return 'Umum';
   };
@@ -177,7 +176,7 @@ const isNonQuota = (eventObj: Event | null | undefined) => {
     if (eventObj.Status !== 'active') return { canRegister: false, message: 'Event Selesai / Tutup' };
 
     if (isNonQuota(eventObj)) {
-       return { canRegister: true, message: 'Daftar Sekarang' };
+      return { canRegister: true, message: 'Daftar Sekarang' };
     }
 
     const remTotal = getRemaining(eventObj.Quota_Total, eventObj.Sold_Total);
@@ -185,11 +184,11 @@ const isNonQuota = (eventObj: Event | null | undefined) => {
     const remAkhwat = getRemaining(eventObj.Quota_Akhwat, eventObj.Sold_Akhwat);
 
     if (
-       (typeof remTotal === 'number' && remTotal > 0) ||
-       (typeof remIkhwan === 'number' && remIkhwan > 0) ||
-       (typeof remAkhwat === 'number' && remAkhwat > 0)
+      (typeof remTotal === 'number' && remTotal > 0) ||
+      (typeof remIkhwan === 'number' && remIkhwan > 0) ||
+      (typeof remAkhwat === 'number' && remAkhwat > 0)
     ) {
-       return { canRegister: true, message: 'Daftar Sekarang' };
+      return { canRegister: true, message: 'Daftar Sekarang' };
     }
 
     return { canRegister: false, message: 'Kuota Penuh' };
@@ -319,7 +318,7 @@ const isNonQuota = (eventObj: Event | null | undefined) => {
     if (!token || !eventData.SK) return false;
     loading.savingBasic = true;
     const toast = useToastStore();
-    
+
     const currentEvent = adminTiketEvent.value.find(d => d.SK === eventData.SK) || currentEventDetail.value;
     if (!currentEvent) {
       loading.savingBasic = false;
@@ -364,7 +363,7 @@ const isNonQuota = (eventObj: Event | null | undefined) => {
       const payload = { AccessToken: token, OldPicture: "", Picture: photoBase64.split(",")[1] };
       const res = await $apiBase.put(`/update-default?type=photo-event&sk=${eventSK}`, payload);
       const newPic = res.data?.Picture || res.data?.event?.Picture;
-      
+
       if (newPic) {
         const target = adminTiketEvent.value.find(d => d.SK === eventSK);
         if (target) target.Picture = newPic;
@@ -395,7 +394,7 @@ const isNonQuota = (eventObj: Event | null | undefined) => {
 
   function decrementQuota(sk: string, total: number, ikhwan: number, akhwat: number) {
     const sub = (val: any, amt: number) => (val === 'non-quota' ? 'non-quota' : Math.max(0, Number(val) - amt));
-    
+
     const apply = (target: Event | null) => {
       if (!target || target.SK !== sk) return;
       target.Quota_Total = sub(target.Quota_Total, total);
@@ -414,8 +413,8 @@ const isNonQuota = (eventObj: Event | null | undefined) => {
     setSearchQuery, fetchPublicTiketEvent, fetchAuthTiketEvent,
     fetchAdminTiketEvent, fetchPublicEventDetail, fetchEventDetail,
     addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
-    deleteTiketEvent, decrementQuota, isNonQuota, getGenderLabel, 
-    showTotal, showIkhwan, showAkhwat, getRemaining, formatQuota, 
+    deleteTiketEvent, decrementQuota, isNonQuota, getGenderLabel,
+    showTotal, showIkhwan, showAkhwat, getRemaining, formatQuota,
     totalQuotaDisplay, registrationStatus
   };
 });

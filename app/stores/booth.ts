@@ -1,7 +1,3 @@
-
-
-// app/stores/booth.ts
-
 import { defineStore } from "pinia";
 import { useNuxtApp } from "#app";
 import { useToastStore } from "./toast";
@@ -16,7 +12,7 @@ export const useBoothStore = defineStore("booth", {
   getters: {
     // Sortir data terbaru di atas
     sortedSubmissions(state): BoothSubmission[] {
-      return [...state.submissions].sort((a, b) => 
+      return [...state.submissions].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     }
@@ -37,7 +33,7 @@ export const useBoothStore = defineStore("booth", {
         // --- INI ADALAH BAGIAN API YANG DIBERI KOMENTAR ---
         // const response = await $apiBase.get('/api/booth-requests');
         // this.submissions = response.data; // <-- Data asli akan diisi di sini
-        
+
         // Karena API di-comment, this.submissions akan tetap kosong
         this.submissions = []; // Pastikan kosong sesuai permintaan "no dummy data"
 
@@ -55,11 +51,11 @@ export const useBoothStore = defineStore("booth", {
     async updateSubmissionStatus(submissionSK: string, newStatus: 'Disetujui' | 'Ditolak') {
       const { $apiBase } = useNuxtApp();
       const toastStore = useToastStore();
-      
+
       // Optimistic UI update
       const submission = this.submissions.find(s => s.SK === submissionSK);
       if (!submission) return;
-      
+
       const oldStatus = submission.status;
       submission.status = newStatus; // Langsung ubah di state
 

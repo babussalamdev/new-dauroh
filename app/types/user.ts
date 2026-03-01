@@ -20,19 +20,16 @@ export interface UserTicket {
   full_sk?: string;
   date: string;
   created_at?: string;
-  event: any;
+  event?: any;
   participants: Participant[];
   title?: string;
   total_participants?: number;
   status:
-    | "Upcoming"
-    | "Selesai"
-    | "PENDING"
-    | "SUCCESSFUL"
-    | "EXPIRED"
-    | "FAILED"
-    | "active"
-    | "CHECKED_IN";
+  | "PENDING"
+  | "SUCCESSFUL"
+  | "Upcoming"
+  | "EXPIRED"
+  | "FAILED";
   amount?: number;
   va_number?: string;
   receiver_bank_account?: any;
