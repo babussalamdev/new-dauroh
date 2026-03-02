@@ -170,6 +170,39 @@ export const useEventStore = defineStore("event", () => {
     return `${eventObj.Quota_Total} Kursi`;
   };
 
+  async function updateEventSchedule(SK: string, schedulePayload: any): Promise<boolean> {
+  const token = useCookie("AccessToken").value;
+  if (!token || !SK) return false;
+
+  loading.savingSchedule = true;
+  const toast = useToastStore();
+
+  try {
+    const { $apiBase } = useNuxtApp() as any;
+    const payload = {
+      AccessToken: token,
+      Date: schedulePayload 
+    };
+
+    await $apiBase.put(`/update-default?type=event&sk=${SK}`, payload);
+    if (currentEventDetail.value && currentEventDetail.value.SK === SK) {
+      currentEventDetail.value.Date = schedulePayload;
+    }
+
+    const targetInList = adminTiketEvent.value.find(d => d.SK === SK);
+    if (targetInList) targetInList.Date = schedulePayload;
+
+    toast.showToast({ message: "Jadwal berhasil diperbarui.", type: "success" });
+    return true;
+  } catch (error: any) {
+    console.error("Gagal update jadwal:", error);
+    toast.showToast({ message: "Gagal memperbarui jadwal.", type: "danger" });
+    return false;
+  } finally {
+    loading.savingSchedule = false;
+  }
+};
+
   const registrationStatus = (eventObj: Event | null | undefined) => {
     if (!eventObj) return { canRegister: false, message: 'Loading...' };
 
@@ -415,6 +448,6 @@ export const useEventStore = defineStore("event", () => {
     addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
     deleteTiketEvent, decrementQuota, isNonQuota, getGenderLabel,
     showTotal, showIkhwan, showAkhwat, getRemaining, formatQuota,
-    totalQuotaDisplay, registrationStatus
+    totalQuotaDisplay, registrationStatus, updateEventSchedule
   };
 });

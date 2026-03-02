@@ -130,11 +130,11 @@
                         </td>
                         <td class="text-center pe-4">
                           <button
-                            v-if="getSmartStatus(ticket) === 'PAID' || ['SUCCESSFUL', 'SUCCESS'].includes((ticket.Status || ticket.status || '').toUpperCase())"
-                            class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm"
-                            @click="openQrModal(ticket)">
-                            <i class="bi bi-qr-code-scan me-2"></i>E-Ticket
-                          </button>
+                          v-if="getSmartStatus(ticket) === 'PAID' || ['SUCCESSFUL', 'SUCCESS'].includes((ticket.Status || ticket.status || '').toUpperCase())"
+                          class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm"
+                          @click="openDetailModal(ticket)">
+                          <i class="bi bi-people me-2"></i>Lihat Peserta
+                        </button>
 
                           <span v-else-if="getSmartStatus(ticket) === 'PENDING'"
                             class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
@@ -161,8 +161,12 @@
         </div>
       </div>
     </div>
-
-    <ModalsQrCodeModal :show="showQrModal" :ticket="selectedTicket" @close="closeQrModal" />
+    <HistoryDetailModal 
+    :show="showDetailModal" 
+    :ticket="selectedTicket" 
+    @close="closeDetailModal" 
+    @show-qr="openParticipantQr" 
+  />
 
   </div>
 </template>
@@ -187,7 +191,9 @@ const { getSmartStatus } = useTransactionStatus();
 const activeTab = ref('active');
 
 const showQrModal = ref(false);
+const showDetailModal = ref(false);
 const selectedTicket = ref(null);
+const selectedParticipant = ref(null);
 const upcomingTickets = computed(() => {
   const allTickets = userStore.tickets || userStore.getDashboardData || [];
   if (!Array.isArray(allTickets)) return [];
@@ -244,14 +250,30 @@ const completedEvent = computed(() => {
   });
 });
 
-const openQrModal = (ticket) => {
+const openDetailModal = (ticket) => {
   selectedTicket.value = ticket;
+  showDetailModal.value = true;
+};
+
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  selectedTicket.value = null;
+};
+
+const openParticipantQr = (ticket, participant) => {
+  selectedTicket.value = {
+    ...ticket,
+    participants: [participant]
+  };
+  
+  showDetailModal.value = false;
   showQrModal.value = true;
 };
 
 const closeQrModal = () => {
   showQrModal.value = false;
-  selectedTicket.value = null;
+  selectedParticipant.value = null;
+   showDetailModal.value = true; 
 };
 
 const formatCurrency = (val) => {

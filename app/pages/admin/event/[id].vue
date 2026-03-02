@@ -22,15 +22,13 @@
         <div class="sticky-sidebar">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
             <div class="card-body p-3">
-              <div
-                class="Picture-container mx-auto position-relative rounded-3 overflow-hidden bg-light border border-dashed d-flex align-items-center justify-content-center">
+              <div class="Picture-container mx-auto position-relative rounded-3 overflow-hidden bg-light border border-dashed d-flex align-items-center justify-content-center">
                 <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="Picture-preview" @error="onImageError" />
                 <div v-else class="text-muted p-4 text-center">
                   <i class="bi bi-image fs-1 opacity-25"></i>
                   <div class="small mt-2">Belum ada gambar</div>
                 </div>
-                <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none"
-                  id="posterUploadPage" />
+                <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none" id="posterUploadPage" />
               </div>
               <canvas ref="canvasRef" style="display: none;"></canvas>
               <div v-if="photoError" class="alert alert-danger mt-2 x-small p-2 text-center">{{ photoError }}</div>
@@ -51,16 +49,12 @@
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <h6 class="fw-bold mb-0 text-dark small text-uppercase">Info Dasar</h6>
-              <button @click="openEditBasicModal"
-                class="btn btn-light btn-sm text-primary py-1 px-2 rounded-pill fw-bold">Edit</button>
+              <button @click="openEditBasicModal" class="btn btn-light btn-sm text-primary py-1 px-2 rounded-pill fw-bold">Edit</button>
             </div>
             <div class="info-list d-flex flex-column gap-3">
-              <div class="d-flex justify-content-between"><span class="text-muted small">Registrasi</span><span
-                  class="small fw-medium">{{ formatRegDates(eventData.Registration) }}</span></div>
-              <div class="d-flex justify-content-between"><span class="text-muted small">Lokasi</span><span
-                  class="small fw-medium text-truncate" style="max-width: 120px;">{{ eventData.Place }}</span></div>
-              <div class="d-flex justify-content-between"><span class="text-muted small">Harga</span><span
-                  class="small fw-bold text-primary">{{ formatCurrency(eventData.Price) }}</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted small">Registrasi</span><span class="small fw-medium">{{ formatRegDates(eventData.Registration) }}</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted small">Lokasi</span><span class="small fw-medium text-truncate" style="max-width: 120px;">{{ eventData.Place }}</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted small">Harga</span><span class="small fw-bold text-primary">{{ formatCurrency(eventData.Price) }}</span></div>
             </div>
           </div>
         </div>
@@ -90,18 +84,15 @@
         <section class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h6 class="fw-bold mb-0 text-dark small text-uppercase">Jadwal Kegiatan</h6>
-            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" @click="addScheduleDay">+ Tambah
-              Hari</button>
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" @click="addScheduleDay">+ Tambah Hari</button>
           </div>
 
           <form @submit.prevent="handleScheduleSubmit">
-            <div v-if="formState.scheduleDays.length === 0"
-              class="text-center py-5 rounded-4 bg-light border border-dashed">
+            <div v-if="formState.scheduleDays.length === 0" class="text-center py-5 rounded-4 bg-light border border-dashed">
               <p class="text-muted small">Belum ada jadwal yang ditambahkan.</p>
             </div>
             <div v-else class="d-flex flex-column gap-3">
-              <div v-for="(day, index) in formState.scheduleDays" :key="day.tempId"
-                class="bg-light p-3 rounded-4 border position-relative">
+              <div v-for="(day, index) in formState.scheduleDays" :key="day.tempId" class="bg-light p-3 rounded-4 border position-relative">
                 <div class="row g-2 align-items-end">
                   <div class="col-md-4">
                     <label class="x-small text-muted mb-1 ps-1">Tanggal</label>
@@ -109,15 +100,14 @@
                   </div>
                   <div class="col-md-3">
                     <label class="x-small text-muted mb-1 ps-1">Mulai</label>
-                    <input type="time" class="form-control modern-input" v-model="day.start_time" required>
+                    <input type="time" class="form-control modern-time-input" v-model="day.start_time" required>
                   </div>
                   <div class="col-md-3">
                     <label class="x-small text-muted mb-1 ps-1">Selesai</label>
-                    <input type="time" class="form-control modern-input" v-model="day.end_time" required>
+                    <input type="time" class="form-control modern-time-input" v-model="day.end_time" required>
                   </div>
                   <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-light text-danger rounded-circle"
-                      @click="removeScheduleDay(index)">
+                    <button type="button" class="btn btn-light text-danger rounded-circle" @click="removeScheduleDay(index)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -144,7 +134,6 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router';
 import { useEventStore } from '@/stores/event';
 import { useToastStore } from '@/stores/toast';
-import Swal from 'sweetalert2';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 
@@ -185,6 +174,30 @@ const breadcrumbItems = computed(() => [
   { text: eventData.value?.Title || 'Detail Event' }
 ]);
 
+// --- UTILS (Time Converter) ---
+const convertTo24h = (timeStr?: string) => {
+  if (!timeStr) return '';
+  const cleanStr = timeStr.replace('.', ':');
+  const [time, modifier] = cleanStr.split(' ');
+  if (!time) return '';
+  let [hours, minutes] = time.split(':');
+  let h = parseInt(hours, 10);
+  if (modifier === 'PM' && h < 12) h += 12;
+  if (modifier === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${minutes}`;
+};
+
+const convertTo12h = (time24: string | undefined) => {
+  if (!time24) return '';
+  const parts = time24.split(':');
+  if (parts.length < 2) return '';
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${String(hours).padStart(2, '0')}.${minutes} ${suffix}`;
+};
+
 // --- INITIALIZE DATA ---
 const initializeData = () => {
   if (!eventData.value) return;
@@ -199,7 +212,7 @@ const initializeData = () => {
     formState.scheduleDays = Object.values(eventData.value.Date).map((day: any, index: number) => ({
       tempId: index,
       ...day,
-      start_time: convertTo24h(day.start_time),
+      start_time: convertTo24h(day.start_time), 
       end_time: convertTo24h(day.end_time)
     })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
@@ -293,21 +306,25 @@ const removeScheduleDay = (index: number) => {
 };
 
 const handleScheduleSubmit = async () => {
-  if (!eventData.value?.SK) return;
+  if (!eventSK) return;
   isSavingSchedule.value = true;
-
-  const payload: Record<string, any> = {};
+  const payload: any = {};
   formState.scheduleDays.forEach((day, i) => {
     payload[`day_${i + 1}`] = {
       date: day.date,
-      start_time: convertTo12h(day.start_time),
+      start_time: convertTo12h(day.start_time), 
       end_time: convertTo12h(day.end_time)
     };
   });
 
   try {
-    await eventStore.updateEventSchedule(eventData.value.SK, payload);
-    toastStore.showToast({ message: 'Jadwal disimpan', type: 'success' });
+    const success = await eventStore.updateEventSchedule(eventSK, payload);
+    if (success) {
+      toastStore.showToast({ message: 'Jadwal berhasil disimpan', type: 'success' });
+    }
+  } catch (err) {
+    console.error(err);
+    toastStore.showToast({ message: 'Gagal menyimpan jadwal', type: 'danger' });
   } finally {
     isSavingSchedule.value = false;
   }
@@ -325,44 +342,6 @@ const handleContentSubmit = async () => {
     isContentChanged.value = false;
   }
   isSavingBasic.value = false;
-};
-
-// --- UTILS (Time Converter) ---
-const convertTo24h = (timeStr?: string) => {
-  // Jika timeStr kosong atau undefined, langsung return string kosong
-  if (!timeStr) return '';
-
-  const parts = timeStr.split(' ');
-  const time = parts[0]; // '08.00'
-  const modifier = parts[1]; // 'AM'
-
-  // Tambahkan pengecekan 'time' di sini
-  if (!time) return '';
-
-  let [hours, minutes] = time.split('.');
-
-  if (hours === '12') hours = '00';
-  if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
-
-  return `${hours.padStart(2, '0')}:${minutes}`;
-};
-
-const convertTo12h = (time24: string | undefined) => {
-  // Gunakan guard clause untuk memastikan time24 bukan undefined/kosong
-  if (!time24) return '';
-
-  const parts = time24.split(':');
-  // Pastikan split menghasilkan array yang lengkap
-  if (parts.length < 2) return '';
-
-  const h = parts[0];
-  const m = parts[1];
-
-  const hours = parseInt(h, 10);
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const hours12 = ((hours + 11) % 12 + 1);
-
-  return `${String(hours12).padStart(2, '0')}.${m} ${suffix}`;
 };
 
 const formatCurrency = (v: any) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
@@ -397,6 +376,8 @@ const onImageError = () => previewUrl.value = null;
 </script>
 
 <style scoped>
+@import url("@/assets/css/admin/timepicker.css");
+
 .sticky-sidebar {
   position: sticky;
   top: 1.5rem;

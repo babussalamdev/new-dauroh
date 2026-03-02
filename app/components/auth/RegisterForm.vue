@@ -159,30 +159,31 @@ const handleRegister = async () => {
       router.push({ path: '/verify', query: { email: form.email } });
     });
 
-  } catch (err) {
-    console.error(err);
-
+} catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
     const msgLower = msg.toLowerCase();
-
-    // 3. HANDLING "ACCOUNT ALREADY EXISTS"
-    // Sesuai request: Anggap ini sebagai "Resend OTP" dan langsung redirect ke verify
-    if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar')) {
-
-      // Tetap simpan data form ke session agar verify.vue bisa ambil untuk resend
+    if (msgLower.includes('nomor') || msgLower.includes('whatsapp')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Nomor Sudah Digunakan',
+        text: msg,
+        confirmButtonColor: '#004754'
+      });
+    } 
+    else if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar') || msgLower.includes('email')) {
       sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
 
       await Swal.fire({
         icon: 'info',
         title: 'Akun Sudah Terdaftar',
-        text: 'Mengirim ulang kode OTP ke email Anda...',
-        timer: 1500,
+        text: 'Email sudah terdaftar. Mengarahkan ke halaman verifikasi untuk kirim ulang OTP...',
+        timer: 2000,
         showConfirmButton: false
       });
 
       router.push({ path: '/verify', query: { email: form.email } });
-
-    } else {
+    } 
+    else {
       error.value = msg;
     }
 

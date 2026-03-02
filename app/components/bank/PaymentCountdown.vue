@@ -68,8 +68,7 @@ const startTimer = () => {
       remainingTime.value = 0;
       stopTimer();
       }
-    }
-  };
+    };
 
   updateTime();
 
@@ -77,6 +76,7 @@ const startTimer = () => {
     intervalId.value = setInterval(updateTime, 1000);
   }
 };
+
 
 const stopTimer = () => {
   if (intervalId.value) clearInterval(intervalId.value);
