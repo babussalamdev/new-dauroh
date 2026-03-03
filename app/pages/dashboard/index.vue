@@ -162,11 +162,17 @@
       </div>
     </div>
     <HistoryDetailModal 
-    :show="showDetailModal" 
-    :ticket="selectedTicket" 
-    @close="closeDetailModal" 
-    @show-qr="openParticipantQr" 
-  />
+      :show="showDetailModal" 
+      :ticket="selectedTicket" 
+      @close="closeDetailModal" 
+      @show-qr="openParticipantQr" 
+    />
+
+    <ModalsQrCodeModal 
+      :show="showQrModal" 
+      :ticket="qrPayload" 
+      @close="closeQrModal" 
+    />
 
   </div>
 </template>
@@ -193,7 +199,7 @@ const activeTab = ref('active');
 const showQrModal = ref(false);
 const showDetailModal = ref(false);
 const selectedTicket = ref(null);
-const selectedParticipant = ref(null);
+const qrPayload = ref(null);
 const upcomingTickets = computed(() => {
   const allTickets = userStore.tickets || userStore.getDashboardData || [];
   if (!Array.isArray(allTickets)) return [];
@@ -261,9 +267,10 @@ const closeDetailModal = () => {
 };
 
 const openParticipantQr = (ticket, participant) => {
-  selectedTicket.value = {
-    ...ticket,
-    participants: [participant]
+  qrPayload.value = {
+    event: ticket.event,
+    participants: [participant],
+    SK: ticket.SK
   };
   
   showDetailModal.value = false;
@@ -272,8 +279,8 @@ const openParticipantQr = (ticket, participant) => {
 
 const closeQrModal = () => {
   showQrModal.value = false;
-  selectedParticipant.value = null;
-   showDetailModal.value = true; 
+  qrPayload.value = null; // Bersihin qrPayload
+  showDetailModal.value = true;
 };
 
 const formatCurrency = (val) => {

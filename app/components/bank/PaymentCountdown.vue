@@ -43,12 +43,16 @@ const minutes = computed(() => Math.floor((remainingTime.value % (1000 * 60 * 60
 const seconds = computed(() => Math.floor((remainingTime.value % (1000 * 60)) / 1000));
 
 const startTimer = () => {
-  let expiryDateStr = transactionDetails.value?.expiryTime || transactionDetails.value?.expired_date;
+  let expiryDateStr = transactionDetails.value?.Expired_Date;
   if (!expiryDateStr) return;
 
   // Logic Timezone (Keep this, ini penting!)
-  if (typeof expiryDateStr === 'string') {
+if (typeof expiryDateStr === 'string') {
       expiryDateStr = expiryDateStr.replace(' ', 'T');
+      if (expiryDateStr.split(':').length === 2) {
+          expiryDateStr += ':00';
+      }
+
       if (!expiryDateStr.includes('+') && !expiryDateStr.endsWith('Z')) {
           expiryDateStr += '+07:00';
       }

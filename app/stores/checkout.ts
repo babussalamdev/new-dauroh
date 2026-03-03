@@ -41,7 +41,7 @@ export const useCheckoutStore = defineStore(
     const timeRemaining = computed(() => {
       if (!transactionDetails.value?.expiryTime) return 0;
 
-      let timeString = transactionDetails.value.expiryTime;
+      let timeString = transactionDetails.value.expiryTime || transactionDetails.value?.Expired_Date || transactionDetails.value?.expired_date;
       if (typeof timeString === "string") {
         timeString = timeString.replace(" ", "T");
         if (!timeString.includes("+") && !timeString.endsWith("Z")) {
