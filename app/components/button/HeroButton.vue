@@ -9,7 +9,7 @@
 <script setup>
 defineProps({
   label: String,
-  icon: Object,
+  icon: String,
   bgClass: String,
   iconSize: {
     type: Number,

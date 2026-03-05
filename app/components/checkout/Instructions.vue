@@ -160,15 +160,11 @@ const handleExpiredState = () => {
   });
 };
 const handleExit = () => {
-  // Arahkan ke dashboard. 
-  // Navigation Guard (onBeforeRouteLeave) di bawah 
-  // SUDAH menghandle kasus ke '/dashboard' dengan next() langsung (tanpa tanya-tanya).
   router.push('/dashboard');
 };
 
 // --- Lifecycle & Watcher ---
 onMounted(() => {
-  // 1. Register data pendaftaran (Existing)
   if (store.transactionDetails && store.event && currentStatus.value !== 'SUCCESSFUL') {
     userStore.registerEvent({
       event: store.event,
@@ -177,22 +173,8 @@ onMounted(() => {
     });
   }
 
-  // 2. Handle Expired State (Existing)
   if (currentStatus.value === 'EXPIRED') {
     handleExpiredState();
-  }
-
-  // 3. [BARU] Konek ke WebSocket AWS lu
-  const wsUrl = config.public.websocketUrl;
-  const userEmail = user.value?.email || ''; // Atau ambil dari store mana lu simpen email
-
-  if (wsUrl && userEmail) {
-    // GABUNGKAN URL DENGAN PARAMETER SK
-    // Hasilnya: wss://.../stage/?sk=email@gmail.com
-    const finalUrl = `${wsUrl}${wsUrl.includes('?') ? '&' : '?'}sk=${userEmail}`;
-
-    console.log("🔌 Menghubungkan ke WebSocket dengan SK:", finalUrl);
-    $connectSocket(finalUrl);
   }
 });
 

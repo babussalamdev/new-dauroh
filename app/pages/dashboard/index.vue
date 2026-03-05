@@ -108,7 +108,7 @@
                   <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                       <tr>
-                        <th class="ps-4 py-3 border-0 small text-uppercase fw-bold text-muted">Transaksi</th>
+                        <th class="border-0 small text-uppercase fw-bold text-muted">Transaksi</th>
                         <th class="border-0 small text-uppercase fw-bold text-muted">Detail Event</th>
                         <th class="border-0 small text-uppercase fw-bold text-muted text-center">Tiket</th>
                       </tr>
@@ -125,7 +125,7 @@
                         </td>
                         <td>
                           <span class="fw-bold d-block text-dark">{{ ticket.event.Title }}</span>
-                          <span class="text-muted small-8">{{ ticket.participants }} Peserta • {{
+                          <span class="text-muted small-8">{{ ticket.participants?.length || 0 }} Peserta • {{
                             formatCurrency(ticket.amount) }}</span>
                         </td>
                         <td class="text-center pe-4">
@@ -214,13 +214,13 @@ const upcomingTickets = computed(() => {
       return item;
     })
     .filter(item => {
-      const smartStatus = getSmartStatus(item);
-      const rawStatus = (item.status || '').toUpperCase();
-      const isPaid = smartStatus === 'SUCCESSFUL' || rawStatus === 'SUCCESSFUL';
-      const isPending = smartStatus === 'PENDING';
+  const smartStatus = getSmartStatus(item);
+  const rawStatus = (item.Status || item.status || '').toUpperCase();
+  const isPaid = ['SUCCESSFUL', 'PAID', 'SUCCESS', 'UPCOMING', 'ACTIVE'].includes(rawStatus) || smartStatus === 'SUCCESSFUL';
+  const isPending = smartStatus === 'PENDING';
 
-      return isPaid || isPending;
-    });
+  return isPaid || isPending;
+});
 });
 
 onMounted(async () => {

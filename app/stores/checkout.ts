@@ -37,21 +37,18 @@ export const useCheckoutStore = defineStore(
     );
 
     const step = computed(() => currentStep.value);
-
     const timeRemaining = computed(() => {
-      if (!transactionDetails.value?.expiryTime) return 0;
-
-      let timeString = transactionDetails.value.expiryTime || transactionDetails.value?.Expired_Date || transactionDetails.value?.expired_date;
+      if (!transactionDetails.value) return 0;
+      let timeString = transactionDetails.value.expired_date;
+      if (!timeString) return 0;
       if (typeof timeString === "string") {
         timeString = timeString.replace(" ", "T");
         if (!timeString.includes("+") && !timeString.endsWith("Z")) {
-          timeString += "+07:00"; // FORCE WIB
+          timeString += "+07:00";
         }
       }
-
       const expireDate = new Date(timeString).getTime();
       const now = new Date().getTime();
-
       return isNaN(expireDate) ? 0 : expireDate - now;
     });
 
@@ -165,9 +162,11 @@ export const useCheckoutStore = defineStore(
         const result = response.data;
         transactionDetails.value = {
           ...result,
-          vaNumber: result.receiver_bank_account?.account_number,
-          expiryTime: result.expired_date,
-          paymentMethod: paymentMethod.value || "Bank",
+          vaNumber: result.receiver_bank_account?.account_number || result.va_number,
+         expired_date: result.expired_date,
+         expiryTime: result.expired_date,
+         amount: result.amount,
+         paymentMethod: paymentMethod.value || "Bank",
         };
 
         currentStep.value = "instructions";
@@ -243,7 +242,7 @@ export const useCheckoutStore = defineStore(
       const { $apiFlip } = useNuxtApp();
       try {
         const skHash = skEvent.split('#')[0]
-        const response = await $apiFlip.get("/get-flip-event", {
+        const response = await $apiFlip.get("/get-flip-dauroh", {
           params: { skEvent: skHash },
         });
         const paymentData = response.data?.Payment;
@@ -259,7 +258,7 @@ export const useCheckoutStore = defineStore(
               paymentData.receiver_bank_account?.account_number ||
               paymentData.va_number,
             expiryTime: paymentData.expired_date || paymentData.expiry_date,
-            amount: paymentData.amount || paymentData.bill_amount,
+            amount: paymentData.amount,
           };
           setStep("instructions");
           return true;

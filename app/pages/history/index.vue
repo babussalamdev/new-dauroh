@@ -101,21 +101,40 @@ const sortedTickets = computed(() => {
 const openDetailModal = async (ticket: any) => {
   selectedTicketDetail.value = ticket;
   showDetail.value = true;
+  
   try {
     const { $apiBase } = useNuxtApp();
     const skRaw = ticket.full_sk || ticket.SK;
     const res = await $apiBase.get('/get-payment', {
       params: { type: 'payment-detail', sk: skRaw }
     });
+    
     const newData = res.data;
-    if (newData && Array.isArray(newData.Participant)) {
-      const freshParticipants = newData.Participant.map((p: any) => ({
-        Name: p.Name || p.name,
-        Gender: p.Gender || p.gender || '-',
-        Age: Number(p.Age || p.age || 0),
-        Domicile: p.Domicile || p.domicile || '-'
-      }));
-      selectedTicketDetail.value = { ...selectedTicketDetail.value, participants: freshParticipants };
+    
+    if (newData) {
+      let freshParticipants = [];
+      if (Array.isArray(newData.Participant)) {
+        freshParticipants = newData.Participant.map((p: any) => ({
+          Name: p.Name || p.name,
+          Gender: p.Gender || p.gender || '-',
+          Age: Number(p.Age || p.age || 0),
+          Domicile: p.Domicile || p.domicile || '-'
+        }));
+      }
+      selectedTicketDetail.value = { 
+        ...selectedTicketDetail.value, 
+        participants: freshParticipants.length > 0 ? freshParticipants : selectedTicketDetail.value.participants,
+        status: newData.Status || selectedTicketDetail.value.status
+      };
+      const index = userStore.tickets.findIndex(t => t.SK === skRaw);
+      if (index !== -1) {
+        userStore.tickets[index] = { 
+          ...userStore.tickets[index], 
+          participants: freshParticipants.length > 0 ? freshParticipants : userStore.tickets[index].participants,
+          status: newData.Status || userStore.tickets[index].status,
+          Status: newData.Status
+        };
+      }
     }
   } catch (error) {
     console.error("Gagal update detail:", error);

@@ -25,15 +25,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout'
-import { useAuth } from '~/composables/useAuth';
 
 // Setup
 const { $connectSocket, $closeSocket } = useNuxtApp() as any;
 const config = useRuntimeConfig();
 const checkoutStore = useCheckoutStore();
-const { user } = useAuth();
+const {user} = useAuth()
 const transactionDetails = computed(() => checkoutStore.transactionDetails);
-
 // Logic Timer
 const remainingTime = ref<number>(1000); 
 const intervalId = ref<any>(null);
@@ -43,7 +41,9 @@ const minutes = computed(() => Math.floor((remainingTime.value % (1000 * 60 * 60
 const seconds = computed(() => Math.floor((remainingTime.value % (1000 * 60)) / 1000));
 
 const startTimer = () => {
-  let expiryDateStr = transactionDetails.value?.Expired_Date;
+  
+  let expiryDateStr = transactionDetails.value?.expired_date;
+
   if (!expiryDateStr) return;
 
   // Logic Timezone (Keep this, ini penting!)

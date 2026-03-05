@@ -13,14 +13,14 @@
             <div class="mb-3">
               <label for="username" class="form-label">Email/Username</label>
               <input type="text" id="username" v-model="form.email" placeholder="Masukkan username atau email"
-                class="form-control form-control-lg" required />
+                class="form-control form-control-lg" autocomplete="current-username" required />
             </div>
 
             <div class="mb-3">
               <label for="password" class="form-label">Password</label>
               <div class="password-wrapper">
                 <input :type="showPassword ? 'text' : 'password'" v-model="form.password" id="password"
-                  placeholder="Masukkan password" class="form-control form-control-lg" required />
+                  placeholder="Masukkan password" class="form-control form-control-lg" autocomplete="current-password" required  />
                 <span @click="togglePasswordVisibility" class="password-toggle-icon">
                   <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                     class="bi bi-eye-fill" viewBox="0 0 16 16">

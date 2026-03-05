@@ -24,6 +24,7 @@
               </thead>
               <tbody>
                 <tr v-for="(p, idx) in ticket.participants" :key="idx">
+                  
                   <td class="ps-3 py-2">
                     <div class="fw-bold text-dark">{{ p.Name }}</div>
                     <small class="text-muted" style="font-size: 0.75rem;">{{ p.Gender || 'Umum' }}</small>

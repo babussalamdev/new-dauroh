@@ -16,15 +16,29 @@ export interface EventInfo {
 }
 
 export interface TransactionDetails {
+  id?: string;
   link_id?: string;
   link_url?: string;
   amount?: number;
+  unique_code?: number;
   status?: string;
+  title?: string;
   paymentMethod?: string;
   vaNumber?: string;
   expiryTime?: string;
-  expired_date?: string;
+  expired_date?: string; 
+  sender_bank?: string;
   sender_bank_type?: string;
+  
+  receiver_bank_account?: {
+    account_number: string;
+    account_type: string;
+    bank_code: string;
+    account_holder: string;
+  };
+  
+  PK?: string;
+  SK?: string;
   [key: string]: any;
 }
 
