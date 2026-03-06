@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useNuxtApp } from "#app";
 import { useToastStore } from "~/stores/toast";
+import { usePagination } from "~/composables/usePagination";
 // Import interface dari folder types
 import type { AdminUser } from "~/types/admin"; 
 
@@ -10,8 +11,8 @@ export const useAdminUserStore = defineStore("adminUser", () => {
   const users = ref<AdminUser[]>([]);
   const loading = ref(false);
   const search = ref("");
-  const perPage = ref(10);
-  const currentPage = ref(1);
+  // const perPage = ref(10);
+  // const currentPage = ref(1);
   const currentType = ref("all");
 
   // --- Getters ---
@@ -34,22 +35,17 @@ export const useAdminUserStore = defineStore("adminUser", () => {
     });
   });
 
-  const totalItems = computed(() => filteredData.value.length);
-  const totalPages = computed(() => Math.ceil(totalItems.value / perPage.value) || 1);
+  const {
+    perPage,
+    currentPage,
+    totalPages,
+    totalItems,
+    paginatedData,
+    changePage
+  } = usePagination(filteredData);
 
-  const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * perPage.value;
-    const end = start + perPage.value;
-    return filteredData.value.slice(start, end);
-  });
-
+ 
   // --- Actions ---
-  function changePage(page: number) {
-    if (page >= 1 && page <= totalPages.value) {
-      currentPage.value = page;
-    }
-  }
-
   async function getListaccount(type: string = 'all', forceRefresh = false) {
     if (users.value.length > 0 && currentType.value === type && !loading.value && !forceRefresh) return;
 
@@ -123,8 +119,12 @@ export const useAdminUserStore = defineStore("adminUser", () => {
   }
 
   return {
-    users, loading, search, perPage, currentPage, currentType,
-    filteredData, totalItems, totalPages, paginatedData,
-    changePage, getListaccount, changeUserStatus, addAccount
+    users, loading, search, currentType,
+    filteredData, 
+    
+    
+    perPage, currentPage, totalItems, totalPages, paginatedData, changePage,
+    
+    getListaccount, changeUserStatus, addAccount
   };
 });

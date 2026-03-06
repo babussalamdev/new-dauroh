@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import Swal from "sweetalert2";
 import { useNuxtApp, useCookie } from "#app";
 import { ref, computed } from "vue";
+import { usePagination } from "~/composables/usePagination";
 
 export const useVoucherStore = defineStore("voucher", () => {
   // =========================================================
@@ -12,8 +13,6 @@ export const useVoucherStore = defineStore("voucher", () => {
   const selectedEventSK = ref("");
   const loading = ref(false);
   const search = ref("");
-  const perPage = ref(10);
-  const currentPage = ref(1);
   const form = ref({
     jumlah: "",
     nominal: "",
@@ -32,27 +31,18 @@ export const useVoucherStore = defineStore("voucher", () => {
     );
   });
 
-  const totalItems = computed((): number => {
-    return filteredData.value.length;
-  });
-
-  const totalPages = computed((): number => {
-    return Math.ceil(totalItems.value / perPage.value) || 1;
-  });
-
-  const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * perPage.value;
-    return filteredData.value.slice(start, start + perPage.value);
-  });
+  const { 
+    perPage, 
+    currentPage, 
+    totalItems, 
+    totalPages, 
+    paginatedData, 
+    changePage 
+  } = usePagination(filteredData);
 
   // =========================================================
   // ACTIONS
   // =========================================================
-  function changePage(page: number) {
-    if (page >= 1 && page <= totalPages.value) {
-      currentPage.value = page;
-    }
-  }
 
   function resetForm() {
     form.value = { jumlah: "", nominal: "", hari: "" };
@@ -181,12 +171,12 @@ export const useVoucherStore = defineStore("voucher", () => {
     selectedEventSK,
     loading,
     search,
-    perPage,
-    currentPage,
     form,
 
     // Getters
     filteredData,
+    perPage,
+    currentPage,
     totalItems,
     totalPages,
     paginatedData,

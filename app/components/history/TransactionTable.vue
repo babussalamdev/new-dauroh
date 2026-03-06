@@ -33,7 +33,7 @@
           </td>
 
           <td class="py-3 text-center">
-            <span class="text-dark fs-10">{{ ticket.participants || 0 }} Orang</span>
+            <span class="text-dark fs-10">{{ ticket.participants?.length || 0 }} Orang</span>
           </td>
 
           <td class="py-3 text-center">

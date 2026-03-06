@@ -43,7 +43,17 @@
         <div v-else>
           <CommonLoadingSpinner v-if="store.loading" class="my-5" />
 
-          <div v-else-if="store.voucher.length > 0" class="table-responsive">
+          <div v-else-if="store.voucher.length > 0">
+
+            <div class="d-flex justify-content-end p-3 border-bottom">
+              <input 
+                type="text" 
+                class="form-control form-control-sm w-25" 
+                placeholder="Cari kode voucher..." 
+                v-model="store.search"
+              >
+            </div>
+            <div class="table-responsive">
             <table class="table table-striped table-hover align-middle mb-0" style="font-size: 0.9rem;">
               <thead class="table-primary text-white">
                 <tr>
@@ -56,7 +66,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="v in store.voucher" :key="v.SK">
+                <tr v-for="v in store.paginatedData" :key="v.SK">
                   <td class="ps-4 fw-medium">{{ v.SK }}</td>
                   <td>{{ v.Status }}</td>
                   <td>{{ v.Expired }}</td>
@@ -73,19 +83,46 @@
             </table>
           </div>
 
+          <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+              <span class="small text-muted">
+                Halaman {{ store.currentPage }} dari {{ store.totalPages }} 
+                (Total: {{ store.totalItems }} Voucher)
+              </span>
+              
+              <div class="btn-group">
+                <button 
+                  class="btn btn-outline-secondary btn-sm" 
+                  :disabled="store.currentPage === 1"
+                  @click="store.changePage(store.currentPage - 1)"
+                >
+                  <i class="bi bi-chevron-left"></i> Prev
+                </button>
+                <button 
+                  class="btn btn-outline-secondary btn-sm" 
+                  :disabled="store.currentPage === store.totalPages"
+                  @click="store.changePage(store.currentPage + 1)"
+                >
+                  Next <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
           <div v-else class="text-center py-5">
             <i class="bi bi-ticket-perforated fs-3 text-muted"></i>
             <h6 class="mt-2 mb-1">Belum Ada Voucher</h6>
             <p class="text-muted small">Event ini belum memiliki voucher. Klik "Tambah Kupon" untuk membuat.</p>
           </div>
         </div>
-
       </div>
     </div>
 
     <AdminVoucherFormModal :show="showModal" @close="showModal = false" />
-
+  
+  
   </div>
+  
 </template>
 
 <script setup lang="ts">
