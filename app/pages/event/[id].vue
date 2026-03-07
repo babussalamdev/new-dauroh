@@ -65,16 +65,16 @@
 
                            <button
                               class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm mb-3 transition-transform d-flex align-items-center justify-content-center gap-2"
-                              :disabled="!registrationStatus.canRegister || isLoadingCheck"
+                              :disabled="!registrationStatus(event).canRegister || isLoadingCheck"
                               @click="handleRegisterClick">
                               <span v-if="isLoadingCheck" class="spinner-border spinner-border-sm" role="status"
                                  aria-hidden="true"></span>
-                              <span>{{ registrationStatus.message }}</span>
+                              <span>{{ registrationStatus(event).message }}</span>
                            </button>
 
-                           <div v-if="!registrationStatus.canRegister"
+                           <div v-if="!registrationStatus(event).canRegister"
                               class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis x-small py-2 mb-0 rounded-3">
-                              <i class="bi bi-info-circle me-1"></i> {{ registrationStatus.message }}
+                              <i class="bi bi-info-circle me-1"></i> {{ registrationStatus(event).message }}
                            </div>
 
                            <span
@@ -96,7 +96,7 @@
                         </div>
                         <div class="card-body p-4">
 
-                           <div v-if="isNonQuota" class="text-center py-2">
+                           <div v-if="isNonQuota(event)" class="text-center py-2">
                               <span
                                  class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
                                  <i class="bi bi-infinity me-1"></i> Tanpa Batas
@@ -104,7 +104,7 @@
                            </div>
 
                            <div v-else class="d-flex flex-column gap-3">
-                              <div v-if="showIkhwan"
+                              <div v-if="showIkhwan(event)"
                                  class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-primary">
                                  <span class="small fw-bold text-secondary ps-1">Ikhwan</span>
                                  <span class="fw-bold text-dark">
@@ -112,7 +112,7 @@
                                  </span>
                               </div>
 
-                              <div v-if="showAkhwat"
+                              <div v-if="showAkhwat(event)"
                                  class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-danger">
                                  <span class="small fw-bold text-secondary ps-1">Akhwat</span>
                                  <span class="fw-bold text-dark">
@@ -120,7 +120,7 @@
                                  </span>
                               </div>
 
-                              <div v-if="showTotal && !showIkhwan && !showAkhwat"
+                              <div v-if="showTotal(event) && !showIkhwan(event) && !showAkhwat(event)"
                                  class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
                                  <span class="small fw-bold text-secondary">Tiket Tersedia</span>
                                  <span class="fw-bold text-dark">
@@ -151,7 +151,7 @@
                               <li class="d-flex justify-content-between">
                                  <span>Total Kapasitas</span>
                                  <span class="fw-bold text-dark text-end" style="max-width: 60%;">
-                                    {{ totalQuotaDisplay }}
+                                    {{ totalQuotaDisplay(event) }}
                                  </span>
                               </li>
                            </ul>
@@ -195,17 +195,6 @@ const currentUrl = ref('');
 const isLoadingCheck = ref(false);
 
 const event = computed(() => eventStore.currentPublicEventDetail);
-
-const isNonQuota = computed(() => eventStore.isNonQuota(event.value));
-const showTotal = computed(() => eventStore.showTotal(event.value));
-const showIkhwan = computed(() => eventStore.showIkhwan(event.value));
-const showAkhwat = computed(() => eventStore.showAkhwat(event.value));
-const totalQuotaDisplay = computed(() => eventStore.totalQuotaDisplay(event.value));
-const registrationStatus = computed(() => eventStore.registrationStatus(event.value));
-
-const getGenderLabel = eventStore.getGenderLabel;
-const getRemaining = eventStore.getRemaining;
-const formatQuota = eventStore.formatQuota;
 
 onMounted(() => {
    currentUrl.value = window.location.href;
