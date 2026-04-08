@@ -48,7 +48,7 @@
                 <div>
                   <span class="fw-bold text-dark d-block">Tiket Ikhwan</span>
                   <small class="x-small" :class="getDynamicQuotaColor(quotaInfo.ikhwan, formState.qtyIkhwan)">
-                    {{ getDynamicQuotaText(quotaInfo.ikhwan, formState.qtyIkhwan) }}
+                    {{ getDynamicQuotaText(event?.Quota_Ikhwan, event?.Sold_Ikhwan, formState.qtyIkhwan) }}
                   </small>
                 </div>
                 <div class="counter-input d-flex align-items-center bg-white rounded-pill shadow-sm border p-1">
@@ -71,7 +71,7 @@
                 <div>
                   <span class="fw-bold text-dark d-block">Tiket Akhwat</span>
                   <small class="x-small" :class="getDynamicQuotaColor(quotaInfo.akhwat, formState.qtyAkhwat)">
-                    {{ getDynamicQuotaText(quotaInfo.akhwat, formState.qtyAkhwat) }}
+                    {{ getDynamicQuotaText(event?.Quota_Akhwat, event?.Sold_Akhwat, formState.qtyAkhwat) }}
                   </small>
                 </div>
                 <div class="counter-input d-flex align-items-center bg-white rounded-pill shadow-sm border p-1">
@@ -207,7 +207,7 @@ const config = useRuntimeConfig();
 const { getSmartStatus } = useTransactionStatus();
 const { user } = useAuth();
 
-const eventSK = computed(() => String(route.params.id));
+const eventSK = computed(() => route.params.id ? String(route.params.id) : '');
 const imgBaseUrl = ref(config.public.img || '');
 const event = computed(() => eventStore.currentPublicEventDetail);
 
@@ -292,11 +292,12 @@ const quotaInfo = computed(() => {
   };
 });
 
-const getDynamicQuotaText = (quotaTotal: any, selectedQty: number) => {
+const getDynamicQuotaText = (quotaTotal: any, soldTotal: any, selectedQty: number) => {
   if (quotaTotal === 'non-quota') return 'Tanpa Batas Kuota';
-  if (typeof quotaTotal === 'number') {
-    const remaining = quotaTotal - selectedQty;
-    return remaining <= 0 ? 'Habis' : `Sisa: ${remaining} Tiket`;
+  if (typeof quotaTotal === 'number' || !isNaN(Number(quotaTotal))) {
+    const realRemaining = Number(quotaTotal) - Number(soldTotal || 0);
+    const dynamicRemaining = realRemaining - selectedQty;
+    return dynamicRemaining <= 0 ? 'Habis' : `Sisa: ${dynamicRemaining} Tiket`;
   }
   return 'Habis';
 };
@@ -497,7 +498,7 @@ const handleSubmit = async () => {
     localStorage.removeItem(STORAGE_KEY.value);
   }
 
-  const mainEmail = userStore.user?.email || formState.participants[0]?.Email || '';
+  const mainEmail = user.value?.email || formState.participants[0]?.Email || '';
 
   const finalParticipants = formState.participants.map((p) => ({
     ...p,

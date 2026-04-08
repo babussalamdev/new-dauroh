@@ -172,25 +172,33 @@ export const useEventStore = defineStore("event", () => {
     }
   }
 
-  async function fetchAuthTiketEvent() {
-    if (loading.tiketEvent) return;
-    loading.tiketEvent = true;
-    try {
-      const { $apiBase } = useNuxtApp() as any;
-      const res = await $apiBase.get("/get-default?type=homepage");
-      const rawEvents = Array.isArray(res.data?.event) ? res.data.event : [];
-      const rawLogs = Array.isArray(res.data?.logs) ? res.data.logs : [];
-
-      tiketEvent.value = rawEvents
-        .filter((event: ApiEventRaw) => event.Status !== 'inactive')
-        .map((event: ApiEventRaw) => mapApiToEvent(event));
-      userLogs.value = rawLogs;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      loading.tiketEvent = false;
-    }
+ async function fetchAuthTiketEvent(SK: string = '') { 
+  if (loading.tiketEvent) return;
+  loading.tiketEvent = true;
+  
+  try {
+    const { $apiBase } = useNuxtApp() as any;
+    const res = await $apiBase.get("/get-default", {
+      params: {
+        type: 'homepage',
+        pk: 'event',
+        sk: SK
+      }
+    });
+    const rawEvents = Array.isArray(res.data?.event) ? res.data.event : [];
+    const rawLogs = Array.isArray(res.data?.logs) ? res.data.logs : [];
+    
+    tiketEvent.value = rawEvents
+      .filter((event: ApiEventRaw) => event.Status !== 'inactive')
+      .map((event: ApiEventRaw) => mapApiToEvent(event));
+      
+    userLogs.value = rawLogs;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.tiketEvent = false;
   }
+}
 
   async function fetchAdminTiketEvent() {
     if (loading.adminTiketEvent) return;
@@ -210,9 +218,16 @@ export const useEventStore = defineStore("event", () => {
   async function fetchPublicEventDetail(SK: string) {
     loading.detailPublic = true;
     currentPublicEventDetail.value = null;
+    
     try {
       const { $apiBase } = useNuxtApp() as any;
-      const res = await $apiBase.get(`/get-view?type=event&sk=${SK}`);
+      const res = await $apiBase.get('/get-view', {
+        params: {
+          type: 'one-item',
+          pk: 'event',
+          sk: SK
+        }
+      });
       const data = res.data?.event || res.data;
       const eventRaw = Array.isArray(data) ? (data.find(e => String(e.SK) === SK) || data[0]) : data;
 
@@ -227,7 +242,7 @@ export const useEventStore = defineStore("event", () => {
     } finally {
       loading.detailPublic = false;
     }
-  }
+}
 
   async function fetchEventDetail(SK: string) {
     loading.detail = true;

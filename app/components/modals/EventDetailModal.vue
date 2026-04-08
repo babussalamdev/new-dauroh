@@ -17,9 +17,24 @@
           <button type="button" class="btn-close bg-light p-2 rounded-circle" @click="close"></button>
         </div>
 
+
         <div class="modal-body p-4">
 
           <div class="row g-3 mb-4">
+            
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-3 p-3 bg-light-subtle rounded-3 border border-light-subtle">
+                <div
+                  class="bg-white p-2 rounded-circle shadow-sm text-primary d-flex align-items-center justify-content-center"
+                  style="width: 40px; height: 40px;">
+                  <i class="bi bi-calendar3 fs-5"></i>
+                </div>
+                <div>
+                  <small class="text-muted fw-bold text-uppercase ls-1 d-block" style="font-size: 0.7rem;">Tanggal Event</small>
+                  <span class="fw-medium text-dark">{{ formatDate(event?.Date) }}</span>
+                </div>
+              </div>
+            </div>
             <div class="col-12">
               <div class="d-flex align-items-center gap-3 p-3 bg-light-subtle rounded-3 border border-light-subtle">
                 <div
@@ -34,7 +49,7 @@
               </div>
             </div>
 
-            <div v-if="eventStore.isNonQuota(event)" class="col-12">
+            <div v-if="isNonQuota(event)" class="col-12">
               <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
                 <small class="text-muted d-block mb-1">Sisa Tiket</small>
                 <h5 class="mb-0 fw-bold text-success">
@@ -44,29 +59,29 @@
             </div>
 
             <template v-else>
-              <div v-if="showIkhwan" :class="gridColClass">
+              <div v-if="isIkhwanShow" :class="gridColClass">
                 <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <small class="text-muted d-block mb-1">Sisa Ikhwan</small>
-                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(eventStore.getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan))">
-                    {{ formatModalQuota(eventStore.getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan)) }}
+                  <small class="text-muted d-block mb-1">Sisa Kuota Ikhwan</small>
+                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan))">
+                    {{ formatModalQuota(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan)) }}
                   </h5>
                 </div>
               </div>
 
-              <div v-if="showAkhwat" :class="gridColClass">
+              <div v-if="isAkhwatShow" :class="gridColClass">
                 <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <small class="text-muted d-block mb-1">Sisa Akhwat</small>
-                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(eventStore.getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat))">
-                    {{ formatModalQuota(eventStore.getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat)) }}
+                  <small class="text-muted d-block mb-1">Sisa Kuota Akhwat</small>
+                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat))">
+                    {{ formatModalQuota(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat)) }}
                   </h5>
                 </div>
               </div>
 
-              <div v-if="eventStore.showTotal(event) && !showIkhwan && !showAkhwat" class="col-12">
+              <div v-if="showTotal(event) && !showIkhwan && !showAkhwat" class="col-12">
                 <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
                   <small class="text-muted d-block mb-1">Tiket Tersedia</small>
-                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(eventStore.getRemaining(event?.Quota_Total, event?.Sold_Total))">
-                    {{ formatModalQuota(eventStore.getRemaining(event?.Quota_Total, event?.Sold_Total)) }}
+                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(getRemaining(event?.Quota_Total, event?.Sold_Total))">
+                    {{ formatModalQuota(getRemaining(event?.Quota_Total, event?.Sold_Total)) }}
                   </h5>
                 </div>
               </div>
@@ -113,11 +128,11 @@ const emit = defineEmits<{
 const eventStore = useEventStore()
 
 // --- KONEKSI GRID LAYOUT ---
-const showIkhwan = computed(() => eventStore.showIkhwan(props.event));
-const showAkhwat = computed(() => eventStore.showAkhwat(props.event));
+const isIkhwanShow = computed(() => showIkhwan(props.event));
+const isAkhwatShow = computed(() => showAkhwat(props.event));
 
 const gridColClass = computed(() => {
-  return (showIkhwan.value && showAkhwat.value) ? 'col-6' : 'col-12'
+  return (isIkhwanShow.value && isAkhwatShow.value) ? 'col-6' : 'col-12'
 })
 
 // --- [CORE LOGIC] BUTTON STATE ---
@@ -126,7 +141,7 @@ const buttonState = computed(() => {
   if (!item) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
 
   // 1. Ambil status pendaftaran dari store
-  const storeStatus = eventStore.registrationStatus(item);
+  const storeStatus = registrationStatus(item);
 
   if (item.Status === 'inactive') {
     return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
@@ -196,7 +211,29 @@ const register = () => {
   if (!buttonState.value.disabled) {
     emit('register', props.event)
   }
-}
+};
+
+const formatDate = (dateObj: any) => {
+  if (!dateObj || typeof dateObj !== 'object') return 'Akan Datang';
+  const rawDates = Object.values(dateObj)
+    .map((d: any) => d?.date)
+    .filter(Boolean) as string[];
+    
+  if (rawDates.length === 0) return 'Akan Datang';
+  rawDates.sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf());
+  if (rawDates.length === 1) {
+    return dayjs(rawDates[0]).format('DD MMMM YYYY'); 
+  }
+  const firstDate = dayjs(rawDates[0]);
+  const lastDate = dayjs(rawDates[rawDates.length - 1]);
+  if (firstDate.format('MM YYYY') === lastDate.format('MM YYYY')) {
+    return `${firstDate.format('DD')}-${lastDate.format('DD MMMM YYYY')}`;
+  } else if (firstDate.format('YYYY') === lastDate.format('YYYY')) {
+    return `${firstDate.format('DD MMMM')} - ${lastDate.format('DD MMMM YYYY')}`;
+  } else {
+    return `${firstDate.format('DD MMMM YYYY')} - ${lastDate.format('DD MMMM YYYY')}`;
+  }
+};
 </script>
 
 <style scoped>

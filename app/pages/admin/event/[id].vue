@@ -181,7 +181,7 @@ const convertTo24h = (timeStr?: string) => {
   const [time, modifier] = cleanStr.split(' ');
   if (!time) return '';
   let [hours, minutes] = time.split(':');
-  let h = parseInt(hours, 10);
+  let h = parseInt(hours || "0", 10);
   if (modifier === 'PM' && h < 12) h += 12;
   if (modifier === 'AM' && h === 12) h = 0;
   return `${String(h).padStart(2, '0')}:${minutes}`;
@@ -191,7 +191,7 @@ const convertTo12h = (time24: string | undefined) => {
   if (!time24) return '';
   const parts = time24.split(':');
   if (parts.length < 2) return '';
-  let hours = parseInt(parts[0], 10);
+  let hours = parseInt(parts[0] || "0", 10);
   const minutes = parts[1];
   const suffix = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;

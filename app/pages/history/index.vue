@@ -97,47 +97,25 @@ const sortedTickets = computed(() => {
   });
 });
 
-// Actions Modal (Fungsi-fungsi ini tetep diem di sini!)
+// Actions Modal
 const openDetailModal = async (ticket: any) => {
+  // 1. Tampilkan modal dulu biar nggak ngelag
   selectedTicketDetail.value = ticket;
   showDetail.value = true;
   
-  try {
-    const { $apiBase } = useNuxtApp();
-    const skRaw = ticket.full_sk || ticket.SK;
-    const res = await $apiBase.get('/get-payment', {
-      params: { type: 'payment-detail', sk: skRaw }
-    });
-    
-    const newData = res.data;
-    
-    if (newData) {
-      let freshParticipants = [];
-      if (Array.isArray(newData.Participant)) {
-        freshParticipants = newData.Participant.map((p: any) => ({
-          Name: p.Name || p.name,
-          Gender: p.Gender || p.gender || '-',
-          Age: Number(p.Age || p.age || 0),
-          Domicile: p.Domicile || p.domicile || '-'
-        }));
-      }
-      selectedTicketDetail.value = { 
-        ...selectedTicketDetail.value, 
-        participants: freshParticipants.length > 0 ? freshParticipants : selectedTicketDetail.value.participants,
-        status: newData.Status || selectedTicketDetail.value.status
-      };
-      const index = userStore.tickets.findIndex(t => t.SK === skRaw);
-      if (index !== -1) {
-        userStore.tickets[index] = { 
-          ...userStore.tickets[index], 
-          participants: freshParticipants.length > 0 ? freshParticipants : userStore.tickets[index].participants,
-          status: newData.Status || userStore.tickets[index].status,
-          Status: newData.Status
-        };
-      }
-    }
-  } catch (error) {
-    console.error("Gagal update detail:", error);
+  // 2. Siapin ID
+  const skRaw = ticket.full_sk || ticket.SK;
+  
+  // 3. Minta data ke Store
+  const freshData = await userStore.fetchTicketDetail(skRaw);
+  
+  // 4. Update Modal kalau datanya udah dapet
+  if (freshData) {
+    selectedTicketDetail.value = { 
+      ...selectedTicketDetail.value, 
+      participants: freshData.participants.length > 0 ? freshData.participants : selectedTicketDetail.value?.participants,
+      status: freshData.status || selectedTicketDetail.value?.status
+    };
   }
 };
 

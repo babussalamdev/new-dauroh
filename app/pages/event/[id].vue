@@ -140,8 +140,8 @@
                         <div class="card-body p-4">
                            <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
                               <li class="d-flex justify-content-between border-bottom pb-2">
-                                 <span>Hari</span>
-                                 <span class="fw-bold text-dark">{{ getDayName(event.Date) }}</span>
+                                 <span>Tanggal</span>
+                                 <span class="fw-bold text-dark">{{ formatDate(event.Date) }}</span>
                               </li>
                               <li class="d-flex justify-content-between border-bottom pb-2">
                                  <span>Jam</span>
@@ -221,13 +221,25 @@ const formatCurrency = (val: number | string) => {
 };
 
 const formatDate = (dateObj: any) => {
-   if (!dateObj || typeof dateObj !== 'object') return 'Akan Datang';
-   const rawDates = Object.values(dateObj).map((d: any) => d?.date).filter(Boolean) as string[];
-   if (rawDates.length === 0 || !rawDates[0]) return 'Akan Datang';
-
-   return new Date(rawDates[0]).toLocaleDateString('id-ID', {
-      day: 'numeric', month: 'long', year: 'numeric'
-   });
+  if (!dateObj || typeof dateObj !== 'object') return 'Akan Datang';
+  const rawDates = Object.values(dateObj)
+    .map((d: any) => d?.date)
+    .filter(Boolean) as string[];
+    
+  if (rawDates.length === 0) return 'Akan Datang';
+  rawDates.sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf());
+  if (rawDates.length === 1) {
+    return dayjs(rawDates[0]).format('DD MMMM YYYY'); 
+  }
+  const firstDate = dayjs(rawDates[0]);
+  const lastDate = dayjs(rawDates[rawDates.length - 1]);
+  if (firstDate.format('MM YYYY') === lastDate.format('MM YYYY')) {
+    return `${firstDate.format('DD')}-${lastDate.format('DD MMMM YYYY')}`;
+  } else if (firstDate.format('YYYY') === lastDate.format('YYYY')) {
+    return `${firstDate.format('DD MMMM')} - ${lastDate.format('DD MMMM YYYY')}`;
+  } else {
+    return `${firstDate.format('DD MMMM YYYY')} - ${lastDate.format('DD MMMM YYYY')}`;
+  }
 };
 
 const getDayName = (dateObj: any) => {

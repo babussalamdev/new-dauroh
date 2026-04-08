@@ -102,7 +102,12 @@
               <div class="card-header bg-white border-0 py-3">
                 <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat
                   Pembayaran & Tiket</h5>
+                  <div class="alert alert-info">
+                    <strong>Data Local completedEvent:</strong>
+                    <pre style="max-height: 300px; overflow-y: auto; font-size: 12px;">{{ completedEvent }}</pre>
+                  </div>
               </div>
+              
               <div class="card-body p-0">
                 <div v-if="upcomingTickets.length > 0" class="table-responsive">
                   <table class="table table-hover align-middle mb-0">
@@ -125,14 +130,14 @@
                         </td>
                         <td>
                           <span class="fw-bold d-block text-dark">{{ ticket.event.Title }}</span>
-                          <span class="text-muted small-8">{{ ticket.participants?.length || 0 }} Peserta • {{
+                          <span class="text-muted small-8">{{ Array.isArray(ticket.participants) ? ticket.participants.length : (ticket.participants || 0) }} Peserta • {{
                             formatCurrency(ticket.amount) }}</span>
                         </td>
                         <td class="text-center pe-4">
                           <button
                           v-if="getSmartStatus(ticket) === 'PAID' || ['SUCCESSFUL', 'SUCCESS'].includes((ticket.Status || ticket.status || '').toUpperCase())"
                           class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm"
-                          @click="openDetailModal(ticket)">
+                          @click="openDetailParticipant(ticket)">
                           <i class="bi bi-people me-2"></i>Lihat Peserta
                         </button>
 
@@ -162,7 +167,7 @@
       </div>
     </div>
     <HistoryDetailModal 
-      :show="showDetailModal" 
+      :show="showDetailParticipant" 
       :ticket="selectedTicket" 
       @close="closeDetailModal" 
       @show-qr="openParticipantQr" 
@@ -197,7 +202,7 @@ const { getSmartStatus } = useTransactionStatus();
 const activeTab = ref('active');
 
 const showQrModal = ref(false);
-const showDetailModal = ref(false);
+const showDetailParticipant = ref(false);
 const selectedTicket = ref(null);
 const qrPayload = ref(null);
 const upcomingTickets = computed(() => {
@@ -256,13 +261,22 @@ const completedEvent = computed(() => {
   });
 });
 
-const openDetailModal = (ticket) => {
+const openDetailParticipant = async (ticket) => {
   selectedTicket.value = ticket;
-  showDetailModal.value = true;
+  showDetailParticipant.value = true;
+  const skRaw = ticket.full_sk || ticket.SK;
+  const freshData = await userStore.fetchTicketDetail(skRaw);
+  if (freshData) {
+    selectedTicket.value = {
+      ...selectedTicket.value,
+      participants: freshData.participants.length > 0 ? freshData.participants : selectedTicket.value.participants,
+      status: freshData.status || selectedTicket.value.status
+    };
+  }
 };
 
 const closeDetailModal = () => {
-  showDetailModal.value = false;
+  showDetailParticipant.value = false;
   selectedTicket.value = null;
 };
 
@@ -273,14 +287,14 @@ const openParticipantQr = (ticket, participant) => {
     SK: ticket.SK
   };
   
-  showDetailModal.value = false;
+  showDetailParticipant.value = false;
   showQrModal.value = true;
 };
 
 const closeQrModal = () => {
   showQrModal.value = false;
   qrPayload.value = null; // Bersihin qrPayload
-  showDetailModal.value = true;
+  showDetailParticipant.value = true;
 };
 
 const formatCurrency = (val) => {

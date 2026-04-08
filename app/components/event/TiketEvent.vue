@@ -28,7 +28,7 @@
 
                     <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
                       <button class="btn btn-sm btn-outline-primary rounded-pill w-100"
-                        @click.stop="openDetailModal(event)">
+                        @click.stop="openDetailEvent(event)">
                         Detail
                       </button>
 
@@ -63,7 +63,7 @@
 
     </div>
 
-    <ModalsEventDetailModal :show="showDetailModal" :event="selectedEvent" @close="closeDetailModal"
+    <ModalsEventDetailModal :show="showDetailEvent" :event="selectedEvent" @close="closeDetailModal"
       @register="handleRegisterFromDetail" />
 
     <ModalsEventImageModal :show="showImageModal" :event="selectedEvent" @close="closeImageModal" />
@@ -106,7 +106,7 @@ onMounted(() => {
 });
 
 const selectedEvent = ref(null);
-const showDetailModal = ref(false);
+const showDetailEvent = ref(false);
 const showImageModal = ref(false);
 
 // --- Modal Handlers ---
@@ -118,13 +118,13 @@ const closeImageModal = () => {
   showImageModal.value = false;
 };
 
-const openDetailModal = async (eventItem) => {
+const openDetailEvent = async (eventItem) => {
   await eventStore.fetchPublicEventDetail(eventItem.SK);
   selectedEvent.value = eventStore.currentPublicEventDetail;
-  showDetailModal.value = true;
+  showDetailEvent.value = true;
 };
 const closeDetailModal = () => {
-  showDetailModal.value = false;
+  showDetailEvent.value = false;
 };
 
 const handleRegisterFromDetail = (event) => {
@@ -272,7 +272,7 @@ const handleRegisterClick = async (eventItem) => {
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          router.push('/checkout');
+          router.push('/history');
         }
       });
     } else {

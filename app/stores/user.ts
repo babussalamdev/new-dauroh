@@ -92,6 +92,55 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
+  async function fetchTicketDetail(skRaw: string) {
+    if (!skRaw) return null;
+    
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get('/get-payment', {
+        params: { type: 'payment-detail', sk: skRaw }
+      });
+      
+      const newData = res.data;
+      
+      if (newData) {
+        let freshParticipants: any[] = [];
+        
+        if (Array.isArray(newData.Participant)) {
+          freshParticipants = newData.Participant.map((p: any) => ({
+            Name: p.Name || p.name,
+            Gender: p.Gender || p.gender || '-',
+            Age: Number(p.Age || p.age || 0),
+            Domicile: p.Domicile || p.domicile || '-'
+          }));
+        }
+
+        // Cari tiket di dalam state Pinia
+        const index = tickets.value.findIndex(t => t.SK === skRaw);
+        
+        // Kalau ketemu, update datanya secara reaktif
+        if (index !== -1) {
+          tickets.value[index] = { 
+            ...tickets.value[index], 
+            participants: freshParticipants.length > 0 ? freshParticipants : tickets.value[index]?.participants,
+            status: newData?.Status || tickets.value[index]?.status,
+            Status: newData?.Status
+          } as any; 
+        }
+
+        // Kembalikan data segar buat dipakai di komponen
+        return {
+          participants: freshParticipants,
+          status: newData?.Status
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Gagal mengambil detail tiket dari API:", error);
+      return null;
+    }
+  }
+
   function registerEvent(payload: any) {
     const { event, participants, transactionDetails } = payload;
     const eventStore = useEventStore();
@@ -184,6 +233,7 @@ export const useUserStore = defineStore("user", () => {
     // Actions
     $reset,
     fetchUserTransactions,
+    fetchTicketDetail,
     registerEvent,
     removeTicket
     // statusPayment,
