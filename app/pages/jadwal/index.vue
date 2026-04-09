@@ -1,4 +1,3 @@
-// app/pages/jadwal.vue
 <template>
   <div class="container py-5">
     <div class="row justify-content-center">
@@ -11,8 +10,9 @@
             <p class="text-muted text-center mb-4">
               Berikut adalah jadwal lengkap untuk semua sesi event yang akan datang.
             </p>
-            <CommonLoadingSpinner v-if="eventStore.loading.tiketEvent" />
-            <div v-else-if="eventStore.tiketEvent.length > 0" class="table-responsive">
+            <CommonLoadingSpinner v-if="isLoadingJadwal" />
+            
+            <div v-else-if="listJadwal.length > 0" class="table-responsive">
               <table class="table table-striped table-hover">
                 <thead class="table-light">
                   <tr>
@@ -23,7 +23,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="event in eventStore.tiketEvent" :key="event.id">
+                  <tr v-for="event in listJadwal" :key="event.SK">
                     <td>{{ formatSingleDate(event.Date) || 'Akan Diumumkan' }}</td>
                     <td>{{ event.Title }}</td>
                     <td>
@@ -48,6 +48,8 @@
                 </tbody>
               </table>
             </div>
+
+
             <div v-else class="text-center text-muted py-4">
               <p>Tidak ada jadwal event yang tersedia saat ini.</p>
             </div>
@@ -67,11 +69,14 @@ const eventStore = useEventStore();
 useHead({
   title: 'Jadwal Event'
 });
+const listJadwal = ref([]);
+const isLoadingJadwal = ref(true);
 
-// Panggil fetchPublicTiketEvent saat komponen dimuat
-// Store akan handle agar tidak fetch ulang jika data sudah ada
-onMounted(() => {
-  eventStore.fetchPublicTiketEvent();
+onMounted(async () => {
+  isLoadingJadwal.value = true;
+  const rawData = await eventStore.fetchViewData('schedule');
+  listJadwal.value = rawData || [];
+  isLoadingJadwal.value = false;
 });
 
 // Helper function to format the first date found in the Date object

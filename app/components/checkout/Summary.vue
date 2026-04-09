@@ -18,6 +18,25 @@
       </div>
     </div>
 
+    <div class="card border-0 shadow-sm rounded-3 p-3 mb-4" style="background-color: #f8f9fa; border-left: 4px solid #0dcaf0 !important;">
+      <h6 class="fw-bold mb-1 text-dark small d-flex align-items-center">
+        <i class="text-danger me-2"></i>Tambahkan Infaq Operasional
+      </h6>
+      <p class="text-muted" style="font-size: 0.75rem;">Dukung dakwah Yayasan Babussalam. Semoga menjadi amal jariyah.</p>
+
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-sm" :class="store.donationAmount === 10000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(10000)">Rp 10.000</button>
+        <button class="btn btn-sm" :class="store.donationAmount === 20000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(20000)">Rp 20.000</button>
+        <button class="btn btn-sm" :class="store.donationAmount === 50000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(50000)">Rp 50.000</button>
+        <button class="btn btn-sm" :class="store.donationAmount === 0 ? 'btn-secondary text-white' : 'btn-outline-secondary'" @click="setDonation(0)">Tidak, Terima Kasih</button>
+      </div>
+
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0">Rp</span>
+        <input type="number" class="form-control border-start-0 shadow-none" placeholder="Isi nominal bebas..." v-model="customDonation" @input="handleCustomDonation">
+      </div>
+    </div>
+
     <div class="alert alert-warning small p-2" role="alert">
       <i class="bi bi-clock me-1"></i>
       Untuk pembayaran hanya aktif selama 30 menit.
@@ -28,6 +47,11 @@
       <li class="list-group-item d-flex justify-content-between align-items-center px-0">
         Biaya Pendaftaran - {{ store.event?.Title }} ({{ store.participants?.length || 0 }} tiket)
         <span>{{ formatCurrency(store.totalAmount) }}</span>
+      </li>
+
+      <li v-if="store.donationAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 text-success">
+        Infaq Dakwah Babussalam
+        <span>+ {{ formatCurrency(store.donationAmount) }}</span>
       </li>
 
       <li v-if="store.discountAmount > 0"
@@ -110,13 +134,29 @@ const { $apiBase } = useNuxtApp();
 const { accessToken } = useAuth();
 const loading = ref(false);
 const error = ref<string | null>(null);
+const customDonation = ref<number | null>(null);
+
 
 onMounted(() => {
   // REVISI 3: Cek paymentMethod, kalau null lempar balik ke step select
   if (!store.paymentMethod) {
     store.setStep('select');
   }
+  store.donationAmount = 0;
 });
+
+const setDonation = (amount: number) => {
+  store.donationAmount = amount;
+  customDonation.value = null; // Kosongin input manual kalau user milih tombol nominal cepat
+};
+
+const handleCustomDonation = () => {
+  if (customDonation.value !== null && customDonation.value >= 0) {
+    store.donationAmount = customDonation.value;
+  } else {
+    store.donationAmount = 0;
+  }
+};
 
 const paymentLogoUrl = computed(() => {
   const logos: { [key: string]: string } = {

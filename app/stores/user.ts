@@ -94,6 +94,13 @@ export const useUserStore = defineStore("user", () => {
 
   async function fetchTicketDetail(skRaw: string) {
     if (!skRaw) return null;
+    const existingTicket = tickets.value.find(t => t.SK === skRaw);
+    if (existingTicket && Array.isArray(existingTicket.participants)) {
+      return {
+        participants: existingTicket.participants,
+        status: existingTicket.status
+      };
+    }
     
     try {
       const { $apiBase } = useNuxtApp() as any;
@@ -115,7 +122,7 @@ export const useUserStore = defineStore("user", () => {
           }));
         }
 
-        // Cari tiket di dalam state Pinia
+       
         const index = tickets.value.findIndex(t => t.SK === skRaw);
         
         // Kalau ketemu, update datanya secara reaktif

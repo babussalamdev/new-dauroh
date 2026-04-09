@@ -36,7 +36,9 @@ export default defineNuxtPlugin(() => {
                         try {
                             // 1. Panggil API untuk refresh token
                             // (Pastikan nama endpoint '/refresh-token' sudah benar)
-                            const { data } = await instance.post('/refresh-token', { RefreshToken: refreshToken })
+                            const { data } = await axios.post(`${config.public.apiBase}/refresh-token`, { 
+                                RefreshToken: refreshToken 
+                            })
 
                             // 2. Simpan token baru yang didapat
                             localStorage.setItem('IdToken', data.IdToken)

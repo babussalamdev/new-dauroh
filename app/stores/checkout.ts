@@ -19,6 +19,7 @@ export const useCheckoutStore = defineStore(
     const voucherApplied = ref(false);
     const isLoading = ref(false);
     const repay = ref<boolean>(false)
+    const donationAmount = ref(0);
 
     // --- GETTERS (Computed) ---
     const totalAmount = computed(() => {
@@ -28,7 +29,7 @@ export const useCheckoutStore = defineStore(
 
     const finalAmount = computed(() => {
       const total = (event.value?.Price || 0) * participants.value.length;
-      const final = total - discountAmount.value;
+      const final = total - discountAmount.value + donationAmount.value;
       return final < 0 ? 0 : final;
     });
 
@@ -78,6 +79,7 @@ export const useCheckoutStore = defineStore(
       paymentMethod.value = null;
       transactionDetails.value = null;
       removeVoucher();
+      donationAmount.value = 0;
       currentStep.value = "select";
     }
 
@@ -152,6 +154,7 @@ export const useCheckoutStore = defineStore(
           PaymentType: paymentType,
           sender_bank_type: paymentType,
           repay: repay.value,
+          donationAmount: donationAmount.value,
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
@@ -291,6 +294,7 @@ export const useCheckoutStore = defineStore(
       discountAmount.value = 0;
       voucherApplied.value = false;
       isLoading.value = false;
+      donationAmount.value = 0;
     }
 
     return {
@@ -305,6 +309,7 @@ export const useCheckoutStore = defineStore(
       voucherApplied,
       isLoading,
       repay,
+      donationAmount,
       // Getters
       totalAmount,
       finalAmount,

@@ -214,8 +214,15 @@ export const useEventStore = defineStore("event", () => {
       loading.adminTiketEvent = false;
     }
   }
-
+  
   async function fetchPublicEventDetail(SK: string) {
+    const existingEvent = tiketEvent.value.find(e => String(e.SK) === String(SK));
+    
+    if (existingEvent && existingEvent.isDetailFetched) {
+      currentPublicEventDetail.value = existingEvent;
+      return;
+    }
+
     loading.detailPublic = true;
     currentPublicEventDetail.value = null;
     
@@ -233,7 +240,17 @@ export const useEventStore = defineStore("event", () => {
 
       if (eventRaw) {
         if (eventRaw.Status === 'inactive') throw new Error("Event ini sedang tidak aktif.");
-        currentPublicEventDetail.value = mapApiToEvent(eventRaw);
+        const mappedEvent = mapApiToEvent(eventRaw);
+        const fullData = { 
+          ...mappedEvent, 
+          isDetailFetched: true 
+        };
+
+        currentPublicEventDetail.value = fullData;
+        if (existingEvent) {
+          Object.assign(existingEvent, fullData);
+        }
+        
       } else {
         throw new Error("Event tidak ditemukan");
       }
@@ -244,19 +261,45 @@ export const useEventStore = defineStore("event", () => {
     }
 }
 
-  async function fetchEventDetail(SK: string) {
+async function fetchEventDetail(SK: string) {
     loading.detail = true;
     currentEventDetail.value = null;
     try {
       const { $apiBase } = useNuxtApp() as any;
-      const res = await $apiBase.get(`/get-default?type=event&sk=${SK}`);
+      const res = await $apiBase.get('/get-default', {
+        params: {
+          type: 'one-item',
+          pk: 'event',
+          sk: SK
+        }
+      });
+      
       const data = res.data?.event || res.data;
       const eventRaw = Array.isArray(data) ? (data.find(e => String(e.SK) === SK) || data[0]) : data;
-      if (eventRaw) currentEventDetail.value = mapApiToEvent(eventRaw);
+      
+      if (eventRaw) {
+        currentEventDetail.value = mapApiToEvent(eventRaw);
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Gagal fetch event detail:', error);
     } finally {
       loading.detail = false;
+    }
+  }
+
+  async function fetchViewData(viewType: string, pk?: string, sk?: string) {
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const queryParams: any = { type: viewType };
+      if (pk) queryParams.pk = pk;
+      if (sk) queryParams.sk = sk;
+      const res = await $apiBase.get('/get-view', {
+        params: queryParams
+      });
+      return res.data?.event || res.data; 
+    } catch (error) {
+      console.error(`Gagal mengambil data view untuk type ${viewType}:`, error);
+      return null;
     }
   }
 
@@ -384,6 +427,6 @@ export const useEventStore = defineStore("event", () => {
     setSearchQuery, fetchPublicTiketEvent, fetchAuthTiketEvent,
     fetchAdminTiketEvent, fetchPublicEventDetail, fetchEventDetail,
     addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
-    deleteTiketEvent, decrementQuota, updateEventSchedule
+    deleteTiketEvent, decrementQuota, updateEventSchedule, fetchViewData
   };
 });

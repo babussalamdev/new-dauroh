@@ -22,9 +22,8 @@
                   <th class="text-end pe-3">Tiket</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody v-if="Array.isArray(ticket?.participants)">
                 <tr v-for="(p, idx) in ticket.participants" :key="idx">
-                  
                   <td class="ps-3 py-2">
                     <div class="fw-bold text-dark">{{ p.Name }}</div>
                     <small class="text-muted" style="font-size: 0.75rem;">{{ p.Gender || 'Umum' }}</small>
@@ -34,6 +33,15 @@
                       <i class="bi bi-qr-code me-1"></i> QR
                     </button>
                     <span v-else class="badge bg-secondary opacity-50">Belum Lunas</span>
+                  </td>
+                </tr>
+              </tbody>
+
+              <tbody v-else>
+                <tr>
+                  <td colspan="2" class="text-center py-4 text-muted small">
+                    <div class="spinner-border spinner-border-sm me-2 text-primary"></div>
+                    Memuat detail nama peserta...
                   </td>
                 </tr>
               </tbody>

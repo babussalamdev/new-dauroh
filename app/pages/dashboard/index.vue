@@ -97,11 +97,10 @@
                 </div>
               </div>
             </div>
-
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+            
+            <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
               <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat
-                  Pembayaran & Tiket</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
                   <div class="alert alert-info">
                     <strong>Data Local completedEvent:</strong>
                     <pre style="max-height: 300px; overflow-y: auto; font-size: 12px;">{{ completedEvent }}</pre>
@@ -264,8 +263,12 @@ const completedEvent = computed(() => {
 const openDetailParticipant = async (ticket) => {
   selectedTicket.value = ticket;
   showDetailParticipant.value = true;
+  if (Array.isArray(ticket.participants)) {
+    return;
+  }
   const skRaw = ticket.full_sk || ticket.SK;
   const freshData = await userStore.fetchTicketDetail(skRaw);
+  
   if (freshData) {
     selectedTicket.value = {
       ...selectedTicket.value,

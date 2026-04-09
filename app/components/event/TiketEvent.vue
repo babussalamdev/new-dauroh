@@ -119,10 +119,34 @@ const closeImageModal = () => {
 };
 
 const openDetailEvent = async (eventItem) => {
-  await eventStore.fetchPublicEventDetail(eventItem.SK);
-  selectedEvent.value = eventStore.currentPublicEventDetail;
+  // 1. Tampilin modalnya dulu pakai data basic yang udah ada
+  selectedEvent.value = eventItem;
   showDetailEvent.value = true;
+  if (eventItem.isDetailFetched) {
+    return;
+  }
+  const rawData = await eventStore.fetchViewData('one-item', 'event', eventItem.SK);
+  
+  if (rawData) {
+    const fullData = {
+      ...eventItem,
+      ...rawData,
+      Title: eventItem.Title,
+      Price: Number(rawData.Price || eventItem.Price),
+      
+      isDetailFetched: true
+    };
+  
+    selectedEvent.value = fullData;
+    const index = eventStore.tiketEvent.findIndex(e => e.SK === eventItem.SK);
+    if (index !== -1) {
+      Object.assign(eventStore.tiketEvent[index], fullData);
+    }
+  } else {
+    toastStore.showToast({ message: 'Gagal memuat detail event', type: 'danger' });
+  }
 };
+
 const closeDetailModal = () => {
   showDetailEvent.value = false;
 };

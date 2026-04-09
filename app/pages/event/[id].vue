@@ -1,7 +1,7 @@
 <template>
    <div class="bg-white min-vh-100 pb-5 font-blog d-flex flex-column">
 
-      <div v-if="eventStore.loading.detailPublic"
+      <div v-if=isLoadingDetail
          class="container py-5 text-center d-flex align-items-center justify-content-center flex-grow-1">
          <div>
             <div class="spinner-border text-dark mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
@@ -194,12 +194,51 @@ const imgUrl = ref(config.public.img || '');
 const currentUrl = ref('');
 const isLoadingCheck = ref(false);
 
-const event = computed(() => eventStore.currentPublicEventDetail);
+const event = ref<any>(null);
+const isLoadingDetail = ref(true);
 
-onMounted(() => {
+onMounted(async () => {
    currentUrl.value = window.location.href;
+   
    if (eventSK) {
-      eventStore.fetchPublicEventDetail(eventSK);
+      if (
+         eventStore.currentPublicEventDetail?.SK === eventSK && 
+         eventStore.currentPublicEventDetail?.isDetailFetched
+      ) {
+         console.log("⚡ Ambil data dari kulkas Pinia!");
+         event.value = eventStore.currentPublicEventDetail;
+         isLoadingDetail.value = false;
+         return; 
+      }
+
+      isLoadingDetail.value = true;
+      const rawData = await eventStore.fetchViewData('one-item-detail', 'event', eventSK);
+      
+      if (rawData) {
+         rawData.Price = Number(rawData.Price || 0);
+         rawData.isDetailFetched = true; 
+         
+         event.value = rawData;
+         eventStore.currentPublicEventDetail = rawData;
+
+         const index = eventStore.tiketEvent.findIndex(e => String(e.SK) === eventSK);
+         if (index !== -1) {
+            const targetEvent = eventStore.tiketEvent[index];
+            if (targetEvent) {
+               Object.assign(targetEvent, rawData);
+            }
+         }
+      }
+      
+      isLoadingDetail.value = false;
+   }
+});
+
+watch(event, (newVal) => {
+   if (newVal) {
+      useHead({
+         title: `${newVal.Title} - Babussalam Event`,
+      });
    }
 });
 

@@ -18,8 +18,10 @@
     </div>
 
     <div v-else-if="eventData" class="row g-4">
+      
       <div class="col-lg-4 col-xl-3">
         <div class="sticky-sidebar">
+          
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
             <div class="card-body p-3">
               <div class="Picture-container mx-auto position-relative rounded-3 overflow-hidden bg-light border border-dashed d-flex align-items-center justify-content-center">
@@ -46,7 +48,7 @@
             </div>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <h6 class="fw-bold mb-0 text-dark small text-uppercase">Info Dasar</h6>
               <button @click="openEditBasicModal" class="btn btn-light btn-sm text-primary py-1 px-2 rounded-pill fw-bold">Edit</button>
@@ -57,10 +59,29 @@
               <div class="d-flex justify-content-between"><span class="text-muted small">Harga</span><span class="small fw-bold text-primary">{{ formatCurrency(eventData.Price) }}</span></div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="col-lg-8 col-xl-9">
+          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+            <h6 class="fw-bold mb-3 text-dark small text-uppercase">Kontak WhatsApp</h6>
+            <div class="d-flex flex-column gap-2">
+              <input 
+                type="text" 
+                class="form-control form-control-sm modern-input" 
+                placeholder="Misal: 628123456789" 
+                v-model="contactWaInput"
+              >
+              <button 
+                class="btn btn-primary btn-sm fw-bold align-self-end px-3" 
+                @click="handleContactSubmit" 
+                :disabled="isSavingContact || !contactWaInput"
+              >
+                <span v-if="isSavingContact" class="spinner-border spinner-border-sm me-1"></span>
+                {{ isSavingContact ? 'Menyimpan...' : 'Simpan' }}
+              </button>
+            </div>
+          </div>
+
+        </div> </div> <div class="col-lg-8 col-xl-9">
+        
         <section class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
           <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
             <h5 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
@@ -121,13 +142,11 @@
             </div>
           </form>
         </section>
-      </div>
-    </div>
 
-    <AdminEventFormModal v-if="showEditBasicModal" :show="showEditBasicModal" :is-editing="true"
+      </div> </div> <AdminEventFormModal v-if="showEditBasicModal" :show="showEditBasicModal" :is-editing="true"
       :event="eventData || undefined" @close="closeEditBasicModal" @save="handleUpdateBasicInfo" />
-  </div>
-</template>
+
+  </div> </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
@@ -153,6 +172,9 @@ let quillInstance: any = null;
 const isSavingPicture = ref(false);
 const isSavingSchedule = ref(false);
 const isSavingBasic = ref(false);
+let isUpdatingQuill = false;
+const isSavingContact = ref(false);
+const contactWaInput = ref('');
 const isContentChanged = ref(false);
 const showEditBasicModal = ref(false);
 
@@ -202,6 +224,8 @@ const convertTo12h = (time24: string | undefined) => {
 const initializeData = () => {
   if (!eventData.value) return;
 
+  contactWaInput.value = eventData.value.Contact_WA || '';
+
   // Setup Image Preview
   previewUrl.value = eventData.value.Picture
     ? `${config.public.img}/${eventData.value.SK}/${eventData.value.Picture}.webp?t=${Date.now()}`
@@ -219,9 +243,16 @@ const initializeData = () => {
 
   // Setup Description
   contentForm.Description = eventData.value.Description || '';
-  if (quillInstance && contentForm.Description) {
+  if (quillInstance) {
+    isUpdatingQuill = true; // Pasang gembok!
+    
     quillInstance.root.innerHTML = contentForm.Description;
-    isContentChanged.value = false;
+    
+    // Tunggu Quill selesai ngerapihin HTML, baru buka gemboknya
+    setTimeout(() => {
+      isContentChanged.value = false;
+      isUpdatingQuill = false; // Buka gembok!
+    }, 150);
   }
 };
 
@@ -242,8 +273,20 @@ const initQuill = () => {
     }
   });
 
+  // 🟢 3. PASANG GEMBOK SAAT PERTAMA KALI RENDER
+  isUpdatingQuill = true;
   quillInstance.root.innerHTML = contentForm.Description;
+
+  setTimeout(() => {
+    isContentChanged.value = false;
+    isUpdatingQuill = false; // Buka gembok
+  }, 150);
+
   quillInstance.on('text-change', () => {
+    // Kalau gembok masih kepasang (lagi load data), blokir pesannya!
+    if (isUpdatingQuill) return; 
+
+    // Kalau lolos gembok, berarti beneran user yang ngetik
     contentForm.Description = quillInstance.root.innerHTML;
     isContentChanged.value = true;
   });
@@ -342,6 +385,25 @@ const handleContentSubmit = async () => {
     isContentChanged.value = false;
   }
   isSavingBasic.value = false;
+};
+
+const handleContactSubmit = async () => {
+  if (!eventData.value?.SK) return;
+  isSavingContact.value = true;
+  
+  // Asumsi fungsi eventStore.updateTiketEventBasic bisa nerima Contact_WA
+  const success = await eventStore.updateTiketEventBasic({
+    SK: eventData.value.SK,
+    Contact_WA: contactWaInput.value
+  });
+
+  if (success) {
+    toastStore.showToast({ message: 'Kontak WA berhasil disimpan', type: 'success' });
+  } else {
+    toastStore.showToast({ message: 'Gagal menyimpan Kontak WA', type: 'danger' });
+  }
+  
+  isSavingContact.value = false;
 };
 
 const formatCurrency = (v: any) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);

@@ -26,6 +26,7 @@ export const dropdownMenuItems: DropdownMenu[] = [
       { to: '/admin/events', text: 'Tiket Event' }, 
       { to: '/admin/booths', text: 'Pengajuan Booth' },
       { to: '/admin/vouchers', text: 'Manajemen Voucher' },
+      { to: '/admin/artikel', text: 'Artikel' }
     ]
   },
   {

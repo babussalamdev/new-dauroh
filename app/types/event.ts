@@ -46,6 +46,8 @@ export interface Event {
   Picture?: string;
   Status: string;
   Description?: string;
+  isDetailFetched?: boolean;
+  Contact_WA?: string;
 }
 
 export interface EventBasicData {
@@ -60,6 +62,7 @@ export interface EventBasicData {
   Quota_Total: number | 'non-quota';
   Status: string;
   Description?: string;
+  Contact_WA?: string;
 }
 
 export interface EventSchedulePayload {

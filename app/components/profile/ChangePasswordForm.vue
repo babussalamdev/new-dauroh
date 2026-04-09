@@ -169,8 +169,6 @@ const handleChangePassword = async () => {
 
     const response = await $apiBase.put('/change-password', payload);
 
-    console.log('Change Password Success:', response);
-
     Swal.fire('Berhasil', 'Password berhasil diubah. Silakan login ulang dengan password baru.', 'success').then(() => {
     });
 

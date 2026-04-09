@@ -275,18 +275,12 @@ const handleChangePassword = async () => {
   try {
     const accessToken = useCookie('AccessToken').value;
     if (!accessToken) throw new Error("Sesi kadaluarsa.");
-
-    // Gunakan Payload yang sama dengan Client
     const payload = {
       oldPassword: passwordForm.oldPassword,
       newPassword: passwordForm.newPassword,
       accessToken: accessToken
     };
-
-    // Gunakan Endpoint yang sama dengan Client
     const response = await $apiBase.put('/change-password', payload);
-    
-    console.log('Change Password Success:', response);
 
     Swal.fire('Berhasil', 'Password berhasil diubah. Silakan login ulang.', 'success');
     
