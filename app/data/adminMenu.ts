@@ -12,12 +12,21 @@ interface DropdownMenu {
   items: MenuItem[];
 }
 
+// 🟢 SCAN PRESENSI DIHAPUS DARI SINI
 export const mainMenuItems: MenuItem[] = [
   { to: '/admin', icon: 'bi-speedometer2', text: 'Dashboard' },
-  { to: '/admin/scan', icon: 'bi-qr-code-scan', text: 'Scan Presensi' }, 
 ];
 
 export const dropdownMenuItems: DropdownMenu[] = [
+  // 🟢 BIKIN KELOMPOK BARU KHUSUS PRESENSI DI PALING ATAS
+{
+    id: 'collapsePresensi',
+    icon: 'bi-clipboard-check-fill',
+    text: 'Presensi Peserta',
+    items: [
+      { to: '/admin/kehadiran', text: 'Data Kehadiran' }, 
+    ]
+  },
   {
     id: 'collapseKonten',
     icon: 'bi-archive-fill',
@@ -34,34 +43,20 @@ export const dropdownMenuItems: DropdownMenu[] = [
     icon: 'bi-people-fill',
     text: 'Manajemen User',
     items: [
-      // 1. MENU SEMUA USER (Default)
       { to: '/admin/users?type=all', text: 'Semua User' },
-      
-      // 2. MENU ADMIN
       { to: '/admin/users?type=admin', text: 'Data Admin' },
-      
-      // 3. MENU CLIENT
       { to: '/admin/users?type=client', text: 'Data Client' },
-      
-      // 4. MENU TAMBAH
       { to: '/admin/users/create', text: 'Tambah User Baru' },
     ]
   },
   {
     id: 'collapseFinance',
-    icon: 'bi-cash-coin', // Icon duit biar relevan
+    icon: 'bi-cash-coin',
     text: 'Keuangan',
     items: [
-      // Dashboard ringkas duit masuk
       { to: '/admin/finance/dashboard', text: 'Ringkasan Omzet' }, 
-      
-      // List semua transaksi (Paid/Pending/Expired)
       { to: '/admin/finance/transactions', text: 'Data Transaksi' }, 
-      
-      // Manajemen Voucher (Voucher ada hubungannya sama duit)
       { to: '/admin/vouchers', text: 'Manajemen Voucher' }, 
-      
-      // Fitur Export data buat laporan
       { to: '/admin/finance/reports', text: 'Laporan & Export' }, 
     ]
   },

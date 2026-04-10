@@ -98,16 +98,14 @@ const article = ref<Article | null>(null);
 const isLoading = ref(true);
 
 onMounted(() => {
-  // Nyari data di store dummy kita berdasarkan ID yang di URL
-  // Nanti kalau API udah siap, ini diganti pakai fungsi fetch detail dari API ya
   setTimeout(() => {
     const foundArticle = articleStore.articles.find(a => a.SK === articleSK);
     if (foundArticle) {
       article.value = foundArticle;
-      useHead({ title: foundArticle.Title }); // Ubah title tab browser
+      useHead({ title: foundArticle.Title });
     }
     isLoading.value = false;
-  }, 300); // Simulasi loading bentar
+  }, 300);
 });
 
 const formatDate = (dateStr?: string) => {
@@ -117,7 +115,6 @@ const formatDate = (dateStr?: string) => {
 </script>
 
 <style scoped>
-/* Biar hasil ketikan admin di Quill Editor (HTML) tampilnya rapi di sini */
 :deep(.article-content p) {
   margin-bottom: 1.2rem;
   line-height: 1.8;

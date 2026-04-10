@@ -139,27 +139,19 @@ const editorContainer = ref<HTMLElement | null>(null);
 let quillInstance: any = null;
 let isUpdatingQuill = false;
 
-// --- LIFECYCLE: FETCH DATA ---
 onMounted(() => {
-  // 🟢 TODO: Ganti pakai fungsi fetch detail dari API backend lu nanti
-  // Simulasi nyari data dummy di store
   setTimeout(() => {
     const foundArticle = articleStore.articles.find(a => a.SK === articleSK);
     
     if (foundArticle) {
-      // Masukin data ke form
       form.Title = foundArticle.Title;
       form.Status = foundArticle.Status as 'active' | 'draft';
       form.Description = foundArticle.Description || '';
-      
-      // Munculin gambar lama
       if (foundArticle.Picture) {
         previewUrl.value = foundArticle.Picture;
       }
 
       isLoading.value = false;
-      
-      // Init Quill setelah DOM formnya kebuka
       setTimeout(initQuill, 200);
     } else {
       Swal.fire('Error', 'Artikel tidak ditemukan!', 'error').then(() => {
@@ -169,7 +161,6 @@ onMounted(() => {
   }, 500);
 });
 
-// Pantau kalau judul/status diubah
 watch(() => [form.Title, form.Status], () => {
   if (!isLoading.value) isBasicChanged.value = true;
 });
