@@ -46,7 +46,12 @@
       @show-qr="showIndividualQr" 
     />
 
-    <ModalsQrCodeModal :show="showQr" :ticket="qrPayload" @close="showQr = false" />
+    <ModalsQrCodeModal 
+      :show="showQr" 
+      :ticket="selectedTicketForQr" 
+      :participant="selectedParticipantForQr"
+      @close="closeQrModal" 
+    />
     
     </template>
 
@@ -78,7 +83,8 @@ const { getSmartStatus } = useTransactionStatus();
 const showDetail = ref(false);
 const selectedTicketDetail = ref<any>(null);
 const showQr = ref(false);
-const qrPayload = ref<any>(null);
+const selectedTicketForQr = ref<any>(null);
+const selectedParticipantForQr = ref<any>(null);
 
 onMounted(async () => {
   if (eventStore.tiketEvent.length === 0) {
@@ -125,8 +131,19 @@ const closeDetailModal = () => {
 };
 
 const showIndividualQr = (ticket: any, specificParticipant: any) => {
-  qrPayload.value = { event: ticket.event, participants: [specificParticipant], SK: ticket.SK };
-  showQr.value = true;
+  selectedTicketForQr.value = ticket;
+  selectedParticipantForQr.value = specificParticipant;
+  
+  showDetail.value = false; // Nutup modal daftar nama
+  showQr.value = true; // Buka modal QR gede
+};
+
+const closeQrModal = () => {
+  showQr.value = false;
+  selectedTicketForQr.value = null;
+  selectedParticipantForQr.value = null;
+  
+  showDetail.value = true; // Munculin daftar nama lagi
 };
 
 // Payment Logic

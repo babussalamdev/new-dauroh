@@ -56,7 +56,6 @@ export const dropdownMenuItems: DropdownMenu[] = [
     items: [
       { to: '/admin/finance/dashboard', text: 'Ringkasan Omzet' }, 
       { to: '/admin/finance/transactions', text: 'Data Transaksi' }, 
-      { to: '/admin/vouchers', text: 'Manajemen Voucher' }, 
       { to: '/admin/finance/reports', text: 'Laporan & Export' }, 
     ]
   },
