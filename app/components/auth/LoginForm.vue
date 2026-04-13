@@ -13,7 +13,7 @@
             <div class="mb-3">
               <label for="username" class="form-label">Email/Username</label>
               <input type="text" id="username" v-model="form.email" placeholder="Masukkan username atau email"
-                class="form-control form-control-lg" autocomplete="current-username" required />
+                class="form-control form-control-lg" autocomplete = "username" required />
             </div>
 
             <div class="mb-3">

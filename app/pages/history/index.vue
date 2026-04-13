@@ -105,17 +105,11 @@ const sortedTickets = computed(() => {
 
 // Actions Modal
 const openDetailModal = async (ticket: any) => {
-  // 1. Tampilkan modal dulu biar nggak ngelag
   selectedTicketDetail.value = ticket;
   showDetail.value = true;
-  
-  // 2. Siapin ID
   const skRaw = ticket.full_sk || ticket.SK;
-  
-  // 3. Minta data ke Store
   const freshData = await userStore.fetchTicketDetail(skRaw);
   
-  // 4. Update Modal kalau datanya udah dapet
   if (freshData) {
     selectedTicketDetail.value = { 
       ...selectedTicketDetail.value, 
@@ -134,8 +128,8 @@ const showIndividualQr = (ticket: any, specificParticipant: any) => {
   selectedTicketForQr.value = ticket;
   selectedParticipantForQr.value = specificParticipant;
   
-  showDetail.value = false; // Nutup modal daftar nama
-  showQr.value = true; // Buka modal QR gede
+  showDetail.value = false;
+  showQr.value = true;
 };
 
 const closeQrModal = () => {
@@ -143,7 +137,7 @@ const closeQrModal = () => {
   selectedTicketForQr.value = null;
   selectedParticipantForQr.value = null;
   
-  showDetail.value = true; // Munculin daftar nama lagi
+  showDetail.value = true;
 };
 
 // Payment Logic

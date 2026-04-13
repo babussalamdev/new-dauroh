@@ -75,7 +75,7 @@ export const useAuth = () => {
   /**
    * Fungsi Logout
    */
-  const logout = async () => {
+const logout = async () => {
     loading.value = true;
 
     try {
@@ -88,7 +88,6 @@ export const useAuth = () => {
         const { $socket } = useNuxtApp() as any;
         if ($socket && typeof $socket.close === "function") {
           console.log("🔌 Closing WebSocket connection...");
-          // Gunakan status code 1000 (Normal Closure)
           $socket.close(1000, "Logout");
         }
       }
@@ -116,22 +115,14 @@ export const useAuth = () => {
 
       user.value = null;
 
-      // --- 3. RESET PINIA STORES ---
-      // Menggunakan try-catch dan pengecekan ketat untuk menghindari Uncaught Error
-      const stores = [userStore, adminUserStore];
-      stores.forEach((s: any) => {
-        try {
-          if (s && typeof s.$reset === "function") {
-            s.$reset();
-          }
-        } catch (err) {
-          console.warn(`Gagal reset store ${s?.$id}:`, err);
-        }
-      });
-
-      // --- 4. REDIRECT & RELOAD ---
+      // --- 3. HARD REDIRECT (Paling Aman buat Security & Hapus State Pinia) ---
       const targetPath = loginType === "admin" ? "/admin/login" : "/auth";
-      await router.push(targetPath);
+      
+      if (process.client) {
+        // Pake window.location.href biar browser ke-refresh total.
+        // Semua sisa state di Pinia bakal otomatis kehapus dari memori.
+        window.location.href = targetPath;
+      }
 
     } catch (error) {
       console.error("Logout fatal error:", error);

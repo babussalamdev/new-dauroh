@@ -1,62 +1,56 @@
 <template>
   <div class="container mt-0">
-    <div v-if="!eventStore.loading.tiketEvent && eventStore.tiketEventChunks.length > 0" id="tiketEvent"
-      class="carousel slide carousel-dark" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
-      <div class="carousel-inner">
-        <div v-for="(chunk, chunkIndex) in eventStore.tiketEventChunks" :key="chunkIndex"
-          :class="['carousel-item', { active: chunkIndex === 0 }]">
-          <div class="d-flex card-container-flex">
-            <div v-for="event in chunk" :key="event.SK" class="event-card-wrapper">
+    <div v-if="!eventStore.loading.tiketEvent && eventStore.tiketEvent.length > 0" id="tiketEvent"
+      class="carousel-wrapper" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
+      
+      <div class="d-flex card-container-flex" ref="scrollContainer">
+        
+        <div v-for="event in eventStore.tiketEvent" :key="event.SK" class="event-card-wrapper">
+          <div class="text-decoration-none d-block h-100 position-relative"
+            :class="{ 'card-disabled': getCardStatus(event).isDisabled }" style="cursor: pointer;"
+            @click="handleCardClick(event)">
+            <div class="card event-card rounded-lg overflow-hidden h-100">
+              <div class="position-relative">
+                <NuxtImg :src="`${imgUrl}/${event.SK}/${event.Picture}.webp`" class="card-img-top"
+                  :alt="event.Title" loading="lazy" format="webp" />
+                <span v-if="event.topOverlay" class="overlay-top">{{ event.topOverlay }}</span>
 
-              <div class="text-decoration-none d-block h-100 position-relative"
-                :class="{ 'card-disabled': getCardStatus(event).isDisabled }" style="cursor: pointer;"
-                @click="handleCardClick(event)">
-                <div class="card event-card rounded-lg overflow-hidden h-100">
-                  <div class="position-relative">
-                    <NuxtImg :src="`${imgUrl}/${event.SK}/${event.Picture}.webp`" class="card-img-top"
-                      :alt="event.Title" loading="lazy" format="webp" />
-                    <span v-if="event.topOverlay" class="overlay-top">{{ event.topOverlay }}</span>
-
-                    <div v-if="getCardStatus(event).overlayText" class="status-overlay">
-                      {{ getCardStatus(event).overlayText }}
-                    </div>
-
-                  </div>
-                  <div class="card-body d-flex flex-column p-3">
-                    <h6 class="card-title fw-bold text-dark">{{ event.Title }}</h6>
-                    <small class="text-muted mb-1">{{ event.date || event.genre }}</small>
-
-                    <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
-                      <button class="btn btn-sm btn-outline-primary rounded-pill w-100"
-                        @click.stop="openDetailEvent(event)">
-                        Detail
-                      </button>
-
-                      <button class="btn btn-sm rounded-pill w-100" :class="getButtonState(event).cssClass"
-                        :disabled="getButtonState(event).disabled || loadingEventId === event.SK"
-                        @click.stop="handleRegisterClick(event)">
-                        <span v-if="loadingEventId === event.SK" class="spinner-border spinner-border-sm" role="status"
-                          aria-hidden="true"></span>
-                        <span v-else>{{ getButtonState(event).label }}</span>
-                      </button>
-
-                    </div>
-                  </div>
+                <div v-if="getCardStatus(event).overlayText" class="status-overlay">
+                  {{ getCardStatus(event).overlayText }}
                 </div>
               </div>
+              <div class="card-body d-flex flex-column p-3">
+                <h6 class="card-title fw-bold text-dark">{{ event.Title }}</h6>
+                <small class="text-muted mb-1">{{ event.date || event.genre }}</small>
 
+                <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
+                  <button class="btn btn-sm btn-outline-primary rounded-pill w-100"
+                    @click.stop="openDetailEvent(event)">
+                    Detail
+                  </button>
+
+                  <button class="btn btn-sm rounded-pill w-100" :class="getButtonState(event).cssClass"
+                    :disabled="getButtonState(event).disabled || loadingEventId === event.SK"
+                    @click.stop="handleRegisterClick(event)">
+                    <span v-if="loadingEventId === event.SK" class="spinner-border spinner-border-sm" role="status"
+                      aria-hidden="true"></span>
+                    <span v-else>{{ getButtonState(event).label }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <button class="carousel-control-prev" type="button" data-bs-target="#tiketEvent" data-bs-slide="prev"
-        v-show="eventStore.tiketEventChunks.length > 1">
+      <button class="custom-nav-btn prev-btn" type="button" @click="scrollPrev"
+        v-show="eventStore.tiketEvent.length > 1">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Previous</span>
       </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#tiketEvent" data-bs-slide="next"
-        v-show="eventStore.tiketEventChunks.length > 1">
+      
+      <button class="custom-nav-btn next-btn" type="button" @click="scrollNext"
+        v-show="eventStore.tiketEvent.length > 1">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
       </button>
@@ -94,10 +88,25 @@ const imgUrl = ref("");
 const config = useRuntimeConfig();
 const loadingEventId = ref(null);
 
+const scrollContainer = ref(null);
+
+const scrollNext = () => {
+  if (scrollContainer.value) {
+    const scrollAmount = window.innerWidth > 768 ? scrollContainer.value.clientWidth / 2 : scrollContainer.value.clientWidth * 0.8;
+    scrollContainer.value.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  }
+};
+
+const scrollPrev = () => {
+  if (scrollContainer.value) {
+    const scrollAmount = window.innerWidth > 768 ? scrollContainer.value.clientWidth / 2 : scrollContainer.value.clientWidth * 0.8;
+    scrollContainer.value.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  }
+};
+
 onMounted(() => {
   imgUrl.value = config.public.img;
 
-  // Pilih endpoint berdasarkan status login
   if (isLoggedIn.value) {
     eventStore.fetchAuthTiketEvent();
   } else {
@@ -109,7 +118,6 @@ const selectedEvent = ref(null);
 const showDetailEvent = ref(false);
 const showImageModal = ref(false);
 
-// --- Modal Handlers ---
 const openImageModal = (event) => {
   selectedEvent.value = event;
   showImageModal.value = true;
@@ -119,7 +127,6 @@ const closeImageModal = () => {
 };
 
 const openDetailEvent = async (eventItem) => {
-  // 1. Tampilin modalnya dulu pakai data basic yang udah ada
   selectedEvent.value = eventItem;
   showDetailEvent.value = true;
   if (eventItem.isDetailFetched) {
@@ -133,7 +140,6 @@ const openDetailEvent = async (eventItem) => {
       ...rawData,
       Title: eventItem.Title,
       Price: Number(rawData.Price || eventItem.Price),
-      
       isDetailFetched: true
     };
   
@@ -162,31 +168,24 @@ const handleCardClick = (event) => {
   router.push(`/event/${event.SK}`);
 };
 
-// --- Status Tombol Terpusat ---
 const getButtonState = (eventItem) => {
   if (!eventItem) return { label: 'Loading...', disabled: true, cssClass: 'btn-secondary' };
-
   if (eventItem.Status === 'inactive') {
     return { label: 'Non-Aktif', disabled: true, cssClass: 'btn-secondary' };
   }
-
   const now = dayjs();
-
   if (eventItem.Date) {
     const dates = Object.values(eventItem.Date);
     if (dates.length > 0) {
       const lastEventDateStr = dates.reduce((max, current) => (current.date > max ? current.date : max), dates[0].date);
       const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
-
       if (eventEndTime.isValid() && now.isAfter(eventEndTime)) {
         return { label: 'Selesai', disabled: true, cssClass: 'btn-secondary' };
       }
     }
   }
-
   const startStr = eventItem.Registration?.start_registration?.replace(' ', 'T');
   const endStr = eventItem.Registration?.end_registration?.replace(' ', 'T');
-
   if (startStr) {
     const startRegis = dayjs(startStr);
     if (startRegis.isValid() && now.isBefore(startRegis)) {
@@ -199,10 +198,8 @@ const getButtonState = (eventItem) => {
       return { label: 'Ditutup', disabled: true, cssClass: 'btn-secondary' };
     }
   }
-
   let relevantQuota = 'non-quota';
   const gender = (eventItem.Gender || '').toLowerCase().trim();
-
   if (gender.includes('ikhwan') && gender.includes('akhwat')) {
     relevantQuota = eventItem.Quota_Total;
   } else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
@@ -212,39 +209,32 @@ const getButtonState = (eventItem) => {
   } else {
     relevantQuota = eventItem.Quota_Total;
   }
-
   if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
     return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
   }
-
   return { label: 'Daftar', disabled: false, cssClass: 'btn-primary' };
 };
 
 const getCardStatus = (eventItem) => {
   const buttonState = getButtonState(eventItem);
   const label = buttonState.label;
-
   if (['Habis', 'Selesai', 'Ditutup', 'Non-Aktif'].includes(label)) {
     let overlayText = '';
     if (label === 'Habis') overlayText = 'SOLD OUT';
     else if (label === 'Selesai') overlayText = 'SELESAI';
     else if (label === 'Ditutup') overlayText = 'DITUTUP';
     else if (label === 'Non-Aktif') overlayText = 'NON AKTIF';
-
     return { isDisabled: true, overlayText: overlayText };
   }
-
   return { isDisabled: false, overlayText: null };
 };
 
 const handleRegisterClick = async (eventItem) => {
   const state = getButtonState(eventItem);
-
   if (state.disabled) {
     toastStore.showToast({ message: `Gagal: Status ${state.label}`, type: 'warning' });
     return;
   }
-
   if (!isLoggedIn.value) {
     Swal.fire({
       icon: 'info',
@@ -269,15 +259,12 @@ const handleRegisterClick = async (eventItem) => {
     });
     return;
   }
-
   if (eventItem && eventItem.SK) {
-    // Logic Satpam menggunakan logs dari store (tanpa hit API tambahan)
     const pendingLog = eventStore.userLogs.find(log => {
       const isSameEvent = String(log.Subject) === String(eventItem.SK);
       const status = getSmartStatus(log);
       return isSameEvent && status === 'PENDING';
     });
-
     if (pendingLog) {
       Swal.fire({
         icon: 'warning',
@@ -309,6 +296,13 @@ const handleRegisterClick = async (eventItem) => {
 </script>
 
 <style scoped>
+/* 🟢 Wrapper utama */
+.carousel-wrapper {
+  position: relative;
+  padding-left: 45px;
+  padding-right: 45px;
+}
+
 .card-disabled {
   filter: grayscale(100%);
   pointer-events: none;
@@ -320,7 +314,6 @@ const handleRegisterClick = async (eventItem) => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 8px 16px;
@@ -333,25 +326,16 @@ const handleRegisterClick = async (eventItem) => {
   border: 2px solid white;
 }
 
-.carousel {
-  position: relative;
-  padding-left: 50px;
-  padding-right: 50px;
-}
-
-.carousel-inner {
-  padding: 1rem 0;
-}
-
+/* 🟢 FIX SCROLL HORIZONTAL */
 .card-container-flex {
   display: flex;
   gap: 1rem;
-  padding: 0;
+  padding: 10px 0;
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 10px;
+  scroll-snap-type: x mandatory;
 }
 
 .card-container-flex::-webkit-scrollbar {
@@ -361,77 +345,73 @@ const handleRegisterClick = async (eventItem) => {
 .event-card-wrapper {
   flex: 0 0 auto;
   width: 80%;
-  margin-bottom: 1rem;
-  padding-right: 0;
-  margin-left: auto;
-  margin-right: auto;
+  scroll-snap-align: start;
 }
 
 @media (min-width: 576px) {
-  .event-card-wrapper {
-    width: calc(50% - 0.75rem);
-  }
+  .event-card-wrapper { width: calc(50% - 0.5rem); }
 }
 
 @media (min-width: 768px) {
-  .event-card-wrapper {
-    width: calc(33.333% - (1rem * 2 / 3) - 4px);
-  }
+  .event-card-wrapper { width: calc(33.333% - 0.66rem); }
 }
 
 @media (min-width: 992px) {
-  .event-card-wrapper {
-    width: calc(25% - (1rem * 3 / 4) - 4px);
-  }
-
-  .card-container-flex {
-    justify-content: center;
-  }
+  .event-card-wrapper { width: calc(25% - 0.75rem); }
 }
 
-.carousel-control-prev,
-.carousel-control-next {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 50%;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+/* 🟢 FIX TOMBOL PREV/NEXT: Background dihapus & disembunyiin di mobile */
+.custom-nav-btn {
+  position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  position: absolute;
+  background-color: transparent; /* Hapus background hitam lingkaran */
+  border: none;
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
   z-index: 10;
-  left: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.carousel-control-next {
-  left: auto;
-  right: 5px;
+.custom-nav-btn:hover {
+  opacity: 0.8;
 }
 
-@media (max-width: 991.98px) {
-  .carousel {
+.prev-btn {
+  left: 0;
+}
+
+.next-btn {
+  right: 0;
+}
+
+/* 🟢 Modifikasi Icon Panah Bawaan Bootstrap Biar Jadi Hitam (Karna background dihapus) */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  width: 2rem;
+  height: 2rem;
+  background-size: 100%;
+  filter: invert(1); /* Ubah panah putih bawaan bootstrap jadi hitam */
+}
+
+/* 🟢 ILANGIN TOMBOL DI MOBILE & BALIKIN PADDING */
+@media (max-width: 768px) {
+  .custom-nav-btn {
+    display: none !important; /* Hilang total di HP */
+  }
+  .carousel-wrapper {
+    padding-left: 0px;  /* Ruang tombol ilangin aja biar card bisa full layar */
+    padding-right: 0px; 
+  }
+}
+
+@media (min-width: 769px) and (max-width: 991.98px) {
+  .carousel-wrapper {
     padding-left: 35px;
     padding-right: 35px;
   }
-
-  .carousel-control-prev {
-    left: 0;
-  }
-
-  .carousel-control-next {
-    right: 0;
-  }
-
-  .card-container-flex {
-    padding: 0;
-    padding-bottom: 10px;
-  }
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-  background-size: 60%;
 }
 
 .card.event-card {

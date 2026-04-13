@@ -2,7 +2,7 @@
   <div class="homepage">
     <HomeHeroSection />
     <EventTiketEvent />
-    <ArticleHomeArticleSection />
+    <!-- <ArticleHomeArticleSection /> -->
 
   </div>
 </template>
