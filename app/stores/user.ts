@@ -114,13 +114,16 @@ export const useUserStore = defineStore("user", () => {
         let freshParticipants: any[] = [];
         
         if (Array.isArray(newData.Participant)) {
+ 
           freshParticipants = newData.Participant.map((p: any) => ({
-            Name: p.Name || p.name,
-            Gender: p.Gender || p.gender || '-',
-            Age: Number(p.Age || p.age || 0),
-            Domicile: p.Domicile || p.domicile || '-'
-          }));
-        }
+            ...p,
+             Name: p.Name,
+             Gender: p.Gender || '-',
+
+             Age: Number(p.Age || 0),
+             Domicile: p.Domicile || '-'
+            }));
+          }
 
        
         const index = tickets.value.findIndex(t => t.SK === skRaw);

@@ -25,7 +25,7 @@
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
               <input type="text" id="username" v-model="form.username" class="form-control"
-                placeholder="Username untuk login" required />
+                placeholder="Username untuk login" autocomplete="username" required />
             </div>
 
             <div class="mb-3">
@@ -52,7 +52,7 @@
               <label for="password" class="form-label">Password</label>
               <div class="password-wrapper">
                 <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control"
-                  placeholder="Masukkan password" required />
+                  placeholder="Masukkan password" autocomplete="new-password" required />
                 <span @click="showPassword = !showPassword" class="password-toggle-icon">
                   <i :class="showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                 </span>
@@ -63,7 +63,7 @@
               <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
               <div class="password-wrapper">
                 <input :type="showConfirmPassword ? 'text' : 'password'" v-model="form.confirmPassword"
-                  class="form-control" placeholder="Ulangi password" required />
+                  class="form-control" placeholder="Ulangi password" autocomplete="new-password" required />
                 <span @click="showConfirmPassword = !showConfirmPassword" class="password-toggle-icon">
                   <i :class="showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                 </span>
