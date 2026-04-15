@@ -198,17 +198,65 @@ const {
 // Angka 10 di belakang = Jumlah row per halaman (bisa di ganti 5, 20, dll)
 
 const handleExport = () => {
+  // 1. Cek dulu, kalau datanya kosong ngapain di-export kan?
+  if (!store.participants || store.participants.length === 0) {
+    Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data kehadiran untuk di-export.' });
+    return;
+  }
+
   isExporting.value = true;
-  setTimeout(() => {
-    isExporting.value = false;
+
+  try {
+    // 2. Siapin Judul Kolom (Header)
+    const headers = ['No', 'Nama Peserta', 'Kode Tiket', 'Gender', 'Umur', 'Waktu Masuk', 'Status'];
+
+    // 3. Mapping: Ubah data JSON lu jadi format Array biasa
+    const rows = store.participants.map((p, index) => {
+      return [
+        index + 1,
+        `"${p.name}"`, // Pake tanda kutip biar kalau namanya ada koma, excel ga error
+        p.ticketId,
+        p.gender === 'l' ? 'Ikhwan' : 'Akhwat',
+        p.age,
+        p.scanTime || 'Belum Absen',
+        p.status.toUpperCase()
+      ];
+    });
+
+    // 4. Gabungin Header dan Rows pake koma dan enter (\n)
+    const csvContent = [
+      headers.join(','),                  // Gabungin header
+      ...rows.map(row => row.join(','))   // Gabungin tiap baris data
+    ].join('\n');                         // Enter buat baris selanjutnya
+
+    // 5. Ubah teks jadi "File" (Blob)
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    // 6. Trik Auto-Download
+    const link = document.createElement('a'); // Bikin elemen <a> gaib
+    const fileName = `Log_Kehadiran_${store.selectedEventSK}_${dayjs().format('YYYYMMDD_HHmm')}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click(); // Klik paksa pake JS
+    document.body.removeChild(link); // Buang lagi link-nya biar bersih
+
     Swal.fire({
       icon: 'success',
       title: 'Berhasil',
-      text: 'File log kehadiran berhasil didownload (Simulasi)',
+      text: 'File CSV berhasil didownload!',
       timer: 2000,
       showConfirmButton: false
     });
-  }, 1500);
+
+  } catch (error) {
+    console.error("Export Error:", error);
+    Swal.fire({ icon: 'error', title: 'Gagal Export', text: 'Terjadi kesalahan saat memproses data.' });
+  } finally {
+    isExporting.value = false;
+  }
 };
 </script>
 

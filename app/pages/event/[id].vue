@@ -82,8 +82,14 @@
                               {{ getGenderLabel(event.Gender) }}
                            </span>
                         </div>
-
-                        <div class="card-footer bg-light p-3 text-center border-0 x-small text-muted">
+                        
+                        <div v-if="event.Whatsapp" class="card-footer bg-light p-3 text-center border-0">
+                           <p class="mb-2 text-muted x-small fw-medium">Ada kendala pendaftaran?</p>
+                           <a :href="`https://wa.me/${event.Whatsapp}`" target="_blank" class="btn btn-outline-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                              <i class="bi bi-whatsapp"></i> Hubungi Panitia
+                           </a>
+                        </div>
+                        <div v-else class="card-footer bg-light p-3 text-center border-0 x-small text-muted">
                            Ada kendala? <a href="#" class="text-dark fw-bold text-decoration-none">Hubungi Admin</a>
                         </div>
                      </div>

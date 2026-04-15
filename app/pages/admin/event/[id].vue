@@ -224,7 +224,7 @@ const convertTo12h = (time24: string | undefined) => {
 const initializeData = () => {
   if (!eventData.value) return;
 
-  contactWaInput.value = eventData.value.Contact_WA || '';
+  contactWaInput.value = eventData.value.Whatsapp || '';
 
   // Setup Image Preview
   previewUrl.value = eventData.value.Picture
@@ -394,7 +394,7 @@ const handleContactSubmit = async () => {
   // Asumsi fungsi eventStore.updateTiketEventBasic bisa nerima Contact_WA
   const success = await eventStore.updateTiketEventBasic({
     SK: eventData.value.SK,
-    Contact_WA: contactWaInput.value
+    Whatsapp: contactWaInput.value
   });
 
   if (success) {

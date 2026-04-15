@@ -46,6 +46,7 @@ const mapApiToEvent = (event: ApiEventRaw): Event => ({
   Picture: event.Picture || undefined,
   Status: event.Status || 'inactive',
   Description: event.Description || "",
+  Whatsapp: event.Whatsapp || "",
 });
 
 const createEventPayload = (data: EventBasicData, accessToken: string, existingDate: any = {}) => {
@@ -59,6 +60,7 @@ const createEventPayload = (data: EventBasicData, accessToken: string, existingD
     Registration: data.Registration,
     Status: data.Status,
     Description: data.Description || "",
+    Whatsapp: data.Whatsapp || "",
   };
   const g = payload.Gender;
   if (g === 'ikhwan') {

@@ -23,7 +23,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
       console.error("Gagal fetch events:", error);
     }
   }
-  async function fetchAttendanceData() {
+  async function fetchAttendanceData(statusType: 'present' | 'not-present' = 'present') {
     if (!selectedEventSK.value) return; 
     
     loading.value = true;
@@ -33,19 +33,20 @@ export const useAttendanceStore = defineStore('attendance', () => {
       const { $apiBase } = useNuxtApp() as any;
       const res = await $apiBase.get('/get-attendance', {
         params: {
-          type: 'present',
+          type: statusType,
           sk: selectedEventSK.value
         }
       });
 
       const rawData = res.data || [];
       participants.value = rawData.map((p: any) => ({
+        pk: p.PK, 
         name: p.Name,
         ticketId: p.SK, 
         gender: p.Gender?.toLowerCase() === 'akhwat' ? 'p' : 'l', 
         age: p.Age,
-        scanTime: p.CheckIn, 
-        status: 'hadir' 
+        scanTime: p.CheckIn || null, 
+        status: statusType === 'present' ? 'hadir' : 'belum'
       }));
 
     } catch (error) {

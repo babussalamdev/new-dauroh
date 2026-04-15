@@ -26,6 +26,7 @@ export interface ApiEventRaw {
   Picture?: string;
   Status?: string;
   Description?: string;
+  Whatsapp?: string;
 }
 
 export interface Event {
@@ -47,7 +48,7 @@ export interface Event {
   Status: string;
   Description?: string;
   isDetailFetched?: boolean;
-  Contact_WA?: string;
+  Whatsapp?: string;
 }
 
 export interface EventBasicData {
@@ -62,7 +63,7 @@ export interface EventBasicData {
   Quota_Total: number | 'non-quota';
   Status: string;
   Description?: string;
-  Contact_WA?: string;
+  Whatsapp?: string;
 }
 
 export interface EventSchedulePayload {
