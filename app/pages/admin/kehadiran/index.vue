@@ -13,11 +13,14 @@
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       
-      <div class="card-header d-flex flex-column flex-xl-row justify-content-between align-items-xl-center bg-white py-3 border-bottom gap-3">
+      <div class="card-header d-flex flex-column flex-xl-row justify-content-between align-items-xl-center bg-white p-3 px-md-4 py-md-3 border-bottom gap-3">
         <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100">
-          <h5 class="mb-0 text-nowrap fw-bold">Log Kehadiran</h5>
           
-          <select class="form-select form-select-sm shadow-sm w-100" style="max-width: 350px; border-color: #198754;"
+          <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5 text-nowrap">
+            <i class="bi bi-person-check-fill text-primary me-2"></i>Log Kehadiran
+          </h5>
+          
+          <select class="form-select form-select-sm shadow-sm rounded px-3 py-1" style="max-width: 400px; border-color: #198754;"
             v-model="store.selectedEventSK" @change="store.fetchAttendanceData()">
             <option value="" disabled>-- Pilih Event Dahulu --</option>
             <option v-for="event in store.events" :key="event.SK!" :value="event.SK">
@@ -69,16 +72,15 @@
                 Total Hadir: {{ totalItems }}
               </span>
             </div>
-
             <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem; min-width: 700px;">
-                <thead class="table-light text-muted">
+              <table class="table table-hover mb-0" style="min-width: 700px;">
+                <thead>
                   <tr>
-                    <th class="py-3 ps-4" style="width: 5%;">No</th>
-                    <th class="py-3" style="width: 35%;">Informasi Peserta</th>
-                    <th class="py-3" style="width: 25%;">Kode Tiket</th>
-                    <th class="py-3" style="width: 20%;">Waktu Masuk</th>
-                    <th class="py-3 text-center pe-4" style="width: 15%;">Status</th>
+                    <th class="ps-4" style="width: 5%;">NO</th>
+                    <th style="width: 35%;">INFORMASI PESERTA</th>
+                    <th style="width: 25%;">KODE TIKET</th>
+                    <th style="width: 20%;">WAKTU MASUK</th>
+                    <th class="text-center pe-4" style="width: 15%;">STATUS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -101,12 +103,15 @@
                       </div>
                     </td>
                     <td class="text-center pe-4">
-                      <span class="badge bg-success px-3 py-1 rounded-pill">Hadir</span>
+                      <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm" style="font-size: 0.75rem;">
+                        Hadir
+                      </span>
                     </td>
                   </tr>
                   
                   <tr v-if="paginatedData.length === 0">
-                    <td colspan="5" class="text-center py-4 text-muted small fst-italic">
+                    <td colspan="5" class="text-center py-5 text-muted small fst-italic">
+                      <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
                       Tidak ada peserta hadir yang cocok dengan pencarian "{{ searchQuery }}"
                     </td>
                   </tr>
@@ -263,10 +268,6 @@ const handleExport = () => {
 <style scoped>
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
-
-.table> :not(caption)>*>* {
-  border-bottom-width: 1px;
-}
 .input-group-text, .form-control {
   padding: 0.5rem 1rem;
 }

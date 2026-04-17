@@ -1,12 +1,14 @@
-import { useUserStore } from "~/stores/user";
-import { useAdminUserStore } from "~/stores/adminUser";
-
 export const useAuth = () => {
   const loading = useLoading();
-  const userStore = useUserStore();
-  const adminUserStore = useAdminUserStore();
 
   const accessToken = useCookie("AccessToken", {
+    maxAge: 60 * 60 * 24,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  // 🟢 BIKIN COOKIE BARU KHUSUS BUAT NYIMPEN TIPE LOGIN (Biar tahan refresh)
+  const loginTypeCookie = useCookie("LoginType", {
     maxAge: 60 * 60 * 24,
     path: "/",
     sameSite: "lax",
@@ -16,10 +18,8 @@ export const useAuth = () => {
   const router = useRouter();
   const { $apiBase } = useNuxtApp();
 
-  const adminRoles = [
+const adminRoles = [
     "root",
-    "super_role",
-    "super role",
     "admin",
     "bendahara",
     "registrasi",
@@ -34,10 +34,11 @@ export const useAuth = () => {
       const res = await $apiBase.post("signin-account", data);
 
       accessToken.value = res.data.AccessToken;
+      loginTypeCookie.value = type;
+
       if (process.client) {
         localStorage.setItem("IdToken", res.data.IdToken);
         localStorage.setItem("RefreshToken", res.data.RefreshToken);
-        sessionStorage.setItem("loginType", type);
       }
 
       await getUser();
@@ -51,6 +52,7 @@ export const useAuth = () => {
 
         if (!adminRoles.includes(userRole)) {
           accessToken.value = null;
+          loginTypeCookie.value = null;
           if (process.client) {
             localStorage.removeItem("IdToken");
             localStorage.removeItem("RefreshToken");
@@ -58,7 +60,7 @@ export const useAuth = () => {
           user.value = null;
 
           throw new Error(
-            "Akses Ditolak: Akun Anda tidak memiliki otoritas Admin.",
+            "Akses Ditolak: Akun Anda tidak memiliki otoritas Admin."
           );
         }
         await router.push("/admin");
@@ -75,15 +77,14 @@ export const useAuth = () => {
   /**
    * Fungsi Logout
    */
-const logout = async () => {
+  const logout = async () => {
     loading.value = true;
 
     try {
-      const loginType = process.client
-        ? sessionStorage.getItem("loginType")
-        : null;
+      // Baca dari cookie sebelum dihapus buat nentuin arah redirect
+      const typeForRedirect = loginTypeCookie.value;
 
-      // --- 1. CLEANUP WEBSOCKET (Mencegah WS Error saat reload) ---
+      // --- 1. CLEANUP WEBSOCKET ---
       if (process.client) {
         const { $socket } = useNuxtApp() as any;
         if ($socket && typeof $socket.close === "function") {
@@ -99,28 +100,25 @@ const logout = async () => {
             AccessToken: localStorage.getItem("IdToken"),
           });
         } catch (e) {
-          console.warn(
-            "API Signout gagal, tetap melanjutkan pembersihan lokal.",
-          );
+          console.warn("API Signout gagal, tetap melanjutkan pembersihan lokal.");
         }
       }
 
       // --- 2. CLEAR SESSION & TOKENS ---
       accessToken.value = null;
+      loginTypeCookie.value = null;
+      
       if (process.client) {
         localStorage.removeItem("IdToken");
         localStorage.removeItem("RefreshToken");
-        sessionStorage.removeItem("loginType");
       }
 
       user.value = null;
 
-      // --- 3. HARD REDIRECT (Paling Aman buat Security & Hapus State Pinia) ---
-      const targetPath = loginType === "admin" ? "/admin/login" : "/auth";
+      // --- 3. HARD REDIRECT ---
+      const targetPath = typeForRedirect === "admin" ? "/admin/login" : "/auth";
       
       if (process.client) {
-        // Pake window.location.href biar browser ke-refresh total.
-        // Semua sisa state di Pinia bakal otomatis kehapus dari memori.
         window.location.href = targetPath;
       }
 
@@ -149,16 +147,13 @@ const logout = async () => {
       user.value?.Series ||
       ""
     ).toLowerCase();
+    
     const hasAdminRole = adminRoles.includes(userRole);
-    const loginType = process.client
-      ? sessionStorage.getItem("loginType")
-      : null;
-    return hasAdminRole && loginType === "admin";
+   
+    return hasAdminRole && loginTypeCookie.value === "admin";
   });
 
-  const isLoggedIn = computed(
-    () => !!user.value?.name || !!user.value?.fullname,
-  );
+  const isLoggedIn = computed(() => !!user.value);
 
   return {
     user,

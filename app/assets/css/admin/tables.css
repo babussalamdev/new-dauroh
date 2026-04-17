@@ -1,6 +1,33 @@
-.table-responsive { overflow-x: auto; }
+/* Bikin tabel bisa digeser kalau layarnya kekecilan */
+.table-responsive { 
+  overflow-x: auto; 
+}
+
+/* 🟢 GLOBAL STYLE UNTUK SEMUA TABEL */
 .table {
-  &.align-middle { vertical-align: middle; }
-  &.fs-sm { font-size: 0.875rem; }
-  th { font-weight: 600; color: #555; }
+  font-size: 0.85rem !important; /* Paksa font lebih kecil secara global */
+  vertical-align: middle !important;
+  margin-bottom: 0 !important;
+}
+
+/* Bikin isi baris tabel (TD & TH) otomatis rapet/compact */
+.table > :not(caption) > * > * {
+  padding: 0.6rem 0.75rem !important; 
+  border-bottom-width: 1px;
+}
+
+/* 🟢 GLOBAL STYLE UNTUK HEADER TABEL (THEAD) */
+.table thead th { 
+  font-weight: 600 !important; 
+  color: #6c757d !important; /* Warna text-muted */
+  font-size: 0.75rem !important; 
+  text-transform: uppercase !important; 
+  letter-spacing: 0.5px !important; 
+  background-color: #f8f9fa !important; /* Otomatis kasih bg-light */
+  border-bottom: 2px solid #e9ecef !important;
+}
+
+/* Bikin baris yang di-hover lebih keliatan elegan */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02) !important;
 }

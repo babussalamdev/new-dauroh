@@ -1,10 +1,10 @@
 <template>
   <div class="card border-0 shadow-sm rounded-4 h-100 bg-white demographic-card">
-    <div class="card-body p-4 d-flex flex-column justify-content-between">
+    <div class="card-body p-3 px-4 d-flex flex-column">
       
-      <div class="text-center mb-3">
-        <h6 class="fw-bold mb-1 text-dark">Demografi Pengguna</h6>
-        <p class="text-muted small mb-0">Total Keseluruhan Akun</p>
+      <div class="mb-3">
+        <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem;">Demografi Pengguna</h6>
+        <p class="text-muted mb-0" style="font-size: 0.8rem;">Total Keseluruhan Akun</p>
       </div>
 
       <div class="d-flex justify-content-center align-items-center flex-grow-1">
@@ -12,7 +12,7 @@
           <apexchart 
             type="pie" 
             width="100%" 
-            height="280" 
+            height="240" 
             :options="chartOptions" 
             :series="series"
           ></apexchart>
@@ -41,33 +41,34 @@ const series = computed(() => [props.ikhwan, props.akhwat]);
 
 const chartOptions: ApexOptions = {
   chart: {
-    type: 'pie', // 🟢 Ubah ke Pie Chart klasik
+    type: 'pie',
     fontFamily: 'inherit',
   },
   labels: ['Ikhwan', 'Akhwat'],
   colors: ['#0d6efd', '#ffc107'], // Biru (Ikhwan) & Kuning (Akhwat)
   stroke: {
     show: true,
-    width: 1, // Garis putih tipis antar potongan biar rapi
+    width: 2, 
     colors: ['#ffffff']
   },
   dataLabels: {
-    enabled: true, // 🟢 Nyalain persentase di dalem pie
+    enabled: true, 
     style: {
-      fontSize: '11px', // Dibikin kecil sesuai request
+      fontSize: '11px',
       fontWeight: 'bold',
-      colors: ['#ffffff'] // Teks warna putih biar kontras sama background chart
+      colors: ['#ffffff']
     },
     dropShadow: {
-      enabled: false // Matiin shadow teks biar clean
+      enabled: false 
     }
   },
   legend: {
-    show: true, // 🟢 Nyalain legenda bawaan
-    position: 'bottom', // Posisinya di bawah chart
-    horizontalAlign: 'center', // Di tengah
+    show: true, 
+    position: 'bottom', 
+    horizontalAlign: 'center', 
     markers: {
-      size: 6, // Kotak legendanya dibikin agak ngotak (kayak di gambar lu)
+      size: 5, // Dikecilin dikit biar makin rapi
+      shape: 'square', // Dibikin kotak tegass
     },
     itemMargin: {
       horizontal: 10,
@@ -79,7 +80,7 @@ const chartOptions: ApexOptions = {
     theme: 'light',
     y: {
       formatter: function(val) {
-        return val + " Akun" // Pas di hover muncul angka aslinya
+        return val + " Akun" 
       }
     }
   }
@@ -92,6 +93,6 @@ const chartOptions: ApexOptions = {
 }
 .demographic-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+  box-shadow: 0 .25rem .75rem rgba(0,0,0,.08)!important;
 }
 </style>

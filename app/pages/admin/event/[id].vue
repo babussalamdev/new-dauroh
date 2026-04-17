@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid px-4 py-4">
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
-      <AdminBreadcrumb :items="breadcrumbItems" />
+      <AdminCommonBreadcrumb :items="breadcrumbItems" />
       <div v-if="eventData">
         <span class="badge px-3 py-2 rounded-pill d-flex align-items-center gap-2"
           :class="eventData.Status === 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">

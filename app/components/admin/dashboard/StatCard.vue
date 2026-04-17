@@ -1,26 +1,22 @@
 <template>
-  <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden bg-white stat-card position-relative">
-    
-    <div v-if="badgeText" class="position-absolute top-0 end-0 mt-3 me-3">
-      <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill px-2 py-1">
-        {{ badgeText }}
-      </span>
-    </div>
-
-    <div class="card-body p-4 d-flex align-items-center">
+  <div class="card border-0 rounded-4 stat-card-base">
+    <div class="card-body p-3 d-flex align-items-center">
+      
       <div 
         class="rounded-circle d-flex justify-content-center align-items-center me-3 flex-shrink-0" 
         :class="iconBgClass"
-        style="width: 55px; height: 55px;"
+        style="width: 40px; height: 40px;"
       >
-        <i :class="['bi', icon, 'fs-3']"></i>
+        <i :class="['bi', icon]" style="font-size: 1.1rem;"></i>
       </div>
+
       <div>
-        <p class="small fw-bold mb-1 text-uppercase tracking-wide text-muted">
+        <p class="fw-bold mb-0 text-uppercase text-muted" style="font-size: 0.65rem; letter-spacing: 0.5px;">
           {{ title }}
         </p>
-        <h3 class="fw-bold mb-0 text-dark">{{ value }}</h3>
+        <h5 class="fw-bold mb-0 text-dark mt-1" style="font-size: 1.1rem;">{{ value }}</h5>
       </div>
+
     </div>
   </div>
 </template>
@@ -30,16 +26,17 @@ defineProps({
   title: String,
   value: [String, Number],
   icon: String,
-  iconBgClass: { type: String, default: 'bg-primary bg-opacity-10 text-primary' },
-  badgeText: { type: String, default: '' }
+  iconBgClass: { type: String, default: 'bg-primary bg-opacity-10 text-primary' }
 });
 </script>
 
 <style scoped>
-.tracking-wide { letter-spacing: 1px; }
-.stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.stat-card:hover { 
-  transform: translateY(-3px); 
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.10)!important; 
+.stat-card-base {
+  transition: all 0.2s ease;
+}
+.stat-card-base:hover {
+  background-color: #ffffff !important; /* Balik ke putih pas di-hover */
+  border-color: #dee2e6 !important;
+  transform: translateY(-2px);
 }
 </style>

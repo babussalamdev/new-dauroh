@@ -1,31 +1,33 @@
 <template>
-  <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
-      <h5 class="mb-0">Manajemen Informasi Yayasan</h5>
-      <button class="btn btn-primary btn-sm" @click="navigateToAdd">
-        <i class="bi bi-plus-lg me-1"></i>
-        Tambah Informasi
+<div class="card content-card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center bg-white p-3 px-md-4 py-md-3 border-bottom">
+      <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5">
+        <i class="bi bi-newspaper text-primary me-2"></i>Manajemen Informasi
+      </h5>
+      <button class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm" @click="navigateToAdd">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Informasi
       </button>
     </div>
-    <div class="card-body">
+    
+    <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm align-middle fs-sm">
-          <thead class="table-light">
+        <table class="table table-hover mb-0" style="min-width: 800px;">
+          <thead>
             <tr>
-              <th scope="col" style="width: 15%" class="text-center">Tanggal Rilis</th>
-              <th scope="col" style="width: 10%" class="text-center">Picture</th>
-              <th scope="col" style="width: 45%">Judul Informasi</th>
-              <th scope="col" class="text-center" style="width: 15%">Status</th>
-              <th scope="col" class="text-center">Aksi</th>
+              <th class="text-center ps-4" style="width: 15%">TANGGAL RILIS</th>
+              <th class="text-center" style="width: 10%">PIC</th>
+              <th style="width: 45%">JUDUL INFORMASI</th>
+              <th class="text-center" style="width: 15%">STATUS</th>
+              <th class="text-center pe-4" style="width: 15%">AKSI</th>
             </tr>
           </thead>
           
           <tbody v-if="!articleStore.loading && articleStore.articles.length > 0">
             <tr v-for="article in articleStore.articles" :key="article.SK">
 
-              <th scope="row" class="fw-normal text-center text-muted">
+              <td class="text-center fw-medium text-muted ps-4">
                 {{ formatDate(article.Created_At) }}
-              </th>
+              </td>
 
               <td class="text-center">
                 <img 
@@ -33,46 +35,49 @@
                   :src="article.Picture"
                   :alt="article.Title" 
                   width="45" height="45"
-                  class="rounded Picture-thumbnail object-fit-cover border"
+                  class="rounded Picture-thumbnail object-fit-cover shadow-sm"
                   @error="($event.target as HTMLImageElement).style.display = 'none'" 
                 />
                 <span v-else class="text-muted small">N/A</span>
               </td>
               
-              <td class="fw-medium">{{ article.Title }}</td>
+              <td class="fw-bold text-dark">{{ article.Title }}</td>
 
               <td class="text-center">
-                <span v-if="article.Status === 'active'"
-                  class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3">
+                <span v-if="article.Status === 'active'" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3" style="font-size: 0.75rem;">
                   Dipublikasi
                 </span>
-                <span v-else class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill border border-secondary px-3">
+                <span v-else class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill border border-secondary px-3" style="font-size: 0.75rem;">
                   Draft
                 </span>
               </td>
 
-              <td class="text-center">
-                <button class="btn btn-link text-info p-1" @click="navigateToDetail(article)" :disabled="!article.SK"
-                  title="Lihat Detail & Edit">
-                  <i class="bi bi-search fs-5"></i>
-                </button>
-                <button class="btn btn-link text-danger p-1" @click="openDeleteModal(article)" title="Hapus">
-                  <i class="bi bi-trash fs-5"></i>
-                </button>
+              <td class="text-center pe-4">
+                <div class="d-flex justify-content-center gap-1">
+                  <button class="btn btn-sm text-primary p-0 border-0 bg-transparent shadow-none" @click="navigateToDetail(article)" :disabled="!article.SK" title="Lihat Detail & Edit">
+                    <i class="bi bi-pencil-square fs-5"></i>
+                  </button>
+                  <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" @click="openDeleteModal(article)" title="Hapus">
+                    <i class="bi bi-trash fs-5"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
           
           <tbody v-else-if="!articleStore.loading && articleStore.articles.length === 0">
             <tr>
-              <td colspan="5" class="text-center text-muted py-4">Belum ada data informasi/artikel.</td>
+              <td colspan="5" class="text-center text-muted py-5">
+                <i class="bi bi-newspaper fs-1 d-block mb-2 opacity-50"></i>
+                Belum ada data informasi/artikel.
+              </td>
             </tr>
           </tbody>
           
           <tbody v-else>
             <tr>
-              <td colspan="5" class="text-center py-4">
-                <div class="spinner-border text-primary" role="status"></div>
+              <td colspan="5" class="py-5 text-center">
+                 <CommonLoadingSpinner />
               </td>
             </tr>
           </tbody>

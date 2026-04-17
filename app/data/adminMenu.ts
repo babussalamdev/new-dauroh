@@ -12,14 +12,14 @@ interface DropdownMenu {
   items: MenuItem[];
 }
 
-// 🟢 SCAN PRESENSI DIHAPUS DARI SINI
+// 🟢 MANAJEMEN USER DIPINDAH KE SINI BIAR JADI MENU TUNGGAL
 export const mainMenuItems: MenuItem[] = [
   { to: '/admin', icon: 'bi-speedometer2', text: 'Dashboard' },
+  { to: '/admin/users', icon: 'bi-people-fill', text: 'Manajemen User' }
 ];
 
 export const dropdownMenuItems: DropdownMenu[] = [
-  // 🟢 BIKIN KELOMPOK BARU KHUSUS PRESENSI DI PALING ATAS
-{
+  {
     id: 'collapsePresensi',
     icon: 'bi-clipboard-check-fill',
     text: 'Presensi Peserta',
@@ -38,23 +38,13 @@ export const dropdownMenuItems: DropdownMenu[] = [
       { to: '/admin/artikel', text: 'Artikel' }
     ]
   },
-  {
-    id: 'collapseUser',
-    icon: 'bi-people-fill',
-    text: 'Manajemen User',
-    items: [
-      { to: '/admin/users?type=all', text: 'Semua User' },
-      { to: '/admin/users?type=admin', text: 'Data Admin' },
-      { to: '/admin/users?type=client', text: 'Data Client' },
-      { to: '/admin/users/create', text: 'Tambah User Baru' },
-    ]
-  },
+  // 🟢 MENU COLLAPSE USER UDAH DIHAPUS DARI SINI
   {
     id: 'collapseFinance',
     icon: 'bi-cash-coin',
     text: 'Keuangan',
     items: [
-      { to: '/admin/finance/dashboard', text: 'Ringkasan Omzet' }, 
+      { to: '/admin/finance', text: 'Ringkasan Pendapatan' }, 
       { to: '/admin/finance/transactions', text: 'Data Transaksi' }, 
       { to: '/admin/finance/reports', text: 'Laporan & Export' }, 
     ]

@@ -3,7 +3,6 @@ import { ref, computed } from "vue";
 import { useNuxtApp } from "#app";
 import { useToastStore } from "~/stores/toast";
 import { usePagination } from "~/composables/usePagination";
-// Import interface dari folder types
 import type { AdminUser } from "~/types/admin"; 
 
 export const useAdminUserStore = defineStore("adminUser", () => {
@@ -11,8 +10,6 @@ export const useAdminUserStore = defineStore("adminUser", () => {
   const users = ref<AdminUser[]>([]);
   const loading = ref(false);
   const search = ref("");
-  // const perPage = ref(10);
-  // const currentPage = ref(1);
   const currentType = ref("all");
 
   // --- Getters ---
@@ -36,18 +33,13 @@ export const useAdminUserStore = defineStore("adminUser", () => {
   });
 
   const {
-    perPage,
-    currentPage,
-    totalPages,
-    totalItems,
-    paginatedData,
-    changePage
+    perPage, currentPage, totalPages, totalItems, paginatedData, changePage
   } = usePagination(filteredData);
 
  
   // --- Actions ---
   async function getListaccount(type: string = 'all', forceRefresh = false) {
-    if (users.value.length > 0 && currentType.value === type && !loading.value && !forceRefresh) return;
+    if (currentType.value === type && users.value.length > 0 && !forceRefresh) return;
 
     loading.value = true;
     currentType.value = type;
@@ -84,7 +76,7 @@ export const useAdminUserStore = defineStore("adminUser", () => {
         message: `User berhasil di-${newStatus === 'inactive' ? 'blokir' : 'aktifkan'}!`,
         type: 'success'
       });
-      await getListaccount(currentType.value, true);
+      await getListaccount(currentType.value, true); 
       return true;
     } catch (error: any) {
       toast.showToast({
@@ -121,7 +113,6 @@ export const useAdminUserStore = defineStore("adminUser", () => {
   return {
     users, loading, search, currentType,
     filteredData, 
-    
     
     perPage, currentPage, totalItems, totalPages, paginatedData, changePage,
     

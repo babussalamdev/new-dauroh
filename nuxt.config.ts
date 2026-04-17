@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     "bootstrap/dist/css/bootstrap.min.css",
     "bootstrap-icons/font/bootstrap-icons.css", // <--- TAMBAHIN BARIS INI (PENTING!)
     "@/assets/css/variables.scss",
+    "@/assets/css/admin/tables.css",
   ],
 
   app: {

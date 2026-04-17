@@ -9,7 +9,7 @@
       </ol>
     </nav>
 
-    <AdminTiketEventManager />
+    <AdminEventTiketEventManager />
   </div>
 </template>
 
