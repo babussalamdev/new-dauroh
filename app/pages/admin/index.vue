@@ -4,13 +4,18 @@
     <div class="card border-0 shadow-sm rounded-4 mb-3 bg-white">
       <div class="card-body p-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
-          <h3 class="fw-bold mb-1 text-dark" style="font-size: 1rem;">Ahlan wa Sahlan, {{ user?.name || 'Admin' }}! 👋</h3>
-          <p class="text-muted mb-0" style="font-size: 0.8rem;">
-            Dashboard manajemen sistem <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 ms-1" style="font-size: 0.65rem;">{{ userRoleLabel }}</span>
+          <h3 class="mb-1 text-dark txt-title">Ahlan wa Sahlan, {{ user?.name || 'Admin' }}! 👋</h3>
+          
+          <p class="text-muted mb-0 txt-caption">
+            Dashboard manajemen sistem 
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 ms-1 txt-label">
+              {{ userRoleLabel }}
+            </span>
           </p>
         </div>
+        
         <div class="text-md-end" style="min-width: 230px;">
-          <select class="form-select form-select-sm border-success fw-medium shadow-sm rounded-pill px-3 py-2"
+          <select class="form-select form-select-sm border-success shadow-sm rounded-pill px-3 py-2 txt-body fw-medium"
             v-model="selectedEventSK" @change="fetchEventDashboardData" :disabled="isLoadingEvents">
             <option value="" disabled>{{ isLoadingEvents ? 'Memuat Event...' : '-- Pilih Event Aktif --' }}</option>
             <option v-for="event in activeEvents" :key="event.SK" :value="event.SK">{{ event.Title.toUpperCase() }}</option>

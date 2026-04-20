@@ -3,24 +3,25 @@
     <div class="auth-overlay">
       <div class="auth-box">
         <div class="auth-content">
+          
           <div class="text-center mb-4">
             <img src="~/assets/img/Logo-Mahad.png" alt="Logo Event" style="height: 60px;" class="mb-3">
-            <h1 class="auth-title">Sign<span class="text-primary">In</span></h1>
-            <p class="text-muted small">Silakan masuk untuk melanjutkan</p>
+            <h1 class="auth-title txt-title fw-bold">Sign<span class="text-primary">In</span></h1>
+            <p class="text-muted txt-caption mb-0">Silakan masuk untuk melanjutkan</p>
           </div>
 
           <form @submit.prevent="handleLogin">
             <div class="mb-3">
-              <label for="username" class="form-label">Email/Username</label>
+              <label for="username" class="form-label txt-label fw-bold text-secondary">Email/Username</label>
               <input type="text" id="username" v-model="form.email" placeholder="Masukkan username atau email"
-                class="form-control form-control-lg" autocomplete = "username" required />
+                class="form-control form-control-lg txt-body" autocomplete="username" required />
             </div>
 
             <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
+              <label for="password" class="form-label txt-label fw-bold text-secondary">Password</label>
               <div class="password-wrapper">
                 <input :type="showPassword ? 'text' : 'password'" v-model="form.password" id="password"
-                  placeholder="Masukkan password" class="form-control form-control-lg" autocomplete="current-password" required  />
+                  placeholder="Masukkan password" class="form-control form-control-lg txt-body" autocomplete="current-password" required  />
                 <span @click="togglePasswordVisibility" class="password-toggle-icon">
                   <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                     class="bi bi-eye-fill" viewBox="0 0 16 16">
@@ -40,14 +41,14 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-              <a href="#" class="text-decoration-none small" data-bs-toggle="modal"
+              <a href="#" class="text-decoration-none txt-caption fw-bold" data-bs-toggle="modal"
                 data-bs-target="#forgotPasswordModal">
                 Lupa password?
               </a>
             </div>
 
             <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
+              <button type="submit" class="btn btn-primary btn-lg txt-body fw-bold rounded-pill" :disabled="loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
                   aria-hidden="true"></span>
                 Login
@@ -55,12 +56,14 @@
             </div>
 
             <div class="text-center mt-4">
-              <NuxtLink to="/" class="d-block text-decoration-none">Saya hanya pengunjung</NuxtLink>
+              <NuxtLink to="/" class="d-block text-decoration-none txt-caption fw-bold text-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Saya hanya pengunjung
+              </NuxtLink>
             </div>
 
             <div class="text-center mt-4 pt-3 border-top">
-              <p class="text-muted small mb-1">Belum punya akun?</p>
-              <a href="#" @click.prevent="$emit('switch', 'register')" class="text-decoration-none fw-bold">Daftar Sekarang</a>
+              <p class="text-muted txt-caption mb-1">Belum punya akun?</p>
+              <a href="#" @click.prevent="$emit('switch', 'register')" class="text-decoration-none txt-body fw-bold text-primary">Daftar Sekarang</a>
             </div>
           </form>
         </div>

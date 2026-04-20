@@ -3,37 +3,38 @@
     <table class="table table-hover align-middle mb-0">
       <thead class="bg-light">
         <tr>
-          <th scope="col" class="ps-4 py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Tanggal & ID</th>
-          <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Event Info</th>
-          <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Peserta</th>
-          <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Status</th>
-          <th scope="col" class="py-3 text-uppercase text-secondary fs-7 fw-semibold text-center">Total</th>
-          <th scope="col" class="pe-4 py-3 text-uppercase text-secondary fs-7 fw-semibold text-center" style="width: 150px;">Aksi</th>
+          <th scope="col" class="ps-4 py-3 text-uppercase text-secondary txt-label fw-bold text-center">Tanggal & ID</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Event Info</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Peserta</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Status</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Total</th>
+          <th scope="col" class="pe-4 py-3 text-uppercase text-secondary txt-label fw-bold text-center" style="width: 150px;">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(ticket, index) in tickets" :key="ticket.SK || index">
+          
           <td class="ps-4 py-3">
             <div class="d-flex flex-column">
-              <span class="fw-bold text-dark mb-1">{{ formatDate(ticket.CreatedAt || ticket.created_at || ticket.date) }}</span>
-              <span class="badge bg-light text-secondary border rounded-1 fw-normal text-start" style="width: fit-content;" :title="ticket.SK">
+              <span class="txt-body fw-bold text-dark mb-1">{{ formatDate(ticket.CreatedAt || ticket.created_at || ticket.date) }}</span>
+              <span class="badge bg-light text-secondary border rounded-1 txt-caption fw-bold text-start" style="width: fit-content;" :title="ticket.SK">
                 {{ ticket.id || ticket.SK }}
               </span>
             </div>
           </td>
 
           <td class="py-3" style="max-width: 200px;">
-            <span class="d-block fw-bold text-primary text-truncate mb-1" :title="ticket.Title || ticket.title || ticket.event?.Title">
+            <span class="d-block txt-body fw-bold text-primary text-truncate mb-1" :title="ticket.Title || ticket.title || ticket.event?.Title">
               {{ ticket.Title || ticket.title || ticket.event?.Title || 'Event Event' }}
             </span>
-            <small class="text-muted d-flex align-items-center text-truncate">
+            <span class="text-muted d-flex align-items-center text-truncate txt-caption">
               <i class="bi bi-geo-alt-fill me-1 text-secondary opacity-50"></i>
               {{ ticket.event?.Place || 'Lokasi Online' }}
-            </small>
+            </span>
           </td>
 
           <td class="py-3 text-center">
-            <span class="text-dark fs-10">
+            <span class="text-dark txt-body fw-bold">
               {{ Array.isArray(ticket.participants) ? ticket.participants.length : (ticket.participants || 0) }} Orang
             </span>
           </td>
@@ -64,28 +65,29 @@
           </td>
 
           <td class="py-3 text-center">
-            <span class="fw-bold text-dark fs-6">{{ formatCurrency(ticket.amount) }}</span>
+            <span class="txt-body fw-bold text-dark">{{ formatCurrency(ticket.amount) }}</span>
           </td>
 
           <td class="pe-4 py-3 text-center">
             <div class="d-flex flex-column gap-2 mx-auto" style="max-width: 120px;">
-              <button @click="$emit('open-detail', ticket)" class="btn btn-xs btn-outline-secondary border shadow-sm py-1 px-2 d-flex align-items-center justify-content-center gap-1" style="font-size: 0.75rem;">
+              <button @click="$emit('open-detail', ticket)" class="btn btn-xs btn-outline-secondary border shadow-sm py-1 px-2 d-flex align-items-center justify-content-center gap-1 rounded-pill txt-caption fw-bold">
                 <i class="bi bi-eye"></i> Detail
               </button>
 
-              <button v-if="['EXPIRED', 'CANCELLED', 'FAILED'].includes(getSmartStatus(ticket))" class="btn btn-xs btn-danger text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="font-size: 0.75rem;" @click="$emit('resume-payment', ticket)">
+              <button v-if="['EXPIRED', 'CANCELLED', 'FAILED'].includes(getSmartStatus(ticket))" class="btn btn-xs btn-danger text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm rounded-pill txt-caption fw-bold" @click="$emit('resume-payment', ticket)">
                 <i class="bi bi-arrow-clockwise"></i> Re-Pay
               </button>
 
-              <button v-else-if="getSmartStatus(ticket) === 'PENDING'" class="btn btn-xs btn-primary text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="font-size: 0.75rem;" @click="$emit('resume-payment', ticket)">
+              <button v-else-if="getSmartStatus(ticket) === 'PENDING'" class="btn btn-xs btn-primary text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm rounded-pill txt-caption fw-bold" @click="$emit('resume-payment', ticket)">
                 <i class="bi bi-credit-card"></i> Bayar
               </button>
 
-              <span v-else-if="getSmartStatus(ticket) === 'SUCCESSFUL'" class="text-success fw-bold p-1" style="font-size: 0.7rem;">
+              <span v-else-if="getSmartStatus(ticket) === 'SUCCESSFUL'" class="text-success txt-caption fw-bold p-1">
                 <i class="bi bi-patch-check"></i> SUCCESS
               </span>
             </div>
           </td>
+          
         </tr>
       </tbody>
     </table>

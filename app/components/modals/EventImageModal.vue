@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0">
-          <h5 class="modal-title">{{ event?.Title || 'Gambar Event' }}</h5>
+          <h5 class="modal-title txt-subtitle fw-bold">{{ event?.Title || 'Gambar Event' }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body text-center">
@@ -12,11 +12,11 @@
           <div v-else
             class="Picture-preview-placeholder d-flex flex-column justify-content-center align-items-center text-muted mx-auto">
             <i class="bi bi-image fs-1"></i>
-            <span>Picture Event</span>
+            <span class="txt-body fw-bold">Picture Event</span>
           </div>
         </div>
         <div class="modal-footer border-0">
-          <button type="button" class="btn btn-secondary" @click="close">Tutup</button>
+          <button type="button" class="btn btn-secondary txt-body fw-bold" @click="close">Tutup</button>
         </div>
       </div>
     </div>

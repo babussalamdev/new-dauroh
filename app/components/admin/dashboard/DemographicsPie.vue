@@ -3,8 +3,8 @@
     <div class="card-body p-3 px-4 d-flex flex-column">
       
       <div class="mb-3">
-        <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem;">Demografi Pengguna</h6>
-        <p class="text-muted mb-0" style="font-size: 0.8rem;">Total Keseluruhan Akun</p>
+        <h6 class="txt-subtitle fw-bold mb-1 text-dark">Demografi Pengguna</h6>
+        <p class="txt-caption text-muted mb-0">Total Keseluruhan Akun</p>
       </div>
 
       <div class="d-flex justify-content-center align-items-center flex-grow-1">

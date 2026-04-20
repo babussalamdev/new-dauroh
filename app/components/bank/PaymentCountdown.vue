@@ -1,24 +1,27 @@
 <template>
   <div v-if="transactionDetails">
+    
     <div v-if="transactionDetails.sender_bank_type !== 'wallet_account' && transactionDetails.paymentMethod !== 'wallet_account'">
-      <h5 class="fw-bold text-danger" v-if="remainingTime > 0">
-        {{ pad(hours) }}:{{ pad(minutes) }}:{{ pad(seconds) }}
+      <h5 class="txt-title fw-bold text-danger mb-0" v-if="remainingTime > 0">
+        <i class="bi bi-clock-history me-1"></i>{{ pad(hours) }}:{{ pad(minutes) }}:{{ pad(seconds) }}
       </h5>
-      <span v-else class="text-danger fw-bold">
+      <span v-else class="txt-title text-danger fw-bold">
         Expired
       </span>
     </div>
 
     <div v-else>
-      <small class="fw-bold text-dark" v-if="remainingTime > 0">
-        Lakukan Pembayaran Dalam : <span class="text-danger fw-bold">
-          {{ pad(hours) }}:{{ pad(minutes) }}:{{ pad(seconds) }}
+      <div class="txt-caption fw-bold text-dark" v-if="remainingTime > 0">
+        Lakukan Pembayaran Dalam : 
+        <span class="text-danger fw-bold ms-1">
+          <i class="bi bi-clock-history me-1"></i>{{ pad(hours) }}:{{ pad(minutes) }}:{{ pad(seconds) }}
         </span>
-      </small>
-      <span v-else class="text-danger fw-bold">
+      </div>
+      <span v-else class="txt-caption text-danger fw-bold">
         Expired
       </span>
     </div>
+    
   </div>
 </template>
 

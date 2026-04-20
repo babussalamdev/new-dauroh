@@ -1,18 +1,18 @@
 <template>
   <div>
-    <div class="card shadow-sm">
+    <div class="card shadow-sm border-0 rounded-4">
       <div class="card-body p-4 text-center">
 
         <img v-if="paymentLogoUrl" :src="paymentLogoUrl" :alt="store.transactionDetails?.paymentMethod || 'Bank'"
           class="payment-logo-summary mb-3">
 
-        <p class="text-muted mb-1">Jumlah yang harus dibayar</p>
+        <p class="text-muted mb-1 txt-caption fw-bold text-uppercase">Jumlah yang harus dibayar</p>
 
-        <h2 class="fw-bold mb-3 text-primary">
+        <h2 class="fw-bold mb-3 text-primary txt-title fs-2">
           {{ formatCurrency(Number(store.transactionDetails?.amount || 0)) }}
         </h2>
 
-        <hr class="my-4">
+        <hr class="my-4 text-muted opacity-25">
 
         <div class="mb-4">
           <BankPaymentCountdown />
@@ -20,31 +20,32 @@
 
         <div class="text-start">
           <div v-if="currentStatus === 'PENDING'">
-            <h6 class="mb-3 text-center">Panduan Pembayaran</h6>
+            <h6 class="mb-3 text-center txt-subtitle fw-bold text-dark">Panduan Pembayaran</h6>
 
             <component :is="currentBankComponent" v-if="currentBankComponent"
               :vaNumber="store.transactionDetails?.vaNumber || 'ERROR'"
               :amount="Number(store.transactionDetails?.amount || 0)" />
 
-            <div v-else class="alert alert-warning text-center">
-              Gunakan No. VA: <strong>{{ store.transactionDetails?.vaNumber || '-' }}</strong>
+            <div v-else class="alert alert-warning text-center txt-body rounded-3 border-0">
+              Gunakan No. VA: <strong class="fw-bold fs-5 d-block mt-1">{{ store.transactionDetails?.vaNumber || '-' }}</strong>
             </div>
 
-            <div class="text-center mt-3 pt-2 border-top">
+            <div class="text-center mt-3 pt-3 border-top">
               <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
-              <span class="ms-2 text-muted small fst-italic">Menunggu pembayaran otomatis...</span>
+              <span class="ms-2 text-muted txt-caption fw-bold fst-italic">Menunggu pembayaran otomatis...</span>
             </div>
             <div class="text-center mt-4">
-              <button class="btn btn-secondary" @click="handleExit">Bayar Nanti
+              <button class="btn btn-light border px-4 rounded-pill txt-body fw-bold text-muted" @click="handleExit">
+                <i class="bi bi-clock-history me-1"></i> Bayar Nanti
               </button>
             </div>
 
           </div>
 
-          <div v-else-if="currentStatus === 'EXPIRED'" class="alert alert-danger text-center">
-            <h5 class="alert-heading"><i class="bi bi-x-circle-fill"></i> Waktu Habis</h5>
-            <p>Sesi pembayaran telah berakhir.</p>
-            <button class="btn btn-outline-danger btn-sm mt-3" @click="handleExpiredState">
+          <div v-else-if="currentStatus === 'EXPIRED'" class="alert alert-danger text-center rounded-4 border-0 p-4">
+            <h5 class="alert-heading txt-subtitle fw-bold text-danger"><i class="bi bi-x-circle-fill me-2"></i>Waktu Habis</h5>
+            <p class="txt-body mb-3 text-danger-emphasis">Sesi pembayaran telah berakhir.</p>
+            <button class="btn btn-danger px-4 rounded-pill txt-body fw-bold shadow-sm" @click="handleExpiredState">
               Pilih Metode Pembayaran Ulang
             </button>
           </div>
@@ -53,11 +54,11 @@
       </div>
     </div>
 
-    <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
-      <i class="bi bi-whatsapp me-1"></i> Whatsapp
+    <a href="https://wa.me/628123456789" target="_blank" class="btn btn-success whatsapp-fab rounded-pill shadow-sm px-3 txt-body fw-bold d-inline-flex align-items-center mt-4">
+      <i class="bi bi-whatsapp me-2 fs-5"></i> Bantuan
     </a>
 
-    <ModalsQrCodeModal v-if="showQrModal" :show="showQrModal" :ticket="newlyCreatedTicket" @close="handleCloseQr" />
+    <ModalsQrCodeModal v-if="showQrModal" :show="showQrModal" :ticket="newlyCreatedTicket" :participant="store.participants[0]" @close="handleCloseQr" />
   </div>
 </template>
 

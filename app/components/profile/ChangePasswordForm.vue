@@ -1,99 +1,65 @@
 <template>
-  <div class="card shadow-sm h-100">
-    <div class="card-header bg-white py-3">
-      <h5 class="mb-0">Ubah Password</h5>
+  <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom-0 pt-4 px-4">
+      <h5 class="mb-0 txt-subtitle fw-bold text-dark">Ubah Password</h5>
     </div>
-    <div class="card-body p-4 d-flex flex-column">
-      <p class="text-muted small mb-3">Kosongkan jika tidak ingin mengubah password.</p>
+    
+    <div class="card-body p-4 pt-2 d-flex flex-column">
+      <p class="text-muted txt-caption mb-4">Kosongkan jika tidak ingin mengubah password.</p>
 
       <form @submit.prevent="handleChangePassword" id="changePasswordForm" class="flex-grow-1">
 
         <div class="mb-3">
-          <label for="currentPassword" class="form-label">Password Saat Ini</label>
+          <label for="currentPassword" class="form-label txt-label fw-bold text-secondary">Password Saat Ini</label>
           <div class="input-group">
             <input :type="showOldPass ? 'text' : 'password'" id="currentPassword"
-              v-model="passwordForm.oldPassword" class="form-control" placeholder="Masukkan password lama"
+              v-model="passwordForm.oldPassword" class="form-control txt-body" placeholder="Masukkan password lama"
               :required="isChangingPassword">
             <button class="btn btn-outline-secondary" type="button" @click="showOldPass = !showOldPass">
-              <svg v-if="showOldPass" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-                <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                <path
-                  d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-                <path
-                  d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z" />
-                <path
-                  d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z" />
-              </svg>
+              <i :class="showOldPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
             </button>
           </div>
         </div>
 
         <div class="mb-3">
-          <label for="newPassword" class="form-label">Password Baru</label>
+          <label for="newPassword" class="form-label txt-label fw-bold text-secondary">Password Baru</label>
           <div class="input-group">
             <input :type="showNewPass ? 'text' : 'password'" id="newPassword"
-              v-model="passwordForm.newPassword" class="form-control"
+              v-model="passwordForm.newPassword" class="form-control txt-body"
               :class="{ 'is-invalid': isChangingPassword && !isPasswordValid && passwordForm.newPassword.length > 0, 'is-valid': isPasswordValid }"
               placeholder="Min. 8 karakter, Besar, Kecil, Angka" :required="isChangingPassword">
             <button class="btn btn-outline-secondary" type="button" @click="showNewPass = !showNewPass">
-              <svg v-if="showNewPass" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-                <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                <path
-                  d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-                <path
-                  d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z" />
-                <path
-                  d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z" />
-              </svg>
+              <i :class="showNewPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
             </button>
           </div>
-          <div class="form-text small" :class="isPasswordValid ? 'text-success' : 'text-muted'">
+          <div class="form-text txt-caption fw-bold mt-2" :class="isPasswordValid ? 'text-success' : 'text-muted'">
             <i v-if="isPasswordValid" class="bi bi-check-circle-fill me-1"></i>
             Syarat: Min. 8 Karakter, Huruf Besar, Huruf Kecil, & Angka.
           </div>
         </div>
 
         <div class="mb-3">
-          <label for="confirmPassword" class="form-label">Konfirmasi Password Baru</label>
+          <label for="confirmPassword" class="form-label txt-label fw-bold text-secondary">Konfirmasi Password Baru</label>
           <div class="input-group">
             <input :type="showConfirmPass ? 'text' : 'password'" id="confirmPassword"
-              v-model="passwordForm.confirmNewPassword" class="form-control"
+              v-model="passwordForm.confirmNewPassword" class="form-control txt-body"
               :class="{ 'is-invalid': passwordForm.confirmNewPassword && passwordForm.newPassword !== passwordForm.confirmNewPassword }"
               :required="isChangingPassword">
             <button class="btn btn-outline-secondary" type="button"
               @click="showConfirmPass = !showConfirmPass">
-              <svg v-if="showConfirmPass" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-                <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                <path
-                  d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-                <path
-                  d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588M5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z" />
-                <path
-                  d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z" />
-              </svg>
+              <i :class="showConfirmPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
             </button>
           </div>
         </div>
 
-        <div v-if="passwordError" class="alert alert-danger mt-3 small p-2">
-          {{ passwordError }}
+        <div v-if="passwordError" class="alert alert-danger mt-3 txt-caption fw-bold p-2 rounded-3 border-0">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ passwordError }}
         </div>
       </form>
-      <div class="mt-auto pt-3 text-end">
-        <NuxtLink to="/dashboard" class="btn btn-secondary me-2">Batal</NuxtLink>
-        <button type="submit" form="changePasswordForm" class="btn btn-warning"
+      
+      <div class="mt-auto pt-4 text-end border-top">
+        <NuxtLink to="/dashboard" class="btn btn-light border txt-body fw-bold text-muted rounded-pill px-4 me-2">Batal</NuxtLink>
+        <button type="submit" form="changePasswordForm" class="btn btn-warning txt-body fw-bold rounded-pill px-4 shadow-sm"
           :disabled="passwordLoading || !isChangingPassword"
           title="Isi password baru untuk mengaktifkan tombol ini">
           <span v-if="passwordLoading" class="spinner-border spinner-border-sm me-1" role="status"

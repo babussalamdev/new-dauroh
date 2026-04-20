@@ -4,18 +4,18 @@
     <div class="card shadow-sm border-0 rounded-4 w-100 mb-3" style="max-width: 450px;">
       <div class="card-body p-4 text-center">
         
-        <h6 class="fw-bold text-dark mb-3">Arahkan ke QR-Code Peserta</h6>
+        <h6 class="txt-subtitle text-dark mb-3">Arahkan ke QR-Code Peserta</h6>
 
         <div class="mx-auto rounded-4 overflow-hidden border bg-light mb-4 position-relative" style="max-width: 250px; min-height: 250px;">
           <div id="reader" class="w-100 h-100"></div>
           
           <div v-if="loading" class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex flex-column justify-content-center align-items-center" style="z-index: 10;">
             <div class="spinner-border text-success mb-2" role="status"></div>
-            <span class="small fw-bold text-success">Memverifikasi...</span>
+            <span class="txt-caption fw-bold text-success">Memverifikasi...</span>
           </div>
         </div>
 
-        <NuxtLink to="/admin/kehadiran" class="btn btn-outline-success w-100 rounded-pill fw-bold">
+        <NuxtLink to="/admin/kehadiran" class="btn btn-outline-success w-100 rounded-pill fw-bold txt-body">
           <i class="bi bi-card-list me-2"></i>Lihat Daftar Hadir
         </NuxtLink>
 
@@ -28,10 +28,10 @@
           <i v-if="scanResult.success" class="bi bi-check-circle-fill text-success fs-1 me-3"></i>
           <i v-else class="bi bi-x-circle-fill text-danger fs-1 me-3"></i>
           <div>
-            <h6 class="mb-0 fw-bold text-dark">{{ scanResult.message }}</h6>
-            <div class="small text-muted text-capitalize">{{ scanResult.data?.participantName }}</div>
+            <h6 class="mb-0 txt-subtitle text-dark">{{ scanResult.message }}</h6>
+            <div class="txt-body text-muted text-capitalize">{{ scanResult.data?.participantName }}</div>
             
-            <div v-if="scanResult.data?.time" class="small fw-bold mt-1" :class="scanResult.success ? 'text-success' : 'text-danger'">
+            <div v-if="scanResult.data?.time" class="txt-caption fw-bold mt-1" :class="scanResult.success ? 'text-success' : 'text-danger'">
               <i class="bi bi-clock me-1"></i> {{ scanResult.data.time }}
             </div>
           </div>

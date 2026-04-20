@@ -4,13 +4,15 @@
       
       <div class="p-3 px-4 d-flex align-items-center border-bottom bg-white">
         <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">
-          <i class="bi bi-bar-chart-fill" style="font-size: 0.85rem;"></i>
+          <i class="bi bi-bar-chart-fill"></i>
         </div>
-        <h6 class="fw-bold m-0 text-dark" style="font-size: 0.9rem;">Statistik Event Terpilih</h6>
+        <h6 class="txt-subtitle fw-bold m-0 text-dark">Statistik Event Terpilih</h6>
       </div>
 
       <div class="p-3">
-        <div class="row g-2"> <div class="col-12 col-md-4">
+        <div class="row g-2"> 
+          
+          <div class="col-12 col-md-4">
             <StatCard 
               title="Total Kuota Tiket" 
               :value="stats.totalQuota" 
@@ -19,6 +21,7 @@
               class="inner-stat-card"
             />
           </div>
+          
           <div class="col-12 col-md-4">
             <StatCard 
               title="Tiket Terjual (Lunas)" 
@@ -28,6 +31,7 @@
               class="inner-stat-card"
             />
           </div>
+          
           <div class="col-12 col-md-4">
             <StatCard 
               title="Tiket Tersedia (Sisa)" 
@@ -37,6 +41,7 @@
               class="inner-stat-card"
             />
           </div>
+          
         </div>
       </div>
 

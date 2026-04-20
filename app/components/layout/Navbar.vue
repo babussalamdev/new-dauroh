@@ -3,12 +3,12 @@
     <div class="container">
       <NuxtLink class="navbar-brand fw-bold text-dark-custom" to="/">
         <img src="/assets/img/Logo-Mahad.png" alt="Event Tickets Logo" style="height: 40px;" class="me-2">
-        <span class="fs-6 d-none d-sm-inline">tiket.sisalam.id</span>
+        <span class="txt-subtitle fw-bold d-none d-sm-inline">tiket.sisalam.id</span>
       </NuxtLink>
 
       <div class="d-flex align-items-center ms-auto d-lg-none">
         <template v-if="isLoggedIn">
-          <span class="navbar-text text-dark-custom me-3 fw-medium">
+          <span class="navbar-text text-dark-custom me-3 txt-body fw-bold">
             Halo, {{ userName }}
           </span>
         </template>
@@ -23,15 +23,15 @@
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-3">
 
           <li class="nav-item">
-            <NuxtLink class="nav-link" to="/" active-class="active">Home</NuxtLink>
+            <NuxtLink class="nav-link txt-body fw-bold" to="/" active-class="active">Home</NuxtLink>
           </li>
 
           <template v-if="isLoggedIn">
             <li class="nav-item">
-              <NuxtLink v-if="isAdmin" class="nav-link" to="/admin" active-class="active">
+              <NuxtLink v-if="isAdmin" class="nav-link txt-body fw-bold" to="/admin" active-class="active">
                 Dashboard Admin
               </NuxtLink>
-              <NuxtLink v-else class="nav-link" to="/dashboard" active-class="active">
+              <NuxtLink v-else class="nav-link txt-body fw-bold" to="/dashboard" active-class="active">
                 Dashboard
               </NuxtLink>
             </li>
@@ -41,37 +41,37 @@
 
           <li class="nav-item" v-if="!isLoggedIn">
             <div class="d-flex align-items-center gap-3">
-              <NuxtLink class="nav-link text-dark fw-medium" to="/auth">Login</NuxtLink>
-              <NuxtLink to="/auth" class="btn btn-primary px-4 rounded-pill">Buat Akun</NuxtLink>
+              <NuxtLink class="nav-link text-dark txt-body fw-bold" to="/auth">Login</NuxtLink>
+              <NuxtLink to="/auth" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm">Buat Akun</NuxtLink>
             </div>
           </li>
 
           <li class="nav-item dropdown" v-if="isLoggedIn">
-            <button class="btn btn-light rounded-pill dropdown-toggle d-flex align-items-center gap-2" type="button"
+            <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center gap-2 txt-body fw-bold text-dark" type="button"
               data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-person-circle text-primary"></i>
-              <span class="fw-medium">{{ userName }}</span>
+              <i class="bi bi-person-circle text-primary fs-5"></i>
+              <span>{{ userName }}</span>
             </button>
 
-            <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
               <li>
-                <NuxtLink class="dropdown-item" to="/profile">
-                  <i class="bi bi-person-gear me-2"></i> Profil Saya
+                <NuxtLink class="dropdown-item rounded-3 txt-body fw-bold" to="/profile">
+                  <i class="bi bi-person-gear me-2 text-secondary"></i> Profil Saya
                 </NuxtLink>
               </li>
 
               <li v-if="!isAdmin">
-                <NuxtLink class="dropdown-item" to="/history">
-                  <i class="bi bi-clock-history me-2"></i> Riwayat Pendaftaran
+                <NuxtLink class="dropdown-item rounded-3 txt-body fw-bold" to="/history">
+                  <i class="bi bi-clock-history me-2 text-secondary"></i> Riwayat Pendaftaran
                 </NuxtLink>
               </li>
 
               <li>
-                <hr class="dropdown-divider">
+                <hr class="dropdown-divider my-2">
               </li>
 
               <li>
-                <button class="dropdown-item text-danger" @click="handleLogout">
+                <button class="dropdown-item rounded-3 text-danger txt-body fw-bold" @click="handleLogout">
                   <i class="bi bi-box-arrow-right me-2"></i> Logout
                 </button>
               </li>
@@ -84,47 +84,47 @@
     </div>
   </nav>
 
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel"
+  <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel"
     ref="offcanvasRef">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title fw-bold" id="offcanvasNavbarLabel">Menu</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <div class="offcanvas-header border-bottom">
+      <h5 class="offcanvas-title txt-subtitle fw-bold text-dark" id="offcanvasNavbarLabel">Menu</h5>
+      <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body d-flex flex-column">
+    <div class="offcanvas-body d-flex flex-column p-4">
 
       <ul class="navbar-nav justify-content-start flex-grow-1 pe-3">
 
         <li class="nav-item mb-2">
-          <NuxtLink class="nav-link" to="/" active-class="active" @click="closeOffcanvas">
-            <i class="bi bi-house-door me-2"></i>Home
+          <NuxtLink class="nav-link txt-body fw-bold d-flex align-items-center px-3 rounded-3" to="/" active-class="bg-light text-primary" @click="closeOffcanvas">
+            <i class="bi bi-house-door me-3 fs-5"></i>Home
           </NuxtLink>
         </li>
 
         <template v-if="isLoggedIn">
           <li class="nav-item mb-2">
-            <NuxtLink v-if="isAdmin" class="nav-link" to="/admin" active-class="active" @click="closeOffcanvas">
-              <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+            <NuxtLink v-if="isAdmin" class="nav-link txt-body fw-bold d-flex align-items-center px-3 rounded-3" to="/admin" active-class="bg-light text-primary" @click="closeOffcanvas">
+              <i class="bi bi-speedometer2 me-3 fs-5"></i>Dashboard Admin
             </NuxtLink>
-            <NuxtLink v-else class="nav-link" to="/dashboard" active-class="active" @click="closeOffcanvas">
-              <i class="bi bi-grid me-2"></i>Dashboard
+            <NuxtLink v-else class="nav-link txt-body fw-bold d-flex align-items-center px-3 rounded-3" to="/dashboard" active-class="bg-light text-primary" @click="closeOffcanvas">
+              <i class="bi bi-grid me-3 fs-5"></i>Dashboard
             </NuxtLink>
           </li>
 
           <li class="nav-item mb-2" v-if="!isAdmin">
-            <NuxtLink class="nav-link" to="/history" active-class="active" @click="closeOffcanvas">
-              <i class="bi bi-clock-history me-2"></i>Riwayat Pendaftaran
+            <NuxtLink class="nav-link txt-body fw-bold d-flex align-items-center px-3 rounded-3" to="/history" active-class="bg-light text-primary" @click="closeOffcanvas">
+              <i class="bi bi-clock-history me-3 fs-5"></i>Riwayat Pendaftaran
             </NuxtLink>
           </li>
 
           <li class="nav-item mb-2">
-            <NuxtLink class="nav-link" to="/profile" active-class="active" @click="closeOffcanvas">
-              <i class="bi bi-person-circle me-2"></i>Profil Saya
+            <NuxtLink class="nav-link txt-body fw-bold d-flex align-items-center px-3 rounded-3" to="/profile" active-class="bg-light text-primary" @click="closeOffcanvas">
+              <i class="bi bi-person-circle me-3 fs-5"></i>Profil Saya
             </NuxtLink>
           </li>
 
           <li class="nav-item mt-auto">
-            <hr class="my-3">
-            <button @click="handleLogout" class="btn btn-danger w-100 rounded-pill">
+            <hr class="my-3 opacity-25">
+            <button @click="handleLogout" class="btn btn-danger w-100 rounded-pill txt-body fw-bold shadow-sm py-2">
               <i class="bi bi-box-arrow-right me-1"></i> Logout
             </button>
           </li>
@@ -133,12 +133,13 @@
 
         <template v-else>
           <li class="nav-item mb-2">
-            <NuxtLink class="nav-link" to="/auth" active-class="active" @click="closeOffcanvas">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            <NuxtLink class="nav-link txt-body fw-bold d-flex align-items-center px-3 rounded-3" to="/auth" active-class="bg-light text-primary" @click="closeOffcanvas">
+              <i class="bi bi-box-arrow-in-right me-3 fs-5"></i>Login
             </NuxtLink>
           </li>
-          <li class="nav-item mt-2">
-            <NuxtLink to="/auth" class="btn btn-primary w-100 rounded-pill" @click="closeOffcanvas">Buat Akun
+          <li class="nav-item mt-3">
+            <NuxtLink to="/auth" class="btn btn-primary w-100 rounded-pill txt-body fw-bold shadow-sm py-2" @click="closeOffcanvas">
+              Buat Akun
             </NuxtLink>
           </li>
         </template>

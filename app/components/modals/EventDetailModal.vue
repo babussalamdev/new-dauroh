@@ -5,54 +5,49 @@
 
         <div class="modal-header border-0 pb-0 pt-4 px-4 align-items-start bg-white rounded-top-4">
           <div class="d-flex flex-column flex-grow-1 me-3">
-            <h4 class="fw-bold text-dark mb-1 lh-base">{{ event?.Title || 'Detail Event' }}</h4>
+            <h4 class="txt-title fw-bold text-dark mb-1 lh-base">{{ event?.Title || 'Detail Event' }}</h4>
 
             <div class="mt-1">
-              <span class="fs-5 fw-bold text-success">
+              <span class="txt-subtitle fw-bold text-success">
                 {{ event?.Price ? `Rp${event.Price.toLocaleString('id-ID')}` : 'Gratis' }}
               </span>
             </div>
           </div>
 
-          <button type="button" class="btn-close bg-light p-2 rounded-circle" @click="close"></button>
+          <button type="button" class="btn-close shadow-none bg-light p-2 rounded-circle" @click="close"></button>
         </div>
 
-
         <div class="modal-body p-4">
-
           <div class="row g-3 mb-4">
             
             <div class="col-12">
               <div class="d-flex align-items-center gap-3 p-3 bg-light-subtle rounded-3 border border-light-subtle">
-                <div
-                  class="bg-white p-2 rounded-circle shadow-sm text-primary d-flex align-items-center justify-content-center"
-                  style="width: 40px; height: 40px;">
+                <div class="bg-white p-2 rounded-circle shadow-sm text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                   <i class="bi bi-calendar3 fs-5"></i>
                 </div>
                 <div>
-                  <small class="text-muted fw-bold text-uppercase ls-1 d-block" style="font-size: 0.7rem;">Tanggal Event</small>
-                  <span class="fw-medium text-dark">{{ formatDate(event?.Date) }}</span>
+                  <span class="text-muted fw-bold text-uppercase txt-label d-block mb-1">Tanggal Event</span>
+                  <span class="fw-bold text-dark txt-body">{{ formatDate(event?.Date) }}</span>
                 </div>
               </div>
             </div>
+            
             <div class="col-12">
               <div class="d-flex align-items-center gap-3 p-3 bg-light-subtle rounded-3 border border-light-subtle">
-                <div
-                  class="bg-white p-2 rounded-circle shadow-sm text-danger d-flex align-items-center justify-content-center"
-                  style="width: 40px; height: 40px;">
+                <div class="bg-white p-2 rounded-circle shadow-sm text-danger d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                   <i class="bi bi-geo-alt-fill fs-5"></i>
                 </div>
                 <div>
-                  <small class="text-muted fw-bold text-uppercase ls-1 d-block" style="font-size: 0.7rem;">Lokasi Event</small>
-                  <span class="fw-medium text-dark">{{ event?.Place || 'Informasi menyusul' }}</span>
+                  <span class="text-muted fw-bold text-uppercase txt-label d-block mb-1">Lokasi Event</span>
+                  <span class="fw-bold text-dark txt-body">{{ event?.Place || 'Informasi menyusul' }}</span>
                 </div>
               </div>
             </div>
 
             <div v-if="isNonQuota(event)" class="col-12">
               <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                <small class="text-muted d-block mb-1">Sisa Tiket</small>
-                <h5 class="mb-0 fw-bold text-success">
+                <span class="text-muted d-block mb-1 txt-caption fw-bold">Sisa Tiket</span>
+                <h5 class="mb-0 fw-bold text-success txt-subtitle">
                   <i class="bi bi-infinity me-1"></i> Tanpa Batas
                 </h5>
               </div>
@@ -61,8 +56,8 @@
             <template v-else>
               <div v-if="isIkhwanShow" :class="gridColClass">
                 <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <small class="text-muted d-block mb-1">Sisa Kuota Ikhwan</small>
-                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan))">
+                  <span class="text-muted d-block mb-1 txt-caption fw-bold">Sisa Kuota Ikhwan</span>
+                  <h5 class="mb-0 fw-bold txt-subtitle" :class="getQuotaColor(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan))">
                     {{ formatModalQuota(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan)) }}
                   </h5>
                 </div>
@@ -70,8 +65,8 @@
 
               <div v-if="isAkhwatShow" :class="gridColClass">
                 <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <small class="text-muted d-block mb-1">Sisa Kuota Akhwat</small>
-                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat))">
+                  <span class="text-muted d-block mb-1 txt-caption fw-bold">Sisa Kuota Akhwat</span>
+                  <h5 class="mb-0 fw-bold txt-subtitle" :class="getQuotaColor(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat))">
                     {{ formatModalQuota(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat)) }}
                   </h5>
                 </div>
@@ -79,8 +74,8 @@
 
               <div v-if="showTotal(event) && !showIkhwan && !showAkhwat" class="col-12">
                 <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <small class="text-muted d-block mb-1">Tiket Tersedia</small>
-                  <h5 class="mb-0 fw-bold" :class="getQuotaColor(getRemaining(event?.Quota_Total, event?.Sold_Total))">
+                  <span class="text-muted d-block mb-1 txt-caption fw-bold">Tiket Tersedia</span>
+                  <h5 class="mb-0 fw-bold txt-subtitle" :class="getQuotaColor(getRemaining(event?.Quota_Total, event?.Sold_Total))">
                     {{ formatModalQuota(getRemaining(event?.Quota_Total, event?.Sold_Total)) }}
                   </h5>
                 </div>
@@ -88,16 +83,17 @@
             </template>
 
           </div>
-          <div class="modal-footer border-top bg-white p-3">
-            <button type="button" class="btn btn-light text-muted fw-medium px-4 rounded-pill" @click="close">
-              Batal
-            </button>
+        </div>
+        
+        <div class="modal-footer border-top bg-white p-3 rounded-bottom-4">
+          <button type="button" class="btn btn-light border text-muted fw-bold px-4 rounded-pill txt-body" @click="close">
+            Batal
+          </button>
 
-            <button type="button" class="btn fw-bold px-5 rounded-pill shadow-sm hover-up" :class="buttonState.cssClass"
-              :disabled="buttonState.disabled" @click="register">
-              {{ buttonState.label }} <i v-if="!buttonState.disabled" class="bi bi-arrow-right ms-1"></i>
-            </button>
-          </div>
+          <button type="button" class="btn fw-bold px-5 rounded-pill shadow-sm hover-up txt-body" :class="buttonState.cssClass"
+            :disabled="buttonState.disabled" @click="register">
+            {{ buttonState.label }} <i v-if="!buttonState.disabled" class="bi bi-arrow-right ms-1"></i>
+          </button>
         </div>
       </div>
     </div>

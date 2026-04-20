@@ -1,5 +1,5 @@
 <template>
-    <NuxtLink :to="`/artikel/${encodeURIComponent(article.SK)}`" class="text-decoration-none">
+  <NuxtLink :to="`/artikel/${encodeURIComponent(article.SK)}`" class="text-decoration-none">
     <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-shadow transition article-card">
       
       <div class="position-relative picture-wrapper bg-light">
@@ -11,23 +11,23 @@
           loading="lazy" 
         />
         <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-          <i class="bi bi-image fs-1 opacity-25"></i>
+          <i class="bi bi-image display-4 opacity-25"></i>
         </div>
         
         <div class="position-absolute top-0 start-0 m-3">
-          <span class="badge bg-white text-primary rounded-pill shadow-sm px-3 py-2 fw-bold small">
+          <span class="badge bg-white text-primary rounded-pill shadow-sm px-3 py-2 txt-caption fw-bold">
             Informasi
           </span>
         </div>
       </div>
 
       <div class="card-body p-4 d-flex flex-column">
-        <h5 class="fw-bold text-dark mb-2 text-truncate-2" style="line-height: 1.4;">
+        <h5 class="txt-subtitle fw-bold text-dark mb-2 text-truncate-2">
           {{ article.Title }}
         </h5>
         
-        <div class="text-muted small mt-auto pt-3 d-flex align-items-center">
-          <i class="bi bi-calendar3 me-2"></i>
+        <div class="text-muted txt-caption fw-bold mt-auto pt-3 d-flex align-items-center">
+          <i class="bi bi-calendar3 me-2 fs-6"></i>
           {{ formatDate(article.Created_At) }}
         </div>
       </div>

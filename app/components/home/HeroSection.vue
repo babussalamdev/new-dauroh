@@ -1,29 +1,31 @@
 <template>
   <section class="hero-section">
     <div class="container text-center">
-      <h1 class="display-5 fw-bold mb-5" style="font-family: 'Montserrat', sans-serif;">
+      
+      <h1 class="display-5 txt-title fw-bold mb-5 text-dark">
         Event <span class="text-primary">Babussalam</span>
       </h1>
+      
       <div class="search-bar-hero mx-auto" style="max-width: 600px;">
         <CommonSearchBar />
       </div>
 
-      <div class="button-container">
+      <div class="button-container mt-4">
         <div class="button-item" @click="handleButtonClick('/qr')">
-          <ButtonHeroButton :icon="QrCode" bgClass="btn-hero-custom" />
-          <p class="mt-1">QR Code</p>
+          <ButtonHeroButton :icon="QrCode" bgClass="btn-hero-custom shadow-sm" />
+          <p class="mt-2 mb-0 txt-caption fw-bold text-secondary">QR Code</p>
         </div>
         <div class="button-item" @click="handleButtonClick('/jadwal')">
-          <ButtonHeroButton :icon="JadwalIcon" bgClass="btn-hero-custom" />
-          <p class="mt-1">Jadwal</p>
+          <ButtonHeroButton :icon="JadwalIcon" bgClass="btn-hero-custom shadow-sm" />
+          <p class="mt-2 mb-0 txt-caption fw-bold text-secondary">Jadwal</p>
         </div>
         <div class="button-item" @click="handleButtonClick('/booth')">
-          <ButtonHeroButton :icon="BoothIcon" bgClass="btn-hero-custom" />
-          <p class="mt-1">Booth</p>
+          <ButtonHeroButton :icon="BoothIcon" bgClass="btn-hero-custom shadow-sm" />
+          <p class="mt-2 mb-0 txt-caption fw-bold text-secondary">Booth</p>
         </div>
       </div>
+      
     </div>
-
   </section>
 </template>
 

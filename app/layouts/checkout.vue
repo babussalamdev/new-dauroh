@@ -3,13 +3,13 @@
     <header class="checkout-header">
       <div class="container">
         <div>
-          <h5 class="mb-0 text-white">Pembayaran Registrasi</h5>
-          <p class="mb-0 text-white-50 small">silahkan ikuti sesuai petunjuk dibawah ini.</p>
+          <h5 class="mb-0 text-white txt-subtitle fw-bold">Pembayaran Registrasi</h5>
+          <p class="mb-0 text-white-50 txt-caption">Silakan ikuti sesuai petunjuk di bawah ini.</p>
         </div>
       </div>
     </header>
     
-    <main class="checkout-main">
+    <main class="checkout-main mt-4">
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-lg-8">

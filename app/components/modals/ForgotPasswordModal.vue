@@ -1,14 +1,14 @@
 <template>
   <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold" id="forgotPasswordLabel">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-header border-0 px-4 pt-4 pb-2">
+          <h5 class="modal-title txt-subtitle fw-bold text-dark" id="forgotPasswordLabel">
             {{ step === 1 ? 'Lupa Password?' : 'Reset Password' }}
           </h5>
           <button 
             type="button" 
-            class="btn-close" 
+            class="btn-close shadow-none bg-light p-2 rounded-circle" 
             data-bs-dismiss="modal" 
             aria-label="Close" 
             @click="resetForm" 
@@ -19,15 +19,15 @@
         <div class="modal-body p-4">
           
           <div v-if="step === 1">
-            <p class="text-muted small mb-4">
+            <p class="text-muted txt-caption mb-4">
               Masukkan alamat email yang terdaftar. Kami akan mengirimkan kode verifikasi untuk mereset password Anda.
             </p>
             <form @submit.prevent="handleSendCode">
               <div class="mb-3">
-                <label for="forgotEmail" class="form-label">Email</label>
+                <label for="forgotEmail" class="form-label txt-label fw-bold text-secondary">Email</label>
                 <input 
                   type="email" 
-                  class="form-control" 
+                  class="form-control txt-body" 
                   id="forgotEmail" 
                   v-model="form.email" 
                   placeholder="nama@email.com" 
@@ -35,9 +35,9 @@
                   :disabled="loading"
                 >
               </div>
-              <div class="d-grid">
-                <button type="submit" class="btn btn-primary" :disabled="loading">
-                  <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
+              <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary rounded-pill txt-body fw-bold py-2 shadow-sm" :disabled="loading">
+                  <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                   {{ loading ? 'Mengirim...' : 'Kirim Kode Verifikasi' }}
                 </button>
               </div>
@@ -45,17 +45,17 @@
           </div>
 
           <div v-else>
-            <div class="alert alert-info small py-2 d-flex align-items-center">
-              <i class="bi bi-envelope-check me-2"></i>
+            <div class="alert alert-info txt-caption fw-bold py-2 d-flex align-items-center border-0 rounded-3">
+              <i class="bi bi-envelope-check me-2 fs-5"></i>
               <span>Kode telah dikirim ke <b>{{ form.email }}</b></span>
             </div>
 
             <form @submit.prevent="handleChangePassword">
               <div class="mb-3">
-                <label for="verifyCode" class="form-label">Kode Verifikasi (OTP)</label>
+                <label for="verifyCode" class="form-label txt-label fw-bold text-secondary">Kode Verifikasi (OTP)</label>
                 <input 
                   type="text" 
-                  class="form-control text-center letter-spacing-2 fw-bold" 
+                  class="form-control text-center letter-spacing-2 fw-bold txt-body" 
                   id="verifyCode" 
                   v-model="form.code" 
                   placeholder="xxxxxx" 
@@ -65,11 +65,11 @@
               </div>
 
               <div class="mb-3">
-                <label for="newPass" class="form-label">Password Baru</label>
+                <label for="newPass" class="form-label txt-label fw-bold text-secondary">Password Baru</label>
                 <div class="input-group">
                   <input 
                     :type="showPass ? 'text' : 'password'" 
-                    class="form-control" 
+                    class="form-control txt-body" 
                     id="newPass" 
                     v-model="form.newPassword" 
                     :class="{'is-invalid': form.newPassword && !isPasswordValid}"
@@ -80,35 +80,35 @@
                     <i :class="showPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                   </button>
                 </div>
-                 <div class="form-text small" :class="isPasswordValid ? 'text-success' : 'text-muted'">
+                <div class="form-text txt-caption fw-bold mt-2" :class="isPasswordValid ? 'text-success' : 'text-muted'">
                   <i v-if="isPasswordValid" class="bi bi-check-circle-fill me-1"></i>
                   Syarat: Min. 8 Karakter, Besar, Kecil, & Angka.
                 </div>
               </div>
 
               <div class="mb-3">
-                <label for="confirmPass" class="form-label">Konfirmasi Password</label>
-                 <div class="input-group">
-                   <input 
+                <label for="confirmPass" class="form-label txt-label fw-bold text-secondary">Konfirmasi Password</label>
+                <div class="input-group">
+                  <input 
                     :type="showConfirmPass ? 'text' : 'password'" 
-                    class="form-control" 
+                    class="form-control txt-body" 
                     id="confirmPass" 
                     v-model="form.confirmPassword" 
                     :class="{'is-invalid': form.confirmPassword && form.newPassword !== form.confirmPassword}"
                     required
                   >
-                   <button class="btn btn-outline-secondary" type="button" @click="showConfirmPass = !showConfirmPass">
+                  <button class="btn btn-outline-secondary" type="button" @click="showConfirmPass = !showConfirmPass">
                     <i :class="showConfirmPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                   </button>
-                 </div>
+                </div>
               </div>
 
-              <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary" :disabled="loading || !isPasswordValid">
-                   <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
-                   {{ loading ? 'Memproses...' : 'Ubah Password' }}
+              <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary rounded-pill txt-body fw-bold py-2 shadow-sm" :disabled="loading || !isPasswordValid">
+                  <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                  {{ loading ? 'Memproses...' : 'Ubah Password' }}
                 </button>
-                <button type="button" class="btn btn-link text-decoration-none btn-sm text-muted" @click="step = 1">
+                <button type="button" class="btn btn-link text-decoration-none txt-caption fw-bold text-muted mt-2" @click="step = 1">
                   Kirim Ulang / Ganti Email
                 </button>
               </div>

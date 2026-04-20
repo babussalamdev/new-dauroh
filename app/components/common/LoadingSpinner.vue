@@ -3,7 +3,7 @@
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
-    <p class="mb-0 ms-3">Memuat data...</p>
+    <p class="mb-0 ms-3 txt-body fw-bold text-muted">Memuat data...</p>
   </div>
 </template>
 

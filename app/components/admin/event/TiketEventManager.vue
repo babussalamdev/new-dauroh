@@ -1,10 +1,11 @@
 <template>
-<div class="card content-card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
+    
     <div class="card-header d-flex justify-content-between align-items-center bg-white p-3 px-md-4 py-md-3 border-bottom">
-      <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5">
+      <h5 class="mb-0 txt-title fw-bold text-dark">
         <i class="bi bi-calendar-event text-primary me-2"></i>Manajemen Event
       </h5>
-      <button class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm" @click="openAddModal">
+      <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold txt-body shadow-sm" @click="openAddModal">
         <i class="bi bi-plus-lg me-1"></i> Tambah Event
       </button>
     </div>
@@ -14,21 +15,21 @@
         <table class="table table-hover mb-0" style="min-width: 800px;">
           <thead>
             <tr>
-              <th class="text-center ps-4" style="width: 15%">TANGGAL</th>
-              <th class="text-center" style="width: 5%">PIC</th>
-              <th style="width: 25%">JUDUL EVENT</th>
-              <th>TEMPAT</th>
-              <th>GENDER</th>
-              <th>HARGA</th>
-              <th class="text-center" style="width: 10%">STATUS</th>
-              <th class="text-center pe-4" style="width: 10%">AKSI</th>
+              <th class="text-center ps-4 txt-label" style="width: 15%">TANGGAL</th>
+              <th class="text-center txt-label" style="width: 5%">PIC</th>
+              <th class="txt-label" style="width: 25%">JUDUL EVENT</th>
+              <th class="txt-label">TEMPAT</th>
+              <th class="txt-label">GENDER</th>
+              <th class="txt-label">HARGA</th>
+              <th class="text-center txt-label" style="width: 10%">STATUS</th>
+              <th class="text-center pe-4 txt-label" style="width: 10%">AKSI</th>
             </tr>
           </thead>
           
           <tbody v-if="!eventStore.loading.adminTiketEvent && eventStore.adminTiketEvent.length > 0">
             <tr v-for="event in eventStore.filteredAdminTiketEvent" :key="event.SK || event.Title">
 
-              <td class="text-center fw-medium text-muted ps-4">
+              <td class="text-center fw-bold txt-body text-muted ps-4">
                 {{ formatEventDates(event.Date) }}
               </td>
 
@@ -38,25 +39,26 @@
                   class="rounded Picture-thumbnail shadow-sm"
                   style="object-fit: cover; background-color: #f8f9fa;"
                   @error="($event.target as HTMLImageElement).style.display = 'none'" />
-                <span v-if="!event.Picture" class="text-muted small">N/A</span>
+                <span v-if="!event.Picture" class="text-muted txt-caption fw-bold">N/A</span>
               </td>
               
-              <td class="fw-bold text-dark">{{ event.Title }}</td>
-              <td class="text-muted small">{{ event.Place || "-" }}</td>
+              <td class="fw-bold txt-body text-dark">{{ event.Title }}</td>
               
-              <td class="text-capitalize small">
+              <td class="text-muted txt-caption fw-bold">{{ event.Place || "-" }}</td>
+              
+              <td class="text-capitalize">
                 <span :class="['badge bg-opacity-10 border', event.Gender.toLowerCase() === 'campur' ? 'bg-secondary text-secondary border-secondary' : (event.Gender.toLowerCase() === 'ikhwan' ? 'bg-info text-info border-info' : 'bg-warning text-warning border-warning')]" style="font-size: 0.7rem;">
                    {{ event.Gender }}
                 </span>
               </td>
               
-              <td class="fw-medium">{{ formatCurrency(event.Price) }}</td>
+              <td class="fw-bold txt-body">{{ formatCurrency(event.Price) }}</td>
 
               <td class="text-center">
-                <span v-if="event.Status === 'active'" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3" style="font-size: 0.75rem;">
+                <span v-if="event.Status === 'active'" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3 txt-label">
                   Active
                 </span>
-                <span v-else class="badge bg-danger bg-opacity-10 text-danger rounded-pill border border-danger px-3" style="font-size: 0.75rem;">
+                <span v-else class="badge bg-danger bg-opacity-10 text-danger rounded-pill border border-danger px-3 txt-label">
                   Inactive
                 </span>
               </td>
@@ -78,7 +80,7 @@
             <tr>
               <td colspan="8" class="text-center text-muted py-5">
                  <i class="bi bi-calendar-x fs-1 d-block mb-2 opacity-50"></i>
-                 Belum ada data event.
+                 <span class="txt-body fw-bold">Belum ada data event.</span>
               </td>
             </tr>
           </tbody>

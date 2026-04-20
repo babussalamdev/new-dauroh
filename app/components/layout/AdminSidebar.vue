@@ -8,8 +8,8 @@
     </div>
 
     <ul class="nav flex-column mt-3">
-      <li class="nav-item">
-        <span class="nav-category">MENU UTAMA</span>
+     <li class="nav-item px-3 mb-2">
+        <span class="nav-category txt-title text-white-50">MENU UTAMA</span>
       </li>
 
       <li v-for="item in mainMenuItems" :key="item.text" class="nav-item">
@@ -23,7 +23,7 @@
         <a class="nav-link collapsed" :href="`#${dropdown.id}`" data-bs-toggle="collapse" role="button">
           <i :class="`bi ${dropdown.icon} me-2`"></i>
           {{ dropdown.text }}
-          <i class="bi bi-chevron-down ms-auto"></i>
+          <i class="bi bi-chevron-down ms-auto "></i>
         </a>
         <div class="collapse" :id="dropdown.id">
           <ul class="nav flex-column sub-menu">
@@ -39,7 +39,7 @@
 
     <div class="mt-auto p-3">
       <NuxtLink to="/" class="btn btn-outline-secondary btn-sm w-100">
-        <i class="bi bi-box-arrow-left me-2"></i>
+        <i class="bi bi-box-arrow-left me-2 txt-body text-white"></i>
         Kembali ke Situs
       </NuxtLink>
     </div>

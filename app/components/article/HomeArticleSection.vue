@@ -2,12 +2,12 @@
   <div class="container py-5 mb-5">
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
-        <h3 class="fw-bold text-dark mb-1">Artikel</h3>
+        <h3 class="txt-title fw-bold text-dark mb-1">Artikel</h3>
       </div>
     </div>
 
     <div class="row g-4">
-      <div v-if="articleStore.articles.length === 0" class="col-12 text-center py-5 text-muted">
+      <div v-if="articleStore.articles.length === 0" class="col-12 text-center py-5 text-muted txt-body fw-bold">
         Belum ada informasi terbaru.
       </div>
       

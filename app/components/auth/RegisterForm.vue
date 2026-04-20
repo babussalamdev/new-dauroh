@@ -3,40 +3,42 @@
     <div class="auth-overlay">
       <div class="auth-box">
         <div class="auth-content">
+          
           <div class="text-center mb-4">
             <img src="~/assets/img/Logo-Mahad.png" alt="Logo Event" style="height: 60px;" class="mb-3">
-            <h1 class="auth-title">Buat Akun Baru</h1>
-            <p class="text-muted small">Daftar untuk menjadi peserta event</p>
+            <h1 class="auth-title txt-title fw-bold">Buat Akun Baru</h1>
+            <p class="text-muted txt-caption mb-0">Daftar untuk menjadi peserta event</p>
           </div>
 
           <form @submit.prevent="handleRegister">
+            
             <div class="mb-3">
-              <label for="fullName" class="form-label">Nama Lengkap</label>
-              <input type="text" id="fullName" v-model="form.name" class="form-control"
+              <label for="fullName" class="form-label txt-label fw-bold text-secondary">Nama Lengkap</label>
+              <input type="text" id="fullName" v-model="form.name" class="form-control txt-body"
                 placeholder="Masukkan nama lengkap Anda" required />
             </div>
 
             <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input type="email" id="email" v-model="form.email" class="form-control"
+              <label for="email" class="form-label txt-label fw-bold text-secondary">Email</label>
+              <input type="email" id="email" v-model="form.email" class="form-control txt-body"
                 placeholder="contoh: peserta@event.com" required />
             </div>
 
             <div class="mb-3">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" id="username" v-model="form.username" class="form-control"
+              <label for="username" class="form-label txt-label fw-bold text-secondary">Username</label>
+              <input type="text" id="username" v-model="form.username" class="form-control txt-body"
                 placeholder="Username untuk login" autocomplete="username" required />
             </div>
 
             <div class="mb-3">
-              <label for="phone" class="form-label">Nomor HP</label>
-              <input type="tel" id="phone" v-model="form.phone_number" class="form-control" placeholder="08..."
+              <label for="phone" class="form-label txt-label fw-bold text-secondary">Nomor HP</label>
+              <input type="tel" id="phone" v-model="form.phone_number" class="form-control txt-body" placeholder="08..."
                 required />
             </div>
 
             <div class="mb-3">
-              <label for="gender" class="form-label">Jenis Kelamin</label>
-              <select id="gender" v-model="form.gender" class="form-control" required>
+              <label for="gender" class="form-label txt-label fw-bold text-secondary">Jenis Kelamin</label>
+              <select id="gender" v-model="form.gender" class="form-control txt-body" required>
                 <option value="" disabled>Pilih Jenis Kelamin</option>
                 <option value="Male">Ikhwan (Laki-laki)</option>
                 <option value="Female">Akhwat (Perempuan)</option>
@@ -44,14 +46,14 @@
             </div>
 
             <div class="mb-3">
-              <label for="birthDate" class="form-label">Tanggal Lahir</label>
-              <input type="date" id="birthDate" v-model="form.birthDate" class="form-control" required />
+              <label for="birthDate" class="form-label txt-label fw-bold text-secondary">Tanggal Lahir</label>
+              <input type="date" id="birthDate" v-model="form.birthDate" class="form-control txt-body" required />
             </div>
 
             <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
+              <label for="password" class="form-label txt-label fw-bold text-secondary">Password</label>
               <div class="password-wrapper">
-                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control"
+                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control txt-body"
                   placeholder="Masukkan password" autocomplete="new-password" required />
                 <span @click="showPassword = !showPassword" class="password-toggle-icon">
                   <i :class="showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
@@ -60,22 +62,22 @@
             </div>
 
             <div class="mb-3">
-              <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
+              <label for="confirmPassword" class="form-label txt-label fw-bold text-secondary">Konfirmasi Password</label>
               <div class="password-wrapper">
                 <input :type="showConfirmPassword ? 'text' : 'password'" v-model="form.confirmPassword"
-                  class="form-control" placeholder="Ulangi password" autocomplete="new-password" required />
+                  class="form-control txt-body" placeholder="Ulangi password" autocomplete="new-password" required />
                 <span @click="showConfirmPassword = !showConfirmPassword" class="password-toggle-icon">
                   <i :class="showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                 </span>
               </div>
             </div>
 
-            <div v-if="error" class="alert alert-danger mt-3 small p-2">
-              {{ error }}
+            <div v-if="error" class="alert alert-danger mt-3 txt-caption fw-bold p-2">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ error }}
             </div>
 
             <div class="d-grid gap-2 mt-4">
-              <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
+              <button type="submit" class="btn btn-primary btn-lg txt-body fw-bold rounded-pill" :disabled="loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
                   aria-hidden="true"></span>
                 {{ loading ? 'Memproses...' : 'Daftar' }}
@@ -83,9 +85,10 @@
             </div>
 
             <div class="text-center mt-4 pt-3 border-top">
-              <p class="text-muted small mb-1">Sudah punya akun?</p>
-              <a href="#" @click.prevent="$emit('switch', 'login')" class="text-decoration-none fw-bold">Login di sini</a>
+              <p class="text-muted txt-caption mb-1">Sudah punya akun?</p>
+              <a href="#" @click.prevent="$emit('switch', 'login')" class="text-decoration-none txt-body fw-bold text-primary">Login di sini</a>
             </div>
+            
           </form>
         </div>
       </div>

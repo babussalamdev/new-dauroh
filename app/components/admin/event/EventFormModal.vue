@@ -5,51 +5,45 @@
 
         <div class="modal-header border-0 px-3 pt-3 pb-2 d-flex align-items-center">
           <div>
-            <h5 class="modal-title fw-bold text-dark fs-5">{{ isEditing ? 'Edit Event' : 'Buat Event Baru' }}</h5>
-            <p class="text-muted small mb-0" style="font-size: 0.8rem;">Isi data event dengan teliti.</p>
+            <h5 class="modal-title txt-title fw-bold text-dark">{{ isEditing ? 'Edit Event' : 'Buat Event Baru' }}</h5>
+            <p class="text-muted txt-caption mb-0">Isi data event dengan teliti.</p>
           </div>
-          <button type="button" class="btn-close small bg-light p-2 rounded-circle" @click="close"></button>
+          <button type="button" class="btn-close shadow-none bg-light p-2 rounded-circle" @click="close"></button>
         </div>
 
         <div class="modal-body px-3 pb-3 pt-1">
           <form @submit.prevent="save" id="eventBasicForm">
 
-            <div class="card border-0 mb-3 transition-all"
-              :class="isStatusActive ? 'bg-success-subtle' : 'bg-secondary-subtle'">
+            <div class="card border-0 mb-3 transition-all" :class="isStatusActive ? 'bg-success-subtle' : 'bg-secondary-subtle'">
               <div class="card-body p-2 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                   <div class="icon-box rounded-circle d-flex align-items-center justify-content-center"
                     :class="isStatusActive ? 'bg-success text-white' : 'bg-secondary text-white'"
-                    style="width: 32px; height: 32px; font-size: 0.9rem;">
+                    style="width: 32px; height: 32px;">
                     <i class="bi" :class="isStatusActive ? 'bi-check-lg' : 'bi-eye-slash-fill'"></i>
                   </div>
                   <div style="line-height: 1.2;">
-                    <h6 class="fw-bold mb-0 text-truncate" style="font-size: 0.9rem;"
+                    <h6 class="txt-body fw-bold mb-0 text-truncate"
                       :class="isStatusActive ? 'text-success-emphasis' : 'text-secondary-emphasis'">
                       {{ isStatusActive ? 'Publish' : 'Draft' }}
                     </h6>
                   </div>
                 </div>
                 <div class="form-check form-switch m-0">
-                  <input class="form-check-input shadow-sm" type="checkbox" role="switch" id="isActiveSwitch"
-                    v-model="isStatusActive" style="cursor: pointer;">
+                  <input class="form-check-input shadow-sm" type="checkbox" role="switch" id="isActiveSwitch" v-model="isStatusActive" style="cursor: pointer;">
                 </div>
               </div>
             </div>
 
             <div class="row g-3">
               <div class="col-12">
-                <label for="eventTitleModal" class="form-label fw-bold text-muted small-label">Nama Event <span
-                    class="text-danger">*</span></label>
-                <input type="text" class="form-control modern-input" id="eventTitleModal" v-model="formState.Title"
-                  placeholder="Masukkan judul event..." required>
+                <label for="eventTitleModal" class="form-label txt-label fw-bold text-muted">Nama Event <span class="text-danger">*</span></label>
+                <input type="text" class="form-control modern-input txt-body fw-bold" id="eventTitleModal" v-model="formState.Title" placeholder="Masukkan judul event..." required>
               </div>
 
               <div class="col-md-6">
-                <label for="eventGenderModal" class="form-label fw-bold text-muted small-label">Target Peserta <span
-                    class="text-danger">*</span></label>
-                <select class="form-select modern-input" id="eventGenderModal" v-model="formState.Gender"
-                  @change="handleGenderChange" :disabled="isEditing" required>
+                <label for="eventGenderModal" class="form-label txt-label fw-bold text-muted">Target Peserta <span class="text-danger">*</span></label>
+                <select class="form-select modern-input txt-body fw-bold" id="eventGenderModal" v-model="formState.Gender" @change="handleGenderChange" :disabled="isEditing" required>
                   <option disabled value="">Pilih Target</option>
                   <option value="Ikhwan">Ikhwan (Laki-laki)</option>
                   <option value="Akhwat">Akhwat (Perempuan)</option>
@@ -58,66 +52,55 @@
               </div>
 
               <div class="col-md-6">
-                <label for="eventPlaceModal" class="form-label fw-bold text-muted small-label">Lokasi <span
-                    class="text-danger">*</span></label>
-                <input type="text" class="form-control modern-input" id="eventPlaceModal" v-model="formState.Place"
-                  placeholder="Cth: Masjid Babussalam" required>
+                <label for="eventPlaceModal" class="form-label txt-label fw-bold text-muted">Lokasi <span class="text-danger">*</span></label>
+                <input type="text" class="form-control modern-input txt-body fw-bold" id="eventPlaceModal" v-model="formState.Place" placeholder="Cth: Masjid Babussalam" required>
               </div>
 
               <div class="col-12">
-                <label for="eventPriceModal" class="form-label fw-bold text-muted small-label">Harga Tiket <span
-                    class="text-danger">*</span></label>
+                <label for="eventPriceModal" class="form-label txt-label fw-bold text-muted">Harga Tiket <span class="text-danger">*</span></label>
                 <div class="input-group modern-input-group">
-                  <span class="input-group-text border-0 bg-transparent text-muted ps-3">Rp</span>
-                  <input type="number" class="form-control border-0 bg-transparent ps-1 fw-bold text-dark"
-                    id="eventPriceModal" v-model.number="formState.Price" placeholder="0" min="0" required>
-                  <span class="input-group-text border-0 bg-transparent text-muted pe-3 small">(Isi 0 jika
-                    gratis)</span>
+                  <span class="input-group-text border-0 bg-transparent text-muted ps-3 txt-body fw-bold">Rp</span>
+                  <input type="number" class="form-control border-0 bg-transparent ps-1 txt-title fw-bold text-dark" id="eventPriceModal" v-model.number="formState.Price" placeholder="0" min="0" required>
+                  <span class="input-group-text border-0 bg-transparent text-muted pe-3 txt-caption">(Isi 0 jika gratis)</span>
                 </div>
               </div>
 
               <div class="col-lg-6">
                 <div class="p-3 rounded-3 bg-light border border-dashed h-100">
                   <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="fw-bold mb-0 small d-flex align-items-center gap-2 text-dark">
+                    <h6 class="txt-body fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
                       <i class="bi bi-calendar-event text-primary"></i> Waktu Pendaftaran
                     </h6>
                     <div class="form-check form-switch m-0" style="min-height: auto;">
-                      <input class="form-check-input" type="checkbox" id="hasStartSwitch"
-                        v-model="formState.HasRegStart">
+                      <input class="form-check-input" type="checkbox" id="hasStartSwitch" v-model="formState.HasRegStart">
                     </div>
                   </div>
 
                   <template v-if="formState.HasRegStart">
                     <div class="animate-slide-down">
                       <div class="mb-2">
-                        <label class="form-label x-small text-muted mb-1">Buka</label>
+                        <label class="form-label txt-caption text-muted mb-1">Buka</label>
                         <div class="input-group input-group-sm">
-                          <input type="date" class="form-control modern-input" v-model="formState.RegStartDate"
-                            :required="formState.HasRegStart" :min="minDate">
-                          <input type="time" class="form-control modern-input" step="1" v-model="formState.RegStartTime"
-                            :required="formState.HasRegStart" :min="getMinStartTime(formState.RegStartDate)">
+                          <input type="date" class="form-control modern-input txt-body fw-bold" v-model="formState.RegStartDate" :required="formState.HasRegStart" :min="minDate">
+                          <input type="time" class="form-control modern-input txt-body fw-bold" step="1" v-model="formState.RegStartTime" :required="formState.HasRegStart" :min="getMinStartTime(formState.RegStartDate)">
                         </div>
                       </div>
 
                       <div class="form-check form-switch mb-1">
-                        <input class="form-check-input small-switch" type="checkbox" id="hasEndSwitch"
-                          v-model="formState.HasRegEnd" :disabled="!formState.HasRegStart">
-                        <label class="form-check-label x-small text-muted" for="hasEndSwitch">Batasi tutup?</label>
+                        <input class="form-check-input small-switch" type="checkbox" id="hasEndSwitch" v-model="formState.HasRegEnd" :disabled="!formState.HasRegStart">
+                        <label class="form-check-label txt-caption text-muted" for="hasEndSwitch">Batasi tutup?</label>
                       </div>
 
                       <div v-if="formState.HasRegEnd">
                         <div class="input-group input-group-sm">
-                          <input type="date" class="form-control modern-input" v-model="formState.RegEndDate"
-                            :required="formState.HasRegEnd" :min="formState.RegStartDate || minDate">
-                          <input type="time" class="form-control modern-input" step="1" v-model="formState.RegEndTime"
-                            :required="formState.HasRegEnd" :min="getMinEndTime(formState.RegEndDate)">
+                          <input type="date" class="form-control modern-input txt-body fw-bold" v-model="formState.RegEndDate" :required="formState.HasRegEnd" :min="formState.RegStartDate || minDate">
+                          <input type="time" class="form-control modern-input txt-body fw-bold" step="1" v-model="formState.RegEndTime" :required="formState.HasRegEnd" :min="getMinEndTime(formState.RegEndDate)">
                         </div>
                       </div>
                     </div>
                   </template>
                   <template v-else>
-                    <p class="text-muted x-small mb-0 mt-2">Otomatis buka saat event aktif.</p>
+                    <p class="text-muted txt-caption mb-0 mt-2">Otomatis buka saat event aktif.</p>
                   </template>
                 </div>
               </div>
@@ -125,55 +108,44 @@
               <div class="col-lg-6">
                 <div class="p-3 rounded-3 bg-light border border-dashed h-100">
                   <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="fw-bold mb-0 small d-flex align-items-center gap-2 text-dark">
+                    <h6 class="txt-body fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
                       <i class="bi bi-people text-primary"></i> Pengaturan Kuota
                     </h6>
                     <div class="form-check form-switch m-0" style="min-height: auto;">
-                      <input class="form-check-input" type="checkbox" id="unlimitedTotalSwitch"
-                        v-model="isUnlimited.total" title="Aktifkan jika kuota tidak terbatas">
+                      <input class="form-check-input" type="checkbox" id="unlimitedTotalSwitch" v-model="isUnlimited.total" title="Aktifkan jika kuota tidak terbatas">
                     </div>
                   </div>
 
-                  <div v-if="isUnlimited.total"
-                    class="alert alert-success py-2 px-2 d-flex align-items-center gap-2 mb-0 mt-2 animate-slide-down">
+                  <div v-if="isUnlimited.total" class="alert alert-success py-2 px-2 d-flex align-items-center gap-2 mb-0 mt-2 animate-slide-down">
                     <i class="bi bi-infinity fs-5"></i>
-                    <span class="x-small fw-medium">Event ini Tanpa Batas Kuota (Non-Quota).</span>
+                    <span class="txt-caption fw-bold">Event ini Tanpa Batas Kuota (Non-Quota).</span>
                   </div>
 
                   <div v-else class="row g-2 mt-1 animate-slide-down">
 
                     <div class="col-12" v-if="formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
-                        <span class="input-group-text border-0 bg-transparent text-muted x-small">Total</span>
-                        <input type="number" class="form-control border-0 bg-transparent"
-                          v-model.number="quotaValues.total" placeholder="100" @input="validateMinOne('total')"
-                          required>
+                        <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold">Total</span>
+                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" v-model.number="quotaValues.total" placeholder="100" @input="validateMinOne('total')" required>
                       </div>
 
-                      <div v-if="showAllocationWarning"
-                        class="mt-1 p-1 rounded-2 x-small d-flex align-items-center gap-1"
-                        :class="remainingQuota === 0 ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'">
-                        <i
-                          :class="remainingQuota === 0 ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-circle-fill'"></i>
+                      <div v-if="showAllocationWarning" class="mt-1 p-1 rounded-2 txt-caption fw-bold d-flex align-items-center gap-1" :class="remainingQuota === 0 ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'">
+                        <i :class="remainingQuota === 0 ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-circle-fill'"></i>
                         <span>{{ allocationMessage }}</span>
                       </div>
                     </div>
 
                     <div class="col-12" v-if="formState.Gender === 'Ikhwan' || formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
-                        <span class="input-group-text border-0 bg-transparent text-muted x-small"
-                          style="width: 60px;">Ikhwan</span>
-                        <input type="number" class="form-control border-0 bg-transparent"
-                          v-model.number="quotaValues.ikhwan" @input="validateMinOne('ikhwan')" required>
+                        <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold" style="width: 65px;">Ikhwan</span>
+                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" v-model.number="quotaValues.ikhwan" @input="validateMinOne('ikhwan')" required>
                       </div>
                     </div>
 
                     <div class="col-12" v-if="formState.Gender === 'Akhwat' || formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
-                        <span class="input-group-text border-0 bg-transparent text-muted x-small"
-                          style="width: 60px;">Akhwat</span>
-                        <input type="number" class="form-control border-0 bg-transparent"
-                          v-model.number="quotaValues.akhwat" @input="validateMinOne('akhwat')" required>
+                        <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold" style="width: 65px;">Akhwat</span>
+                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" v-model.number="quotaValues.akhwat" @input="validateMinOne('akhwat')" required>
                       </div>
                     </div>
 
@@ -185,11 +157,10 @@
         </div>
 
         <div class="modal-footer border-0 px-3 pb-3 pt-0">
-          <button type="button" class="btn btn-light btn-sm px-4 rounded-3 text-muted fw-medium"
-            @click="close">Batal</button>
-          <button type="submit" form="eventBasicForm" class="btn btn-primary btn-sm px-4 rounded-3 fw-bold shadow-sm"
-            :disabled="isLoading || (!isUnlimited.total && isQuotaMismatch)">
+          <button type="button" class="btn btn-light px-4 rounded-pill text-muted txt-body fw-bold border" @click="close">Batal</button>
+          <button type="submit" form="eventBasicForm" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm" :disabled="isLoading || (!isUnlimited.total && isQuotaMismatch)">
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+            <i v-else class="bi bi-floppy-fill me-1"></i>
             {{ isLoading ? 'Menyimpan...' : 'Simpan Event' }}
           </button>
         </div>

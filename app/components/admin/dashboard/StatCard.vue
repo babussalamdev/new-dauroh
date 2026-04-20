@@ -7,14 +7,14 @@
         :class="iconBgClass"
         style="width: 40px; height: 40px;"
       >
-        <i :class="['bi', icon]" style="font-size: 1.1rem;"></i>
+        <i :class="['bi', icon, 'fs-5']"></i>
       </div>
 
       <div>
-        <p class="fw-bold mb-0 text-uppercase text-muted" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+        <p class="txt-caption fw-bold mb-0 text-uppercase text-muted">
           {{ title }}
         </p>
-        <h5 class="fw-bold mb-0 text-dark mt-1" style="font-size: 1.1rem;">{{ value }}</h5>
+        <h5 class="txt-subtitle fw-bold mb-0 text-dark mt-1">{{ value }}</h5>
       </div>
 
     </div>

@@ -1,10 +1,10 @@
 <template>
-<div class="card content-card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-header d-flex justify-content-between align-items-center bg-white p-3 px-md-4 py-md-3 border-bottom">
-      <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5">
+      <h5 class="mb-0 txt-title fw-bold text-dark">
         <i class="bi bi-newspaper text-primary me-2"></i>Manajemen Informasi
       </h5>
-      <button class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm" @click="navigateToAdd">
+      <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold txt-body shadow-sm" @click="navigateToAdd">
         <i class="bi bi-plus-lg me-1"></i> Tambah Informasi
       </button>
     </div>
@@ -14,18 +14,18 @@
         <table class="table table-hover mb-0" style="min-width: 800px;">
           <thead>
             <tr>
-              <th class="text-center ps-4" style="width: 15%">TANGGAL RILIS</th>
-              <th class="text-center" style="width: 10%">PIC</th>
-              <th style="width: 45%">JUDUL INFORMASI</th>
-              <th class="text-center" style="width: 15%">STATUS</th>
-              <th class="text-center pe-4" style="width: 15%">AKSI</th>
+              <th class="text-center ps-4 txt-label" style="width: 15%">TANGGAL RILIS</th>
+              <th class="text-center txt-label" style="width: 10%">PIC</th>
+              <th class="txt-label" style="width: 45%">JUDUL INFORMASI</th>
+              <th class="text-center txt-label" style="width: 15%">STATUS</th>
+              <th class="text-center pe-4 txt-label" style="width: 15%">AKSI</th>
             </tr>
           </thead>
           
           <tbody v-if="!articleStore.loading && articleStore.articles.length > 0">
             <tr v-for="article in articleStore.articles" :key="article.SK">
 
-              <td class="text-center fw-medium text-muted ps-4">
+              <td class="text-center fw-bold txt-body text-muted ps-4">
                 {{ formatDate(article.Created_At) }}
               </td>
 
@@ -38,16 +38,16 @@
                   class="rounded Picture-thumbnail object-fit-cover shadow-sm"
                   @error="($event.target as HTMLImageElement).style.display = 'none'" 
                 />
-                <span v-else class="text-muted small">N/A</span>
+                <span v-else class="text-muted txt-caption fw-bold">N/A</span>
               </td>
               
-              <td class="fw-bold text-dark">{{ article.Title }}</td>
+              <td class="fw-bold txt-body text-dark">{{ article.Title }}</td>
 
               <td class="text-center">
-                <span v-if="article.Status === 'active'" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3" style="font-size: 0.75rem;">
+                <span v-if="article.Status === 'active'" class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success px-3 txt-label">
                   Dipublikasi
                 </span>
-                <span v-else class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill border border-secondary px-3" style="font-size: 0.75rem;">
+                <span v-else class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill border border-secondary px-3 txt-label">
                   Draft
                 </span>
               </td>
@@ -69,7 +69,7 @@
             <tr>
               <td colspan="5" class="text-center text-muted py-5">
                 <i class="bi bi-newspaper fs-1 d-block mb-2 opacity-50"></i>
-                Belum ada data informasi/artikel.
+                <span class="txt-body fw-bold">Belum ada data informasi/artikel.</span>
               </td>
             </tr>
           </tbody>
@@ -85,8 +85,7 @@
       </div>
     </div>
   </div>
-
-  </template>
+</template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";

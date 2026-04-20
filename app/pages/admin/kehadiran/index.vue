@@ -3,11 +3,9 @@
     
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <NuxtLink to="/admin" class="text-decoration-none text-muted">Home</NuxtLink>
-        </li>
-        <li class="breadcrumb-item text-muted">Presensi</li>
-        <li class="breadcrumb-item active fw-medium text-dark" aria-current="page">Log Kehadiran</li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item txt-caption text-muted">Presensi</li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Log Kehadiran</li>
       </ol>
     </nav>
 
@@ -16,11 +14,11 @@
       <div class="card-header d-flex flex-column flex-xl-row justify-content-between align-items-xl-center bg-white p-3 px-md-4 py-md-3 border-bottom gap-3">
         <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100">
           
-          <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5 text-nowrap">
+          <h5 class="mb-0 txt-title text-nowrap">
             <i class="bi bi-person-check-fill text-primary me-2"></i>Log Kehadiran
           </h5>
           
-          <select class="form-select form-select-sm shadow-sm rounded px-3 py-1" style="max-width: 400px; border-color: #198754;"
+          <select class="form-select form-select-sm shadow-sm rounded px-3 py-1 txt-body" style="max-width: 400px; border-color: #198754;"
             v-model="store.selectedEventSK" @change="store.fetchAttendanceData()">
             <option value="" disabled>-- Pilih Event Dahulu --</option>
             <option v-for="event in store.events" :key="event.SK!" :value="event.SK">
@@ -30,15 +28,15 @@
         </div>
 
         <div class="d-flex flex-wrap gap-2 w-100 justify-content-sm-start justify-content-xl-end" v-if="store.selectedEventSK">
-          <NuxtLink to="/admin/scan" class="btn btn-outline-success btn-sm px-3 rounded-pill fw-bold d-flex align-items-center shadow-sm flex-grow-1 flex-md-grow-0 justify-content-center">
+          <NuxtLink to="/admin/scan" class="btn btn-outline-success btn-sm px-3 rounded-pill d-flex align-items-center shadow-sm flex-grow-1 flex-md-grow-0 justify-content-center txt-body fw-medium">
             <i class="bi bi-qr-code-scan me-2"></i> Scan QR
           </NuxtLink>
           
-          <NuxtLink to="/admin/kehadiran/manual" class="btn btn-outline-success btn-sm px-3 rounded-pill fw-bold d-flex align-items-center shadow-sm flex-grow-1 flex-md-grow-0 justify-content-center">
+          <NuxtLink to="/admin/kehadiran/manual" class="btn btn-outline-success btn-sm px-3 rounded-pill d-flex align-items-center shadow-sm flex-grow-1 flex-md-grow-0 justify-content-center txt-body fw-medium">
             <i class="bi bi-journal-text me-2"></i> Absen Manual
           </NuxtLink>
 
-          <button class="btn btn-success btn-sm px-3 rounded-pill fw-bold shadow-sm flex-grow-1 flex-md-grow-0" @click="handleExport" :disabled="isExporting">
+          <button class="btn btn-success btn-sm px-3 rounded-pill shadow-sm flex-grow-1 flex-md-grow-0 txt-body fw-medium" @click="handleExport" :disabled="isExporting">
             <span v-if="isExporting" class="spinner-border spinner-border-sm me-1"></span>
             <i v-else class="bi bi-file-earmark-excel-fill me-1"></i>
             Export
@@ -50,7 +48,7 @@
         
         <div v-if="!store.selectedEventSK" class="text-center py-5 text-muted bg-light px-3">
           <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
-          <p class="mb-0 fw-medium">Silakan pilih <strong>Event</strong> terlebih dahulu.</p>
+          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu.</p>
         </div>
 
         <div v-else>
@@ -59,58 +57,59 @@
           <div v-else-if="filteredAttendees.length > 0">
             
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3 border-bottom bg-light gap-3">
-              <div class="input-group input-group-sm w-100" style="max-width: 400px;">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <div class="input-group input-group-sm w-100 shadow-sm" style="max-width: 400px;">
+                <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
                 <input 
                   type="text" 
-                  class="form-control bg-white border-start-0 ps-0" 
+                  class="form-control bg-white border-0 ps-0 txt-body" 
                   placeholder="Cari nama atau tiket..." 
                   v-model="searchQuery"
                 >
               </div>
-              <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill shadow-sm align-self-start align-self-md-center">
+              <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill shadow-sm align-self-start align-self-md-center txt-label">
                 Total Hadir: {{ totalItems }}
               </span>
             </div>
+            
             <div class="table-responsive">
               <table class="table table-hover mb-0" style="min-width: 700px;">
                 <thead>
                   <tr>
-                    <th class="ps-4" style="width: 5%;">NO</th>
-                    <th style="width: 35%;">INFORMASI PESERTA</th>
-                    <th style="width: 25%;">KODE TIKET</th>
-                    <th style="width: 20%;">WAKTU MASUK</th>
-                    <th class="text-center pe-4" style="width: 15%;">STATUS</th>
+                    <th class="ps-4 txt-label" style="width: 5%;">NO</th>
+                    <th class="txt-label" style="width: 35%;">INFORMASI PESERTA</th>
+                    <th class="txt-label" style="width: 25%;">KODE TIKET</th>
+                    <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
+                    <th class="text-center pe-4 txt-label" style="width: 15%;">STATUS</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
                     
-                    <td class="ps-4 fw-medium text-muted">
+                    <td class="ps-4 fw-medium text-muted txt-body">
                       {{ (currentPage - 1) * perPage + index + 1 }}
                     </td>
                     
                     <td>
-                      <div class="fw-bold text-dark text-capitalize">{{ item.name }}</div>
-                      <div class="small text-muted">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
+                      <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
+                      <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
                     </td>
                     <td>
-                      <span class="badge bg-light text-dark border font-monospace px-2 py-1">{{ item.ticketId }}</span>
+                      <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
                     </td>
                     <td>
-                      <div v-if="item.scanTime" class="text-dark fw-medium">
+                      <div v-if="item.scanTime" class="text-dark fw-medium txt-body">
                         <i class="bi bi-clock me-1 text-success"></i> {{ dayjs(item.scanTime).format('HH:mm:ss') }} WIB
                       </div>
                     </td>
                     <td class="text-center pe-4">
-                      <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm" style="font-size: 0.75rem;">
+                      <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm txt-label">
                         Hadir
                       </span>
                     </td>
                   </tr>
                   
                   <tr v-if="paginatedData.length === 0">
-                    <td colspan="5" class="text-center py-5 text-muted small fst-italic">
+                    <td colspan="5" class="text-center py-5 text-muted fst-italic txt-body">
                       <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
                       Tidak ada peserta hadir yang cocok dengan pencarian "{{ searchQuery }}"
                     </td>
@@ -120,21 +119,21 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light" v-if="totalPages > 1">
-              <span class="small text-muted">
+              <span class="text-muted txt-body">
                 Halaman {{ currentPage }} dari {{ totalPages }} 
                 (Total: {{ totalItems }} Hadir)
               </span>
               
               <div class="btn-group shadow-sm">
                 <button 
-                  class="btn btn-outline-secondary btn-sm" 
+                  class="btn btn-outline-secondary btn-sm txt-body" 
                   :disabled="currentPage === 1"
                   @click="changePage(currentPage - 1)"
                 >
                   <i class="bi bi-chevron-left"></i> Prev
                 </button>
                 <button 
-                  class="btn btn-outline-secondary btn-sm" 
+                  class="btn btn-outline-secondary btn-sm txt-body" 
                   :disabled="currentPage === totalPages"
                   @click="changePage(currentPage + 1)"
                 >
@@ -146,9 +145,9 @@
           </div>
 
           <div v-else class="text-center py-5 px-3">
-            <i class="bi bi-inbox fs-3 text-muted"></i>
-            <h6 class="mt-2 mb-1">Belum Ada Peserta Masuk</h6>
-            <p class="text-muted small">Belum ada data peserta yang melakukan Check-in pada event ini.</p>
+            <i class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-3"></i>
+            <h6 class="mb-1 txt-subtitle">Belum Ada Peserta Masuk</h6>
+            <p class="text-muted txt-body">Belum ada data peserta yang melakukan Check-in pada event ini.</p>
           </div>
 
         </div>

@@ -19,40 +19,34 @@
         
         <CommonLoadingSpinner v-if="store.loading" class="my-5" />
 
-        <div v-else-if="!store.loading && store.sortedSubmissions.length > 0" class="table-responsive">
-          <table class="table table-bordered table-hover align-middle fs-sm">
-            <thead class="table-light">
+        <div class="table-responsive" v-else-if="!store.loading && store.sortedSubmissions.length > 0">
+          <table class="table table-hover mb-0" style="min-width: 800px;">
+            <thead>
               <tr>
-                <th>Nama Booth</th>
-                <th>Nama Kontak</th>
-                <th>Email</th>
-                <th>Telepon</th>
-                <th>Status</th>
-                <th class="text-center">Aksi</th>
+                <th class="ps-4">NAMA BOOTH</th>
+                <th>NAMA KONTAK</th>
+                <th>EMAIL</th>
+                <th>TELEPON</th>
+                <th>STATUS</th>
+                <th class="text-center pe-4">AKSI</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="sub in store.sortedSubmissions" :key="sub.SK">
-                <td>{{ sub.boothName }}</td>
+                <td class="ps-4 fw-bold text-dark">{{ sub.boothName }}</td>
                 <td>{{ sub.contactName }}</td>
                 <td>{{ sub.email }}</td>
                 <td>{{ sub.phone }}</td>
                 <td>
-                  <span :class="['badge', getStatusBadge(sub.status)]">{{ sub.status }}</span>
+                  <span :class="['badge rounded-pill px-3', getStatusBadge(sub.status)]" style="font-size: 0.75rem;">{{ sub.status }}</span>
                 </td>
-                <td class="text-center">
+                <td class="text-center pe-4">
                   <template v-if="sub.status === 'Menunggu'">
-                    <button 
-                      class="btn btn-success btn-sm me-1" 
-                      title="Setujui"
-                      @click="store.updateSubmissionStatus(sub.SK, 'Disetujui')">
-                      <i class="bi bi-check-lg"></i>
+                    <button class="btn btn-sm text-success p-0 border-0 bg-transparent shadow-none me-2" title="Setujui" @click="store.updateSubmissionStatus(sub.SK, 'Disetujui')">
+                      <i class="bi bi-check-circle-fill fs-5"></i>
                     </button>
-                    <button 
-                      class="btn btn-danger btn-sm" 
-                      title="Tolak"
-                      @click="store.updateSubmissionStatus(sub.SK, 'Ditolak')">
-                      <i class="bi bi-x-lg"></i>
+                    <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" title="Tolak" @click="store.updateSubmissionStatus(sub.SK, 'Ditolak')">
+                      <i class="bi bi-x-circle-fill fs-5"></i>
                     </button>
                   </template>
                   <span v-else class="text-muted small fst-italic">Selesai</span>

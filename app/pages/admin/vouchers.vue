@@ -2,17 +2,18 @@
   <div>
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item active fw-medium text-dark" aria-current="page">Manajemen Voucher</li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Manajemen Voucher</li>
       </ol>
     </nav>
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
+      
       <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
         <div class="d-flex align-items-center gap-3 w-100 w-md-auto">
-          <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated-fill text-primary me-2"></i>Vouchers</h5>
+          <h5 class="mb-0 txt-title text-dark"><i class="bi bi-ticket-perforated-fill text-primary me-2"></i>Vouchers</h5>
           
-          <select class="form-select form-select-sm bg-light border-0 shadow-sm" style="width: 250px;"
+          <select class="form-select form-select-sm bg-light border-0 shadow-sm txt-body" style="width: 250px;"
             v-model="store.selectedEventSK" @change="handleEventChange">
             <option value="" disabled>-- Pilih Event Dahulu --</option>
             <option v-for="event in store.events" :key="event.SK" :value="event.SK">
@@ -22,20 +23,21 @@
         </div>
 
         <div class="d-flex gap-2 w-100 w-md-auto justify-content-end" v-if="store.selectedEventSK">
-          <button v-if="selectedIds.length > 0" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm" @click="handleBulkDelete">
+          <button v-if="selectedIds.length > 0" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm txt-body fw-medium" @click="handleBulkDelete">
             <i class="bi bi-trash3-fill me-1"></i> Hapus ({{ selectedIds.length }})
           </button>
           
-          <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" @click="showModal = true" :disabled="store.loading">
+          <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm txt-body fw-medium" @click="showModal = true" :disabled="store.loading">
             <i class="bi bi-plus-lg me-1"></i> Tambah Voucher
           </button>
         </div>
       </div>
 
       <div class="card-body p-0">
+        
         <div v-if="!store.selectedEventSK" class="text-center py-5 text-muted bg-light border-bottom border-top">
           <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-primary opacity-50"></i>
-          <p class="mb-0 fw-medium">Silakan pilih <strong>Event</strong> untuk mengelola voucher.</p>
+          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> untuk mengelola voucher.</p>
         </div>
 
         <div v-else>
@@ -43,12 +45,12 @@
 
           <div v-else-if="store.voucher.length > 0">
             <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
-               <div class="small text-muted">
+               <div class="txt-caption text-muted">
                  Menampilkan <strong>{{ store.paginatedData.length }}</strong> data.
                </div>
                <div class="input-group input-group-sm shadow-sm" style="max-width: 300px;">
-                  <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                  <input type="text" class="form-control bg-light border-0" placeholder="Cari kode..." v-model="store.search" @input="store.changePage(1)">
+                  <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                  <input type="text" class="form-control bg-light border-0 txt-body" placeholder="Cari kode..." v-model="store.search" @input="store.changePage(1)">
                </div>
             </div>
 
@@ -59,12 +61,12 @@
                     <th class="ps-4" style="width: 40px;">
                       <input type="checkbox" class="form-check-input" :checked="isAllSelected" @change="toggleSelectAll">
                     </th>
-                    <th>VOUCHER CODE</th>
-                    <th class="text-center">STATUS</th>
-                    <th>EXPIRED</th>
-                    <th>DISKON</th>
-                    <th>USER</th>
-                    <th class="text-center pe-4" style="width: 100px;">AKSI</th>
+                    <th class="txt-label">VOUCHER CODE</th>
+                    <th class="text-center txt-label">STATUS</th>
+                    <th class="txt-label">EXPIRED</th>
+                    <th class="txt-label">DISKON</th>
+                    <th class="txt-label">USER</th>
+                    <th class="text-center pe-4 txt-label" style="width: 100px;">AKSI</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -72,20 +74,22 @@
                     <td class="ps-4">
                       <input type="checkbox" class="form-check-input" :value="v.SK" v-model="selectedIds">
                     </td>
-                    <td class="fw-bold text-dark">{{ v.SK }}</td>
+                    <td class="fw-bold text-dark txt-body">{{ v.SK }}</td>
+                    
                     <td class="text-center">
-                      <span :class="['badge rounded-pill px-2', v.Status === 'active' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-secondary bg-opacity-10 text-muted border']" style="font-size: 0.75rem;">
+                      <span :class="['badge rounded-pill px-3 py-1 shadow-sm txt-label', v.Status === 'active' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-secondary bg-opacity-10 text-muted border']">
                         {{ v.Status }}
                       </span>
                     </td>
-                    <td class="text-muted small">{{ v.Expired }}</td>
-                    <td class="fw-medium text-dark">Rp{{ formatCurrency(v.Nominal) }}</td>
-                    <td class="small">{{ v.User || '-' }}</td>
+                    
+                    <td class="text-muted txt-caption">{{ v.Expired }}</td>
+                    <td class="fw-medium text-dark txt-body">Rp{{ formatCurrency(v.Nominal) }}</td>
+                    <td class="txt-caption text-muted">{{ v.User || '-' }}</td>
+                    
                     <td class="text-center pe-4">
-                      <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" 
-    title="Hapus" @click="handleSingleDelete(v.SK)">
-    <i class="bi bi-trash fs-5"></i>
-  </button>
+                      <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" title="Hapus" @click="handleSingleDelete(v.SK)">
+                        <i class="bi bi-trash fs-5"></i>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -93,12 +97,12 @@
             </div>
 
             <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center p-3 px-4">
-              <span class="text-muted small">Total: {{ store.totalItems }} Voucher</span>
+              <span class="text-muted txt-caption">Total: {{ store.totalItems }} Voucher</span>
               <div class="btn-group shadow-sm">
-                <button class="btn btn-outline-secondary btn-sm px-3" :disabled="store.currentPage === 1" @click="store.changePage(store.currentPage - 1)">
+                <button class="btn btn-outline-secondary btn-sm px-3 txt-body" :disabled="store.currentPage === 1" @click="store.changePage(store.currentPage - 1)">
                   Prev
                 </button>
-                <button class="btn btn-outline-secondary btn-sm px-3" :disabled="store.currentPage === store.totalPages" @click="store.changePage(store.currentPage + 1)">
+                <button class="btn btn-outline-secondary btn-sm px-3 txt-body" :disabled="store.currentPage === store.totalPages" @click="store.changePage(store.currentPage + 1)">
                   Next
                 </button>
               </div>
@@ -107,8 +111,8 @@
 
           <div v-else class="text-center py-5">
             <i class="bi bi-ticket-perforated fs-1 text-muted opacity-50 mb-3 d-block"></i>
-            <h6 class="fw-bold">Belum Ada Voucher</h6>
-            <p class="text-muted small">Event ini belum memiliki voucher terdaftar.</p>
+            <h6 class="txt-subtitle mb-1">Belum Ada Voucher</h6>
+            <p class="text-muted txt-body">Event ini belum memiliki voucher terdaftar.</p>
           </div>
         </div>
       </div>

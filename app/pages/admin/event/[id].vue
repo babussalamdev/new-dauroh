@@ -3,10 +3,9 @@
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
       <AdminCommonBreadcrumb :items="breadcrumbItems" />
       <div v-if="eventData">
-        <span class="badge px-3 py-2 rounded-pill d-flex align-items-center gap-2"
+        <span class="badge px-3 py-2 rounded-pill d-flex align-items-center gap-2 txt-caption fw-bold"
           :class="eventData.Status === 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
-          <i class="bi" :class="eventData.Status === 'active' ? 'bi-circle-fill' : 'bi-pause-circle-fill'"
-            style="font-size: 0.6rem;"></i>
+          <i class="bi" :class="eventData.Status === 'active' ? 'bi-circle-fill' : 'bi-pause-circle-fill'"></i>
           {{ eventData.Status === 'active' ? 'Published' : 'Draft' }}
         </span>
       </div>
@@ -14,7 +13,7 @@
 
     <div v-if="eventStore.loading.detail" class="text-center py-5">
       <div class="spinner-border text-primary border-2" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="mt-3 text-muted fw-medium ls-1 small">MEMUAT DATA EVENT...</p>
+      <p class="mt-3 text-muted fw-bold ls-1 txt-label">MEMUAT DATA EVENT...</p>
     </div>
 
     <div v-else-if="eventData" class="row g-4">
@@ -28,19 +27,19 @@
                 <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="Picture-preview" @error="onImageError" />
                 <div v-else class="text-muted p-4 text-center">
                   <i class="bi bi-image fs-1 opacity-25"></i>
-                  <div class="small mt-2">Belum ada gambar</div>
+                  <div class="txt-caption mt-2">Belum ada gambar</div>
                 </div>
                 <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none" id="posterUploadPage" />
               </div>
               <canvas ref="canvasRef" style="display: none;"></canvas>
-              <div v-if="photoError" class="alert alert-danger mt-2 x-small p-2 text-center">{{ photoError }}</div>
+              <div v-if="photoError" class="alert alert-danger mt-2 txt-caption p-2 text-center">{{ photoError }}</div>
             </div>
 
             <div class="d-flex gap-2 px-3 pb-3">
-              <label for="posterUploadPage" class="btn btn-sm btn-light fw-medium flex-grow-1">
+              <label for="posterUploadPage" class="btn btn-sm btn-light fw-bold txt-body flex-grow-1">
                 <i class="bi bi-camera me-2"></i> {{ previewUrl ? 'Ganti' : 'Upload' }}
               </label>
-              <button v-if="newPhotoBase64" type="button" class="btn btn-success btn-sm fw-bold flex-grow-1"
+              <button v-if="newPhotoBase64" type="button" class="btn btn-success btn-sm fw-bold txt-body flex-grow-1"
                 :disabled="isSavingPicture" @click="handlePictureSubmit">
                 <span v-if="isSavingPicture" class="spinner-border spinner-border-sm me-1" />
                 {{ isSavingPicture ? '...' : 'Simpan' }}
@@ -50,27 +49,27 @@
 
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-              <h6 class="fw-bold mb-0 text-dark small text-uppercase">Info Dasar</h6>
-              <button @click="openEditBasicModal" class="btn btn-light btn-sm text-primary py-1 px-2 rounded-pill fw-bold">Edit</button>
+              <h6 class="fw-bold mb-0 text-dark txt-label">INFO DASAR</h6>
+              <button @click="openEditBasicModal" class="btn btn-light btn-sm text-primary py-1 px-3 rounded-pill fw-bold txt-caption">Edit</button>
             </div>
             <div class="info-list d-flex flex-column gap-3">
-              <div class="d-flex justify-content-between"><span class="text-muted small">Registrasi</span><span class="small fw-medium">{{ formatRegDates(eventData.Registration) }}</span></div>
-              <div class="d-flex justify-content-between"><span class="text-muted small">Lokasi</span><span class="small fw-medium text-truncate" style="max-width: 120px;">{{ eventData.Place }}</span></div>
-              <div class="d-flex justify-content-between"><span class="text-muted small">Harga</span><span class="small fw-bold text-primary">{{ formatCurrency(eventData.Price) }}</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted txt-caption">Registrasi</span><span class="txt-body fw-bold">{{ formatRegDates(eventData.Registration) }}</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted txt-caption">Lokasi</span><span class="txt-body fw-bold text-truncate" style="max-width: 120px;">{{ eventData.Place }}</span></div>
+              <div class="d-flex justify-content-between"><span class="text-muted txt-caption">Harga</span><span class="txt-body fw-bold text-primary">{{ formatCurrency(eventData.Price) }}</span></div>
             </div>
           </div>
 
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-            <h6 class="fw-bold mb-3 text-dark small text-uppercase">Kontak WhatsApp</h6>
+            <h6 class="fw-bold mb-3 text-dark txt-label">KONTAK WHATSAPP</h6>
             <div class="d-flex flex-column gap-2">
               <input 
                 type="text" 
-                class="form-control form-control-sm modern-input" 
+                class="form-control form-control-sm modern-input txt-body fw-bold" 
                 placeholder="Misal: 628123456789" 
                 v-model="contactWaInput"
               >
               <button 
-                class="btn btn-primary btn-sm fw-bold align-self-end px-3" 
+                class="btn btn-primary btn-sm fw-bold align-self-end px-3 txt-body rounded-pill" 
                 @click="handleContactSubmit" 
                 :disabled="isSavingContact || !contactWaInput"
               >
@@ -80,14 +79,17 @@
             </div>
           </div>
 
-        </div> </div> <div class="col-lg-8 col-xl-9">
+        </div> 
+      </div> 
+      
+      <div class="col-lg-8 col-xl-9">
         
         <section class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
           <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+            <h5 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
               <i class="bi bi-file-text text-primary"></i> Deskripsi
             </h5>
-            <div v-if="isContentChanged" class="text-warning small fw-bold animate-pulse">
+            <div v-if="isContentChanged" class="text-warning txt-caption fw-bold animate-pulse">
               <i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i> Belum Tersimpan
             </div>
           </div>
@@ -95,8 +97,9 @@
             <div ref="editorContainer" style="height: 350px;"></div>
           </div>
           <div class="px-4 py-3 bg-white border-top d-flex justify-content-end">
-            <button @click="handleContentSubmit" class="btn btn-primary rounded-pill px-4 fw-bold"
+            <button @click="handleContentSubmit" class="btn btn-primary rounded-pill px-4 txt-body fw-bold"
               :disabled="isSavingBasic || !isContentChanged">
+              <i v-if="!isSavingBasic" class="bi bi-floppy-fill me-1"></i>
               {{ isSavingBasic ? 'Menyimpan...' : 'Simpan Deskripsi' }}
             </button>
           </div>
@@ -104,49 +107,54 @@
 
         <section class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h6 class="fw-bold mb-0 text-dark small text-uppercase">Jadwal Kegiatan</h6>
-            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" @click="addScheduleDay">+ Tambah Hari</button>
+            <h6 class="fw-bold mb-0 text-dark txt-label">JADWAL KEGIATAN</h6>
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 txt-body fw-bold" @click="addScheduleDay">
+              <i class="bi bi-plus-lg me-1"></i>Tambah Hari
+            </button>
           </div>
 
           <form @submit.prevent="handleScheduleSubmit">
             <div v-if="formState.scheduleDays.length === 0" class="text-center py-5 rounded-4 bg-light border border-dashed">
-              <p class="text-muted small">Belum ada jadwal yang ditambahkan.</p>
+              <p class="text-muted txt-body mb-0">Belum ada jadwal yang ditambahkan.</p>
             </div>
             <div v-else class="d-flex flex-column gap-3">
               <div v-for="(day, index) in formState.scheduleDays" :key="day.tempId" class="bg-light p-3 rounded-4 border position-relative">
                 <div class="row g-2 align-items-end">
                   <div class="col-md-4">
-                    <label class="x-small text-muted mb-1 ps-1">Tanggal</label>
-                    <input type="date" class="form-control modern-input" v-model="day.date" required>
+                    <label class="txt-caption fw-bold text-muted mb-1 ps-1">Tanggal</label>
+                    <input type="date" class="form-control modern-input txt-body fw-bold" v-model="day.date" required>
                   </div>
                   <div class="col-md-3">
-                    <label class="x-small text-muted mb-1 ps-1">Mulai</label>
-                    <input type="time" class="form-control modern-time-input" v-model="day.start_time" required>
+                    <label class="txt-caption fw-bold text-muted mb-1 ps-1">Mulai</label>
+                    <input type="time" class="form-control modern-time-input txt-body fw-bold" v-model="day.start_time" required>
                   </div>
                   <div class="col-md-3">
-                    <label class="x-small text-muted mb-1 ps-1">Selesai</label>
-                    <input type="time" class="form-control modern-time-input" v-model="day.end_time" required>
+                    <label class="txt-caption fw-bold text-muted mb-1 ps-1">Selesai</label>
+                    <input type="time" class="form-control modern-time-input txt-body fw-bold" v-model="day.end_time" required>
                   </div>
                   <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-light text-danger rounded-circle" @click="removeScheduleDay(index)">
+                    <button type="button" class="btn btn-light text-danger rounded-circle shadow-sm" @click="removeScheduleDay(index)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
                 </div>
               </div>
               <div class="text-end mt-3 border-top pt-3">
-                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" :disabled="isSavingSchedule">
+                <button type="submit" class="btn btn-primary rounded-pill px-4 txt-body fw-bold" :disabled="isSavingSchedule">
+                  <span v-if="isSavingSchedule" class="spinner-border spinner-border-sm me-1"></span>
+                  <i v-else class="bi bi-floppy-fill me-1"></i>
                   {{ isSavingSchedule ? 'Menyimpan...' : 'Simpan Jadwal' }}
                 </button>
               </div>
             </div>
           </form>
         </section>
-
-      </div> </div> <AdminEventFormModal v-if="showEditBasicModal" :show="showEditBasicModal" :is-editing="true"
+      </div>
+    </div>
+    <AdminEventFormModal v-if="showEditBasicModal" :show="showEditBasicModal" :is-editing="true"
       :event="eventData || undefined" @close="closeEditBasicModal" @save="handleUpdateBasicInfo" />
-
-  </div> </template>
+  </div> 
+</template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';

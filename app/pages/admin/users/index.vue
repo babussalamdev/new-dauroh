@@ -1,22 +1,23 @@
 <template>
   <div class="container-fluid px-2 px-md-4 py-4">
+    
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item active fw-medium text-dark" aria-current="page">Manajemen User</li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Manajemen User</li>
       </ol>
     </nav>
     
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       
-    <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column gap-3">
+      <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column gap-3">
         
         <div class="d-flex justify-content-between align-items-center w-100">
-          <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5 text-truncate">
+          <h5 class="mb-0 txt-title text-truncate">
             <i class="bi bi-people-fill text-primary me-2"></i>Manajemen User
           </h5>
-          <NuxtLink to="/admin/users/create" class="btn btn-primary btn-sm rounded-pill px-3 fw-medium shadow-sm text-nowrap">
-            <i></i> Tambah User
+          <NuxtLink to="/admin/users/create" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm text-nowrap txt-body fw-medium">
+            <i class="bi bi-plus-lg me-1"></i> Tambah User
           </NuxtLink>
         </div>
 
@@ -26,7 +27,7 @@
             <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
             <input 
               type="text" 
-              class="form-control bg-light border-0" 
+              class="form-control bg-light border-0 txt-body" 
               placeholder="Cari nama, email..." 
               v-model="store.search" 
               @input="store.changePage(1)"
@@ -36,22 +37,22 @@
           <div class="dropdown">
             <button class="btn btn-sm btn-light border d-flex align-items-center shadow-sm px-2 px-md-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-funnel-fill text-secondary"></i>
-              <span class="ms-2 fw-medium text-secondary d-none d-md-inline" style="font-size: 0.8rem;">{{ activeTypeLabel }}</span>
+              <span class="ms-2 txt-label text-secondary d-none d-md-inline">{{ activeTypeLabel }}</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size: 0.85rem;">
-              <li><h6 class="dropdown-header">Kategori Role</h6></li>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+              <li><h6 class="dropdown-header txt-label">Kategori Role</h6></li>
               <li>
-                <a class="dropdown-item py-2" :class="{ 'active bg-primary text-white': activeType === 'all' }" href="#" @click.prevent="changeType('all')">
+                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'all' }" href="#" @click.prevent="changeType('all')">
                   <i class="bi bi-list-ul me-2"></i>Semua User
                 </a>
               </li>
               <li>
-                <a class="dropdown-item py-2" :class="{ 'active bg-primary text-white': activeType === 'admin' }" href="#" @click.prevent="changeType('admin')">
+                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'admin' }" href="#" @click.prevent="changeType('admin')">
                   <i class="bi bi-shield-lock me-2"></i>Data Admin
                 </a>
               </li>
               <li>
-                <a class="dropdown-item py-2" :class="{ 'active bg-primary text-white': activeType === 'client' }" href="#" @click.prevent="changeType('client')">
+                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'client' }" href="#" @click.prevent="changeType('client')">
                   <i class="bi bi-person me-2"></i>Data Client
                 </a>
               </li>
@@ -66,63 +67,62 @@
 
         <div v-else class="table-responsive">
           <table class="table table-hover mb-0" style="min-width: 800px;">
-            <thead class="table-light text-muted" style="font-size: 0.8rem;">
+            <thead>
               <tr>
-                <th class="ps-4">USER INFO</th>
-                <th>KONTAK</th>
-                <th class="text-center">ROLE</th>
-                <th class="text-center">STATUS</th>
-                <th class="text-center pe-4" style="width: 180px;">AKSI</th> 
-    
+                <th class="ps-4 txt-label">USER INFO</th>
+                <th class="txt-label">KONTAK</th>
+                <th class="text-center txt-label">ROLE</th>
+                <th class="text-center txt-label">STATUS</th>
+                <th class="text-center pe-4 txt-label" style="width: 180px;">AKSI</th> 
               </tr>
             </thead>
             <tbody>
               <tr v-if="store.paginatedData.length > 0" v-for="user in store.paginatedData" :key="user.SK">
                 <td class="ps-4">
-                  <div class="fw-bold text-dark">{{ user.Name }}</div>
-                  <small class="text-muted" style="font-size: 0.75rem;">{{ user.SK || '-' }}</small>
+                  <div class="fw-bold text-dark txt-body">{{ user.Name }}</div>
+                  <div class="text-muted txt-caption">{{ user.SK || '-' }}</div>
                 </td>
                 
                 <td>
-                  <span v-if="user.Whatsapp" class="text-dark">{{ user.Whatsapp }}</span>
-                  <span v-else class="text-muted">-</span>
+                  <span v-if="user.Whatsapp" class="text-dark txt-body">{{ user.Whatsapp }}</span>
+                  <span v-else class="text-muted txt-body">-</span>
                 </td>
                 
                 <td class="text-center">
-                  <span :class="['badge border px-2 py-1', getRoleBadge(user.Role || user.role || user.Series || user.PK)]" style="font-size: 0.7rem;">
+                  <span :class="['badge px-3 py-1 shadow-sm rounded-pill txt-label', getRoleBadge(user.Role || user.role || user.Series || user.PK)]">
                     {{ formatRoleName(user.Role || user.role || user.Series || user.PK || 'user') }}
                   </span>
                 </td>
 
                 <td class="text-center">
-                  <span :class="['badge rounded-pill px-3 py-1', getStatusBadge(user.Status)]" style="font-size: 0.7rem;">
+                  <span :class="['badge px-3 py-1 shadow-sm rounded-pill txt-label', getStatusBadge(user.Status)]">
                     {{ user.Status || 'Unverified' }}
                   </span>
                 </td>
                 
                 <td class="text-center pe-4">
-                  <div class="d-flex justify-content-center gap-1">
-                    <NuxtLink :to="`/admin/users/edit/${encodeURIComponent(user.SK)}`" class="btn btn-sm btn-light text-primary border rounded-circle" title="Edit">
-                      <i class="bi bi-pencil-square"></i>
+                  <div class="d-flex justify-content-center gap-2">
+                    <NuxtLink :to="`/admin/users/edit/${encodeURIComponent(user.SK)}`" class="btn btn-sm text-primary p-0 border-0 bg-transparent shadow-none" title="Edit">
+                      <i class="bi bi-pencil-square fs-5"></i>
                     </NuxtLink>
 
                     <button 
                       v-if="canManageUsers"
-                      class="btn btn-sm btn-light text-warning border rounded-circle" 
+                      class="btn btn-sm text-warning p-0 border-0 bg-transparent shadow-none" 
                       title="Reset Password User"
                       @click="handleResetPassword(user)"
                     >
-                      <i class="bi bi-key-fill"></i>
+                      <i class="bi bi-key fs-5"></i>
                     </button>
 
                     <button 
                       v-if="canManageUsers"
-                      class="btn btn-sm btn-light border rounded-circle" 
+                      class="btn btn-sm p-0 border-0 bg-transparent shadow-none" 
                       :class="user.Status === 'inactive' ? 'text-success' : 'text-danger'"
                       :title="user.Status === 'inactive' ? 'Buka Blokir' : 'Blokir User'"
                       @click="toggleBlockUser(user)"
                     >
-                      <i :class="user.Status === 'inactive' ? 'bi bi-unlock-fill' : 'bi bi-lock-fill'"></i>
+                      <i :class="user.Status === 'inactive' ? 'bi bi-unlock fs-5' : 'bi bi-lock fs-5'"></i>
                     </button>
                   </div>
                 </td>
@@ -130,15 +130,16 @@
               
               <tr v-if="!store.loading && store.users.length === 0">
                 <td colspan="5" class="text-center py-5"> 
-                  <i class="bi bi-people fs-2 text-muted opacity-50 mb-2 d-block"></i>
-                  <h6 class="mt-2 mb-1 fw-bold text-dark">Data Kosong</h6>
-                  <p class="text-muted small">Belum ada data untuk kategori {{ activeType }}.</p>
+                  <i class="bi bi-people fs-1 text-muted opacity-50 mb-3 d-block"></i>
+                  <h6 class="mb-1 txt-subtitle">Data Kosong</h6>
+                  <p class="text-muted txt-body">Belum ada data untuk kategori {{ activeType }}.</p>
                 </td>
               </tr>
               
               <tr v-if="!store.loading && store.users.length > 0 && store.paginatedData.length === 0">
                 <td colspan="5" class="text-center py-5">
-                    <h6 class="mt-2 mb-1 text-muted fw-bold">Tidak Ada Hasil Pencarian</h6>
+                  <i class="bi bi-search fs-1 text-muted opacity-50 mb-3 d-block"></i>
+                  <h6 class="mb-1 text-muted txt-subtitle">Tidak Ada Hasil Pencarian</h6>
                 </td>
               </tr>
             </tbody>
@@ -147,19 +148,19 @@
       </div>
 
       <div v-if="!store.loading && store.totalPages > 1" class="card-footer bg-white border-top d-flex justify-content-between align-items-center p-3 px-4">
-        <span class="text-muted" style="font-size: 0.8rem;">
+        <span class="text-muted txt-body">
           Menampilkan <strong>{{ store.paginatedData.length }}</strong> dari <strong>{{ store.totalItems }}</strong> user
         </span>
         <nav aria-label="Page navigation">
           <ul class="pagination pagination-sm mb-0 shadow-sm">
             <li class="page-item" :class="{ disabled: store.currentPage === 1 }">
-              <a class="page-link text-muted" href="#" @click.prevent="store.changePage(store.currentPage - 1)">Prev</a>
+              <a class="page-link text-muted txt-body" href="#" @click.prevent="store.changePage(store.currentPage - 1)">Prev</a>
             </li>
             <li v-for="page in store.totalPages" :key="page" class="page-item" :class="{ active: store.currentPage === page }">
-              <a class="page-link" href="#" @click.prevent="store.changePage(page)">{{ page }}</a>
+              <a class="page-link txt-body" href="#" @click.prevent="store.changePage(page)">{{ page }}</a>
             </li>
             <li class="page-item" :class="{ disabled: store.currentPage === store.totalPages }">
-              <a class="page-link text-muted" href="#" @click.prevent="store.changePage(store.currentPage + 1)">Next</a>
+              <a class="page-link text-muted txt-body" href="#" @click.prevent="store.changePage(store.currentPage + 1)">Next</a>
             </li>
           </ul>
         </nav>

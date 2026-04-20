@@ -2,48 +2,51 @@
   <div>
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin">Home</NuxtLink></li>
-        <li class="breadcrumb-item active" aria-current="page">Profil Saya</li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Profil Saya</li>
       </ol>
     </nav>
 
     <div class="row g-4"> 
+      
       <div class="col-lg-6"> 
-        <div class="card content-card h-100"> 
-          <div class="card-header">
-            <h5 class="mb-0">Informasi Profil</h5>
+        <div class="card content-card border-0 shadow-sm rounded-4 h-100"> 
+          <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom">
+            <h5 class="mb-0 txt-title text-dark">Informasi Profil</h5>
           </div>
-          <div class="card-body d-flex flex-column"> 
+          <div class="card-body p-3 px-md-4 d-flex flex-column"> 
             <form @submit.prevent="handleUpdateProfile" id="updateProfileForm" class="flex-grow-1">
+              
               <div class="mb-3">
-                <label for="adminName" class="form-label">Nama Lengkap</label>
-                <input type="text" class="form-control" id="adminName" v-model="profileForm.name" required>
+                <label for="adminName" class="form-label txt-label text-secondary">Nama Lengkap</label>
+                <input type="text" class="form-control txt-body" id="adminName" v-model="profileForm.name" required>
               </div>
               
               <div class="mb-3">
-                <label for="adminEmail" class="form-label">Email</label>
-                <input type="email" class="form-control" id="adminEmail" v-model="profileForm.email" required disabled>
-                <small class="text-muted">Email tidak dapat diubah.</small>
+                <label for="adminEmail" class="form-label txt-label text-secondary">Email</label>
+                <input type="email" class="form-control txt-body bg-light" id="adminEmail" v-model="profileForm.email" required disabled>
+                <div class="form-text txt-caption text-muted">Email tidak dapat diubah.</div>
               </div>
 
               <div class="mb-3">
-                <label for="adminPhone" class="form-label">No. Handphone</label>
-                <input type="text" class="form-control" id="adminPhone" v-model="profileForm.phone_number" placeholder="08..." required>
+                <label for="adminPhone" class="form-label txt-label text-secondary">No. Handphone</label>
+                <input type="text" class="form-control txt-body" id="adminPhone" v-model="profileForm.phone_number" placeholder="08..." required>
               </div>
 
               <div class="mb-3">
-                <label class="form-label">Role</label>
-                <input type="text" class="form-control bg-light" :value="profileForm.role" readonly>
+                <label class="form-label txt-label text-secondary">Role</label>
+                <input type="text" class="form-control bg-light txt-body text-capitalize" :value="profileForm.role" readonly>
               </div>
 
-              <div v-if="profileError" class="alert alert-danger mt-3 small p-2">
-                {{ profileError }}
+              <div v-if="profileError" class="alert alert-danger mt-3 txt-caption p-2">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ profileError }}
               </div>
             </form>
             
             <div class="text-end mt-auto pt-3"> 
-              <button type="submit" form="updateProfileForm" class="btn btn-primary" :disabled="profileLoading">
+              <button type="submit" form="updateProfileForm" class="btn btn-primary rounded-pill px-4 txt-body fw-medium" :disabled="profileLoading">
                 <span v-if="profileLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <i v-else class="bi bi-floppy-fill me-1"></i>
                 {{ profileLoading ? 'Menyimpan...' : 'Simpan Info Profil' }}
               </button>
             </div>
@@ -52,21 +55,21 @@
       </div>
 
       <div class="col-lg-6"> 
-        <div class="card content-card h-100"> 
-          <div class="card-header">
-            <h5 class="mb-0">Ubah Password</h5>
+        <div class="card content-card border-0 shadow-sm rounded-4 h-100"> 
+          <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom">
+            <h5 class="mb-0 txt-title text-dark">Ubah Password</h5>
           </div>
-          <div class="card-body d-flex flex-column"> 
-            <p class="text-muted small mb-3">Kosongkan jika tidak ingin mengubah password.</p>
+          <div class="card-body p-3 px-md-4 d-flex flex-column"> 
+            <p class="text-muted txt-caption mb-3">Kosongkan jika tidak ingin mengubah password.</p>
             
             <form @submit.prevent="handleChangePassword" class="flex-grow-1" id="changePasswordForm">
               
               <div class="mb-3">
-                <label for="currentPassword" class="form-label">Password Saat Ini</label>
+                <label for="currentPassword" class="form-label txt-label text-secondary">Password Saat Ini</label>
                 <div class="input-group">
                   <input 
                     :type="showOldPass ? 'text' : 'password'" 
-                    class="form-control" 
+                    class="form-control txt-body" 
                     id="currentPassword" 
                     v-model="passwordForm.oldPassword"
                     placeholder="Masukkan password lama"
@@ -79,11 +82,11 @@
               </div>
 
               <div class="mb-3">
-                <label for="newPassword" class="form-label">Password Baru</label>
+                <label for="newPassword" class="form-label txt-label text-secondary">Password Baru</label>
                 <div class="input-group">
                   <input 
                     :type="showNewPass ? 'text' : 'password'" 
-                    class="form-control" 
+                    class="form-control txt-body" 
                     id="newPassword" 
                     v-model="passwordForm.newPassword"
                     :class="{'is-invalid': isChangingPassword && !isPasswordValid && passwordForm.newPassword.length > 0, 'is-valid': isPasswordValid}"
@@ -94,18 +97,18 @@
                     <i :class="showNewPass ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
                   </button>
                 </div>
-                <div class="form-text small" :class="isPasswordValid ? 'text-success' : 'text-muted'">
+                <div class="form-text txt-caption mt-1" :class="isPasswordValid ? 'text-success fw-bold' : 'text-muted'">
                   <i v-if="isPasswordValid" class="bi bi-check-circle-fill me-1"></i>
                   Syarat: Min. 8 Karakter, Huruf Besar, Huruf Kecil, & Angka.
                 </div>
               </div>
 
               <div class="mb-3">
-                <label for="confirmNewPassword" class="form-label">Konfirmasi Password Baru</label>
+                <label for="confirmNewPassword" class="form-label txt-label text-secondary">Konfirmasi Password Baru</label>
                 <div class="input-group">
                   <input 
                     :type="showConfirmPass ? 'text' : 'password'" 
-                    class="form-control" 
+                    class="form-control txt-body" 
                     id="confirmNewPassword" 
                     v-model="passwordForm.confirmNewPassword"
                     :class="{'is-invalid': passwordForm.confirmNewPassword && passwordForm.newPassword !== passwordForm.confirmNewPassword}"
@@ -117,14 +120,15 @@
                 </div>
               </div>
 
-              <div v-if="passwordError" class="alert alert-danger mt-3 small p-2">
-                {{ passwordError }}
+              <div v-if="passwordError" class="alert alert-danger mt-3 txt-caption p-2">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ passwordError }}
               </div>
             </form>
             
             <div class="text-end mt-auto pt-3"> 
-              <button type="submit" form="changePasswordForm" class="btn btn-warning" :disabled="passwordLoading || !isChangingPassword">
+              <button type="submit" form="changePasswordForm" class="btn btn-warning rounded-pill px-4 txt-body fw-bold" :disabled="passwordLoading || !isChangingPassword">
                  <span v-if="passwordLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                 <i v-else class="bi bi-key-fill me-1"></i>
                 {{ passwordLoading ? 'Menyimpan...' : 'Ubah Password' }}
               </button>
             </div>

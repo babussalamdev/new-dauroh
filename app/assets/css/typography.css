@@ -1,0 +1,35 @@
+/* 1. Judul Utama (Page Title, Modal Title) */
+.txt-title {
+  font-size: 1.25rem !important; /* Setara 20px */
+  font-weight: 700 !important;
+}
+
+/* 2. Sub Judul (Card Title, Highlighted Text) */
+.txt-subtitle {
+  font-size: 1rem !important; /* Setara 16px */
+  font-weight: 600 !important;
+}
+
+/* 3. Teks Standar (Isi Tabel, Teks Normal) */
+.txt-body {
+  font-size: 0.875rem !important; /* Setara 14px */
+  font-weight: 400 !important;
+}
+
+/* 4. Teks Keterangan (Tanggal, Sub-info, Hint abu-abu) */
+.txt-caption {
+  font-size: 0.75rem !important; /* Setara 12px */
+  font-weight: 400 !important;
+}
+
+/* 5. Label & Header (Header Tabel, Badge, Input Label) */
+.txt-label {
+  font-size: 0.75rem !important; /* Setara 12px */
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Modifier tambahan kalau butuh warna beda tapi ukuran sama */
+.txt-dark { color: #212529 !important; }
+.txt-success { color: #198754 !important; }

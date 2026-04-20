@@ -3,9 +3,9 @@
     
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item text-muted">Keuangan</li>
-        <li class="breadcrumb-item active fw-medium text-dark" aria-current="page">Laporan & Export</li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item txt-caption text-muted">Keuangan</li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Laporan & Export</li>
       </ol>
     </nav>
 
@@ -14,7 +14,7 @@
         
         <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
           <div class="card-header bg-white py-3 border-bottom text-center">
-            <h6 class="mb-0 fw-bold"><i class="bi bi-file-earmark-arrow-down text-success me-2"></i>Export Laporan Keuangan</h6>
+            <h5 class="mb-0 txt-title text-dark"><i class="bi bi-file-earmark-arrow-down text-success me-2"></i>Export Laporan Keuangan</h5>
           </div>
 
           <div class="card-body p-4">
@@ -22,34 +22,34 @@
             <div class="alert alert-info rounded-3 border-0 bg-info bg-opacity-10 text-info-emphasis d-flex gap-3 mb-4 p-3">
               <i class="bi bi-info-circle-fill fs-5 mt-1"></i>
               <div>
-                <h6 class="fw-bold mb-1" style="font-size: 0.85rem;">Informasi Laporan</h6>
-                <p class="mb-0" style="font-size: 0.8rem;">Hanya mengekspor transaksi <strong>LUNAS</strong>. Pilih "Semua Event" untuk melihat rekap bulanan/tahunan secara global.</p>
+                <h6 class="txt-body fw-bold mb-1">Informasi Laporan</h6>
+                <p class="mb-0 txt-caption">Hanya mengekspor transaksi <strong>LUNAS</strong>. Pilih "Semua Event" untuk melihat rekap bulanan/tahunan secara global.</p>
               </div>
             </div>
 
             <form @submit.prevent="handleExportExcel">
               
               <div class="mb-3">
-                <label class="form-label fw-bold text-dark small mb-1">Pilih Event</label>
-                <select class="form-select bg-light border-0 shadow-none" v-model="form.eventSK" @change="resetDates" required>
+                <label class="form-label txt-label text-secondary mb-1">Pilih Event</label>
+                <select class="form-select bg-light border-0 shadow-none txt-body" v-model="form.eventSK" @change="resetDates" required>
                   <option value="ALL">Semua Event (Global)</option>
                   <option v-for="event in mockEvents" :key="event.SK" :value="event.SK">{{ event.Title }}</option>
                 </select>
               </div>
 
               <div class="mb-4" v-if="form.eventSK === 'ALL'">
-                <label class="form-label fw-bold text-dark small mb-1">Rentang Waktu Transaksi <span class="text-danger">*</span></label>
+                <label class="form-label txt-label text-secondary mb-1">Rentang Waktu Transaksi <span class="text-danger">*</span></label>
                 <div class="row g-2">
                   <div class="col-6">
                     <div class="input-group input-group-sm">
-                      <span class="input-group-text bg-light border-end-0 text-muted">Dari</span>
-                      <input type="date" class="form-control bg-light border-start-0 ps-0" v-model="form.startDate" required>
+                      <span class="input-group-text bg-light border-end-0 text-muted txt-body">Dari</span>
+                      <input type="date" class="form-control bg-light border-start-0 ps-0 txt-body" v-model="form.startDate" required>
                     </div>
                   </div>
                   <div class="col-6">
                     <div class="input-group input-group-sm">
-                      <span class="input-group-text bg-light border-end-0 text-muted">Sampai</span>
-                      <input type="date" class="form-control bg-light border-start-0 ps-0" v-model="form.endDate" :min="form.startDate" required>
+                      <span class="input-group-text bg-light border-end-0 text-muted txt-body">Sampai</span>
+                      <input type="date" class="form-control bg-light border-start-0 ps-0 txt-body" v-model="form.endDate" :min="form.startDate" required>
                     </div>
                   </div>
                 </div>
@@ -58,11 +58,11 @@
               <hr class="my-4 text-muted opacity-25">
 
               <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-2">
-                <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-4 rounded-pill" @click="handleExportPDF" :disabled="isLoadingPDF">
+                <button type="button" class="btn btn-outline-danger btn-sm px-4 rounded-pill txt-body fw-bold" @click="handleExportPDF" :disabled="isLoadingPDF">
                   <span v-if="isLoadingPDF" class="spinner-border spinner-border-sm me-2"></span>
                   <i v-else class="bi bi-filetype-pdf me-1"></i> PDF
                 </button>
-                <button type="submit" class="btn btn-success btn-sm fw-bold px-4 rounded-pill shadow-sm" :disabled="isLoadingExcel">
+                <button type="submit" class="btn btn-success btn-sm px-4 rounded-pill shadow-sm txt-body fw-bold" :disabled="isLoadingExcel">
                   <span v-if="isLoadingExcel" class="spinner-border spinner-border-sm me-2"></span>
                   <i v-else class="bi bi-file-earmark-excel-fill me-1"></i> Download Excel
                 </button>

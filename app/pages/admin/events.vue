@@ -1,11 +1,15 @@
 <template>
   <div>
-    <nav aria-label="breadcrumb" class="mb-3">
-      <ol class="breadcrumb">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item">
-          <NuxtLink to="/admin">Home</NuxtLink>
+          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
+            <i class="bi bi-house-door-fill me-1"></i>Home
+          </NuxtLink>
         </li>
-        <li class="breadcrumb-item active" aria-current="page">Manajemen Tiket</li>
+        <li class="breadcrumb-item active txt-caption fw-bold text-secondary" aria-current="page">
+          Manajemen Tiket
+        </li>
       </ol>
     </nav>
 

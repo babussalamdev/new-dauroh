@@ -1,7 +1,6 @@
 <template>
   <div>
-
-    <h5 class="mb-3">Silahkan pilih metode pembayaran berikut:</h5>
+    <h5 class="mb-3 txt-subtitle fw-bold text-dark">Silahkan pilih metode pembayaran berikut:</h5>
 
     <div class="row g-3">
       <div v-for="bank in banks" :key="bank.code" class="col-6 col-md-4">
@@ -12,19 +11,20 @@
       </div>
     </div>
 
-    <div class="d-flex justify-content-between mt-4">
-
-      <button class="btn btn-secondary" @click="handleBack">Kembali
+    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+      
+      <button class="btn btn-light border px-4 rounded-pill txt-body fw-bold text-muted" @click="handleBack">
+        <i class="bi bi-arrow-left me-1"></i> Kembali
       </button>
 
-      <button class="btn btn-primary" @click="handleSelect" :disabled="!selectedMethod">
-        Pilih
+      <button class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm" @click="handleSelect" :disabled="!selectedMethod">
+        Pilih Metode <i class="bi bi-check-circle-fill ms-1"></i>
       </button>
     </div>
   </div>
 
-  <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
-    <i class="bi bi-whatsapp me-1"></i> Whatsapp
+  <a href="https://wa.me/628123456789" target="_blank" class="btn btn-success whatsapp-fab rounded-pill shadow-sm px-3 txt-body fw-bold d-inline-flex align-items-center mt-4">
+    <i class="bi bi-whatsapp me-2 fs-5"></i> Bantuan
   </a>
 </template>
 

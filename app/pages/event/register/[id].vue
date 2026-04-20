@@ -3,7 +3,7 @@
     <div v-if="eventStore.loading.detailPublic || (event && String(event.SK) !== String(eventSK))"
       class="text-center py-5">
       <div class="spinner-border text-primary" role="status"></div>
-      <p class="mt-2 text-muted small letter-spacing-1">MEMUAT DATA EVENT...</p>
+      <p class="mt-2 text-muted txt-caption fw-bold letter-spacing-1">MEMUAT DATA EVENT...</p>
     </div>
 
     <div v-else-if="event" class="row justify-content-center">
@@ -18,8 +18,8 @@
                   @error="($event.target as HTMLImageElement).style.display = 'none'">
               </div>
               <div class="flex-grow-1">
-                <h5 class="fw-bold mb-1 text-dark">{{ event.Title }}</h5>
-                <div class="d-flex flex-wrap gap-3 text-muted x-small mt-2">
+                <h5 class="txt-subtitle fw-bold mb-1 text-dark">{{ event.Title }}</h5>
+                <div class="d-flex flex-wrap gap-3 text-muted txt-caption mt-2 fw-bold">
                   <span class="d-flex align-items-center gap-1"><i class="bi bi-geo-alt-fill text-danger"></i> {{
                     event.Place }}</span>
                   <span class="d-flex align-items-center gap-1"><i class="bi bi-tag-fill text-primary"></i> {{
@@ -28,7 +28,7 @@
               </div>
             </div>
 
-            <div v-if="isSoldOut" class="bg-danger-subtle text-danger px-4 py-2 text-center small fw-bold">
+            <div v-if="isSoldOut" class="bg-danger-subtle text-danger px-4 py-2 text-center txt-caption fw-bold">
               <i class="bi bi-exclamation-circle me-1"></i> {{ soldOutMessage }}
             </div>
           </div>
@@ -36,7 +36,7 @@
 
         <div v-if="!isSoldOut" class="card shadow-sm border-0 mb-4 rounded-4">
           <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-            <h6 class="fw-bold m-0 d-flex align-items-center gap-2">
+            <h6 class="txt-subtitle fw-bold m-0 d-flex align-items-center gap-2 text-dark">
               <i class="bi bi-ticket-perforated-fill text-primary"></i> Pilih Tiket
             </h6>
           </div>
@@ -46,17 +46,17 @@
               <div v-if="canShowIkhwan"
                 class="p-3 border rounded-3 bg-light-subtle d-flex justify-content-between align-items-center transition-hover">
                 <div>
-                  <span class="fw-bold text-dark d-block">Tiket Ikhwan</span>
-                  <small class="x-small" :class="getDynamicQuotaColor(quotaInfo.ikhwan, formState.qtyIkhwan)">
+                  <span class="txt-body fw-bold text-dark d-block">Tiket Ikhwan</span>
+                  <span class="txt-caption fw-bold" :class="getDynamicQuotaColor(quotaInfo.ikhwan, formState.qtyIkhwan)">
                     {{ getDynamicQuotaText(event?.Quota_Ikhwan, event?.Sold_Ikhwan, formState.qtyIkhwan) }}
-                  </small>
+                  </span>
                 </div>
                 <div class="counter-input d-flex align-items-center bg-white rounded-pill shadow-sm border p-1">
                   <button class="btn btn-icon rounded-circle btn-sm" @click="updateTicket('ikhwan', -1)"
                     :disabled="formState.qtyIkhwan <= 0">
                     <i class="bi bi-dash"></i>
                   </button>
-                  <input type="text" class="form-control border-0 text-center fw-bold p-0 mx-1"
+                  <input type="text" class="form-control border-0 text-center txt-body fw-bold p-0 mx-1"
                     style="width: 40px; background: transparent;" :value="formState.qtyIkhwan" readonly>
                   <button class="btn btn-icon rounded-circle btn-sm btn-primary text-white"
                     @click="updateTicket('ikhwan', 1)"
@@ -69,17 +69,17 @@
               <div v-if="canShowAkhwat"
                 class="p-3 border rounded-3 bg-light-subtle d-flex justify-content-between align-items-center transition-hover">
                 <div>
-                  <span class="fw-bold text-dark d-block">Tiket Akhwat</span>
-                  <small class="x-small" :class="getDynamicQuotaColor(quotaInfo.akhwat, formState.qtyAkhwat)">
+                  <span class="txt-body fw-bold text-dark d-block">Tiket Akhwat</span>
+                  <span class="txt-caption fw-bold" :class="getDynamicQuotaColor(quotaInfo.akhwat, formState.qtyAkhwat)">
                     {{ getDynamicQuotaText(event?.Quota_Akhwat, event?.Sold_Akhwat, formState.qtyAkhwat) }}
-                  </small>
+                  </span>
                 </div>
                 <div class="counter-input d-flex align-items-center bg-white rounded-pill shadow-sm border p-1">
                   <button class="btn btn-icon rounded-circle btn-sm" @click="updateTicket('akhwat', -1)"
                     :disabled="formState.qtyAkhwat <= 0">
                     <i class="bi bi-dash"></i>
                   </button>
-                  <input type="text" class="form-control border-0 text-center fw-bold p-0 mx-1"
+                  <input type="text" class="form-control border-0 text-center txt-body fw-bold p-0 mx-1"
                     style="width: 40px; background: transparent;" :value="formState.qtyAkhwat" readonly>
                   <button class="btn btn-icon rounded-circle btn-sm btn-primary text-white"
                     @click="updateTicket('akhwat', 1)"
@@ -92,7 +92,7 @@
             </div>
 
             <div v-if="isMaxReached" class="mt-3 text-center">
-              <span class="badge bg-warning-subtle text-warning border border-warning-subtle x-small">
+              <span class="badge bg-warning-subtle text-warning border border-warning-subtle txt-caption fw-bold">
                 <i class="bi bi-info-circle me-1"></i> Maksimal 4 tiket per akun
               </span>
             </div>
@@ -103,22 +103,24 @@
           <form @submit.prevent="handleSubmit">
             <div v-for="(participant, index) in formState.participants" :key="index"
               class="card shadow-sm border-0 mb-3 rounded-4 overflow-hidden">
-              <div v-if="index === 0" class="mb-4 p-3 bg-primary-subtle rounded-3 d-flex align-items-start gap-3">
+              
+              <div v-if="index === 0" class="mb-4 p-3 bg-primary-subtle rounded-3 d-flex align-items-start gap-3 m-3 pb-3">
                 <div class="bg-primary text-white rounded-circle p-2 d-flex align-items-center justify-content-center"
                   style="width: 32px; height: 32px;">
                   <i class="bi bi-person-fill"></i>
                 </div>
                 <div>
-                  <h5 class="text-primary fw-bold d-block">Data Peserta</h5>
-                  <div class="small text-muted mb-1">{{ user?.fullname }}</div>
-                  <div class="x-small text-muted opacity-75">{{ user?.email }}</div>
+                  <h5 class="text-primary txt-body fw-bold d-block mb-1">Data Pemesan</h5>
+                  <div class="txt-caption fw-bold text-muted mb-0">{{ user?.fullname }}</div>
+                  <div class="txt-caption text-muted opacity-75">{{ user?.email }}</div>
                   <input type="hidden" v-model="participant.Email">
                 </div>
               </div>
+
               <div
                 class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-primary small text-uppercase ls-1">Peserta {{ index + 1 }}</span>
-                <span class="badge rounded-pill"
+                <span class="txt-label fw-bold text-primary text-uppercase ls-1">Peserta {{ index + 1 }}</span>
+                <span class="badge rounded-pill txt-caption fw-bold"
                   :class="participant.Gender === 'Ikhwan' ? 'bg-info-subtle text-info-emphasis' : 'bg-danger-subtle text-danger-emphasis'">
                   {{ participant.Gender }}
                 </span>
@@ -127,23 +129,23 @@
               <div class="card-body p-4">
                 <div class="row g-3">
                   <div class="col-12">
-                    <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Nama Lengkap</label>
-                    <input type="text" class="form-control modern-input" v-model="participant.Name" required>
+                    <label class="form-label txt-label fw-bold text-muted text-uppercase mb-1">Nama Lengkap</label>
+                    <input type="text" class="form-control modern-input txt-body" v-model="participant.Name" required>
                   </div>
 
                   <div class="col-6">
-                    <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Usia</label>
+                    <label class="form-label txt-label fw-bold text-muted text-uppercase mb-1">Usia</label>
                     <div class="input-group">
-                      <input type="number" class="form-control modern-input" v-model="participant.Age" required min="5"
+                      <input type="number" class="form-control modern-input txt-body" v-model="participant.Age" required min="5"
                         placeholder="0">
-                      <span class="input-group-text bg-light border-start-0 text-muted x-small"
+                      <span class="input-group-text bg-light border-start-0 text-muted txt-caption fw-bold"
                         style="border-color: #e9ecef;">Thn</span>
                     </div>
                   </div>
 
                   <div class="col-6">
-                    <label class="form-label x-small fw-bold text-muted text-uppercase mb-1">Domisili</label>
-                    <input type="text" class="form-control modern-input" v-model="participant.Domicile" required
+                    <label class="form-label txt-label fw-bold text-muted text-uppercase mb-1">Domisili</label>
+                    <input type="text" class="form-control modern-input txt-body" v-model="participant.Domicile" required
                       placeholder="Kota">
                   </div>
                 </div>
@@ -154,10 +156,10 @@
               <div class="container d-flex justify-content-between align-items-center px-0 px-lg-3"
                 style="max-width: 600px;">
                 <div>
-                  <small class="text-muted d-block x-small">Total Pembayaran</small>
-                  <span class="fs-4 fw-bold text-primary lh-1">{{ formatCurrency(totalPrice) }}</span>
+                  <span class="text-muted d-block txt-caption fw-bold mb-1">Total Pembayaran</span>
+                  <span class="txt-title fw-bold text-primary lh-1">{{ formatCurrency(totalPrice) }}</span>
                 </div>
-                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm"
+                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill txt-body fw-bold shadow-sm"
                   :disabled="totalTickets === 0">
                   Bayar Sekarang <i class="bi bi-arrow-right-short fs-5 align-middle"></i>
                 </button>
@@ -173,9 +175,9 @@
 
     <div v-else class="text-center py-5">
       <div class="mb-3 text-muted opacity-50"><i class="bi bi-calendar-x display-1"></i></div>
-      <h5 class="fw-bold">Event Tidak Ditemukan</h5>
-      <p class="text-muted small">Silakan periksa kembali link atau kembali ke beranda.</p>
-      <button @click="router.push('/')" class="btn btn-outline-primary rounded-pill px-4 mt-2">Ke Beranda</button>
+      <h5 class="txt-subtitle fw-bold text-dark">Event Tidak Ditemukan</h5>
+      <p class="text-muted txt-body">Silakan periksa kembali link atau kembali ke beranda.</p>
+      <button @click="router.push('/')" class="btn btn-outline-primary rounded-pill px-4 mt-2 txt-body fw-bold shadow-sm">Ke Beranda</button>
     </div>
   </div>
 </template>
@@ -535,10 +537,6 @@ const handleSubmit = async () => {
 
 .ls-1 {
   letter-spacing: 0.5px;
-}
-
-.x-small {
-  font-size: 0.8rem;
 }
 
 .bg-light-subtle {

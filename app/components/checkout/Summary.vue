@@ -3,107 +3,108 @@
     <div class="text-center mb-3">
       <img v-if="paymentLogoUrl" :src="paymentLogoUrl" :alt="store.paymentMethod || 'Logo Pembayaran'"
         class="payment-logo-summary">
-      <hr>
+      <hr class="text-muted opacity-25">
     </div>
 
     <div class="mb-3">
-      <label for="voucher" class="form-label">Kode Voucher</label>
+      <label for="voucher" class="form-label txt-label fw-bold text-secondary">Kode Voucher</label>
       <div class="input-group">
-        <input type="text" class="form-control" id="voucher" placeholder="Masukkan kode voucher"
+        <input type="text" class="form-control txt-body" id="voucher" placeholder="Masukkan kode voucher"
           v-model="store.voucherCode" :disabled="loading" @keyup.enter="applyVoucher">
-        <button class="btn btn-outline-secondary" type="button" @click="applyVoucher" :disabled="loading">
+        <button class="btn btn-outline-secondary txt-body fw-bold" type="button" @click="applyVoucher" :disabled="loading">
           <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           <span v-else>Submit</span>
         </button>
       </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-3 p-3 mb-4" style="background-color: #f8f9fa; border-left: 4px solid #0dcaf0 !important;">
-      <h6 class="fw-bold mb-1 text-dark small d-flex align-items-center">
-        <i class="text-danger me-2"></i>Tambahkan Infaq Operasional
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background-color: #f8f9fa; border-left: 4px solid #0dcaf0 !important;">
+      <h6 class="fw-bold mb-1 text-dark txt-label d-flex align-items-center">
+        <i class="bi bi-heart-fill text-danger me-2"></i>Tambahkan Infaq Operasional
       </h6>
-      <p class="text-muted" style="font-size: 0.75rem;">Dukung dakwah Yayasan Babussalam. Semoga menjadi amal jariyah.</p>
+      <p class="text-muted txt-caption">Dukung dakwah Yayasan Babussalam. Semoga menjadi amal jariyah.</p>
 
       <div class="d-flex flex-wrap gap-2 mb-3">
-        <button class="btn btn-sm" :class="store.donationAmount === 10000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(10000)">Rp 10.000</button>
-        <button class="btn btn-sm" :class="store.donationAmount === 20000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(20000)">Rp 20.000</button>
-        <button class="btn btn-sm" :class="store.donationAmount === 50000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(50000)">Rp 50.000</button>
-        <button class="btn btn-sm" :class="store.donationAmount === 0 ? 'btn-secondary text-white' : 'btn-outline-secondary'" @click="setDonation(0)">Tidak, Terima Kasih</button>
+        <button class="btn btn-sm rounded-pill txt-body fw-bold" :class="store.donationAmount === 10000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(10000)">Rp 10.000</button>
+        <button class="btn btn-sm rounded-pill txt-body fw-bold" :class="store.donationAmount === 20000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(20000)">Rp 20.000</button>
+        <button class="btn btn-sm rounded-pill txt-body fw-bold" :class="store.donationAmount === 50000 ? 'btn-info text-white' : 'btn-outline-info'" @click="setDonation(50000)">Rp 50.000</button>
+        <button class="btn btn-sm rounded-pill txt-body fw-bold" :class="store.donationAmount === 0 ? 'btn-secondary text-white' : 'btn-outline-secondary'" @click="setDonation(0)">Tidak, Terima Kasih</button>
       </div>
 
       <div class="input-group input-group-sm">
-        <span class="input-group-text bg-white border-end-0">Rp</span>
-        <input type="number" class="form-control border-start-0 shadow-none" placeholder="Isi nominal bebas..." v-model="customDonation" @input="handleCustomDonation">
+        <span class="input-group-text bg-white border-end-0 txt-body fw-bold">Rp</span>
+        <input type="number" class="form-control border-start-0 shadow-none txt-body fw-bold text-dark" placeholder="Isi nominal bebas..." v-model="customDonation" @input="handleCustomDonation">
       </div>
     </div>
 
-    <div class="alert alert-warning small p-2" role="alert">
-      <i class="bi bi-clock me-1"></i>
+    <div class="alert alert-warning txt-caption fw-bold p-2 rounded-3 border-0" role="alert">
+      <i class="bi bi-clock-history me-1"></i>
       Untuk pembayaran hanya aktif selama 30 menit.
       Pastikan anda sudah siap membayar sebelum menekan tombol bayar.
     </div>
 
     <ul class="list-group list-group-flush mt-4">
-      <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-        Biaya Pendaftaran - {{ store.event?.Title }} ({{ store.participants?.length || 0 }} tiket)
-        <span>{{ formatCurrency(store.totalAmount) }}</span>
+      <li class="list-group-item d-flex justify-content-between align-items-center px-0 txt-body">
+        <span class="text-muted">Biaya Pendaftaran - {{ store.event?.Title }} ({{ store.participants?.length || 0 }} tiket)</span>
+        <span class="fw-bold text-dark">{{ formatCurrency(store.totalAmount) }}</span>
       </li>
 
-      <li v-if="store.donationAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 text-success">
-        Infaq Dakwah Babussalam
-        <span>+ {{ formatCurrency(store.donationAmount) }}</span>
+      <li v-if="store.donationAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 txt-body text-success">
+        <span>Infaq Dakwah Babussalam</span>
+        <span class="fw-bold">+ {{ formatCurrency(store.donationAmount) }}</span>
       </li>
 
       <li v-if="store.discountAmount > 0"
-        class="list-group-item d-flex justify-content-between align-items-center px-0 text-danger">
-        Diskon ({{ store.voucherCode }})
-        <span>- {{ formatCurrency(store.discountAmount) }}</span>
+        class="list-group-item d-flex justify-content-between align-items-center px-0 txt-body text-danger">
+        <span>Diskon ({{ store.voucherCode }})</span>
+        <span class="fw-bold">- {{ formatCurrency(store.discountAmount) }}</span>
       </li>
 
-      <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light fw-bold">
-        TOTAL
-        <span>{{ formatCurrency(store.finalAmount) }}</span>
+      <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light rounded-3 mt-2 p-2">
+        <span class="txt-body fw-bold text-dark">TOTAL</span>
+        <span class="txt-subtitle fw-bold text-primary">{{ formatCurrency(store.finalAmount) }}</span>
       </li>
     </ul>
 
-    <div v-if="error" class="alert alert-danger small p-2 mt-3">
-      {{ error }}
+    <div v-if="error" class="alert alert-danger txt-caption fw-bold p-2 mt-3">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ error }}
     </div>
 
-    <h6 class="fw-bold mt-4 mb-2 small text-muted">DATA PESERTA</h6>
-    <div class="table-responsive mb-4 border rounded">
+    <h6 class="fw-bold mt-4 mb-2 txt-label text-muted">DATA PESERTA</h6>
+    <div class="table-responsive mb-4 border rounded-4 overflow-hidden">
       <table class="table table-sm mb-0">
         <thead class="bg-light">
           <tr>
-            <th class="ps-3">Nama</th>
-            <th>Gender</th>
-            <th>Usia</th>
+            <th class="ps-3 txt-caption fw-bold text-muted">Nama</th>
+            <th class="txt-caption fw-bold text-muted">Gender</th>
+            <th class="txt-caption fw-bold text-muted">Usia</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(p, idx) in store.participants" :key="idx">
-            <td class="ps-3">{{ p.Name }}</td>
-            <td>{{ p.Gender }}</td>
-            <td>{{ p.Age }}</td>
+            <td class="ps-3 txt-body fw-bold text-dark">{{ p.Name }}</td>
+            <td class="txt-body text-muted">{{ p.Gender }}</td>
+            <td class="txt-body text-muted">{{ p.Age }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="d-flex justify-content-between mt-4">
-      <button class="btn btn-secondary" @click="store.setStep('select')" :disabled="loading">
-        Kembali
+      <button class="btn btn-light border px-4 rounded-pill txt-body fw-bold text-muted" @click="store.setStep('select')" :disabled="loading">
+        <i class="bi bi-arrow-left me-1"></i> Kembali
       </button>
 
-      <button class="btn btn-primary" @click="handlePay" :disabled="loading">
+      <button class="btn btn-primary px-5 rounded-pill txt-body fw-bold shadow-sm" @click="handlePay" :disabled="loading">
         <span v-if="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-        {{ loading ? 'Memproses...' : 'Bayar' }}
+        {{ loading ? 'Memproses...' : 'Bayar Sekarang' }}
       </button>
     </div>
 
   </div>
-  <a href="https://wa.me/628123456789" target="_blank" class="btn whatsapp-fab">
-    <i class="bi bi-whatsapp me-1"></i> Whatsapp
+
+  <a href="https://wa.me/628123456789" target="_blank" class="btn btn-success whatsapp-fab rounded-pill shadow-sm px-3 txt-body fw-bold d-inline-flex align-items-center mt-4">
+    <i class="bi bi-whatsapp me-2 fs-5"></i> Bantuan
   </a>
 </template>
 

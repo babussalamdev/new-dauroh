@@ -1,20 +1,21 @@
 <template>
   <div>
     <div class="page-header mb-4">
-      <h1 class="page-title">Edit User</h1>
+      <h1 class="page-title txt-title">Edit User</h1>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none text-muted">Home</NuxtLink></li>
-          <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none text-muted">Manajemen User</NuxtLink></li>
-          <li class="breadcrumb-item active fw-medium text-dark" aria-current="page">Edit User</li>
+          <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+          <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none txt-caption text-muted">Manajemen User</NuxtLink></li>
+          <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Edit User</li>
         </ol>
       </nav>
     </div>
 
     <div class="card content-card border-0 shadow-sm rounded-4">
       <div class="card-header bg-white py-3 px-4 border-bottom">
-        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Formulir Edit User</h5>
+        <h5 class="mb-0 txt-subtitle text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Formulir Edit User</h5>
       </div>
+      
       <div class="card-body p-4">
         
         <div v-if="loading" class="text-center py-5">
@@ -24,32 +25,32 @@
         </div>
         
         <div v-else-if="isRootTarget" class="text-center py-5">
-          <i class="bi bi-shield-lock-fill text-danger" style="font-size: 3rem;"></i>
-          <h5 class="fw-bold mt-3 text-dark">Akses Ditolak</h5>
-          <p class="text-muted">Akun dengan otoritas Root tidak dapat diubah oleh siapapun melalui halaman ini.</p>
-          <NuxtLink to="/admin/users" class="btn btn-outline-secondary mt-2">Kembali ke Daftar User</NuxtLink>
+          <i class="bi bi-shield-lock-fill text-danger fs-1"></i>
+          <h5 class="txt-subtitle mt-3 text-dark">Akses Ditolak</h5>
+          <p class="text-muted txt-body">Akun dengan otoritas Root tidak dapat diubah oleh siapapun melalui halaman ini.</p>
+          <NuxtLink to="/admin/users" class="btn btn-outline-secondary mt-2 txt-body rounded-pill px-4 fw-medium">Kembali ke Daftar User</NuxtLink>
         </div>
 
         <form v-else @submit.prevent="handleSubmit">
           <div class="row g-3">
             <div class="col-md-6">
-              <label for="fullName" class="form-label small fw-bold text-muted">Nama Lengkap</label>
-              <input type="text" class="form-control bg-light border-0" id="fullName" v-model="form.name" required>
+              <label for="fullName" class="form-label txt-label text-secondary">Nama Lengkap</label>
+              <input type="text" class="form-control bg-light border-0 txt-body" id="fullName" v-model="form.name" required>
             </div>
 
             <div class="col-md-6">
-              <label for="email" class="form-label small fw-bold text-muted">Alamat Email (ID)</label>
-              <input type="text" class="form-control bg-light border-0" id="email" v-model="form.email" required disabled>
+              <label for="email" class="form-label txt-label text-secondary">Alamat Email (ID)</label>
+              <input type="text" class="form-control bg-light border-0 txt-body" id="email" v-model="form.email" required disabled>
             </div>
 
             <div class="col-md-6">
-              <label for="phone" class="form-label small fw-bold text-muted">No. Handphone</label>
-              <input type="text" class="form-control bg-light border-0" id="phone" v-model="form.phone_number" placeholder="08..." required>
+              <label for="phone" class="form-label txt-label text-secondary">No. Handphone</label>
+              <input type="text" class="form-control bg-light border-0 txt-body" id="phone" v-model="form.phone_number" placeholder="08..." required>
             </div>
 
             <div class="col-md-6">
-              <label for="role" class="form-label small fw-bold text-muted">Role (Hak Akses)</label>
-              <select id="role" class="form-select bg-light border-0" v-model="form.role" :disabled="!canEditRole" required>
+              <label for="role" class="form-label txt-label text-secondary">Role (Hak Akses)</label>
+              <select id="role" class="form-select bg-light border-0 txt-body" v-model="form.role" :disabled="!canEditRole" required>
                 <option v-for="roleOption in availableRoles" :key="roleOption.value" :value="roleOption.value">
                   {{ roleOption.label }}
                 </option>
@@ -57,17 +58,17 @@
                    {{ formatRoleName(form.role) }} (Tidak punya akses untuk mengubah role ini)
                 </option>
               </select>
-              <div v-if="!canEditRole" class="form-text text-danger small mt-1">
+              <div v-if="!canEditRole" class="form-text text-danger txt-caption mt-1 fw-medium">
                 <i class="bi bi-exclamation-circle me-1"></i> Level otoritas Anda (<strong>{{ formatRoleName(user?.role) }}</strong>) tidak mengizinkan perubahan role user.
               </div>
-              <div v-else class="form-text text-primary small mt-1">
+              <div v-else class="form-text text-primary txt-caption mt-1 fw-medium">
                 <i class="bi bi-info-circle me-1"></i> Pilihan role dibatasi sesuai tingkat otoritas Anda.
               </div>
             </div>
 
             <div class="col-12 mt-4">
               <div class="bg-light p-3 rounded-3 border">
-                <p class="text-muted small mb-0">
+                <p class="text-muted txt-caption mb-0">
                   <i class="bi bi-shield-check me-2 text-success"></i>
                   <strong>Catatan Keamanan:</strong> Fitur ubah password user saat ini dinonaktifkan. Gunakan tombol berlogo <i class="bi bi-key-fill text-warning"></i> pada tabel Manajemen User untuk melakukan <i>Force Reset Password</i>.
                 </p>
@@ -78,9 +79,10 @@
           <hr class="border-secondary border-opacity-25 my-4">
 
           <div class="d-flex justify-content-end gap-2">
-            <NuxtLink to="/admin/users" class="btn btn-light border px-4 fw-medium" :class="{ disabled: submitting }">Batal</NuxtLink>
-            <button type="submit" class="btn btn-primary px-4 fw-medium" :disabled="submitting || isRootTarget">
+            <NuxtLink to="/admin/users" class="btn btn-light border px-4 txt-body fw-bold rounded-pill" :class="{ disabled: submitting }">Batal</NuxtLink>
+            <button type="submit" class="btn btn-primary px-4 txt-body fw-bold rounded-pill" :disabled="submitting || isRootTarget">
               <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
+              <i v-else class="bi bi-floppy-fill me-1"></i>
               {{ submitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
             </button>
           </div>

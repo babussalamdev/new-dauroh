@@ -13,6 +13,7 @@ export default defineNuxtConfig({
     "bootstrap-icons/font/bootstrap-icons.css", // <--- TAMBAHIN BARIS INI (PENTING!)
     "@/assets/css/variables.scss",
     "@/assets/css/admin/tables.css",
+    "@/assets/css/typography.css",
   ],
 
   app: {

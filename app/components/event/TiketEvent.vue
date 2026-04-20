@@ -9,27 +9,29 @@
           <div class="text-decoration-none d-block h-100 position-relative"
             :class="{ 'card-disabled': getCardStatus(event).isDisabled }" style="cursor: pointer;"
             @click="handleCardClick(event)">
-            <div class="card event-card rounded-lg overflow-hidden h-100">
+            
+            <div class="card event-card rounded-4 border-0 shadow-sm overflow-hidden h-100">
               <div class="position-relative">
                 <NuxtImg :src="`${imgUrl}/${event.SK}/${event.Picture}.webp`" class="card-img-top"
                   :alt="event.Title" loading="lazy" format="webp" />
-                <span v-if="event.topOverlay" class="overlay-top">{{ event.topOverlay }}</span>
+                
+                <span v-if="event.topOverlay" class="overlay-top txt-caption fw-bold">{{ event.topOverlay }}</span>
 
-                <div v-if="getCardStatus(event).overlayText" class="status-overlay">
+                <div v-if="getCardStatus(event).overlayText" class="status-overlay txt-subtitle fw-bold">
                   {{ getCardStatus(event).overlayText }}
                 </div>
               </div>
               <div class="card-body d-flex flex-column p-3">
-                <h6 class="card-title fw-bold text-dark">{{ event.Title }}</h6>
-                <small class="text-muted mb-1">{{ event.date || event.genre }}</small>
+                <h6 class="card-title fw-bold text-dark txt-body mb-1">{{ event.Title }}</h6>
+                <p class="text-muted mb-3 txt-caption">{{ event.date || event.genre }}</p>
 
                 <div class="mt-auto d-flex flex-column flex-sm-row gap-2">
-                  <button class="btn btn-sm btn-outline-primary rounded-pill w-100"
+                  <button class="btn btn-sm btn-outline-primary rounded-pill w-100 txt-body fw-bold"
                     @click.stop="openDetailEvent(event)">
                     Detail
                   </button>
 
-                  <button class="btn btn-sm rounded-pill w-100" :class="getButtonState(event).cssClass"
+                  <button class="btn btn-sm rounded-pill w-100 txt-body fw-bold" :class="getButtonState(event).cssClass"
                     :disabled="getButtonState(event).disabled || loadingEventId === event.SK"
                     @click.stop="handleRegisterClick(event)">
                     <span v-if="loadingEventId === event.SK" class="spinner-border spinner-border-sm" role="status"

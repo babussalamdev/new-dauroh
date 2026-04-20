@@ -1,52 +1,57 @@
 <template>
-  <div class="card shadow-sm h-100">
-    <div class="card-header bg-white py-3">
-      <h5 class="mb-0">Informasi Profil</h5>
+  <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom-0 pt-4 px-4">
+      <h5 class="mb-0 txt-subtitle fw-bold text-dark">Informasi Profil</h5>
     </div>
-    <div class="card-body p-4 d-flex flex-column">
+    
+    <div class="card-body p-4 pt-2 d-flex flex-column">
       <form @submit.prevent="handleUpdateProfile" id="updateProfileForm" class="flex-grow-1">
+        
         <div class="mb-3">
-          <label for="fullName" class="form-label">Nama Lengkap</label>
-          <input type="text" id="fullName" v-model="profileForm.name" class="form-control" required>
+          <label for="fullName" class="form-label txt-label fw-bold text-secondary">Nama Lengkap</label>
+          <input type="text" id="fullName" v-model="profileForm.name" class="form-control txt-body" required>
         </div>
 
         <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          <input type="email" id="email" v-model="profileForm.email" class="form-control" required disabled>
-          <small class="text-muted">Email tidak dapat diubah.</small>
+          <label for="email" class="form-label txt-label fw-bold text-secondary">Email</label>
+          <input type="email" id="email" v-model="profileForm.email" class="form-control txt-body bg-light" required disabled>
+          <span class="text-muted txt-caption d-block mt-1">Email tidak dapat diubah.</span>
         </div>
 
         <div class="mb-3">
-          <label for="phoneNumber" class="form-label">No. Handphone (WhatsApp)</label>
-          <input type="text" id="phoneNumber" v-model="profileForm.phone_number" class="form-control"
+          <label for="phoneNumber" class="form-label txt-label fw-bold text-secondary">No. Handphone (WhatsApp)</label>
+          <input type="text" id="phoneNumber" v-model="profileForm.phone_number" class="form-control txt-body"
             placeholder="08..." required>
         </div>
 
         <div class="mb-3">
-          <label for="birthDate" class="form-label">Tanggal Lahir</label>
-          <input type="date" id="birthDate" v-model="profileForm.birth_date" class="form-control" required>
+          <label for="birthDate" class="form-label txt-label fw-bold text-secondary">Tanggal Lahir</label>
+          <input type="date" id="birthDate" v-model="profileForm.birth_date" class="form-control txt-body" required>
         </div>
 
         <div class="mb-3">
-          <label for="gender" class="form-label">Jenis Kelamin</label>
-          <select id="gender" v-model="profileForm.gender" class="form-select" required>
+          <label for="gender" class="form-label txt-label fw-bold text-secondary">Jenis Kelamin</label>
+          <select id="gender" v-model="profileForm.gender" class="form-select txt-body" required>
             <option value="" disabled>Pilih Gender</option>
             <option value="male">Ikhwan (Laki-laki)</option>
             <option value="female">Akhwat (Perempuan)</option>
           </select>
         </div>
 
-        <div v-if="profileError" class="alert alert-danger mt-3 small p-2">
-          {{ profileError }}
+        <div v-if="profileError" class="alert alert-danger mt-3 txt-caption fw-bold p-2 rounded-3 border-0">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ profileError }}
         </div>
+        
       </form>
-      <div class="mt-auto pt-3 text-end">
-        <button type="submit" form="updateProfileForm" class="btn btn-primary" :disabled="profileLoading">
-          <span v-if="profileLoading" class="spinner-border spinner-border-sm me-1" role="status"
+      
+      <div class="mt-auto pt-4 text-end border-top">
+        <button type="submit" form="updateProfileForm" class="btn btn-primary rounded-pill txt-body fw-bold px-4 shadow-sm" :disabled="profileLoading">
+          <span v-if="profileLoading" class="spinner-border spinner-border-sm me-2" role="status"
             aria-hidden="true"></span>
           {{ profileLoading ? 'Menyimpan...' : 'Simpan Info Profil' }}
         </button>
       </div>
+      
     </div>
   </div>
 </template>

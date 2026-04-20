@@ -8,24 +8,24 @@
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
               <div class="card-header bg-white border-0 py-3">
                 <div class="d-flex align-items-center justify-content-between">
-                  <h5 class="mb-0 fw-bold text-dark">
+                  <h5 class="mb-0 fw-bold text-dark txt-subtitle">
                     <i class="bi bi-calendar2-week me-2 text-primary"></i>Agenda Event
                   </h5>
                 </div>
 
                 <ul class="nav nav-pills mt-3 bg-light p-1 rounded-3 d-inline-flex">
                   <li class="nav-item">
-                    <button class="nav-link rounded-3 px-4 py-2" :class="{ active: activeTab === 'active' }"
+                    <button class="nav-link rounded-3 px-4 py-2 txt-body fw-bold" :class="{ active: activeTab === 'active' }"
                       @click="activeTab = 'active'">
                       Event Aktif
-                      <span class="ms-1 badge"
+                      <span class="ms-1 badge txt-caption"
                         :class="activeTab === 'active' ? 'bg-white text-primary' : 'bg-secondary text-white'">
                         {{ activeEvent.length }}
                       </span>
                     </button>
                   </li>
                   <li class="nav-item">
-                    <button class="nav-link rounded-3 px-4 py-2" :class="{ active: activeTab === 'completed' }"
+                    <button class="nav-link rounded-3 px-4 py-2 txt-body fw-bold" :class="{ active: activeTab === 'completed' }"
                       @click="activeTab = 'completed'">
                       Sudah Selesai
                     </button>
@@ -47,26 +47,25 @@
                             <div v-else
                               class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted"
                               style="width: 100px; height: 100px;">
-                              <i class="bi bi-image fs-3"></i>
+                              <i class="bi bi-image display-6 opacity-50"></i>
                             </div>
                           </div>
                           <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
                             <div>
-                              <h6 class="fw-bold mb-1 text-truncate-2 small">{{ ticket.event.Title }}</h6>
-                              <p class="text-muted mb-2 small-8"><i class="bi bi-geo-alt me-1"></i>{{ ticket.event.Place
-                              }}</p>
+                              <h6 class="fw-bold mb-1 text-truncate-2 txt-body">{{ ticket.event.Title }}</h6>
+                              <p class="text-muted mb-2 txt-caption"><i class="bi bi-geo-alt me-1"></i>{{ ticket.event.Place }}</p>
                             </div>
                             <div class="d-flex align-items-center justify-content-between mt-auto">
                               <span v-if="getSmartStatus(ticket) === 'PENDING'"
-                                class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle small-8">
+                                class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle txt-caption fw-bold">
                                 Belum Bayar
                               </span>
                               <span v-else
-                                class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle small-8">
+                                class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle txt-caption fw-bold">
                                 Terdaftar
                               </span>
                               <NuxtLink :to="`/event/${ticket.event.SK}`"
-                                class="btn btn-link btn-sm p-0 text-decoration-none small-8 fw-bold">Detail</NuxtLink>
+                                class="btn btn-link btn-sm p-0 text-decoration-none txt-caption fw-bold">Detail</NuxtLink>
                             </div>
                           </div>
                         </div>
@@ -74,8 +73,8 @@
                     </div>
                   </div>
                   <div v-else class="text-center py-5">
-                    <i class="bi bi-calendar-x fs-1 text-light-emphasis"></i>
-                    <p class="text-muted mt-2">Belum ada event aktif yang diikuti.</p>
+                    <i class="bi bi-calendar-x display-4 text-light-emphasis"></i>
+                    <p class="text-muted mt-3 txt-body fw-bold">Belum ada event aktif yang diikuti.</p>
                   </div>
                 </div>
 
@@ -84,15 +83,14 @@
                     <div v-for="(ticket, index) in completedEvent" :key="'comp-' + index" class="col-md-6 col-lg-4">
                       <div class="card h-100 border rounded-4 opacity-75 grayscale bg-light">
                         <div class="p-3">
-                          <h6 class="fw-bold mb-1 text-truncate">{{ ticket.event.Title }}</h6>
-                          <p class="text-muted mb-0 small"><i class="bi bi-check2-all me-1"></i>Selesai pada {{
-                            formatDate(ticket.event.Date) }}</p>
+                          <h6 class="fw-bold mb-1 text-truncate txt-body">{{ ticket.event.Title }}</h6>
+                          <p class="text-muted mb-0 txt-caption"><i class="bi bi-check2-all me-1"></i>Selesai pada {{ formatDate(ticket.event.Date) }}</p>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div v-else class="text-center py-5">
-                    <p class="text-muted small">Riwayat event belum tersedia.</p>
+                    <p class="text-muted txt-body fw-bold">Riwayat event belum tersedia.</p>
                   </div>
                 </div>
               </div>
@@ -100,10 +98,10 @@
             
             <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
               <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
-                  <div class="alert alert-info">
+                <h5 class="mb-0 fw-bold text-dark txt-subtitle"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
+                  <div class="alert alert-info mt-3">
                     <strong>Data Local completedEvent:</strong>
-                    <pre style="max-height: 300px; overflow-y: auto; font-size: 12px;">{{ completedEvent }}</pre>
+                    <pre class="txt-caption mt-2" style="max-height: 300px; overflow-y: auto;">{{ completedEvent }}</pre>
                   </div>
               </div>
               
@@ -112,51 +110,49 @@
                   <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                       <tr>
-                        <th class="border-0 small text-uppercase fw-bold text-muted">Transaksi</th>
-                        <th class="border-0 small text-uppercase fw-bold text-muted">Detail Event</th>
-                        <th class="border-0 small text-uppercase fw-bold text-muted text-center">Tiket</th>
+                        <th class="border-0 txt-label text-uppercase fw-bold text-muted">Transaksi</th>
+                        <th class="border-0 txt-label text-uppercase fw-bold text-muted">Detail Event</th>
+                        <th class="border-0 txt-label text-uppercase fw-bold text-muted text-center">Tiket</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="(ticket, index) in upcomingTickets" :key="'row-' + index">
                         <td class="ps-4">
                           <div class="d-flex flex-column">
-                            <span class="fw-bold text-primary small">#{{ ticket.SK.slice(-6).toUpperCase() }}</span>
+                            <span class="fw-bold text-primary txt-body">#{{ ticket.SK.slice(-6).toUpperCase() }}</span>
                             <span v-if="getSmartStatus(ticket) === 'PENDING'"
-                              class="text-warning small-8 fw-medium">Menunggu Verifikasi</span>
-                            <span v-else class="text-success small-8 fw-medium">Pembayaran Lunas</span>
+                              class="text-warning txt-caption fw-bold">Menunggu Verifikasi</span>
+                            <span v-else class="text-success txt-caption fw-bold">Pembayaran Lunas</span>
                           </div>
                         </td>
                         <td>
-                          <span class="fw-bold d-block text-dark">{{ ticket.event.Title }}</span>
-                          <span class="text-muted small-8">{{ Array.isArray(ticket.participants) ? ticket.participants.length : (ticket.participants || 0) }} Peserta • {{
-                            formatCurrency(ticket.amount) }}</span>
+                          <span class="fw-bold d-block text-dark txt-body mb-1">{{ ticket.event.Title }}</span>
+                          <span class="text-muted txt-caption">{{ Array.isArray(ticket.participants) ? ticket.participants.length : (ticket.participants || 0) }} Peserta • {{ formatCurrency(ticket.amount) }}</span>
                         </td>
                         <td class="text-center pe-4">
                           <button
                           v-if="getSmartStatus(ticket) === 'PAID' || ['SUCCESSFUL', 'SUCCESS'].includes((ticket.Status || ticket.status || '').toUpperCase())"
-                          class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm"
+                          class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm txt-caption fw-bold"
                           @click="openDetailParticipant(ticket)">
                           <i class="bi bi-people me-2"></i>Lihat Peserta
                         </button>
 
                           <span v-else-if="getSmartStatus(ticket) === 'PENDING'"
-                            class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
+                            class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill txt-caption fw-bold">
                             <i class="bi bi-hourglass-split me-1"></i>Belum Lunas
                           </span>
 
                           <span v-else
-                            class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
+                            class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill txt-caption fw-bold">
                             Tidak Valid
                           </span>
-
                         </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 <div v-else class="text-center py-5">
-                  <p class="text-muted">Belum ada riwayat transaksi.</p>
+                  <p class="text-muted txt-body fw-bold">Belum ada riwayat transaksi.</p>
                 </div>
               </div>
             </div>
@@ -165,6 +161,7 @@
         </div>
       </div>
     </div>
+    
     <HistoryDetailModal 
       :show="showDetailParticipant" 
       :ticket="selectedTicket" 

@@ -2,61 +2,67 @@
   <div>
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none text-muted">Manajemen User</NuxtLink></li>
-        <li class="breadcrumb-item active fw-medium text-dark" aria-current="page">Tambah Baru</li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none txt-caption text-muted">Manajemen User</NuxtLink></li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Tambah Baru</li>
       </ol>
     </nav>
 
     <div class="card content-card border-0 shadow-sm rounded-4">
       <div class="card-header bg-white py-3 px-4 border-bottom">
-        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-person-plus-fill text-primary me-2"></i>Formulir User Baru</h5>
+        <h5 class="mb-0 txt-title text-dark"><i class="bi bi-person-plus-fill text-primary me-2"></i>Formulir User Baru</h5>
       </div>
+      
       <div class="card-body p-4">
         <form @submit.prevent="handleSubmit">
           <div class="row g-3">
+            
             <div class="col-md-6">
-              <label for="fullName" class="form-label small fw-bold text-muted">Nama Lengkap</label>
-              <input type="text" class="form-control bg-light border-0" id="fullName" v-model="form.name" required>
+              <label for="fullName" class="form-label txt-label text-secondary">Nama Lengkap</label>
+              <input type="text" class="form-control bg-light border-0 txt-body" id="fullName" v-model="form.name" required>
             </div>
+            
             <div class="col-md-6">
-              <label for="email" class="form-label small fw-bold text-muted">Alamat Email</label>
-              <input type="email" class="form-control bg-light border-0" id="email" v-model="form.email" required>
-            </div>
-
-            <div class="col-md-6">
-              <label for="username" class="form-label small fw-bold text-muted">Username</label>
-              <input type="text" class="form-control bg-light border-0" id="username" v-model="form.username" required placeholder="Username untuk login">
-            </div>
-            <div class="col-md-6">
-              <label for="phone" class="form-label small fw-bold text-muted">Nomor Telepon</label>
-              <input type="tel" class="form-control bg-light border-0" id="phone" v-model="form.phone_number" required placeholder="08...">
+              <label for="email" class="form-label txt-label text-secondary">Alamat Email</label>
+              <input type="email" class="form-control bg-light border-0 txt-body" id="email" v-model="form.email" required>
             </div>
 
             <div class="col-md-6">
-              <label for="password" class="form-label small fw-bold text-muted">Password</label>
-              <input type="password" class="form-control bg-light border-0" id="password" v-model="form.password" required minlength="6">
+              <label for="username" class="form-label txt-label text-secondary">Username</label>
+              <input type="text" class="form-control bg-light border-0 txt-body" id="username" v-model="form.username" required placeholder="Username untuk login">
+            </div>
+            
+            <div class="col-md-6">
+              <label for="phone" class="form-label txt-label text-secondary">Nomor Telepon</label>
+              <input type="tel" class="form-control bg-light border-0 txt-body" id="phone" v-model="form.phone_number" required placeholder="08...">
             </div>
 
             <div class="col-md-6">
-              <label for="role" class="form-label small fw-bold text-muted">Role (Hak Akses)</label>
-              <select id="role" class="form-select bg-light border-0" v-model="form.role" required>
+              <label for="password" class="form-label txt-label text-secondary">Password</label>
+              <input type="password" class="form-control bg-light border-0 txt-body" id="password" v-model="form.password" required minlength="6">
+            </div>
+
+            <div class="col-md-6">
+              <label for="role" class="form-label txt-label text-secondary">Role (Hak Akses)</label>
+              <select id="role" class="form-select bg-light border-0 txt-body" v-model="form.role" required>
                 <option v-for="roleOption in availableRoles" :key="roleOption.value" :value="roleOption.value">
                   {{ roleOption.label }}
                 </option>
               </select>
-              <div class="form-text text-primary small mt-1">
+              <div class="form-text text-primary txt-caption mt-1">
                 <i class="bi bi-info-circle me-1"></i> Pilihan role disesuaikan dengan tingkat otoritas Anda (<strong>{{ formatRoleName(user?.role) }}</strong>).
               </div>
             </div>
+            
           </div>
           
           <hr class="border-secondary border-opacity-25 my-4">
 
           <div class="d-flex justify-content-end gap-2">
-            <NuxtLink to="/admin/users" class="btn btn-light border px-4 fw-medium" :class="{ disabled: store.loading }">Batal</NuxtLink>
-            <button type="submit" class="btn btn-primary px-4 fw-medium" :disabled="store.loading">
+            <NuxtLink to="/admin/users" class="btn btn-light border px-4 txt-body fw-bold rounded-pill" :class="{ disabled: store.loading }">Batal</NuxtLink>
+            <button type="submit" class="btn btn-primary px-4 txt-body fw-bold rounded-pill" :disabled="store.loading">
               <span v-if="store.loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              <i v-else class="bi bi-floppy-fill me-1"></i>
               {{ store.loading ? 'Menyimpan...' : 'Simpan User' }}
             </button>
           </div>

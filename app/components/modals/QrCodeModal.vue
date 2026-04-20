@@ -1,25 +1,25 @@
 <template>
-  <div v-if="show" class="modal fade show d-block" tabindex="-1" @click.self="close">
+  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="close">
     <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
         
         <div class="modal-header text-white border-0 py-3 px-4 d-flex justify-content-between align-items-center" 
              :style="{ backgroundColor: '#' + qrColor }">
           <div>
-            <h6 class="modal-title fw-bold mb-0">E-Ticket Peserta</h6>
-            <small class="opacity-75 text-truncate d-block" style="max-width: 180px; font-size: 0.7rem;">
+            <h6 class="modal-title txt-subtitle fw-bold mb-0">E-Ticket Peserta</h6>
+            <span class="opacity-75 text-truncate d-block txt-caption mt-1" style="max-width: 180px;">
               {{ ticket?.event?.Title || ticket?.Title || 'Event Dauroh' }}
-            </small>
+            </span>
           </div>
           <button type="button" class="btn-close btn-close-white shadow-none" @click="close"></button>
         </div>
 
         <div class="modal-body p-4 text-center bg-light">
           
-          <h5 class="fw-bold text-dark text-capitalize mb-1">
+          <h5 class="txt-title fw-bold text-dark text-capitalize mb-1">
             {{ participantName }}
           </h5>
-          <div class="small text-muted font-monospace mb-4">
+          <div class="txt-caption text-muted font-monospace mb-4">
             SK: <span class="fw-bold">{{ participantSK }}</span>
           </div>
 
@@ -28,15 +28,15 @@
             <img :src="qrUrl" alt="QR Code" class="img-fluid rounded-3" style="width: 220px; height: 220px; object-fit: contain;">
           </div>
 
-          <div class="alert alert-warning p-2 d-flex align-items-center justify-content-center gap-2 small mb-0 rounded-3">
-            <i class="bi bi-brightness-high-fill"></i>
+          <div class="alert alert-warning p-2 d-flex align-items-center justify-content-center gap-2 txt-caption fw-bold mb-0 rounded-3 border-0 shadow-sm">
+            <i class="bi bi-brightness-high-fill fs-6"></i>
             <span>Terangkan layar HP Anda saat di-scan</span>
           </div>
 
         </div>
 
         <div class="modal-footer border-0 p-3 bg-white d-flex justify-content-center">
-          <button class="btn w-100 rounded-pill fw-bold text-white shadow-sm" 
+          <button class="btn w-100 rounded-pill txt-body fw-bold text-white shadow-sm py-2" 
                   :style="{ backgroundColor: '#' + qrColor }" 
                   @click="downloadQr" 
                   :disabled="isDownloading">

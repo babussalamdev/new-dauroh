@@ -1,7 +1,7 @@
 <template>
    <div class="bg-white min-vh-100 pb-5 font-blog d-flex flex-column">
 
-      <div v-if=isLoadingDetail
+      <div v-if="isLoadingDetail"
          class="container py-5 text-center d-flex align-items-center justify-content-center flex-grow-1">
          <div>
             <div class="spinner-border text-dark mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
@@ -11,17 +11,17 @@
       <div v-else-if="!event"
          class="container py-5 text-center d-flex align-items-center justify-content-center flex-grow-1">
          <div>
-            <h3 class="fw-bold text-dark mb-3">Konten Tidak Ditemukan</h3>
-            <NuxtLink to="/" class="btn btn-dark rounded-pill px-5 fw-bold">Kembali ke Home</NuxtLink>
+            <h3 class="fw-bold text-dark mb-3 txt-subtitle">Konten Tidak Ditemukan</h3>
+            <NuxtLink to="/" class="btn btn-dark rounded-pill px-5 fw-bold txt-body shadow-sm">Kembali ke Home</NuxtLink>
          </div>
       </div>
 
       <div v-else>
          <div class="container pt-5 pb-4 text-center" style="max-width: 900px;">
-            <h1 class="display-5 fw-bold text-dark mb-3 lh-sm">{{ event.Title }}</h1>
+            <h1 class="display-5 fw-bold text-dark mb-3 lh-sm txt-title">{{ event.Title }}</h1>
 
             <div
-               class="d-flex justify-content-center align-items-center gap-3 text-secondary small text-uppercase ls-1 flex-wrap">
+               class="d-flex justify-content-center align-items-center gap-3 text-secondary txt-caption fw-bold text-uppercase ls-1 flex-wrap">
                <span><i class="bi bi-calendar3 me-1"></i> {{ formatDate(event.Date) }}</span>
                <span class="text-light-gray d-none d-sm-inline">|</span>
                <span><i class="bi bi-geo-alt me-1"></i> {{ event.Place }}</span>
@@ -40,16 +40,16 @@
                         <div v-else
                            class="w-100 h-100 d-flex align-items-center justify-content-center text-muted py-5">
                            <div class="text-center">
-                              <i class="bi bi-image fs-1 opacity-25"></i>
-                              <p class="small m-0 mt-2">Tidak ada gambar</p>
+                              <i class="bi bi-image display-1 opacity-25"></i>
+                              <p class="txt-caption fw-bold m-0 mt-2">Tidak ada gambar</p>
                            </div>
                         </div>
                      </div>
                   </div>
 
-                  <article class="blog-body ql-editor px-md-2">
+                  <article class="blog-body ql-editor px-md-2 txt-body text-dark">
                      <div v-if="event.Description" v-html="event.Description"></div>
-                     <p v-else class="text-muted fst-italic text-center py-5 bg-light rounded-3">
+                     <p v-else class="text-muted fst-italic text-center py-5 bg-light rounded-3 txt-body">
                         Belum ada deskripsi lengkap untuk event ini.
                      </p>
                   </article>
@@ -60,11 +60,11 @@
 
                      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
                         <div class="card-body p-4 pt-5 text-center">
-                           <p class="text-muted x-small text-uppercase fw-bold mb-1 ls-1">Harga Tiket</p>
-                           <h3 class="fw-bold text-primary mb-4">{{ formatCurrency(event.Price) }}</h3>
+                           <p class="text-muted txt-caption text-uppercase fw-bold mb-1 ls-1">Harga Tiket</p>
+                           <h3 class="fw-bold text-primary mb-4 txt-title fs-3">{{ formatCurrency(event.Price) }}</h3>
 
                            <button
-                              class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm mb-3 transition-transform d-flex align-items-center justify-content-center gap-2"
+                              class="btn btn-dark w-100 rounded-pill py-3 fw-bold txt-body shadow-sm mb-3 transition-transform d-flex align-items-center justify-content-center gap-2"
                               :disabled="!registrationStatus(event).canRegister || isLoadingCheck"
                               @click="handleRegisterClick">
                               <span v-if="isLoadingCheck" class="spinner-border spinner-border-sm" role="status"
@@ -73,30 +73,30 @@
                            </button>
 
                            <div v-if="!registrationStatus(event).canRegister"
-                              class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis x-small py-2 mb-0 rounded-3">
+                              class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis txt-caption fw-bold py-2 mb-0 rounded-3">
                               <i class="bi bi-info-circle me-1"></i> {{ registrationStatus(event).message }}
                            </div>
 
                            <span
-                              class="badge bg-light text-dark border px-3 py-2 rounded-pill text-uppercase x-small fw-bold shadow-sm mt-3">
+                              class="badge bg-light text-dark border px-3 py-2 rounded-pill text-uppercase txt-caption fw-bold shadow-sm mt-3">
                               {{ getGenderLabel(event.Gender) }}
                            </span>
                         </div>
                         
                         <div v-if="event.Whatsapp" class="card-footer bg-light p-3 text-center border-0">
-                           <p class="mb-2 text-muted x-small fw-medium">Ada kendala pendaftaran?</p>
-                           <a :href="`https://wa.me/${event.Whatsapp}`" target="_blank" class="btn btn-outline-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                           <p class="mb-2 text-muted txt-caption fw-bold">Ada kendala pendaftaran?</p>
+                           <a :href="`https://wa.me/${event.Whatsapp}`" target="_blank" class="btn btn-outline-success w-100 rounded-pill fw-bold txt-body py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
                               <i class="bi bi-whatsapp"></i> Hubungi Panitia
                            </a>
                         </div>
-                        <div v-else class="card-footer bg-light p-3 text-center border-0 x-small text-muted">
-                           Ada kendala? <a href="#" class="text-dark fw-bold text-decoration-none">Hubungi Admin</a>
+                        <div v-else class="card-footer bg-light p-3 text-center border-0 txt-caption text-muted">
+                           Ada kendala? <a href="#" class="text-dark fw-bold text-decoration-none txt-caption">Hubungi Admin</a>
                         </div>
                      </div>
 
                      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
                         <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                           <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                           <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
                               <i class="bi bi-pie-chart-fill text-primary"></i> Sisa Kuota
                            </h6>
                         </div>
@@ -104,7 +104,7 @@
 
                            <div v-if="isNonQuota(event)" class="text-center py-2">
                               <span
-                                 class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                                 class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill txt-body fw-bold">
                                  <i class="bi bi-infinity me-1"></i> Tanpa Batas
                               </span>
                            </div>
@@ -112,24 +112,24 @@
                            <div v-else class="d-flex flex-column gap-3">
                               <div v-if="showIkhwan(event)"
                                  class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-primary">
-                                 <span class="small fw-bold text-secondary ps-1">Ikhwan</span>
-                                 <span class="fw-bold text-dark">
+                                 <span class="txt-caption fw-bold text-secondary ps-1">Ikhwan</span>
+                                 <span class="fw-bold text-dark txt-body">
                                     {{ formatQuota(getRemaining(event.Quota_Ikhwan, event.Sold_Ikhwan)) }}
                                  </span>
                               </div>
 
                               <div v-if="showAkhwat(event)"
                                  class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-danger">
-                                 <span class="small fw-bold text-secondary ps-1">Akhwat</span>
-                                 <span class="fw-bold text-dark">
+                                 <span class="txt-caption fw-bold text-secondary ps-1">Akhwat</span>
+                                 <span class="fw-bold text-dark txt-body">
                                     {{ formatQuota(getRemaining(event.Quota_Akhwat, event.Sold_Akhwat)) }}
                                  </span>
                               </div>
 
                               <div v-if="showTotal(event) && !showIkhwan(event) && !showAkhwat(event)"
                                  class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
-                                 <span class="small fw-bold text-secondary">Tiket Tersedia</span>
-                                 <span class="fw-bold text-dark">
+                                 <span class="txt-caption fw-bold text-secondary">Tiket Tersedia</span>
+                                 <span class="fw-bold text-dark txt-body">
                                     {{ formatQuota(getRemaining(event.Quota_Total, event.Sold_Total)) }}
                                  </span>
                               </div>
@@ -139,24 +139,24 @@
 
                      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
                         <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                           <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                           <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
                               <i class="bi bi-info-circle-fill text-primary"></i> Detail Event
                            </h6>
                         </div>
                         <div class="card-body p-4">
-                           <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small text-secondary">
+                           <ul class="list-unstyled mb-0 d-flex flex-column gap-3 txt-body text-secondary">
                               <li class="d-flex justify-content-between border-bottom pb-2">
-                                 <span>Tanggal</span>
-                                 <span class="fw-bold text-dark">{{ formatDate(event.Date) }}</span>
+                                 <span class="txt-body">Tanggal</span>
+                                 <span class="fw-bold text-dark txt-body">{{ formatDate(event.Date) }}</span>
                               </li>
                               <li class="d-flex justify-content-between border-bottom pb-2">
-                                 <span>Jam</span>
-                                 <span class="fw-bold text-dark">{{ getTimeRange(event.Date) }}</span>
+                                 <span class="txt-body">Jam</span>
+                                 <span class="fw-bold text-dark txt-body">{{ getTimeRange(event.Date) }}</span>
                               </li>
 
                               <li class="d-flex justify-content-between">
-                                 <span>Total Kapasitas</span>
-                                 <span class="fw-bold text-dark text-end" style="max-width: 60%;">
+                                 <span class="txt-body">Total Kapasitas</span>
+                                 <span class="fw-bold text-dark text-end txt-body" style="max-width: 60%;">
                                     {{ totalQuotaDisplay(event) }}
                                  </span>
                               </li>

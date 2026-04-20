@@ -5,26 +5,26 @@
         <div class="auth-content">
           <div class="text-center mb-4">
             <img src="~/assets/img/Logo-Mahad.png" alt="Logo Event" style="height: 60px;" class="mb-3">
-            <h1 class="auth-title">Admin <span class="text-primary">SignIn</span></h1>
-            <p class="text-muted small">Silakan masuk untuk melanjutkan</p>
+            <h1 class="auth-title txt-title">Admin <span class="text-primary">SignIn</span></h1>
+            <p class="text-muted txt-caption">Silakan masuk untuk melanjutkan</p>
           </div>
 
-          <div v-if="errorMessage" class="alert alert-danger small py-2" role="alert">
-            {{ errorMessage }}
+          <div v-if="errorMessage" class="alert alert-danger txt-caption py-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ errorMessage }}
           </div>
 
           <form @submit.prevent="handleLogin">
             <div class="mb-3">
-              <label for="username" class="form-label">Email/Username</label>
+              <label for="username" class="form-label txt-label text-secondary">Email/Username</label>
               <input type="text" id="username" v-model="form.email" placeholder="Masukkan username atau email"
-                class="form-control form-control-lg" :disabled="loading" autocomplete="username" required />
+                class="form-control form-control-lg txt-body" :disabled="loading" autocomplete="username" required />
             </div>
 
             <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
+              <label for="password" class="form-label txt-label text-secondary">Password</label>
               <div class="password-wrapper">
                 <input :type="showPassword ? 'text' : 'password'" v-model="form.password" id="password"
-                  placeholder="Masukkan password" class="form-control form-control-lg" :disabled="loading" autocomplete="current-password"  required />
+                  placeholder="Masukkan password" class="form-control form-control-lg txt-body" :disabled="loading" autocomplete="current-password"  required />
                 <span @click="togglePasswordVisibility" class="password-toggle-icon">
                   <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                     class="bi bi-eye-fill" viewBox="0 0 16 16">
@@ -44,19 +44,19 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-              <a href="#!" class="text-decoration-none small">Lupa password?</a>
+              <a href="#!" class="text-decoration-none txt-caption fw-medium">Lupa password?</a>
             </div>
 
             <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
+              <button type="submit" class="btn btn-primary btn-lg txt-body fw-bold rounded-pill" :disabled="loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 {{ loading ? 'Sedang Masuk...' : 'Login Admin' }}
               </button>
             </div>
 
             <div class="text-center mt-4">
-              <NuxtLink to="/" class="d-block text-decoration-none">
-                Kembali ke Beranda
+              <NuxtLink to="/" class="d-block text-decoration-none txt-caption text-muted fw-medium">
+                <i class="bi bi-arrow-left me-1"></i> Kembali ke Beranda
               </NuxtLink>
             </div>
           </form>
