@@ -12,14 +12,19 @@
       
       <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column gap-3">
         
-        <div class="d-flex justify-content-between align-items-center w-100">
-          <h5 class="mb-0 txt-title text-truncate">
-            <i class="bi bi-people-fill text-primary me-2"></i>Manajemen User
-          </h5>
-          <NuxtLink to="/admin/users/create" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm text-nowrap txt-body fw-medium">
-            <i class="bi bi-plus-lg me-1"></i> Tambah User
-          </NuxtLink>
-        </div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 w-100">
+  
+  <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Manajemen User</h5>
+  </div>
+
+  <div class="d-flex flex-shrink-0 flex-wrap">
+    <NuxtLink to="/admin/users/create" class="btn btn-primary rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium">
+      Tambah User
+    </NuxtLink>
+  </div>
+
+</div>
 
         <div class="d-flex justify-content-between align-items-center gap-2 w-100">
           
@@ -43,7 +48,7 @@
               <li><h6 class="dropdown-header txt-label">Kategori Role</h6></li>
               <li>
                 <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'all' }" href="#" @click.prevent="changeType('all')">
-                  <i class="bi bi-list-ul me-2"></i>Semua User
+                  <i class="bi bi-list-ul me-2"></i>Semua
                 </a>
               </li>
               <li>
@@ -196,7 +201,7 @@ const { $apiBase } = useNuxtApp() as any;
 // --- Permission Check ---
 const canManageUsers = computed(() => {
   const myRole = (user.value?.role || user.value?.Role || '').toLowerCase();
-  const allowedRoles = ['root', 'super role', 'super_role', 'admin'];
+  const allowedRoles = ['root', 'admin']; 
   return allowedRoles.includes(myRole);
 });
 
@@ -206,7 +211,7 @@ const activeType = computed(() => (route.query.type as string) || 'all');
 const activeTypeLabel = computed(() => {
   if (activeType.value === 'admin') return 'Data Admin';
   if (activeType.value === 'client') return 'Data Client';
-  return 'Semua User';
+  return 'Semua';
 });
 
 // 🟢 FUNGSI BARU: Buat ngubah tab tanpa ngereload web (tapi update URL)
@@ -237,12 +242,10 @@ const getRoleBadge = (roleStr?: string) => {
   
   switch (role) {
     case 'root': return 'bg-dark text-white border-dark';
-    case 'super role': 
-    case 'super_role': return 'bg-secondary bg-opacity-10 text-dark border-secondary border-opacity-25';
     case 'admin': return 'bg-info bg-opacity-10 text-info border-info border-opacity-25';
     case 'bendahara': return 'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25';
     case 'registrasi': return 'bg-teal bg-opacity-10 text-teal border-teal border-opacity-25';
-    case 'user': return 'bg-primary bg-opacity-10 text-primary border-primary border-opacity-25';             
+    case 'user': return 'bg-primary bg-opacity-10 text-primary border-primary border-opacity-25';            
     default: return 'bg-light text-dark border';
   }
 };

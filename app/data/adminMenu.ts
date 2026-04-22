@@ -12,7 +12,7 @@ interface DropdownMenu {
   items: MenuItem[];
 }
 
-// 🟢 MANAJEMEN USER DIPINDAH KE SINI BIAR JADI MENU TUNGGAL
+
 export const mainMenuItems: MenuItem[] = [
   { to: '/admin', icon: 'bi-speedometer2', text: 'Dashboard' },
   { to: '/admin/users', icon: 'bi-people-fill', text: 'Manajemen User' }
@@ -38,7 +38,7 @@ export const dropdownMenuItems: DropdownMenu[] = [
       { to: '/admin/artikel', text: 'Artikel' }
     ]
   },
-  // 🟢 MENU COLLAPSE USER UDAH DIHAPUS DARI SINI
+  
   {
     id: 'collapseFinance',
     icon: 'bi-cash-coin',

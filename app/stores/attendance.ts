@@ -1,30 +1,21 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useNuxtApp } from '#app';
+import { useAuth } from '~/composables/useAuth';
+import { useGlobalEventStore } from '~/stores/globalEvent';
 import type { AttendanceParticipant } from '~/types/attendance';
-import type { Event } from '~/types/event';
 
 export const useAttendanceStore = defineStore('attendance', () => {
 
   // --- STATE ---
-  const events = ref<Event[]>([]); 
-  const selectedEventSK = ref(""); 
   const participants = ref<AttendanceParticipant[]>([]); 
   const loading = ref(false);
 
   // --- ACTIONS ---
-  async function fetchEvents() {
-    try {
-      const { $apiBase } = useNuxtApp() as any;
-      const res = await $apiBase.get('/get-default?type=event');
-      const data = res.data?.event || res.data;
-      events.value = Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error("Gagal fetch events:", error);
-    }
-  }
   async function fetchAttendanceData(statusType: 'present' | 'not-present' = 'present') {
-    if (!selectedEventSK.value) return; 
+    const globalStore = useGlobalEventStore(); 
+
+    if (!globalStore.activeEventSK) return; 
     
     loading.value = true;
     participants.value = [];
@@ -34,7 +25,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
       const res = await $apiBase.get('/get-attendance', {
         params: {
           type: statusType,
-          sk: selectedEventSK.value
+          sk: globalStore.activeEventSK
         }
       });
 
@@ -56,12 +47,55 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
+  // Fungsi untuk check-in Manual (Admin)
+  async function markManualAttendance(pk: string, sk: string) {
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const { accessToken } = useAuth();
+
+      const payload = {
+        AccessToken: accessToken.value,
+        PK: pk,
+        SK: sk
+      };
+
+      await $apiBase.put('/update-attendance?type=admin', payload);
+
+      // Auto-hapus peserta dari state jika saat ini lagi buka tab "not-present"
+      participants.value = participants.value.filter(p => p.ticketId !== sk);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Gagal check-in manual:", error);
+      return { success: false, message: error.response?.data?.message || 'Gagal mengubah status.' };
+    }
+  }
+
+  async function markScanAttendance(pk: string, sk: string) {
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const { accessToken } = useAuth();
+
+      const payload = {
+        AccessToken: accessToken.value,
+        PK: pk,
+        SK: sk
+      };
+
+      await $apiBase.put('/update-attendance?type=scan', payload);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Gagal scan tiket:", error);
+      return { success: false, message: error.response?.data?.message || 'Tiket gagal dipindai.' };
+    }
+  }
+
   return {
-    events,
-    selectedEventSK,
     participants,
     loading,
-    fetchEvents,
-    fetchAttendanceData
+    fetchAttendanceData,
+    markManualAttendance,
+    markScanAttendance   
   };
 });

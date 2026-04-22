@@ -1,13 +1,18 @@
 <template>
   <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center bg-white p-3 px-md-4 py-md-3 border-bottom">
-      <h5 class="mb-0 txt-title fw-bold text-dark">
-        <i class="bi bi-newspaper text-primary me-2"></i>Manajemen Informasi
-      </h5>
-      <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold txt-body shadow-sm" @click="navigateToAdd">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Informasi
-      </button>
-    </div>
+    <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+  
+  <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Manajemen Informasi</h5>
+  </div>
+
+  <div class="d-flex flex-shrink-0 flex-wrap">
+    <button class="btn btn-primary rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium" @click="navigateToAdd">
+      Tambah Informasi
+    </button>
+  </div>
+
+</div>
     
     <div class="card-body p-0">
       <div class="table-responsive">

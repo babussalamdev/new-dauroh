@@ -8,152 +8,153 @@
         <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Log Kehadiran</li>
       </ol>
     </nav>
-
-    <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
-      
-      <div class="card-header d-flex flex-column flex-xl-row justify-content-between align-items-xl-center bg-white p-3 px-md-4 py-md-3 border-bottom gap-3">
-        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100">
-          
-          <h5 class="mb-0 txt-title text-nowrap">
-            <i class="bi bi-person-check-fill text-primary me-2"></i>Log Kehadiran
-          </h5>
-          
-          <select class="form-select form-select-sm shadow-sm rounded px-3 py-1 txt-body" style="max-width: 400px; border-color: #198754;"
-            v-model="store.selectedEventSK" @change="store.fetchAttendanceData()">
-            <option value="" disabled>-- Pilih Event Dahulu --</option>
-            <option v-for="event in store.events" :key="event.SK!" :value="event.SK">
-              {{ event.Title }}
-            </option>
-          </select>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2 w-100 justify-content-sm-start justify-content-xl-end" v-if="store.selectedEventSK">
-          <NuxtLink to="/admin/scan" class="btn btn-outline-success btn-sm px-3 rounded-pill d-flex align-items-center shadow-sm flex-grow-1 flex-md-grow-0 justify-content-center txt-body fw-medium">
-            <i class="bi bi-qr-code-scan me-2"></i> Scan QR
-          </NuxtLink>
-          
-          <NuxtLink to="/admin/kehadiran/manual" class="btn btn-outline-success btn-sm px-3 rounded-pill d-flex align-items-center shadow-sm flex-grow-1 flex-md-grow-0 justify-content-center txt-body fw-medium">
-            <i class="bi bi-journal-text me-2"></i> Absen Manual
-          </NuxtLink>
-
-          <button class="btn btn-success btn-sm px-3 rounded-pill shadow-sm flex-grow-1 flex-md-grow-0 txt-body fw-medium" @click="handleExport" :disabled="isExporting">
-            <span v-if="isExporting" class="spinner-border spinner-border-sm me-1"></span>
-            <i v-else class="bi bi-file-earmark-excel-fill me-1"></i>
-            Export
-          </button>
-        </div>
-      </div>
-
-      <div class="card-body p-0">
+    
+    <div class="card content-card border-0 shadow-sm rounded-4 mb-4 bg-white">
+      <div class="card-body p-3 px-md-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
         
-        <div v-if="!store.selectedEventSK" class="text-center py-5 text-muted bg-light px-3">
-          <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
-          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu.</p>
+        <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
+          <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Log Kehadiran</h5>
+          
+          <div v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
+            {{ globalStore.activeEvent?.Title }}
+          </div>
+          <div v-else class="text-muted txt-caption text-truncate w-100">
+            Belum Ada Event Terpilih
+          </div>
         </div>
 
-        <div v-else>
-          <CommonLoadingSpinner v-if="store.loading" class="my-5" />
+        <div class="flex-shrink-0 text-start text-md-end" v-if="globalStore.activeEventSK">
+          <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill shadow-sm txt-caption fw-medium">
+            Total Hadir: {{ totalItems }} Peserta
+          </span>
+        </div>
 
-          <div v-else-if="filteredAttendees.length > 0">
+      </div>
+    </div>
+    <div class="card content-card border-0 shadow-sm rounded-4 mb-4"> 
+      
+      <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom" v-if="globalStore.activeEventSK">
+        <div class="d-flex flex-column gap-3">
+          
+          <div class="d-flex flex-wrap gap-2 justify-content-start">
+            <NuxtLink to="/admin/scan" class="btn btn-outline-success rounded-pill px-3 py-1 shadow-sm flex-grow-1 flex-sm-grow-0 text-center txt-caption fw-medium">
+              Scan QR
+            </NuxtLink>
             
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3 border-bottom bg-light gap-3">
-              <div class="input-group input-group-sm w-100 shadow-sm" style="max-width: 400px;">
-                <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
-                <input 
-                  type="text" 
-                  class="form-control bg-white border-0 ps-0 txt-body" 
-                  placeholder="Cari nama atau tiket..." 
-                  v-model="searchQuery"
-                >
-              </div>
-              <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill shadow-sm align-self-start align-self-md-center txt-label">
-                Total Hadir: {{ totalItems }}
-              </span>
-            </div>
-            
-            <div class="table-responsive">
-              <table class="table table-hover mb-0" style="min-width: 700px;">
-                <thead>
-                  <tr>
-                    <th class="ps-4 txt-label" style="width: 5%;">NO</th>
-                    <th class="txt-label" style="width: 35%;">INFORMASI PESERTA</th>
-                    <th class="txt-label" style="width: 25%;">KODE TIKET</th>
-                    <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
-                    <th class="text-center pe-4 txt-label" style="width: 15%;">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
-                    
-                    <td class="ps-4 fw-medium text-muted txt-body">
-                      {{ (currentPage - 1) * perPage + index + 1 }}
-                    </td>
-                    
-                    <td>
-                      <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
-                      <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
-                    </td>
-                    <td>
-                      <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
-                    </td>
-                    <td>
-                      <div v-if="item.scanTime" class="text-dark fw-medium txt-body">
-                        <i class="bi bi-clock me-1 text-success"></i> {{ dayjs(item.scanTime).format('HH:mm:ss') }} WIB
-                      </div>
-                    </td>
-                    <td class="text-center pe-4">
-                      <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm txt-label">
-                        Hadir
-                      </span>
-                    </td>
-                  </tr>
-                  
-                  <tr v-if="paginatedData.length === 0">
-                    <td colspan="5" class="text-center py-5 text-muted fst-italic txt-body">
-                      <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
-                      Tidak ada peserta hadir yang cocok dengan pencarian "{{ searchQuery }}"
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <NuxtLink to="/admin/kehadiran/manual" class="btn btn-outline-success rounded-pill px-3 py-1 shadow-sm flex-grow-1 flex-sm-grow-0 text-center txt-caption fw-medium">
+              Absen Manual
+            </NuxtLink>
 
-            <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light" v-if="totalPages > 1">
-              <span class="text-muted txt-body">
-                Halaman {{ currentPage }} dari {{ totalPages }} 
-                (Total: {{ totalItems }} Hadir)
-              </span>
-              
-              <div class="btn-group shadow-sm">
-                <button 
-                  class="btn btn-outline-secondary btn-sm txt-body" 
-                  :disabled="currentPage === 1"
-                  @click="changePage(currentPage - 1)"
-                >
-                  <i class="bi bi-chevron-left"></i> Prev
-                </button>
-                <button 
-                  class="btn btn-outline-secondary btn-sm txt-body" 
-                  :disabled="currentPage === totalPages"
-                  @click="changePage(currentPage + 1)"
-                >
-                  Next <i class="bi bi-chevron-right"></i>
-                </button>
-              </div>
-            </div>
-
+            <button class="btn btn-success rounded-pill px-3 py-1 shadow-sm flex-grow-1 flex-sm-grow-0 txt-caption fw-medium" @click="handleExport" :disabled="isExporting">
+              <span v-if="isExporting" class="spinner-border spinner-border-sm me-1"></span>
+              Export
+            </button>
           </div>
 
-          <div v-else class="text-center py-5 px-3">
-            <i class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-3"></i>
-            <h6 class="mb-1 txt-subtitle">Belum Ada Peserta Masuk</h6>
-            <p class="text-muted txt-body">Belum ada data peserta yang melakukan Check-in pada event ini.</p>
+          <div class="w-100" style="max-width: 400px;">
+            <div class="input-group input-group-sm shadow-sm">
+              <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-search"></i></span>
+              <input 
+                type="text" 
+                class="form-control form-control-sm bg-light border-0 ps-0 txt-body" 
+                placeholder="Cari nama atau kode tiket..." 
+                v-model="searchQuery"
+              >
+            </div>
           </div>
 
         </div>
       </div>
     </div>
+
+  <div class="card-body p-0">
+    
+    <div v-if="!globalStore.activeEventSK" class="text-center py-5 text-muted bg-light px-3 rounded-bottom-4">
+      <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
+      <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu di halaman Dashboard.</p>
+      <NuxtLink to="/admin" class="btn btn-sm btn-primary mt-3 rounded-pill px-4 shadow-sm txt-caption">Ke Dashboard</NuxtLink>
+    </div>
+
+    <div v-else>
+      <CommonLoadingSpinner v-if="store.loading" class="my-5" />
+
+      <div v-else-if="filteredAttendees.length > 0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" style="min-width: 700px;">
+            <thead>
+              <tr>
+                <th class="ps-4 txt-label" style="width: 5%;">NO</th>
+                <th class="txt-label" style="width: 35%;">INFORMASI PESERTA</th>
+                <th class="txt-label" style="width: 25%;">KODE TIKET</th>
+                <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
+                <th class="text-center pe-4 txt-label" style="width: 15%;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
+                <td class="ps-4 fw-medium text-muted txt-body">
+                  {{ (currentPage - 1) * perPage + index + 1 }}
+                </td>
+                <td>
+                  <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
+                  <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
+                </td>
+                <td>
+                  <div v-if="item.scanTime" class="text-dark fw-medium txt-body">
+                    <i class="bi bi-clock me-1 text-success"></i> {{ dayjs(item.scanTime).format('HH:mm:ss') }} WIB
+                  </div>
+                </td>
+                <td class="text-center pe-4">
+                  <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm txt-label">
+                    Hadir
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light rounded-bottom-4" v-if="totalPages > 1">
+          <span class="text-muted txt-body">
+            Halaman {{ currentPage }} dari {{ totalPages }} 
+          </span>
+          
+          <div class="btn-group shadow-sm">
+            <button 
+              class="btn btn-outline-secondary btn-sm txt-body" 
+              :disabled="currentPage === 1"
+              @click="changePage(currentPage - 1)"
+            >
+              <i class="bi bi-chevron-left"></i> Prev
+            </button>
+            <button 
+              class="btn btn-outline-secondary btn-sm txt-body" 
+              :disabled="currentPage === totalPages"
+              @click="changePage(currentPage + 1)"
+            >
+              <i class="bi bi-chevron-right"></i> Next
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div v-else class="text-center py-5 px-3">
+        <i v-if="searchQuery" class="bi bi-search fs-1 text-muted opacity-50 d-block mb-3"></i>
+        <i v-else class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-3"></i>
+        
+        <h6 class="mb-1 txt-subtitle">{{ searchQuery ? 'Data Tidak Ditemukan' : 'Belum Ada Peserta Masuk' }}</h6>
+        <p class="text-muted txt-body">
+          {{ searchQuery ? `Tidak ada peserta hadir yang cocok dengan "${searchQuery}"` : 'Belum ada data peserta yang melakukan Check-in pada event ini.' }}
+        </p>
+      </div>
+
+    </div>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -161,19 +162,24 @@ import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
 import Swal from 'sweetalert2';
 import { useAttendanceStore } from '~/stores/attendance';
+import { useGlobalEventStore } from '~/stores/globalEvent'; 
 import { usePagination } from '~/composables/usePagination';
 
 definePageMeta({ layout: 'admin' });
 
 const store = useAttendanceStore();
+const globalStore = useGlobalEventStore(); // 🟢 2. PANGGIL GLOBAL STORE
 
 const isExporting = ref(false);
 const searchQuery = ref('');
 
+// 🟢 3. UBAH INIT HALAMAN: Tembak API kalau SK udah ada di Global Store
 await useAsyncData('attendance-init', async () => {
-  await store.fetchEvents();
-  store.selectedEventSK = ''; 
-  store.participants = [];    
+  if (globalStore.activeEventSK) {
+    await store.fetchAttendanceData('present'); 
+  } else {
+    store.participants = []; // Kosongin kalau admin blm milih event di dashboard
+  }
   return true;
 });
 
@@ -190,7 +196,6 @@ const filteredAttendees = computed(() => {
   });
 });
 
-
 const { 
   perPage, 
   currentPage, 
@@ -199,10 +204,8 @@ const {
   paginatedData, 
   changePage 
 } = usePagination(filteredAttendees, 10);
-// Angka 10 di belakang = Jumlah row per halaman (bisa di ganti 5, 20, dll)
 
 const handleExport = () => {
-  // 1. Cek dulu, kalau datanya kosong ngapain di-export kan?
   if (!store.participants || store.participants.length === 0) {
     Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data kehadiran untuk di-export.' });
     return;
@@ -211,14 +214,12 @@ const handleExport = () => {
   isExporting.value = true;
 
   try {
-    // 2. Siapin Judul Kolom (Header)
     const headers = ['No', 'Nama Peserta', 'Kode Tiket', 'Gender', 'Umur', 'Waktu Masuk', 'Status'];
 
-    // 3. Mapping: Ubah data JSON lu jadi format Array biasa
     const rows = store.participants.map((p, index) => {
       return [
         index + 1,
-        `"${p.name}"`, // Pake tanda kutip biar kalau namanya ada koma, excel ga error
+        `"${p.name}"`, 
         p.ticketId,
         p.gender === 'l' ? 'Ikhwan' : 'Akhwat',
         p.age,
@@ -227,25 +228,23 @@ const handleExport = () => {
       ];
     });
 
-    // 4. Gabungin Header dan Rows pake koma dan enter (\n)
     const csvContent = [
-      headers.join(','),                  // Gabungin header
-      ...rows.map(row => row.join(','))   // Gabungin tiap baris data
-    ].join('\n');                         // Enter buat baris selanjutnya
+      headers.join(','),                  
+      ...rows.map(row => row.join(','))   
+    ].join('\n');                         
 
-    // 5. Ubah teks jadi "File" (Blob)
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
-    // 6. Trik Auto-Download
-    const link = document.createElement('a'); // Bikin elemen <a> gaib
-    const fileName = `Log_Kehadiran_${store.selectedEventSK}_${dayjs().format('YYYYMMDD_HHmm')}.csv`;
+    const link = document.createElement('a'); 
+    // 🟢 4. UBAH NAMA FILE EXPORT BIAR NGAMBIL SK DARI GLOBAL STORE
+    const fileName = `Log_Kehadiran_${globalStore.activeEventSK}_${dayjs().format('YYYYMMDD_HHmm')}.csv`;
     
     link.setAttribute('href', url);
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
-    link.click(); // Klik paksa pake JS
-    document.body.removeChild(link); // Buang lagi link-nya biar bersih
+    link.click(); 
+    document.body.removeChild(link); 
 
     Swal.fire({
       icon: 'success',

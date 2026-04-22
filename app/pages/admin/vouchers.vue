@@ -9,41 +9,47 @@
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       
-      <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-3 w-100 w-md-auto">
-          <h5 class="mb-0 txt-title text-dark"><i class="bi bi-ticket-perforated-fill text-primary me-2"></i>Vouchers</h5>
+      <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        
+        <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width: 0;">
           
-          <select class="form-select form-select-sm bg-light border-0 shadow-sm txt-body" style="width: 250px;"
-            v-model="store.selectedEventSK" @change="handleEventChange">
-            <option value="" disabled>-- Pilih Event Dahulu --</option>
-            <option v-for="event in store.events" :key="event.SK" :value="event.SK">
-              {{ event.Title }}
-            </option>
-          </select>
+          <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
+            <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Vouchers</h5>
+            
+            <span v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
+              {{ globalStore.activeEvent?.Title }}
+            </span>
+            <span v-else class="text-muted txt-caption text-truncate w-100">
+              Belum Ada Event Terpilih
+            </span>
+          </div>
         </div>
 
-        <div class="d-flex gap-2 w-100 w-md-auto justify-content-end" v-if="store.selectedEventSK">
-          <button v-if="selectedIds.length > 0" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm txt-body fw-medium" @click="handleBulkDelete">
-            <i class="bi bi-trash3-fill me-1"></i> Hapus ({{ selectedIds.length }})
+        <div class="d-flex gap-2 flex-shrink-0 flex-wrap" v-if="globalStore.activeEventSK">
+          
+          <button v-if="selectedIds.length > 0" class="btn btn-danger rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium d-flex align-items-center" @click="handleBulkDelete">
+            <i style="font-size: 0.8rem;"></i> Hapus ({{ selectedIds.length }})
           </button>
           
-          <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm txt-body fw-medium" @click="showModal = true" :disabled="store.loading">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Voucher
+          <button class="btn btn-primary rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium d-flex align-items-center" @click="showModal = true" :disabled="store.loading">
+            <i style="font-size: 0.8rem;"></i> Tambah Voucher
           </button>
         </div>
+        
       </div>
 
       <div class="card-body p-0">
         
-        <div v-if="!store.selectedEventSK" class="text-center py-5 text-muted bg-light border-bottom border-top">
+        <div v-if="!globalStore.activeEventSK" class="text-center py-5 text-muted bg-light border-bottom border-top">
           <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-primary opacity-50"></i>
-          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> untuk mengelola voucher.</p>
+          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> di halaman Dashboard untuk mengelola voucher.</p>
+          <NuxtLink to="/admin" class="btn btn-sm btn-primary mt-3 rounded-pill px-4 shadow-sm">Ke Dashboard</NuxtLink>
         </div>
 
         <div v-else>
           <CommonLoadingSpinner v-if="store.loading && store.voucher.length === 0" class="my-5" />
 
-          <div v-else-if="store.voucher.length > 0">
+          <div v-else-if="store.paginatedData.length > 0">
             <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
                <div class="txt-caption text-muted">
                  Menampilkan <strong>{{ store.paginatedData.length }}</strong> data.
@@ -66,7 +72,6 @@
                     <th class="txt-label">EXPIRED</th>
                     <th class="txt-label">DISKON</th>
                     <th class="txt-label">USER</th>
-                    <th class="text-center pe-4 txt-label" style="width: 100px;">AKSI</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -85,12 +90,6 @@
                     <td class="text-muted txt-caption">{{ v.Expired }}</td>
                     <td class="fw-medium text-dark txt-body">Rp{{ formatCurrency(v.Nominal) }}</td>
                     <td class="txt-caption text-muted">{{ v.User || '-' }}</td>
-                    
-                    <td class="text-center pe-4">
-                      <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" title="Hapus" @click="handleSingleDelete(v.SK)">
-                        <i class="bi bi-trash fs-5"></i>
-                      </button>
-                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -126,6 +125,7 @@
 import { ref, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useVoucherStore } from '~/stores/voucher';
+import { useGlobalEventStore } from '~/stores/globalEvent';
 import Swal from 'sweetalert2';
 
 definePageMeta({
@@ -137,10 +137,11 @@ definePageMeta({
 });
 
 const store = useVoucherStore();
-const showModal = ref(false);
-const selectedIds = ref<string[]>([]); // Menyimpan ID voucher yang dicentang
+const globalStore = useGlobalEventStore();
 
-// --- Logic Selection ---
+const showModal = ref(false);
+const selectedIds = ref<string[]>([]);
+
 const isAllSelected = computed(() => {
   return store.paginatedData.length > 0 && selectedIds.value.length === store.paginatedData.length;
 });
@@ -153,27 +154,6 @@ const toggleSelectAll = (e: any) => {
   }
 };
 
-const handleEventChange = () => {
-  selectedIds.value = []; // Reset pilihan saat ganti event
-  store.fetchVouchers();
-};
-
-// --- Action Handlers ---
-const handleSingleDelete = async (id: string) => {
-  const result = await Swal.fire({
-    title: 'Hapus Voucher?',
-    text: "Data yang dihapus tidak bisa dikembalikan!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#dc3545',
-    confirmButtonText: 'Ya, Hapus'
-  });
-
-  if (result.isConfirmed) {
-    await store.deleteVoucher(id); // Pastikan action ini manggil API BE
-  }
-};
-
 const handleBulkDelete = async () => {
   const result = await Swal.fire({
     title: `Hapus ${selectedIds.value.length} Voucher?`,
@@ -181,22 +161,29 @@ const handleBulkDelete = async () => {
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#dc3545',
-    confirmButtonText: 'Ya, Hapus Semua'
+    confirmButtonText: 'Ya, Hapus Semua',
+    cancelButtonText: 'Batal'
   });
 
   if (result.isConfirmed) {
-    // Di sini lu manggil action store buat bulk delete
-    // await store.deleteVoucherBulk(selectedIds.value);
-    Swal.fire('Fitur Sedang Disiapkan', 'Pastikan API Bulk Delete di Backend sudah ada.', 'info');
-    selectedIds.value = [];
+    // fungsi bulk delete
+    const success = await store.deleteVoucherBulk(selectedIds.value);
+    
+
+    if (success) {
+      selectedIds.value = [];
+    }
   }
 };
 
-// Init
-await useAsyncData('voucher-events-init', async () => {
-  await store.fetchEvents();
-  store.selectedEventSK = '';
-  store.voucher = [];
+await useAsyncData('voucher-init', async () => {
+  selectedIds.value = [];
+  
+  if (globalStore.activeEventSK) {
+    await store.fetchVouchers(); 
+  } else {
+    store.voucher = [];
+  }
   return true;
 });
 

@@ -10,19 +10,18 @@
     </nav>
 
     <AdminFinanceRevenueSummary 
-      :is-loading="isLoading"
-      :selected-event-s-k="selectedEventSK"
-      :events="mockEvents"
-      :summary-data="summaryData"
-      @update-event-s-k="handleEventChange"
+      :is-loading="financeStore.loadingSummary"
+      :summary-data="financeStore.summary"
     />
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
+import { useFinanceStore } from '~/stores/finance';
+import { useGlobalEventStore } from '~/stores/globalEvent';
 
 definePageMeta({ 
   layout: 'admin',
@@ -32,50 +31,15 @@ definePageMeta({
   }
 });
 
-// STATE UTAMA
-const isLoading = ref(false);
-const selectedEventSK = ref('ALL');
+const financeStore = useFinanceStore();
+const globalStore = useGlobalEventStore();
 
-const summaryData = ref({
-  totalOmzet: 0,
-  totalTiketPrice: 0,
-  totalInfaq: 0,
-  totalTicketsSold: 0
+// 🟢 1. nembak api pertama kali halaman dibuka (ssr friendly)
+await useAsyncData('finance-init', async () => {
+  await financeStore.fetchSummary();
+  return true;
 });
-
-// MOCKUP API (Nanti lu ganti pake axios dari temen BE lu)
-const mockEvents = ref([
-  { SK: 'EVT#001', Title: 'Dauroh: Menggapai Kebahagiaan' },
-  { SK: 'EVT#002', Title: 'Kajian Rutin Pemuda Hijrah' },
-]);
-
-const fetchSummary = (eventSK: string) => {
-  isLoading.value = true;
-  
-  // Simulasi nembak API
-  setTimeout(() => {
-    if (eventSK === 'EVT#001') {
-      summaryData.value = { totalOmzet: 12500000, totalTiketPrice: 10000000, totalInfaq: 2500000, totalTicketsSold: 200 };
-    } else if (eventSK === 'EVT#002') {
-      summaryData.value = { totalOmzet: 3100000, totalTiketPrice: 2500000, totalInfaq: 600000, totalTicketsSold: 50 };
-    } else {
-      summaryData.value = { totalOmzet: 15600000, totalTiketPrice: 12500000, totalInfaq: 3100000, totalTicketsSold: 250 };
-    }
-    isLoading.value = false;
-  }, 600);
-};
-
-// Fungsi yang dipanggil dari Komponen pas dropdown diubah
-const handleEventChange = (newSK: string) => {
-  selectedEventSK.value = newSK;
-  fetchSummary(newSK);
-};
-
-onMounted(() => {
-  fetchSummary(selectedEventSK.value);
+watch(() => globalStore.activeEventSK, () => {
+  financeStore.fetchSummary();
 });
 </script>
-
-<style scoped>
-/* Style dipindahin ke komponen masing-masing biar bersih */
-</style>

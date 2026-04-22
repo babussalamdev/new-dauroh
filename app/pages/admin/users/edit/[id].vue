@@ -140,8 +140,7 @@ const formatPhoneDisplay = (phone: string | null | undefined) => {
 const formatRoleName = (roleStr: string | null | undefined) => {
   if (!roleStr) return 'Admin';
   const role = roleStr.toLowerCase();
-  if (role === 'root') return 'Root (Highest)';
-  if (role === 'super_role' || role === 'super role') return 'Super Role';
+  if (role === 'root') return 'Root';
   if (role === 'user') return 'Client';
   return role.charAt(0).toUpperCase() + role.slice(1);
 };
@@ -150,20 +149,24 @@ const formatRoleName = (roleStr: string | null | undefined) => {
 const availableRoles = computed(() => {
   const myRole = (user.value?.role || user.value?.Series || '').toLowerCase();
 
-  // Root, Super Role Lama, dan Admin biasa bisa bikin list yang sama
-  if (['root', 'super_role', 'super role', 'admin'].includes(myRole)) {
+  // Root bisa ubah jadi Admin, Bendahara, Registrasi
+  if (myRole === 'root') {
     return [
       { label: 'Admin Standar', value: 'admin' },
       { label: 'Bendahara (Keuangan)', value: 'bendahara' },
-      { label: 'Petugas Registrasi (Check-in)', value: 'registrasi' },
-      { label: 'Client (User Biasa)', value: 'user' }
+      { label: 'Petugas Registrasi (Check-in)', value: 'registrasi' }
     ];
   }
   
-  // Kalau selain admin yg nyasar
-  return [
-    { label: 'Client (User Biasa)', value: 'user' }
-  ];
+  // Admin cuma bisa ubah jadi Bendahara atau Registrasi
+  if (myRole === 'admin') {
+    return [
+      { label: 'Bendahara (Keuangan)', value: 'bendahara' },
+      { label: 'Petugas Registrasi (Check-in)', value: 'registrasi' }
+    ];
+  }
+
+  return [];
 });
 
 // Cek apakah akun yg mau diedit adalah ROOT
@@ -175,13 +178,12 @@ const isRootTarget = computed(() => {
 const canEditRole = computed(() => {
   const myRole = (user.value?.role || user.value?.Series || '').toLowerCase();
   
-  // 1. Root & Super Role BISA ganti role siapa aja (kecuali sesama root karena isRootTarget bakal ngeblok duluan)
-  if (['root', 'super_role', 'super role'].includes(myRole)) return true;
+  // 1. Root BISA ganti role siapa aja (kecuali sesama root karena isRootTarget bakal ngeblok duluan)
+  if (myRole === 'root') return true;
   
-  // 2. Admin BISA ganti role client/bawahan, TAPI GAK BISA ganti role atasannya (misal gak bisa nurunin pangkat super_role)
+  // 2. Admin BISA ganti role bawahan, TAPI GAK BISA ganti role root atau sesama admin
   if (myRole === 'admin') {
-     // Admin ga bisa ngubah orang yg jabatannya ada kata super_role
-     return !['root', 'super_role', 'super role'].includes(form.role);
+     return !['root', 'admin'].includes(form.role);
   }
 
   return false;
@@ -199,14 +201,12 @@ onMounted(async () => {
 
   const foundUser = store.users.find(u => u.SK === userId);
 
-  if (foundUser) {
+if (foundUser) {
     form.name = foundUser.Name;
     form.email = foundUser.SK;
     form.phone_number = formatPhoneDisplay(foundUser.phone_number || foundUser.Whatsapp || foundUser.PhoneNumber);
     
     let rawRole = foundUser.role || foundUser.Series || foundUser.Role || 'user';
-    if (rawRole === 'super role') rawRole = 'super_role';
-    
     form.role = rawRole.toLowerCase();
     
     loading.value = false;

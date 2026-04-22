@@ -1,24 +1,18 @@
 <template>
-  <div class="card content-card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-    
-    <div class="p-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center bg-white border-bottom gap-3">
-      <div class="d-flex align-items-center gap-3 w-100">
-        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
-          <i class="bi bi-wallet2"></i>
-        </div>
-        <h6 class="mb-0 fw-bold txt-subtitle text-dark">Ringkasan Pendapatan</h6>
-      </div>
-      
-      <div class="w-100 d-flex justify-content-md-end">
-        <select class="form-select form-select-sm shadow-sm rounded-pill px-3 py-2 txt-body fw-bold" style="max-width: 380px; border-color: #198754;"
-          v-model="localSelectedEvent" @change="emitChangeEvent">
-          <option value="ALL">-- Semua Event --</option>
-          <option v-for="event in events" :key="event.SK" :value="event.SK">
-            {{ event.Title }}
-          </option>
-        </select>
-      </div>
+<div class="card content-card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+    <div class="p-3 px-4 bg-white border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+        <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
+          <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Ringkasan Pendapatan</h6>
+          <span v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
+            {{ globalStore.activeEvent?.Title }}
+          </span>
+          <span v-else class="text-muted txt-caption text-truncate w-100">
+            Belum Ada Event Terpilih
+          </span>
     </div>
+  </div>
+</div>
 
     <div class="card-body p-3 bg-white">
       <CommonLoadingSpinner v-if="isLoading" class="my-5" />
@@ -34,7 +28,7 @@
                 </div>
                 <div>
                   <p class="mb-0 fw-bold txt-label text-muted">TOTAL PEMASUKAN</p>
-                  <h5 class="mb-0 fw-bold text-dark mt-1 txt-title">{{ formatRupiah(summaryData.totalOmzet) }}</h5>
+                  <h5 class="mb-0 fw-bold text-dark mt-1 txt-title">{{ formatRupiah(summaryData.totalPendapatan) }}</h5>
                 </div>
               </div>
             </div>
@@ -100,34 +94,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { useGlobalEventStore } from '~/stores/globalEvent';
 
+const globalStore = useGlobalEventStore()
 const props = defineProps<{
   isLoading: boolean;
-  selectedEventSK: string;
-  events: any[];
   summaryData: {
-    totalOmzet: number;
+    totalPendapatan: number; // UBAH JADI INI
     totalTiketPrice: number;
     totalInfaq: number;
     totalTicketsSold: number;
   }
 }>();
-
-const emit = defineEmits(['updateEventSK']);
-
-// Bikin local state buat nampung model dari dropdown
-const localSelectedEvent = ref(props.selectedEventSK);
-
-// Kalau props dari parent berubah, update local state
-watch(() => props.selectedEventSK, (newVal) => {
-  localSelectedEvent.value = newVal;
-});
-
-// Ngirim tau ke Parent (index.vue) kalau dropdown di-klik
-const emitChangeEvent = () => {
-  emit('updateEventSK', localSelectedEvent.value);
-};
 
 const formatRupiah = (angka: number) => {
   return new Intl.NumberFormat('id-ID', {

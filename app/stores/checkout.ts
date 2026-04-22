@@ -154,7 +154,7 @@ export const useCheckoutStore = defineStore(
           PaymentType: paymentType,
           sender_bank_type: paymentType,
           repay: repay.value,
-          donationAmount: donationAmount.value,
+          Infaq: donationAmount.value ? String(donationAmount.value) : "0",
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 

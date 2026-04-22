@@ -11,33 +11,35 @@
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       
-      <div class="card-header d-flex justify-content-between align-items-center bg-white p-3 px-md-4 py-md-3 border-bottom gap-3 flex-wrap">
-        <div class="d-flex align-items-center gap-3 w-100 w-sm-auto">
-          <h5 class="mb-0 text-nowrap txt-title">
-            <i class="bi bi-journal-text text-primary me-2"></i>Absen Manual
-          </h5>
-          
-          <select class="form-select form-select-sm shadow-sm txt-body" style="width: 250px; border-color: #198754;" 
-                  v-model="store.selectedEventSK" @change="store.fetchAttendanceData('not-present')">
-            <option value="" disabled>-- Pilih Event Dahulu --</option>
-            <option v-for="event in store.events" :key="event.SK!" :value="event.SK">
-              {{ event.Title }}
-            </option>
-          </select>
-        </div>
-
-        <div v-if="store.selectedEventSK" class="w-100 w-sm-auto d-flex justify-content-end">
-          <NuxtLink to="/admin/kehadiran" class="btn btn-outline-secondary btn-sm rounded-pill fw-medium px-3 shadow-sm d-flex align-items-center txt-body">
-            <i class="bi bi-arrow-left me-2"></i> Log Kehadiran
-          </NuxtLink>
-        </div>
+      <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+  
+  <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+    <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
+      <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Absen Manual</h5>
+      
+      <div v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
+        {{ globalStore.activeEvent?.Title }}
       </div>
+      <div v-else class="text-muted txt-caption text-truncate w-100">
+        Belum Ada Event Terpilih
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-shrink-0 flex-wrap" v-if="globalStore.activeEventSK">
+    <NuxtLink to="/admin/kehadiran" class="btn btn-outline-secondary rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium">
+      Log Kehadiran
+    </NuxtLink>
+  </div>
+
+</div>
 
       <div class="card-body p-0">
         
-        <div v-if="!store.selectedEventSK" class="text-center py-5 text-muted bg-light">
+        <div v-if="!globalStore.activeEventSK" class="text-center py-5 text-muted bg-light">
           <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
-          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu.</p>
+          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu di halaman Dashboard.</p>
+          <NuxtLink to="/admin" class="btn btn-sm btn-primary mt-3 rounded-pill px-4 shadow-sm">Ke Dashboard</NuxtLink>
         </div>
 
         <div v-else>
@@ -101,7 +103,7 @@
                   <i class="bi bi-chevron-left"></i> Prev
                 </button>
                 <button class="btn btn-outline-secondary btn-sm txt-body" :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">
-                  Next <i class="bi bi-chevron-right"></i>
+                  <i class="bi bi-chevron-right"></i> Next
                 </button>
               </div>
             </div>
@@ -122,28 +124,29 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import dayjs from 'dayjs';
 import Swal from 'sweetalert2';
-import { useNuxtApp } from '#app';
 import { useAttendanceStore } from '~/stores/attendance';
+import { useGlobalEventStore } from '~/stores/globalEvent'; 
 import { usePagination } from '~/composables/usePagination';
 
 definePageMeta({ layout: 'admin' });
 
-const { $apiBase } = useNuxtApp() as any;
 const store = useAttendanceStore();
+const globalStore = useGlobalEventStore();
+
 const searchQuery = ref('');
 const isProcessing = ref(false);
 
-// INIT HALAMAN
 await useAsyncData('attendance-manual-init', async () => {
-  await store.fetchEvents();
-  store.selectedEventSK = '';
-  store.participants = [];
+  if (globalStore.activeEventSK) {
+    await store.fetchAttendanceData('not-present');
+  } else {
+    store.participants = [];
+  }
   return true;
 });
 
-// FILTER SEARCH (Cari yang 'belum' hadir aja)
+
 const filteredAttendees = computed(() => {
   if (!store.participants) return [];
   return store.participants.filter(item => {
@@ -155,7 +158,6 @@ const filteredAttendees = computed(() => {
 
 const { perPage, currentPage, totalPages, totalItems, paginatedData, changePage } = usePagination(filteredAttendees, 10);
 
-// 🟢 4. LOGIKA TOMBOL CHECK-IN API REAL
 const processManualCheckIn = (item: any) => {
   Swal.fire({
     title: 'Check-In Manual?',
@@ -169,27 +171,24 @@ const processManualCheckIn = (item: any) => {
   }).then(async (result) => {
     if (result.isConfirmed) {
       isProcessing.value = true;
+      
       try {
-        // Tembak API yang sama persis kayak Scanner
-        await $apiBase.put('/update-attendance?type=scan', {
-          PK: item.pk,
-          SK: item.ticketId
-        });
+        const response = await store.markManualAttendance(item.pk, item.ticketId);
 
-        // Ubah UI otomatis jadi sukses tanpa reload
-        item.status = 'hadir';
-        item.scanTime = dayjs().format('HH:mm:ss');
-        
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil',
-          text: `${item.name} berhasil diabsen!`,
-          timer: 1500,
-          showConfirmButton: false
-        });
+        if (response.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: `${item.name} berhasil diabsen!`,
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire('Gagal!', response.message, 'error');
+        }
 
       } catch (error: any) {
-        Swal.fire('Gagal!', error.response?.data?.message || 'Terjadi kesalahan sistem.', 'error');
+        Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
       } finally {
         isProcessing.value = false;
       }

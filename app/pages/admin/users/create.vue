@@ -97,7 +97,6 @@ const formatRoleName = (roleStr: string | null | undefined) => {
   if (!roleStr) return 'Admin';
   const role = roleStr.toLowerCase();
   if (role === 'root') return 'Root (Highest)';
-  if (role === 'super_role' || role === 'super role') return 'Super Role';
   return role.charAt(0).toUpperCase() + role.slice(1);
 };
 
@@ -105,22 +104,25 @@ const formatRoleName = (roleStr: string | null | undefined) => {
 const availableRoles = computed(() => {
   const myRole = (user.value?.role || user.value?.Series || '').toLowerCase();
 
-  // 1. Jika yang login adalah ROOT, SUPER ROLE lama, atau ADMIN
-  // Cuma bisa bikin Admin Standar dan ke bawahnya (Super Role dihilangkan)
-  if (myRole === 'root' || myRole === 'super_role' || myRole === 'super role' || myRole === 'admin') {
+  // 1. Jika yang login adalah ROOT: Bisa bikin Admin dan Staf
+  if (myRole === 'root') {
     return [
       { label: 'Admin Standar', value: 'admin' },
       { label: 'Bendahara (Keuangan)', value: 'bendahara' },
-      { label: 'Petugas Registrasi (Check-in)', value: 'registrasi' },
-      { label: 'Client (User Biasa)', value: 'user' }
+      { label: 'Petugas Registrasi (Check-in)', value: 'registrasi' }
     ];
   }
 
-  // 2. Jika Bendahara/Registrasi somehow nyasar ke sini
-  // Cuma bisa bikin client doang
-  return [
-    { label: 'Client (User Biasa)', value: 'user' }
-  ];
+  // 2. Jika yang login adalah ADMIN: CUMA bisa bikin Staf
+  if (myRole === 'admin') {
+    return [
+      { label: 'Bendahara (Keuangan)', value: 'bendahara' },
+      { label: 'Petugas Registrasi (Check-in)', value: 'registrasi' }
+    ];
+  }
+
+  // 3. Jika Bendahara/Registrasi nyasar ke sini, form bakal kosong
+  return [];
 });
 
 const form = reactive({ 
@@ -129,24 +131,27 @@ const form = reactive({
   username: '', 
   phone_number: '', 
   password: '', 
-  role: availableRoles.value[0]?.value || 'user' 
+  role: availableRoles.value[0]?.value || '' 
 });
 
 // Auto-adjust form.role kalau pilihan yg ada sekarang ilang gara-gara ganti user
 watch(availableRoles, (newRoles) => {
   const isCurrentRoleValid = newRoles.find(r => r.value === form.role);
   if (!isCurrentRoleValid) {
-    form.role = newRoles[0]?.value || 'user';
+    form.role = newRoles[0]?.value || '';
   }
 }, { immediate: true });
 
 const handleSubmit = async () => {
+  if (!form.role) {
+    alert("Anda tidak memiliki hak untuk membuat user dari halaman ini.");
+    return;
+  }
+  
   const success = await store.addAccount(form);
   
   if (success) {
-    // Balik ke halaman sesuai role yang baru dibikin biar enak
-    const targetTab = form.role === 'user' ? 'client' : 'admin';
-    router.push(`/admin/users?type=${targetTab}`);
+    router.push(`/admin/users?type=admin`);
   }
 };
 </script>

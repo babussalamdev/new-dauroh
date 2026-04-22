@@ -24,3 +24,13 @@
   color: var(--color-primary);
   background-color: rgba(var(--color-primary-rgb), 0.05);
 }
+
+.nav-link-custom {
+  font-weight: 700 !important;
+  color: #000000 !important; /* Biar hitam tebal solid */
+  transition: all 0.3s ease;
+}
+
+.nav-link-custom.active {
+  color: var(--color-primary) !important; /* Biar pas aktif warnanya berubah ke warna utama */
+}

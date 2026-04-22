@@ -22,20 +22,20 @@
 
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-3">
 
-          <li class="nav-item">
-            <NuxtLink class="nav-link txt-body fw-bold" to="/" active-class="active">Home</NuxtLink>
-          </li>
+<li class="nav-item">
+  <NuxtLink class="nav-link txt-body nav-link-custom" to="/" active-class="active">Home</NuxtLink>
+</li>
 
-          <template v-if="isLoggedIn">
-            <li class="nav-item">
-              <NuxtLink v-if="isAdmin" class="nav-link txt-body fw-bold" to="/admin" active-class="active">
-                Dashboard Admin
-              </NuxtLink>
-              <NuxtLink v-else class="nav-link txt-body fw-bold" to="/dashboard" active-class="active">
-                Dashboard
-              </NuxtLink>
-            </li>
-          </template>
+<template v-if="isLoggedIn">
+  <li class="nav-item">
+    <NuxtLink v-if="isAdmin" class="nav-link txt-body nav-link-custom" to="/admin" active-class="active">
+      Dashboard Admin
+    </NuxtLink>
+    <NuxtLink v-else class="nav-link txt-body nav-link-custom" to="/dashboard" active-class="active">
+      Dashboard
+    </NuxtLink>
+  </li>
+</template>
 
           <li class="nav-item text-muted opacity-25 mx-1" v-if="isLoggedIn">|</li>
 
@@ -153,6 +153,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRouter } from 'vue-router'
+import Swal from 'sweetalert2'
 
 const isScrolled = ref(false)
 const { user, logout, isLoggedIn, isAdmin } = useAuth()
@@ -166,8 +167,28 @@ const handleScroll = () => {
 }
 
 const handleLogout = async () => {
+  // Tutup menu offcanvas dulu (kalau lagi buka dari HP)
   closeOffcanvas()
-  await logout()
+  
+  // Munculin loading muter transparan
+  Swal.fire({
+    background: 'transparent',
+    allowOutsideClick: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading()
+    }
+  })
+
+  try {
+    await logout()
+    await new Promise(resolve => setTimeout(resolve, 800))
+    Swal.close()
+    router.push('/auth')
+  } catch (error) {
+    Swal.close()
+    console.error("Logout gagal:", error)
+  }
 }
 
 // --- Fix Scroll Issue ---
@@ -204,8 +225,6 @@ onMounted(() => {
 
 <style scoped>
 @import url("~/assets/css/layout/navbar.css");
-
-/* Bersihkan panah default dropdown bootstrap */
 .dropdown-toggle::after {
   display: block
 }

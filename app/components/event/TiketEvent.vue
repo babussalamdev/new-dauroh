@@ -12,8 +12,12 @@
             
             <div class="card event-card rounded-4 border-0 shadow-sm overflow-hidden h-100">
               <div class="position-relative">
-                <NuxtImg :src="`${imgUrl}/${event.SK}/${event.Picture}.webp`" class="card-img-top"
-                  :alt="event.Title" loading="lazy" format="webp" />
+                <img 
+                :src="`${imgUrl}/${event.SK}/${event.Picture}.webp`" 
+                class="card-img-top"
+                :alt="event.Title" 
+                loading="lazy" 
+                />
                 
                 <span v-if="event.topOverlay" class="overlay-top txt-caption fw-bold">{{ event.topOverlay }}</span>
 

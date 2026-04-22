@@ -6,7 +6,7 @@
       </button>
 
       <div class="ms-auto d-flex align-items-center">
-        <span class="navbar-text me-3 d-none d-sm-block txt-body fw-medium text-dark" v-if="userName">
+        <span class="navbar-text me-3 d-none d-sm-block" v-if="userName">
           Halo, {{ userName }}
         </span>
         <div class="dropdown">
@@ -15,14 +15,10 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end text-small shadow">
             <li>
-              <NuxtLink class="dropdown-item txt-body py-2" to="/admin/profile">
-                <i class="bi bi-person me-2"></i>Profil
-              </NuxtLink> 
-            </li>
+              <NuxtLink class="dropdown-item" to="/admin/profile">Profil</NuxtLink> 
+              </li>
             <li><hr class="dropdown-divider"></li>
-            <a class="dropdown-item txt-body text-danger py-2" href="#" @click.prevent="handleLogout">
-                <i class="bi bi-box-arrow-right me-2"></i>Logout
-              </a>
+            <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a></li>
           </ul>
         </div>
       </div>
@@ -33,6 +29,7 @@
 <script setup>
 import { useAuth } from '~/composables/useAuth';
 import { useAdminSidebar } from '~/composables/useAdminSidebar';
+import Swal from 'sweetalert2';
 
 const { user, logout } = useAuth();
 const isSidebarOpen = useAdminSidebar();
@@ -45,7 +42,25 @@ const toggleSidebar = () => {
 };
 
 const handleLogout = async () => {
-  await logout();
+  Swal.fire({
+    background: 'transparent',
+    allowOutsideClick: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  try {
+    await logout();
+    await new Promise(resolve => setTimeout(resolve, 800));
+    Swal.close();
+    navigateTo('/'); 
+
+  } catch (error) {
+    Swal.close();
+    console.error("Logout gagal:", error);
+  }
 };
 </script>
 
