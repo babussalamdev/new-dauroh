@@ -73,6 +73,9 @@
                   <button class="btn btn-sm text-primary p-0 border-0 bg-transparent shadow-none" @click="navigateToPage(event)" :disabled="!event.SK" :title="event.SK ? 'Lihat Detail & Edit' : 'Detail belum tersedia'">
                     <i class="bi bi-pencil-square fs-5"></i>
                   </button>
+                  <button class="btn btn-sm text-warning p-0 border-0 bg-transparent shadow-none" @click="navigateToCertificate(event)" :disabled="!event.SK" title="Kelola Sertifikat">
+                    <i class="bi bi-patch-check-fill fs-5"></i>
+                  </button>
                   <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" @click="openDeleteModal(event)" title="Hapus">
                     <i class="bi bi-trash fs-5"></i>
                   </button>
@@ -180,6 +183,14 @@ const formatEventDates = (dateObj: any) => {
 const navigateToPage = (event: Event | null) => {
   if (event && event.SK) {
     router.push(`/admin/event/${event.SK}`);
+  } else {
+    Swal.fire("Error", "SK event tidak valid.", "error");
+  }
+};
+
+const navigateToCertificate = (event: Event | null) => {
+  if (event && event.SK) {
+    router.push(`/admin/event/certificate/${event.SK}`);
   } else {
     Swal.fire("Error", "SK event tidak valid.", "error");
   }

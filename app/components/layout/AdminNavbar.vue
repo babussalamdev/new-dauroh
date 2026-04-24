@@ -30,6 +30,8 @@
 import { useAuth } from '~/composables/useAuth';
 import { useAdminSidebar } from '~/composables/useAdminSidebar';
 import Swal from 'sweetalert2';
+import { useGlobalEventStore } from '~/stores/globalEvent';
+import { useFinanceStore } from '~/stores/finance';
 
 const { user, logout } = useAuth();
 const isSidebarOpen = useAdminSidebar();
@@ -42,17 +44,24 @@ const toggleSidebar = () => {
 };
 
 const handleLogout = async () => {
+  // 🟢 PANGGIL STORE
+  const globalStore = useGlobalEventStore();
+  const financeStore = useFinanceStore();
+
   Swal.fire({
     background: 'transparent',
     allowOutsideClick: false,
     showConfirmButton: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
+    didOpen: () => { Swal.showLoading(); }
   });
 
   try {
     await logout();
+    
+    // 🟢 EKSEKUSI RESET DATA SEBELUM PINDAH HALAMAN
+    globalStore.resetStore();
+    financeStore.resetStore();
+
     await new Promise(resolve => setTimeout(resolve, 800));
     Swal.close();
     navigateTo('/'); 

@@ -83,6 +83,11 @@ export const useFinanceStore = defineStore("finance", () => {
     ]);
   }
 
+  function resetStore() {
+    summary.value = { totalPendapatan: 0, totalTiketPrice: 0, totalInfaq: 0, totalTicketsSold: 0 };
+    transactions.value = [];
+  }
+
   
   // RETURN 
   return {
@@ -92,6 +97,7 @@ export const useFinanceStore = defineStore("finance", () => {
     loadingTx,
     fetchSummary,
     fetchTransactions,
-    fetchAllFinanceData
+    fetchAllFinanceData,
+    resetStore
   };
 });

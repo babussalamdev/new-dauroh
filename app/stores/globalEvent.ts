@@ -27,6 +27,12 @@ export const useGlobalEventStore = defineStore('globalEvent', () => {
     activeEvent.value = null;
   }
 
+  function resetStore() {
+    selectedYear.value = new Date().getFullYear();
+    selectedMonth.value = new Date().getMonth() + 1;
+    activeEvent.value = null;
+  }
+
   return {
     selectedYear,
     selectedMonth,
@@ -35,7 +41,8 @@ export const useGlobalEventStore = defineStore('globalEvent', () => {
     hasActiveEvent,
     setYearMonth,
     setActiveEvent,
-    clearActiveEvent
+    clearActiveEvent,
+    resetStore
   };
 }, {
 

@@ -8,33 +8,37 @@
     </div>
 
     <ul class="nav flex-column mt-3">
-     <li class="nav-item px-3 mb-2">
+      <li class="nav-item px-3 mb-2">
         <span class="nav-category txt-title text-white-50">MENU UTAMA</span>
       </li>
 
-      <li v-for="item in mainMenuItems" :key="item.text" class="nav-item">
-        <NuxtLink :to="item.to" class="nav-link">
-          <i :class="`bi ${item.icon} me-2`"></i>
-          {{ item.text }}
-        </NuxtLink>
-      </li>
+      <template v-for="(menu, index) in menuStore.menus" :key="index">
+        
+        <li v-if="!menu.subMenus" class="nav-item">
+          <NuxtLink :to="menu.url" class="nav-link">
+            <i :class="`bi ${menu.icon} me-2`"></i>
+            {{ menu.title }}
+          </NuxtLink>
+        </li>
 
-      <li v-for="dropdown in dropdownMenuItems" :key="dropdown.id" class="nav-item">
-        <a class="nav-link collapsed" :href="`#${dropdown.id}`" data-bs-toggle="collapse" role="button">
-          <i :class="`bi ${dropdown.icon} me-2`"></i>
-          {{ dropdown.text }}
-          <i class="bi bi-chevron-down ms-auto "></i>
-        </a>
-        <div class="collapse" :id="dropdown.id">
-          <ul class="nav flex-column sub-menu">
-            <li v-for="subItem in dropdown.items" :key="subItem.text" class="nav-item">
-              <NuxtLink :to="subItem.to" :class="['nav-link', { disabled: subItem.disabled }]">
-                - {{ subItem.text }}
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
-      </li>
+        <li v-else class="nav-item">
+          <a class="nav-link collapsed" :href="`#collapse-${index}`" data-bs-toggle="collapse" role="button">
+            <i :class="`bi ${menu.icon} me-2`"></i>
+            {{ menu.title }}
+            <i class="bi bi-chevron-down ms-auto"></i>
+          </a>
+          <div class="collapse" :id="`collapse-${index}`">
+            <ul class="nav flex-column sub-menu">
+              <li v-for="sub in menu.subMenus" :key="sub.title" class="nav-item">
+                <NuxtLink :to="sub.url" class="nav-link">
+                  - {{ sub.title }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </div>
+        </li>
+
+      </template>
     </ul>
 
     <div class="mt-auto p-3">
@@ -47,8 +51,10 @@
 </template>
 
 <script setup>
-// Impor data menu dari file terpisah
-import { mainMenuItems, dropdownMenuItems } from '~/data/adminMenu';
+// 🟢 IMPORT STORE MENU
+import { useUserMenuStore } from '~/stores/userMenu';
+
+const menuStore = useUserMenuStore();
 </script>
 
 <style scoped>

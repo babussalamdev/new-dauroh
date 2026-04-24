@@ -3,7 +3,7 @@
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none txt-caption text-muted">Manajemen User</NuxtLink></li>
+        <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none txt-caption text-muted">Data Peserta</NuxtLink></li>
         <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Tambah Baru</li>
       </ol>
     </nav>

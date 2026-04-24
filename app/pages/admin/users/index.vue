@@ -4,7 +4,7 @@
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Manajemen User</li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Data Peserta</li>
       </ol>
     </nav>
     
@@ -15,7 +15,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 w-100">
   
   <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
-    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Manajemen User</h5>
+    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Data Peserta</h5>
   </div>
 
   <div class="d-flex flex-shrink-0 flex-wrap">

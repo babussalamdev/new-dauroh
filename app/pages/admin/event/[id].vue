@@ -20,32 +20,61 @@
       
       <div class="col-lg-4 col-xl-3">
         <div class="sticky-sidebar">
-          
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
-            <div class="card-body p-3">
-              <div class="Picture-container mx-auto position-relative rounded-3 overflow-hidden bg-light border border-dashed d-flex align-items-center justify-content-center">
-                <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="Picture-preview" @error="onImageError" />
-                <div v-else class="text-muted p-4 text-center">
-                  <i class="bi bi-image fs-1 opacity-25"></i>
-                  <div class="txt-caption mt-2">Belum ada gambar</div>
-                </div>
-                <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none" id="posterUploadPage" />
-              </div>
-              <canvas ref="canvasRef" style="display: none;"></canvas>
-              <div v-if="photoError" class="alert alert-danger mt-2 txt-caption p-2 text-center">{{ photoError }}</div>
+            <div class="card-header bg-white p-3 border-bottom text-center">
+              <h6 class="mb-0 fw-bold text-dark txt-label">POSTER EVENT</h6>
             </div>
+  
+  <div class="card-body p-3">
+    <div 
+      class="upload-area border-2 border-dashed rounded-4 p-4 text-center mx-auto position-relative bg-light"
+      :class="{ 'border-primary bg-primary bg-opacity-10': isDragging }"
+      @dragover.prevent="isDragging = true"
+      @dragleave.prevent="isDragging = false"
+      @drop.prevent="handleDrop"
+    >
+      
+      <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none" id="posterUploadPage" />
 
-            <div class="d-flex gap-2 px-3 pb-3">
-              <label for="posterUploadPage" class="btn btn-sm btn-light fw-bold txt-body flex-grow-1">
-                <i class="bi bi-camera me-2"></i> {{ previewUrl ? 'Ganti' : 'Upload' }}
-              </label>
-              <button v-if="newPhotoBase64" type="button" class="btn btn-success btn-sm fw-bold txt-body flex-grow-1"
-                :disabled="isSavingPicture" @click="handlePictureSubmit">
-                <span v-if="isSavingPicture" class="spinner-border spinner-border-sm me-1" />
-                {{ isSavingPicture ? '...' : 'Simpan' }}
-              </button>
-            </div>
-          </div>
+      <div v-if="!previewUrl" class="w-100">
+        <i class="bi bi-image fs-1 text-primary opacity-50"></i>
+        <p class="txt-caption fw-medium mt-2 mb-3 text-muted">Pilih atau Drag Poster ke Sini</p>
+        <label for="posterUploadPage" class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm txt-caption fw-bold cursor-pointer">
+          Browse File
+        </label>
+      </div>
+
+      <div v-else class="w-100">
+        <div class="d-flex align-items-center justify-content-center bg-white rounded-3 shadow-sm border p-2 mb-3" style="height: 280px;">
+          <img :src="previewUrl" alt="Preview" class="Picture-preview" @error="onImageError" />
+        </div>
+        
+        <div class="d-flex justify-content-center gap-2">
+          <label for="posterUploadPage" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold txt-caption mb-0 cursor-pointer">
+            <i class="bi bi-arrow-repeat me-1"></i> Ganti Gambar
+          </label>
+          
+          <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold txt-caption" 
+            @click="previewUrl = null; newPhotoBase64 = null">
+            <i class="bi bi-trash me-1"></i> Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <canvas ref="canvasRef" style="display: none;"></canvas>
+    <div v-if="photoError" class="alert alert-danger mt-2 txt-caption p-2 text-center">{{ photoError }}</div>
+  </div>
+
+  <div v-if="newPhotoBase64" class="card-footer bg-white p-3 border-top">
+    <button type="button" class="btn btn-success w-100 rounded-pill fw-bold txt-body shadow-sm"
+      :disabled="isSavingPicture" @click="handlePictureSubmit">
+      <span v-if="isSavingPicture" class="spinner-border spinner-border-sm me-1" />
+      <i v-else class="bi bi-cloud-arrow-up-fill me-1"></i>
+      {{ isSavingPicture ? 'Menyimpan...' : 'Simpan Poster Baru' }}
+    </button>
+  </div>
+</div>
 
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
@@ -301,18 +330,36 @@ const initQuill = () => {
 };
 
 // --- IMAGE HANDLING ---
-const handleFileChange = (e: Event) => {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/')) { photoError.value = 'Hanya file gambar!'; return; }
+const isDragging = ref(false);
+
+// 2. Mesin pembaca file (dipisah biar bisa dipake sama klik & drop)
+const processImageFile = (file: File) => {
+  if (!file.type.startsWith('image/')) { 
+    photoError.value = 'Hanya file gambar!'; 
+    return; 
+  }
+  photoError.value = null; // Reset error
 
   const reader = new FileReader();
   reader.onload = (ev) => {
     const base64 = ev.target?.result as string;
     previewUrl.value = base64;
-    processWebP(base64);
+    processWebP(base64); // Tetap masuk ke konverter WebP lu
   };
   reader.readAsDataURL(file);
+};
+
+// 3. Trigger dari tombol Browse File
+const handleFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) processImageFile(file);
+};
+
+// 4. Trigger dari Drag & Drop
+const handleDrop = (e: DragEvent) => {
+  isDragging.value = false;
+  const file = e.dataTransfer?.files?.[0];
+  if (file) processImageFile(file);
 };
 
 const processWebP = (src: string) => {
@@ -448,14 +495,26 @@ const onImageError = () => previewUrl.value = null;
 <style scoped>
 @import url("@/assets/css/admin/timepicker.css");
 
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.upload-area {
+  transition: all 0.3s ease;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
 .sticky-sidebar {
   position: sticky;
   top: 1.5rem;
-}
-
-.Picture-container {
-  height: 320px;
-  border-radius: 12px;
 }
 
 .Picture-preview {
@@ -484,5 +543,9 @@ const onImageError = () => previewUrl.value = null;
   border-top-right-radius: 12px;
   background: #f8f9fa;
   border-color: #eee !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

@@ -3,7 +3,11 @@
     
     <nav aria-label="breadcrumb" class="mb-3">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item">
+          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
+            <i class="bi bi-house-door-fill me-1"></i>Home
+          </NuxtLink>
+        </li>
         <li class="breadcrumb-item txt-caption text-muted">Presensi</li>
         <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Log Kehadiran</li>
       </ol>
@@ -83,7 +87,7 @@
           <table class="table table-hover mb-0" style="min-width: 700px;">
             <thead>
               <tr>
-                <th class="ps-4 txt-label" style="width: 5%;">NO</th>
+                <th class="text-center ps-4 txt-label" style="width: 3%;">NO</th>
                 <th class="txt-label" style="width: 35%;">INFORMASI PESERTA</th>
                 <th class="txt-label" style="width: 25%;">KODE TIKET</th>
                 <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
@@ -92,7 +96,7 @@
             </thead>
             <tbody>
               <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
-                <td class="ps-4 fw-medium text-muted txt-body">
+                <td class="text-center ps-4 fw-medium text-muted txt-body">
                   {{ (currentPage - 1) * perPage + index + 1 }}
                 </td>
                 <td>

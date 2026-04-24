@@ -154,6 +154,8 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
+import { useGlobalEventStore } from '~/stores/globalEvent'
+import { useFinanceStore } from '~/stores/finance'
 
 const isScrolled = ref(false)
 const { user, logout, isLoggedIn, isAdmin } = useAuth()
@@ -167,21 +169,23 @@ const handleScroll = () => {
 }
 
 const handleLogout = async () => {
-  // Tutup menu offcanvas dulu (kalau lagi buka dari HP)
   closeOffcanvas()
-  
-  // Munculin loading muter transparan
+
+  const globalStore = useGlobalEventStore()
+  const financeStore = useFinanceStore()
+
   Swal.fire({
     background: 'transparent',
     allowOutsideClick: false,
     showConfirmButton: false,
-    didOpen: () => {
-      Swal.showLoading()
-    }
+    didOpen: () => { Swal.showLoading() }
   })
 
   try {
     await logout()
+    globalStore.resetStore()
+    financeStore.resetStore()
+
     await new Promise(resolve => setTimeout(resolve, 800))
     Swal.close()
     router.push('/auth')
