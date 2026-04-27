@@ -70,6 +70,8 @@ import { useAuth } from '~/composables/useAuth';
 import { useNuxtApp } from '#app';
 import { useGlobalEventStore } from '~/stores/globalEvent';
 
+useHead({ title: 'Dashboard Admin' });
+
 definePageMeta({ layout: 'admin' });
 
 const { $apiBase } = useNuxtApp() as any;
