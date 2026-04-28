@@ -1,3 +1,5 @@
+import { useUserMenuStore } from '~/stores/userMenu';
+
 export const useAuth = () => {
   const loading = useLoading();
 
@@ -129,10 +131,17 @@ const adminRoles = [
     }
   };
 
-  const getUser = async () => {
+ const getUser = async () => {
     try {
       const res = await $apiBase.get("get-account");
       user.value = res.data;
+      
+      
+      if (res.data.Menus) {
+        const menuStore = useUserMenuStore();
+        menuStore.setMenus(res.data.Menus);
+      }
+
       return res.data;
     } catch (error) {
       user.value = null;

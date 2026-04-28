@@ -3,7 +3,12 @@
     
     <nav aria-label="breadcrumb" class="mb-4">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
+        <li class="breadcrumb-item">
+          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
+            <i class="bi bi-house-door-fill me-1"></i>Home
+          </NuxtLink>
+        </li>
+
         <li class="breadcrumb-item txt-caption text-muted">Keuangan</li>
         <li class="breadcrumb-item active txt-caption text-dark fw-bold" aria-current="page">Dashboard Pendapatan</li>
       </ol>

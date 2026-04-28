@@ -14,8 +14,8 @@
 
       <template v-for="(menu, index) in menuStore.menus" :key="index">
         
-        <li v-if="!menu.subMenus" class="nav-item">
-          <NuxtLink :to="menu.url" class="nav-link">
+        <li v-if="!menu.subMenus || menu.subMenus.length === 0" class="nav-item">
+          <NuxtLink :to="menu.url" class="nav-link" active-class="active" exact-active-class="active">
             <i :class="`bi ${menu.icon} me-2`"></i>
             {{ menu.title }}
           </NuxtLink>
@@ -30,7 +30,7 @@
           <div class="collapse" :id="`collapse-${index}`">
             <ul class="nav flex-column sub-menu">
               <li v-for="sub in menu.subMenus" :key="sub.title" class="nav-item">
-                <NuxtLink :to="sub.url" class="nav-link">
+                <NuxtLink :to="sub.url" class="nav-link" active-class="active">
                   - {{ sub.title }}
                 </NuxtLink>
               </li>
@@ -51,12 +51,19 @@
 </template>
 
 <script setup>
-// 🟢 IMPORT STORE MENU
 import { useUserMenuStore } from '~/stores/userMenu';
 
+// Nangkep data menu yang udah diisi sama useAuth tadi
 const menuStore = useUserMenuStore();
 </script>
 
 <style scoped>
 @import url("~/assets/css/admin/sidebar.css");
+
+/* Tambahan kecil buat nandain menu yang lagi aktif */
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff !important;
+  border-radius: 6px;
+}
 </style>

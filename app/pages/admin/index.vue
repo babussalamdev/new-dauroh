@@ -19,7 +19,7 @@
           <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden" 
      style="width: 200px; border: 1px solid #ced4da; height: 38px;"> 
   <span class="input-group-text bg-light border-0 py-1 ps-3 pe-0">
-    <i class="bi bi-calendar-month text-muted" style="font-size: 0.8rem;"></i>
+    <i class="bi bi-calendar text-muted" style="font-size: 0.8rem;"></i>
   </span>
   <input type="month" 
          class="form-control border-0 txt-caption fw-medium ps-2 pe-3 py-1 shadow-none"

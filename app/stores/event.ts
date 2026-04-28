@@ -143,7 +143,8 @@ export const useEventStore = defineStore("event", () => {
 
     toast.showToast({ message: "Jadwal berhasil diperbarui.", type: "success" });
     return true;
-  } catch (error: any) {
+  } 
+  catch (error: any) {
     console.error("Gagal update jadwal:", error);
     toast.showToast({ message: "Gagal memperbarui jadwal.", type: "danger" });
     return false;

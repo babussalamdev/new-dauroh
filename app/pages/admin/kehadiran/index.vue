@@ -169,6 +169,8 @@ import { useAttendanceStore } from '~/stores/attendance';
 import { useGlobalEventStore } from '~/stores/globalEvent'; 
 import { usePagination } from '~/composables/usePagination';
 
+useHead({ title: 'Presensi Peserta' });
+
 definePageMeta({ layout: 'admin' });
 
 const store = useAttendanceStore();
