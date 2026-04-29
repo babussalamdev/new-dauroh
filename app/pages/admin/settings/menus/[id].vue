@@ -131,6 +131,9 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Swal from 'sweetalert2';
 
+useHead({
+  title: 'Control Sub Menu'
+});
 definePageMeta({ layout: 'admin' });
 
 const route = useRoute();

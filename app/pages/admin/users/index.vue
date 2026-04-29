@@ -9,7 +9,7 @@
           </NuxtLink>
         </li>
 
-        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Data Peserta</li>
+        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Manajemen Akun</li>
       </ol>
     </nav>
     
@@ -20,12 +20,12 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 w-100">
   
   <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
-    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Data Peserta</h5>
+    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Manajemen Akun</h5>
   </div>
 
   <div class="d-flex flex-shrink-0 flex-wrap">
     <NuxtLink to="/admin/users/create" class="btn btn-primary rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium">
-      Tambah User
+      Tambah Akun
     </NuxtLink>
   </div>
 
@@ -62,8 +62,8 @@
                 </a>
               </li>
               <li>
-                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'client' }" href="#" @click.prevent="changeType('client')">
-                  <i class="bi bi-person me-2"></i>Data Client
+                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'user' }" href="#" @click.prevent="changeType('user')">
+                  <i class="bi bi-person me-2"></i>Data User
                 </a>
               </li>
             </ul>
@@ -187,6 +187,9 @@ import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
 import Swal from 'sweetalert2'; 
 
+useHead({
+  title: 'Manajemen Akun'
+});
 definePageMeta({
   layout: 'admin',
   middleware: () => {
@@ -215,7 +218,7 @@ const activeType = computed(() => (route.query.type as string) || 'all');
 
 const activeTypeLabel = computed(() => {
   if (activeType.value === 'admin') return 'Data Admin';
-  if (activeType.value === 'client') return 'Data Client';
+  if (activeType.value === 'user-client') return 'Data User';
   return 'Semua';
 });
 
@@ -228,6 +231,9 @@ const changeType = (type: string) => {
 watch(() => route.query.type, (newType) => {
     const type = (newType as string) || 'all';
     store.search = ''; 
+    
+    // Langsung lempar 'type' mentah-mentah ke store. 
+    // JANGAN PAKE apiType DI SINI LAGI!
     store.getListaccount(type, true);
 }, { immediate: true });
 
@@ -235,7 +241,7 @@ watch(() => route.query.type, (newType) => {
 const formatRoleName = (role: string | null | undefined) => {
   if (!role) return '-';
   const lowerRole = String(role).toLowerCase();
-  if (lowerRole === 'user') return 'Client';
+  if (lowerRole === 'user') return 'User';
   
   const cleanRole = String(role).replace(/_/g, ' ');
   return cleanRole.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -340,7 +346,7 @@ const toggleBlockUser = async (targetUser: any) => {
 .bg-teal { background-color: #20c997 !important; }
 .border-teal { border-color: #20c997 !important; }
 
-/* Menghilangkan padding card-body biar tabel nempel manis */
+
 .table> :not(caption)>*>* { border-bottom-width: 1px; }
 
 .tabs-scroll-wrapper {

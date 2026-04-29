@@ -38,7 +38,7 @@ export const useAdminUserStore = defineStore("adminUser", () => {
 
  
   // --- Actions ---
-  async function getListaccount(type: string = 'all', forceRefresh = false) {
+async function getListaccount(type: string = 'all', forceRefresh = false) {
     if (currentType.value === type && users.value.length > 0 && !forceRefresh) return;
 
     loading.value = true;
@@ -46,7 +46,9 @@ export const useAdminUserStore = defineStore("adminUser", () => {
 
     const { $apiBase } = useNuxtApp() as any;
     try {
-      const res = await $apiBase.get(`/list-account?type=${type}`);
+    
+      const apiType = type === 'user' ? 'user' : type;
+      const res = await $apiBase.get(`/list-account?type=${apiType}`);
       const rawData = res.data || res;
 
       if (Array.isArray(rawData)) {

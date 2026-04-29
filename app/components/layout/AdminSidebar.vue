@@ -22,11 +22,11 @@
         </li>
 
         <li v-else class="nav-item">
-          <a class="nav-link collapsed" :href="`#collapse-${index}`" data-bs-toggle="collapse" role="button">
+          <div class="nav-link collapsed cursor-pointer" data-bs-toggle="collapse" :data-bs-target="`#collapse-${index}`" role="button">
             <i :class="`bi ${menu.icon} me-2`"></i>
             {{ menu.title }}
             <i class="bi bi-chevron-down ms-auto"></i>
-          </a>
+          </div>
           <div class="collapse" :id="`collapse-${index}`">
             <ul class="nav flex-column sub-menu">
               <li v-for="sub in menu.subMenus" :key="sub.title" class="nav-item">
@@ -65,5 +65,10 @@ const menuStore = useUserMenuStore();
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff !important;
   border-radius: 6px;
+}
+
+/* Biar div-nya kerasa kayak tombol/link */
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

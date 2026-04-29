@@ -8,7 +8,7 @@
           </NuxtLink>
         </li>
         <li class="breadcrumb-item active txt-caption fw-bold text-secondary" aria-current="page">
-          Manajemen Tiket
+          Manajemen Event
         </li>
       </ol>
     </nav>
@@ -20,6 +20,9 @@
 <script setup>
 import { useAuth } from '~/composables/useAuth';
 
+useHead({
+  title: 'Manajemen Event'
+});
 definePageMeta({
   layout: 'admin',
   middleware: () => {

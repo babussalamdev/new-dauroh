@@ -130,6 +130,10 @@ import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
 import { useGlobalEventStore } from '~/stores/globalEvent';
 
+useHead({
+  title: 'Riwayat Transaksi'
+});
+
 const globalStore = useGlobalEventStore();
 
 const props = defineProps<{

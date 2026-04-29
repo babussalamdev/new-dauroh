@@ -1,14 +1,23 @@
 <template>
-  <nav aria-label="breadcrumb" class="mb-4">
+  <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
       <li 
         v-for="(item, index) in items" 
         :key="index" 
         class="breadcrumb-item"
-        :class="{ 'active': index === items.length - 1 }"
+        :class="{ 'active fw-medium txt-caption text-dark': index === items.length - 1 }"
       >
-        <NuxtLink v-if="index < items.length - 1" :to="item.to">{{ item.text }}</NuxtLink>
-        <span v-else>{{ item.text }}</span>
+        <NuxtLink 
+          v-if="index < items.length - 1" 
+          :to="item.to" 
+          class="text-decoration-none txt-caption fw-bold text-primary"
+        >
+          <i v-if="item.icon" :class="`${item.icon} me-1`"></i>{{ item.text }}
+        </NuxtLink>
+        
+        <span v-else aria-current="page">
+          <i v-if="item.icon" :class="`${item.icon} me-1`"></i>{{ item.text }}
+        </span>
       </li>
     </ol>
   </nav>
@@ -19,7 +28,7 @@ defineProps({
   items: {
     type: Array,
     required: true,
-    // Contoh: [{ text: 'Home', to: '/admin' }, { text: 'Manajemen Tiket' }]
+    // Contoh: [{ text: 'Home', to: '/admin', icon: 'bi bi-house-door-fill' }, { text: 'Manajemen Tiket' }]
   }
 });
 </script>

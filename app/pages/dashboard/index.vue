@@ -97,14 +97,6 @@
             </div>
             
             <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
-              <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0 fw-bold text-dark txt-subtitle"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Riwayat Pembayaran & Tiket</h5>
-                  <div class="alert alert-info mt-3">
-                    <strong>Data Local completedEvent:</strong>
-                    <pre class="txt-caption mt-2" style="max-height: 300px; overflow-y: auto;">{{ completedEvent }}</pre>
-                  </div>
-              </div>
-              
               <div class="card-body p-0">
                 <div v-if="upcomingTickets.length > 0" class="table-responsive">
                   <table class="table table-hover align-middle mb-0">

@@ -28,6 +28,9 @@ import { useAuth } from '~/composables/useAuth';
 import { useFinanceStore } from '~/stores/finance';
 import { useGlobalEventStore } from '~/stores/globalEvent';
 
+useHead({
+  title: 'Dashboard Pendapatan'
+});
 definePageMeta({ 
   layout: 'admin',
   middleware: () => {
@@ -39,7 +42,7 @@ definePageMeta({
 const financeStore = useFinanceStore();
 const globalStore = useGlobalEventStore();
 
-// 🟢 1. nembak api pertama kali halaman dibuka (ssr friendly)
+
 await useAsyncData('finance-init', async () => {
   await financeStore.fetchSummary();
   return true;

@@ -92,6 +92,9 @@
 import { ref, onMounted } from 'vue';
 import Swal from 'sweetalert2';
 
+useHead({
+  title: 'Control Role'
+});
 definePageMeta({ layout: 'admin' });
 
 const rolesData = ref<any[]>([]);

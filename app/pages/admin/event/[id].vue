@@ -17,64 +17,58 @@
     </div>
 
     <div v-else-if="eventData" class="row g-4">
-      
       <div class="col-lg-4 col-xl-3">
         <div class="sticky-sidebar">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
             <div class="card-header bg-white p-3 border-bottom text-center">
               <h6 class="mb-0 fw-bold text-dark txt-label">POSTER EVENT</h6>
             </div>
-  
-  <div class="card-body p-3">
-    <div 
-      class="upload-area border-2 border-dashed rounded-4 p-4 text-center mx-auto position-relative bg-light"
-      :class="{ 'border-primary bg-primary bg-opacity-10': isDragging }"
-      @dragover.prevent="isDragging = true"
-      @dragleave.prevent="isDragging = false"
-      @drop.prevent="handleDrop"
-    >
+            <div class="card-body p-3">
+              <div 
+              class="upload-area border-2 border-dashed rounded-4 p-4 text-center mx-auto position-relative bg-light"
+              :class="{ 'border-primary bg-primary bg-opacity-10': isDragging }"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"@drop.prevent="handleDrop"
+              >
       
-      <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none" id="posterUploadPage" />
-
-      <div v-if="!previewUrl" class="w-100">
-        <i class="bi bi-image fs-1 text-primary opacity-50"></i>
-        <p class="txt-caption fw-medium mt-2 mb-3 text-muted">Pilih atau Drag Poster ke Sini</p>
-        <label for="posterUploadPage" class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm txt-caption fw-bold cursor-pointer">
-          Browse File
-        </label>
-      </div>
-
-      <div v-else class="w-100">
-        <div class="d-flex align-items-center justify-content-center bg-white rounded-3 shadow-sm border p-2 mb-3" style="height: 280px;">
-          <img :src="previewUrl" alt="Preview" class="Picture-preview" @error="onImageError" />
+              <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" class="d-none" id="posterUploadPage" />
+              <div v-if="!previewUrl" class="w-100">
+                <i class="bi bi-image fs-1 text-primary opacity-50"></i>
+                <p class="txt-caption fw-medium mt-2 mb-3 text-muted">Pilih atau Drag Poster ke Sini</p>
+                <label for="posterUploadPage" class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm txt-caption fw-bold cursor-pointer">
+                  Browse File
+                </label>
+              </div>
+              <div v-else class="w-100">
+                <div class="d-flex align-items-center justify-content-center bg-white rounded-3 shadow-sm border p-2 mb-3" style="height: 280px;">
+                  <img :src="previewUrl" alt="Preview" class="Picture-preview" @error="onImageError" />
+                </div>
+                <div class="d-flex justify-content-center gap-2">
+                  <label for="posterUploadPage" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold txt-caption mb-0 cursor-pointer">
+                    <i></i> Ganti
+                  </label>
+                  <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold txt-caption" 
+                  @click="previewUrl = null; newPhotoBase64 = null">
+                  <i></i> Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+          <canvas ref="canvasRef" style="display: none;"></canvas>
+          <div v-if="photoError" class="alert alert-danger mt-2 txt-caption p-2 text-center">{{ photoError }}</div>
         </div>
-        
-        <div class="d-flex justify-content-center gap-2">
-          <label for="posterUploadPage" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold txt-caption mb-0 cursor-pointer">
-            <i class="bi bi-arrow-repeat me-1"></i> Ganti Gambar
-          </label>
-          
-          <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold txt-caption" 
-            @click="previewUrl = null; newPhotoBase64 = null">
-            <i class="bi bi-trash me-1"></i> Hapus
-          </button>
-        </div>
+        <div class="card-footer bg-white p-3 border-top">
+          <button type="button" class="btn btn-success w-100 rounded-pill fw-bold txt-body shadow-sm"
+          :disabled="!newPhotoBase64 || isSavingPicture" @click="handlePictureSubmit">
+          <span v-if="isSavingPicture" class="spinner-border spinner-border-sm me-1" />
+          <i v-else class="bi bi-cloud-arrow-up-fill me-1"></i>
+          {{ isSavingPicture ? 'Menyimpan...' : 'Simpan Poster Baru' }}
+        </button>
+        <small v-if="!newPhotoBase64 && !previewUrl" class="text-danger txt-caption d-block mt-2 text-center">
+          * Poster wajib diupload sebelum menyimpan.
+        </small>
       </div>
     </div>
-
-    <canvas ref="canvasRef" style="display: none;"></canvas>
-    <div v-if="photoError" class="alert alert-danger mt-2 txt-caption p-2 text-center">{{ photoError }}</div>
-  </div>
-
-  <div v-if="newPhotoBase64" class="card-footer bg-white p-3 border-top">
-    <button type="button" class="btn btn-success w-100 rounded-pill fw-bold txt-body shadow-sm"
-      :disabled="isSavingPicture" @click="handlePictureSubmit">
-      <span v-if="isSavingPicture" class="spinner-border spinner-border-sm me-1" />
-      <i v-else class="bi bi-cloud-arrow-up-fill me-1"></i>
-      {{ isSavingPicture ? 'Menyimpan...' : 'Simpan Poster Baru' }}
-    </button>
-  </div>
-</div>
 
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
@@ -180,6 +174,8 @@
         </section>
       </div>
     </div>
+
+    
     <AdminEventFormModal v-if="showEditBasicModal" :show="showEditBasicModal" :is-editing="true"
       :event="eventData || undefined" @close="closeEditBasicModal" @save="handleUpdateBasicInfo" />
   </div> 

@@ -132,6 +132,9 @@ import { useVoucherStore } from '~/stores/voucher';
 import { useGlobalEventStore } from '~/stores/globalEvent';
 import Swal from 'sweetalert2';
 
+useHead({
+  title: 'Manajemen Voucher'
+});
 definePageMeta({
   layout: 'admin',
   middleware: () => {

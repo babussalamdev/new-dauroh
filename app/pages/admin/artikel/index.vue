@@ -5,7 +5,8 @@
 </template>
 
 <script setup lang="ts">
-// 🟢 Pengecekan layout dan hak akses admin tetep ditaruh di sini
+
+useHead({ title: 'Manajemen Artikel' });
 definePageMeta({
   layout: 'admin',
   middleware: () => {
@@ -16,5 +17,5 @@ definePageMeta({
   }
 });
 
-useHead({ title: 'Manajemen Informasi' });
+
 </script>

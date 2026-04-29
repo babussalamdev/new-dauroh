@@ -49,31 +49,26 @@
             </div>
 
             <div class="col-md-6">
-              <label for="role" class="form-label txt-label text-secondary">Role (Hak Akses)</label>
-              <select id="role" class="form-select bg-light border-0 txt-body" v-model="form.role" :disabled="!canEditRole" required>
-                <option v-for="roleOption in availableRoles" :key="roleOption.value" :value="roleOption.value">
-                  {{ roleOption.label }}
-                </option>
-                <option v-if="!availableRoles.find(r => r.value === form.role)" :value="form.role" disabled>
-                   {{ formatRoleName(form.role) }} (Tidak punya akses untuk mengubah role ini)
-                </option>
-              </select>
-              <div v-if="!canEditRole" class="form-text text-danger txt-caption mt-1 fw-medium">
-                <i class="bi bi-exclamation-circle me-1"></i> Level otoritas Anda (<strong>{{ formatRoleName(user?.role) }}</strong>) tidak mengizinkan perubahan role user.
-              </div>
-              <div v-else class="form-text text-primary txt-caption mt-1 fw-medium">
-                <i class="bi bi-info-circle me-1"></i> Pilihan role dibatasi sesuai tingkat otoritas Anda.
-              </div>
-            </div>
+  <label for="role" class="form-label txt-label text-secondary">Role (Hak Akses)</label>
+  <select id="role" class="form-select bg-light border-0 txt-body" v-model="form.role" :disabled="!canEditRole" required>
+    <option v-for="roleOption in availableRoles" :key="roleOption.value" :value="roleOption.value">
+      {{ roleOption.label }}
+    </option>
+    <option v-if="!availableRoles.find(r => r.value === form.role)" :value="form.role" disabled>
+       {{ formatRoleName(form.role) }}
+    </option>
+  </select>
 
-            <div class="col-12 mt-4">
-              <div class="bg-light p-3 rounded-3 border">
-                <p class="text-muted txt-caption mb-0">
-                  <i class="bi bi-shield-check me-2 text-success"></i>
-                  <strong>Catatan Keamanan:</strong> Fitur ubah password user saat ini dinonaktifkan. Gunakan tombol berlogo <i class="bi bi-key-fill text-warning"></i> pada tabel Manajemen User untuk melakukan <i>Force Reset Password</i>.
-                </p>
-              </div>
-            </div>
+  <div v-if="form.role === 'user'" class="form-text text-danger txt-caption mt-1 fw-medium">
+    <i class="bi bi-exclamation-circle me-1"></i> Role akun User tidak dapat diubah.
+  </div>
+  <div v-else-if="!canEditRole" class="form-text text-danger txt-caption mt-1 fw-medium">
+    <i class="bi bi-exclamation-circle me-1"></i> Level otoritas Anda (<strong>{{ formatRoleName(user?.role) }}</strong>) tidak mengizinkan perubahan role user ini.
+  </div>
+  <div v-else class="form-text text-primary txt-caption mt-1 fw-medium">
+    <i class="bi bi-info-circle me-1"></i> Pilihan role dibatasi sesuai tingkat otoritas Anda.
+  </div>
+</div>
           </div>
 
           <hr class="border-secondary border-opacity-25 my-4">
@@ -141,7 +136,7 @@ const formatRoleName = (roleStr: string | null | undefined) => {
   if (!roleStr) return 'Admin';
   const role = roleStr.toLowerCase();
   if (role === 'root') return 'Root';
-  if (role === 'user') return 'Client';
+  if (role === 'user') return 'User';
   return role.charAt(0).toUpperCase() + role.slice(1);
 };
 
@@ -176,12 +171,9 @@ const isRootTarget = computed(() => {
 
 // Cek hak Edit Role
 const canEditRole = computed(() => {
+  if (form.role === 'user') return false;
   const myRole = (user.value?.role || user.value?.Series || '').toLowerCase();
-  
-  // 1. Root BISA ganti role siapa aja (kecuali sesama root karena isRootTarget bakal ngeblok duluan)
   if (myRole === 'root') return true;
-  
-  // 2. Admin BISA ganti role bawahan, TAPI GAK BISA ganti role root atau sesama admin
   if (myRole === 'admin') {
      return !['root', 'admin'].includes(form.role);
   }
@@ -237,18 +229,19 @@ const handleSubmit = async () => {
     await $apiBase.put(`/update-account?email=${form.email}&type=user-admin`, payload);
 
     Swal.fire({
-      title: 'Berhasil!',
-      text: 'Data user telah diperbarui.',
-      icon: 'success',
-      timer: 2000,
-      showConfirmButton: false,
-    }).then(() => {
-      // Tembak API biar data di store fresh, trs redirect sesuai role
-      store.getListaccount('all', true).then(() => {
-        const targetTab = form.role === 'user' ? 'client' : 'admin';
-        router.push(`/admin/users?type=${targetTab}`);
-      });
+    title: 'Berhasil!',
+    text: 'Data user telah diperbarui.',
+    icon: 'success',
+    timer: 2000,
+    showConfirmButton: false,
+  }).then(() => {
+    
+    store.getListaccount('all', true).then(() => {
+      
+      const targetTab = form.role === 'user' ? 'user' : 'admin'; 
+      router.push(`/admin/users?type=${targetTab}`);
     });
+  });
 
   } catch (error: any) {
     console.error('Gagal mengupdate user:', error);

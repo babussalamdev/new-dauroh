@@ -138,6 +138,10 @@
 import { ref, onMounted } from 'vue';
 import Swal from 'sweetalert2';
 
+useHead({
+  title: 'Control Menu'
+});
+
 definePageMeta({ layout: 'admin' });
 
 const availableRoles = ref<string[]>([]);
@@ -196,11 +200,19 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
   isEdit.value = mode === 'edit';
   
   if (mode === 'add') {
-    form.value = { sk: '', title: '', url: '', icon: 'bi-app', roles: [] }; // <--- SEBELUMNYA ADA 'root', 'admin'
+    form.value = { sk: '', title: '', url: '', icon: 'bi-app', roles: [] }; 
   } else if (data) {
     let roleArray: string[] = [];
     const rolesString = data.Roles || data.roles || "";
-    if (rolesString) roleArray = rolesString.split(',').map((r: string) => r.trim());
+    
+    if (rolesString) {
+      // 1. Pecah dulu data dari BE
+      const rawRoles = rolesString.split(',').map((r: string) => r.trim());
+      
+      // 2. 🟢 INI KUNCI PENYARINGANNYA: 
+      // Cuma ambil role yang ada di master data (availableRoles)
+      roleArray = rawRoles.filter((r: string) => availableRoles.value.includes(r));
+    }
 
     form.value = {
       sk: data.SK, 

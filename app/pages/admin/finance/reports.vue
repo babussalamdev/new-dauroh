@@ -88,6 +88,10 @@
 import { ref } from 'vue';
 import Swal from 'sweetalert2';
 
+useHead({
+  title: 'Laporan & Export'
+});
+
 definePageMeta({ layout: 'admin' });
 
 // STATE FORM
