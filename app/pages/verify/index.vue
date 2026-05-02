@@ -64,6 +64,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
+const { alert: swalAlert } = useAlert();
 const { $apiBase } = useNuxtApp();
 
 const otpCode = ref('');
@@ -118,42 +119,33 @@ onUnmounted(() => {
 // --- 3. HANDLE RESEND OTP ---
 const handleResendOtp = async () => {
   if (!storedData.value) {
-    Swal.fire('Error', 'Data sesi hilang. Silakan daftar ulang.', 'error');
+    swalAlert('Error', 'Data sesi hilang. Silakan daftar ulang.', 'error');
     return;
   }
 
   resendLoading.value = true;
   try {
-    // Tembak API Signup lagi (menggunakan data dari session storage)
     await $apiBase.post('/signup-account?type=user-client', storedData.value);
 
-    // Jika sukses (200 OK)
     startTimer(); // Reset timer
-    Swal.fire({
-      icon: 'success',
-      title: 'Terkirim!',
-      text: 'Kode OTP baru telah dikirim.',
-      timer: 2000, showConfirmButton: false
-    });
+    // 🟢 Notifikasi Berhasil yang halus
+    swalAlert('Terkirim!', 'Kode OTP baru telah dikirim ke email Anda.', 'success');
 
   } catch (error: any) {
     console.error("Resend Error:", error);
     const msg = error.response?.data?.message || 'Gagal mengirim ulang kode.';
+    
     if (msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('sudah terdaftar')) {
-      startTimer(); // Reset timer
-      Swal.fire({
-        icon: 'success',
-        title: 'Terkirim!',
-        text: 'Kode OTP baru telah dikirim (Akun Terdaftar).',
-        timer: 2000, showConfirmButton: false
-      });
+      startTimer();
+      swalAlert('Terkirim!', 'Kode OTP baru telah dikirim (Akun Terdaftar).', 'success');
     } else {
-      Swal.fire('Gagal', msg, 'error');
+      swalAlert('Gagal', msg, 'error');
     }
   } finally {
     resendLoading.value = false;
   }
 };
+
 const handleVerify = async () => {
   loading.value = true;
 
@@ -174,35 +166,25 @@ const handleVerify = async () => {
 
     await $apiBase.post('/verify-email', payload);
 
-    await Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Akun berhasil diverifikasi. Silakan login.',
-      timer: 2000,
-      showConfirmButton: false
-    });
-
-    sessionStorage.removeItem('temp_register_data');
-    router.push('/auth');
+    // 🟢 Notifikasi Berhasil Verifikasi
+    swalAlert('Berhasil!', 'Akun Anda telah aktif. Silakan login untuk melanjutkan.', 'success')
+      .then(() => {
+        sessionStorage.removeItem('temp_register_data');
+        router.push('/auth');
+      });
 
   } catch (error: any) {
     console.error("Verify Error:", error);
     let msg = error.response?.data?.message || error.message || 'Verifikasi gagal.';
+    
     if (error.message.includes('Data registrasi hilang')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Sesi Habis',
-        text: 'Data registrasi tidak ditemukan. Silakan daftar ulang.',
-        confirmButtonText: 'Daftar Ulang',
-      }).then((res) => {
-        if (res.isConfirmed) router.push('/register');
-      });
+      // 🟢 Khusus error sesi habis, kita kasih tombol arahin balik ke register
+      swalAlert('Sesi Habis', 'Data registrasi tidak ditemukan. Silakan daftar ulang.', 'error')
+        .then(() => {
+          router.push('/auth/register');
+        });
     } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal',
-        text: msg
-      });
+      swalAlert('Gagal', msg, 'error');
     }
   } finally {
     loading.value = false;

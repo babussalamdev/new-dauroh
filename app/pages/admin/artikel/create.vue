@@ -97,7 +97,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 // import { useArticleStore } from '~/stores/article';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
@@ -105,6 +105,7 @@ import 'quill/dist/quill.snow.css';
 // --- CONFIG ---
 definePageMeta({ layout: 'admin' });
 const router = useRouter();
+const { alert: swalAlert } = useAlert();
 // const articleStore = useArticleStore();
 
 // --- STATE FORM ---
@@ -198,7 +199,7 @@ const initQuill = () => {
 const handleSaveArticle = async () => {
   // Validasi Kosong
   if (!form.Title || !form.Description || form.Description === '<p><br></p>') {
-    Swal.fire('Oops!', 'Judul dan isi konten wajib diisi cuy!', 'warning');
+    swalAlert('Oops!', 'Judul dan isi konten wajib diisi cuy!', 'warning');
     return;
   }
 
@@ -219,20 +220,18 @@ const handleSaveArticle = async () => {
     // Simulasi sukses
     setTimeout(() => {
       isSaving.value = false;
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: 'Informasi Yayasan berhasil diterbitkan.',
-        timer: 1500,
-        showConfirmButton: false
-      }).then(() => {
-        router.push('/admin/artikel'); // Balik ke halaman tabel
-      });
+      
+      // 🟢 2. Notifikasi Berhasil (Pake swalAlert tipe 'success')
+      swalAlert('Berhasil!', 'Informasi Yayasan berhasil diterbitkan.', 'success')
+        .then(() => {
+          router.push('/admin/artikel'); 
+        });
     }, 1000);
 
   } catch (error) {
     isSaving.value = false;
-    Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+    // 🟢 3. Notifikasi Gagal (Pake swalAlert tipe 'error')
+    swalAlert('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
   }
 };
 

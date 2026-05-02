@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, watch } from 'vue';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import { useAuth } from '~/composables/useAuth';
 import { useRouter } from 'vue-router';
 import { useNuxtApp, useCookie } from '#app'; // Ditambahin import standard Nuxt
@@ -66,6 +66,7 @@ import { useNuxtApp, useCookie } from '#app'; // Ditambahin import standard Nuxt
 const router = useRouter();
 const { user, getUser } = useAuth();
 const { $apiBase } = useNuxtApp() as any;
+const { alert: swalAlert } = useAlert();
 
 // --- Helper: Format Phone (Convert +62/62 to 0) ---
 const formatPhoneDisplay = (phone: string | null | undefined) => {
@@ -104,8 +105,9 @@ onMounted(async () => {
       await getUser();
     } catch (error) {
       console.error("Gagal memuat data user:", error);
-      Swal.fire('Error', 'Gagal memuat data profil. Silakan login ulang.', 'error').then(() => {
-        router.push('/auth/login');
+      
+      swalAlert('Error', 'Gagal memuat data profil. Silakan login ulang.', 'error').then(() => {
+        router.push('/auth');
       });
     }
   }
@@ -125,7 +127,6 @@ const handleUpdateProfile = async () => {
     const accessToken = useCookie('AccessToken').value;
     if (!accessToken) throw new Error("Sesi kadaluarsa, silakan login ulang.");
 
-    // Payload Update Profile
     const payload = {
       name: profileForm.name,
       birth_date: profileForm.birth_date,
@@ -136,7 +137,7 @@ const handleUpdateProfile = async () => {
 
     await $apiBase.put(`/update-account?email=${profileForm.email}&type=user-client`, payload);
 
-    // Update local state
+    // Update local state agar navbar ikut berubah namanya secara real-time
     if (user.value) {
       user.value.name = profileForm.name;
       user.value.birth_date = profileForm.birth_date;
@@ -144,11 +145,14 @@ const handleUpdateProfile = async () => {
       user.value.phone_number = profileForm.phone_number;
     }
 
-    Swal.fire('Berhasil', 'Informasi profil berhasil diperbarui.', 'success');
+    // 🟢 Notifikasi Berhasil yang Halus
+    swalAlert('Berhasil', 'Informasi profil berhasil diperbarui.', 'success');
 
   } catch (err: any) {
     profileError.value = err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal memperbarui profil.';
     console.error('Update profile error:', err);
+    // 🟢 Munculin juga pop-up error biar user sadar ada masalah
+    swalAlert('Gagal', profileError.value ?? 'Terjadi kesalahan sistem', 'error');
   } finally {
     profileLoading.value = false;
   }

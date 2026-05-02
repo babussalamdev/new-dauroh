@@ -73,9 +73,11 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import { useNuxtApp, useCookie } from '#app';
+
 const { $apiBase } = useNuxtApp() as any;
+const { alert: swalAlert } = useAlert();
 
 // Password Form State
 const passwordForm = reactive({
@@ -86,7 +88,6 @@ const passwordForm = reactive({
 const passwordLoading = ref(false);
 const passwordError = ref<string | null>(null);
 
-// ---(Icon Mata) ---
 const showOldPass = ref(false);
 const showNewPass = ref(false);
 const showConfirmPass = ref(false);
@@ -95,34 +96,35 @@ const isChangingPassword = computed(() => {
   return passwordForm.newPassword !== '' || passwordForm.confirmNewPassword !== '' || passwordForm.oldPassword !== '';
 });
 
-// --- Validasi Regex Password (Aturan: Min 8, Lower, Upper, Number) ---
 const isPasswordValid = computed(() => {
   const pwd = passwordForm.newPassword;
   if (!pwd) return false;
-
   const hasMinLen = pwd.length >= 8;
   const hasUpper = /[A-Z]/.test(pwd);
   const hasLower = /[a-z]/.test(pwd);
-  const hasNumber = /\d/.test(pwd); // \d itu digit (angka)
-
+  const hasNumber = /\d/.test(pwd);
   return hasMinLen && hasUpper && hasLower && hasNumber;
 });
 
 // --- CHANGE PASSWORD HANDLER ---
 const handleChangePassword = async () => {
   if (!isChangingPassword.value) return;
+  
   passwordLoading.value = true;
   passwordError.value = null;
+
   if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
     passwordError.value = 'Password baru dan konfirmasi tidak cocok.';
     passwordLoading.value = false;
     return;
   }
+
   if (!isPasswordValid.value) {
-    passwordError.value = 'Password baru tidak memenuhi syarat (Min. 8 karakter, Huruf Besar, Huruf Kecil, dan Angka).';
+    passwordError.value = 'Password baru tidak memenuhi syarat.';
     passwordLoading.value = false;
     return;
   }
+
   try {
     const accessToken = useCookie('AccessToken').value;
     if (!accessToken) throw new Error("Sesi kadaluarsa, silakan login ulang.");
@@ -133,9 +135,16 @@ const handleChangePassword = async () => {
       accessToken: accessToken
     };
 
-    const response = await $apiBase.put('/change-password', payload);
+    await $apiBase.put('/change-password', payload);
 
-    Swal.fire('Berhasil', 'Password berhasil diubah. Silakan login ulang dengan password baru.', 'success').then(() => {
+    // Notifikasi Berhasil
+    swalAlert(
+      'Berhasil!', 
+      'Password berhasil diubah. Silakan login kembali dengan password baru Anda.', 
+      'success'
+    ).then(() => {
+      // Force logout/redirect ke login
+      window.location.href = '/auth';
     });
 
     // Reset form
@@ -148,10 +157,11 @@ const handleChangePassword = async () => {
 
     if (msg.includes("Incorrect username or password") || msg.includes("NotAuthorizedException")) {
       passwordError.value = "Password lama yang Anda masukkan salah.";
+      swalAlert('Gagal', 'Password lama salah.', 'error');
     } else {
       passwordError.value = msg;
+      swalAlert('Gagal', msg, 'error');
     }
-
     console.error('Change password error:', err);
   } finally {
     passwordLoading.value = false;

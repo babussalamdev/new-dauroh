@@ -142,7 +142,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 definePageMeta({
   layout: 'admin',
@@ -158,8 +158,9 @@ useHead({ title: 'Profil Admin' });
 
 const { user, getUser } = useAuth();
 const { $apiBase } = useNuxtApp() as any;
+const { alert: swalAlert } = useAlert(); // 🟢 Deklarasikan fungsi alert
 
-// Helper Format Phone (+62 -> 08)
+// --- Helper Format Phone ---
 const formatPhoneDisplay = (phone: string | null | undefined) => {
   if (!phone) return '';
   let str = String(phone).trim();
@@ -168,7 +169,7 @@ const formatPhoneDisplay = (phone: string | null | undefined) => {
   return str;
 };
 
-// Profile Form State
+// Form States
 const profileForm = reactive({
   name: '',
   email: '',
@@ -178,7 +179,6 @@ const profileForm = reactive({
 const profileLoading = ref(false);
 const profileError = ref<string | null>(null);
 
-// Password Form State
 const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
@@ -187,7 +187,6 @@ const passwordForm = reactive({
 const passwordLoading = ref(false);
 const passwordError = ref<string | null>(null);
 
-// Visibility Toggles
 const showOldPass = ref(false);
 const showNewPass = ref(false);
 const showConfirmPass = ref(false);
@@ -196,25 +195,19 @@ const isChangingPassword = computed(() => {
   return passwordForm.newPassword !== '' || passwordForm.confirmNewPassword !== '' || passwordForm.oldPassword !== '';
 });
 
-// Regex Rules
 const isPasswordValid = computed(() => {
   const pwd = passwordForm.newPassword;
   if (!pwd) return false;
-  
-  const hasMinLen = pwd.length >= 8;
-  const hasUpper = /[A-Z]/.test(pwd);
-  const hasLower = /[a-z]/.test(pwd);
-  const hasNumber = /\d/.test(pwd);
-
-  return hasMinLen && hasUpper && hasLower && hasNumber;
+  return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /\d/.test(pwd);
 });
+
 onMounted(async () => {
   if (!user.value) {
     try {
       await getUser(); 
     } catch (error) {
       console.error("Gagal memuat data user:", error);
-      Swal.fire('Error', 'Gagal memuat data profil.', 'error');
+      swalAlert('Error', 'Gagal memuat data profil.', 'error');
     }
   }
   
@@ -225,6 +218,7 @@ onMounted(async () => {
     profileForm.role = user.value.role || user.value.Series || user.value.Role || 'user';
   }
 });
+
 const handleUpdateProfile = async () => {
   profileLoading.value = true;
   profileError.value = null;
@@ -247,29 +241,31 @@ const handleUpdateProfile = async () => {
         user.value.phone_number = profileForm.phone_number;
     }
 
-    Swal.fire('Berhasil', 'Profil Anda berhasil diperbarui.', 'success');
+    // 🟢 Notifikasi Sukses yang Halus
+    swalAlert('Berhasil', 'Profil Anda berhasil diperbarui.', 'success');
 
   } catch (err: any) {
     profileError.value = err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal memperbarui profil.';
     console.error('Update profile error:', err);
+    // 🟢 Handling nullish coalescing buat TypeScript
+    swalAlert('Gagal', profileError.value ?? 'Terjadi kesalahan sistem', 'error');
   } finally {
     profileLoading.value = false;
   }
 };
+
 const handleChangePassword = async () => {
   if (!isChangingPassword.value) return;
 
   passwordLoading.value = true;
   passwordError.value = null;
 
-  // 1. Validasi Match
   if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
     passwordError.value = 'Password baru dan konfirmasi tidak cocok.';
     passwordLoading.value = false;
     return;
   }
 
-  // 2. Validasi Rules
   if (!isPasswordValid.value) {
     passwordError.value = 'Password baru tidak memenuhi syarat.';
     passwordLoading.value = false;
@@ -284,11 +280,14 @@ const handleChangePassword = async () => {
       newPassword: passwordForm.newPassword,
       accessToken: accessToken
     };
-    const response = await $apiBase.put('/change-password', payload);
+    await $apiBase.put('/change-password', payload);
 
-    Swal.fire('Berhasil', 'Password berhasil diubah. Silakan login ulang.', 'success');
+    // 🟢 Notifikasi Sukses & Paksa Login Ulang demi Keamanan
+    swalAlert('Berhasil', 'Password berhasil diubah. Silakan login ulang.', 'success').then(() => {
+        window.location.href = '/admin/login';
+    });
     
-    // Reset
+    // Reset form
     passwordForm.oldPassword = '';
     passwordForm.newPassword = '';
     passwordForm.confirmNewPassword = '';
@@ -301,6 +300,8 @@ const handleChangePassword = async () => {
     } else {
         passwordError.value = msg;
     }
+    // 🟢 Tampilkan pop-up error
+    swalAlert('Gagal', passwordError.value ?? 'Gagal mengubah password', 'error');
   } finally {
     passwordLoading.value = false;
   }

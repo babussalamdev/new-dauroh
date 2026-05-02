@@ -130,11 +130,12 @@ import { ref, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useVoucherStore } from '~/stores/voucher';
 import { useGlobalEventStore } from '~/stores/globalEvent';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 useHead({
   title: 'Manajemen Voucher'
 });
+
 definePageMeta({
   layout: 'admin',
   middleware: () => {
@@ -145,6 +146,7 @@ definePageMeta({
 
 const store = useVoucherStore();
 const globalStore = useGlobalEventStore();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert(); 
 
 const showModal = ref(false);
 const selectedIds = ref<string[]>([]);
@@ -161,24 +163,24 @@ const toggleSelectAll = (e: any) => {
   }
 };
 
+// --- HANDLE BULK DELETE ---
 const handleBulkDelete = async () => {
-  const result = await Swal.fire({
-    title: `Hapus ${selectedIds.value.length} Voucher?`,
-    text: "Semua voucher yang dipilih akan dihapus permanen.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#dc3545',
-    confirmButtonText: 'Ya, Hapus Semua',
-    cancelButtonText: 'Batal'
-  });
+  // swalConfirm
+  const result = await swalConfirm(
+    `Hapus ${selectedIds.value.length} Voucher?`,
+    "Voucher yang dipilih akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.",
+    'Ya, Hapus Semua'
+  );
 
   if (result.isConfirmed) {
-    // fungsi bulk delete
     const success = await store.deleteVoucherBulk(selectedIds.value);
-    
 
     if (success) {
       selectedIds.value = [];
+      // feedback sukses
+      swalAlert('Berhasil!', 'Voucher yang dipilih telah dihapus.', 'success');
+    } else {
+      swalAlert('Gagal', 'Terjadi kesalahan saat menghapus voucher.', 'error');
     }
   }
 };

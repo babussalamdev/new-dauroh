@@ -136,7 +136,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 useHead({
   title: 'Control Menu'
@@ -148,6 +148,7 @@ const availableRoles = ref<string[]>([]);
 const menusData = ref<any[]>([]);
 const loading = ref(true);
 const submitting = ref(false);
+const { alert: swalAlert } = useAlert();
 
 const isEdit = ref(false);
 const form = ref({
@@ -227,7 +228,7 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
 
 const saveMenu = async () => {
   if (!form.value.title) {
-    Swal.fire({ icon: 'warning', title: 'Oops', text: 'Nama Menu wajib diisi!', showConfirmButton: false, timer: 1500 });
+    swalAlert('Oops', 'Nama Menu wajib diisi!', 'warning');
     return;
   }
 
@@ -252,10 +253,11 @@ const saveMenu = async () => {
     }
 
     bootstrapModal?.hide();
-    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Menu telah disimpan.', showConfirmButton: false, timer: 1500 });
+    swalAlert('Berhasil', 'Konfigurasi menu utama telah disimpan.', 'success');
+    
     await fetchMenus();
   } catch (error: any) {
-    Swal.fire({ icon: 'error', title: 'Gagal', text: error.response?.data?.message || 'Terjadi kesalahan' });
+    swalAlert('Gagal', error.response?.data?.message ?? 'Terjadi kesalahan sistem saat menyimpan menu.', 'error');
   } finally {
     submitting.value = false;
   }

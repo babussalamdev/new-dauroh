@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 useHead({
   title: 'Control Role'
@@ -100,6 +100,7 @@ definePageMeta({ layout: 'admin' });
 const rolesData = ref<any[]>([]);
 const loading = ref(true);
 const submitting = ref(false);
+const { alert: swalAlert } = useAlert();
 
 const form = ref({
   sk: ''
@@ -139,10 +140,10 @@ const openModal = () => {
   bootstrapModal?.show();
 };
 
-// SIMPAN ROLE BARU 
+// --- SIMPAN ROLE BARU ---
 const saveRole = async () => {
   if (!form.value.sk) {
-    Swal.fire({ icon: 'warning', title: 'Oops', text: 'Kode Role wajib diisi!', showConfirmButton: false, timer: 1500 });
+    swalAlert('Oops', 'Kode Role wajib diisi!', 'warning');
     return;
   }
 
@@ -157,15 +158,14 @@ const saveRole = async () => {
     };
 
     await $apiBase.post('/input-default?roles=create', payload);
-
     bootstrapModal?.hide();
-    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Role baru ditambahkan!', showConfirmButton: false, timer: 1500 });
+    swalAlert('Berhasil', 'Role baru berhasil ditambahkan!', 'success');
     
-    // Refresh data tabel
     await fetchRoles();
   } catch (error: any) {
     console.error("Gagal save role:", error);
-    Swal.fire({ icon: 'error', title: 'Gagal', text: error.response?.data?.message || 'Terjadi kesalahan saat menyimpan.' });
+    // Handling error dengan fallback pesan
+    swalAlert('Gagal', error.response?.data?.message ?? 'Terjadi kesalahan saat menyimpan.', 'error');
   } finally {
     submitting.value = false;
   }

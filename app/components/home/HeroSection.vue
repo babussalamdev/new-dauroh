@@ -33,11 +33,12 @@
 import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
 import { useRouter } from 'vue-router';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
 const router = useRouter();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const QrCode = ref('ic:baseline-qr-code-scanner')
 const JadwalIcon = ref('ic:baseline-edit-calendar')
 const BoothIcon = ref('ic:baseline-storefront')
@@ -54,17 +55,13 @@ const swalConfig = {
 };
 
 const handleButtonClick = (path) => {
+  // 1. Cek Login
   if (!isLoggedIn.value) {
-    Swal.fire({
-      ...swalConfig,
-      icon: 'info',
-      title: 'Login Diperlukan',
-      text: 'Silakan login terlebih dahulu untuk mengakses fitur ini.',
-      confirmButtonText: 'Login Sekarang',
-      showCancelButton: true,
-      cancelButtonText: 'Nanti',
-      reverseButtons: true
-    }).then((result) => {
+    swalConfirm(
+      'Login Diperlukan',
+      'Silakan login terlebih dahulu untuk mengakses fitur ini.',
+      'Login Sekarang'
+    ).then((result) => {
       if (result.isConfirmed) {
         router.push('/auth');
       }
@@ -75,23 +72,15 @@ const handleButtonClick = (path) => {
   // 2. Routing Handler
   switch (path) {
     case '/qr':
-      // Cek apakah user punya tiket aktif (Upcoming)
       if (userStore.getUpcomingTickets.length > 0) {
-        // Arahkan ke dashboard tempat QR berada
         router.push('/dashboard');
       } else {
-        Swal.fire({
-          ...swalConfig,
-          icon: 'question',
-          iconColor: '#dee2e6',
-          title: 'Belum Ada Tiket',
-          text: 'Anda belum memiliki tiket aktif. Yuk cari kajian menarik!',
-          confirmButtonText: 'Cari Event',
-          showCancelButton: true,
-          cancelButtonText: 'Tutup',
-          reverseButtons: true
-        }).then((result) => {
-          // Jika user klik 'Cari Event', scroll ke list event (opsional)
+        // 🟢 Pake swalConfirm buat nanya mau cari event apa nggak
+        swalConfirm(
+          'Belum Ada Tiket',
+          'Anda belum memiliki tiket aktif. Yuk cari kajian menarik!',
+          'Cari Event'
+        ).then((result) => {
           if (result.isConfirmed) {
             const element = document.getElementById('tiketEvent');
             if (element) element.scrollIntoView({ behavior: 'smooth' });

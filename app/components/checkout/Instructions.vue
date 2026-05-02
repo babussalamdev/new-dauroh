@@ -68,7 +68,7 @@ import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useNuxtApp, useRuntimeConfig } from '#app';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import ModalsQrCodeModal from '~/components/modals/QrCodeModal.vue';
 import { useAuth } from '~/composables/useAuth';
 
@@ -87,6 +87,7 @@ const config = useRuntimeConfig();
 const store = useCheckoutStore();
 const userStore = useUserStore();
 const router = useRouter();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const showQrModal = ref(false);
 
 // --- Computed Helpers ---
@@ -145,13 +146,12 @@ const currentBankComponent = computed(() => {
 
 // --- Helper: Handle Expired Logic ---
 const handleExpiredState = () => {
-  Swal.fire({
-    icon: 'error',
-    title: 'Waktu Habis!',
-    text: 'Sesi pembayaran Anda telah berakhir.',
-    timer: 2000,
-    showConfirmButton: false
-  }).then(() => {
+  // 🟢 Pake swalAlert tipe 'error' biar dapet animasi halus
+  swalAlert(
+    'Waktu Habis!', 
+    'Sesi pembayaran Anda telah berakhir.', 
+    'error'
+  ).then(() => {
     if (store.resetTransaction) store.resetTransaction();
     else {
       store.transactionDetails = null;
@@ -211,15 +211,12 @@ onBeforeRouteLeave((to, from, next) => {
     return;
   }
 
-  Swal.fire({
-    title: 'Keluar halaman?',
-    text: "Anda bisa melanjutkan pembayaran nanti lewat menu Riwayat.",
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    confirmButtonText: 'Ya, Keluar',
-    cancelButtonText: 'Batal'
-  }).then((result) => {
+  // 🟢 Pake swalConfirm dari utility
+  swalConfirm(
+    'Keluar halaman?',
+    'Anda bisa melanjutkan pembayaran nanti lewat menu Riwayat.',
+    'Ya, Keluar'
+  ).then((result) => {
     if (result.isConfirmed) {
       store.clearCheckout();
       next();

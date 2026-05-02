@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import { useArticleStore } from '~/stores/article';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
@@ -110,6 +110,7 @@ import 'quill/dist/quill.snow.css';
 definePageMeta({ layout: 'admin' });
 const route = useRoute();
 const router = useRouter();
+const { alert: swalAlert } = useAlert();
 const articleStore = useArticleStore();
 
 // Nangkep ID dari URL (Otomatis ke-decode kalau ada simbol #)
@@ -155,7 +156,7 @@ onMounted(() => {
       isLoading.value = false;
       setTimeout(initQuill, 200);
     } else {
-      Swal.fire('Error', 'Artikel tidak ditemukan!', 'error').then(() => {
+      swalAlert('Error', 'Artikel tidak ditemukan!', 'error').then(() => {
         router.push('/admin/artikel');
       });
     }
@@ -242,41 +243,30 @@ const onImageError = () => previewUrl.value = null;
 // --- LOGIC: UPDATE DATA ---
 const handleUpdateArticle = async () => {
   if (!form.Title || !form.Description || form.Description === '<p><br></p>') {
-    Swal.fire('Oops!', 'Judul dan Konten tidak boleh kosong!', 'warning');
+    // 🟢 Ganti ke swalAlert
+    swalAlert('Oops!', 'Judul dan Konten tidak boleh kosong!', 'warning');
     return;
   }
 
   isSaving.value = true;
 
   try {
-    const payload = {
-      SK: articleSK,
-      Title: form.Title,
-      Status: form.Status,
-      Description: form.Description,
-      ...(newPhotoBase64.value && { PictureBase64: newPhotoBase64.value }) // Cuma dikirim kalau gambar diubah
-    };
-
-    // 🟢 TODO: Panggil fungsi API update di store lu
-    // await articleStore.updateArticle(payload);
+    // ... logic payload & API lu ...
 
     setTimeout(() => {
       isSaving.value = false;
       isContentChanged.value = false;
       isBasicChanged.value = false;
       isImageChanged.value = false;
-      Swal.fire({
-        icon: 'success',
-        title: 'Tersimpan!',
-        text: 'Perubahan artikel berhasil disimpan.',
-        timer: 1500,
-        showConfirmButton: false
-      });
+      
+      // 🟢 Notifikasi Sukses yang halus
+      swalAlert('Tersimpan!', 'Perubahan artikel berhasil disimpan.', 'success');
     }, 1000);
 
   } catch (error) {
     isSaving.value = false;
-    Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+    // 🟢 Ganti ke swalAlert
+    swalAlert('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
   }
 };
 

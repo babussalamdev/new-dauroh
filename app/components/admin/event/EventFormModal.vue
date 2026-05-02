@@ -123,6 +123,12 @@
 
                   <div v-else class="row g-2 mt-1 animate-slide-down">
 
+                    <div class="col-12" v-if="!formState.Gender">
+  <span class="text-muted txt-caption fst-italic">
+    * Pilih target peserta terlebih dahulu untuk mengatur kuota.
+  </span>
+</div>
+
                     <div class="col-12" v-if="formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
                         <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold">Total</span>
@@ -160,8 +166,9 @@
           <button type="button" class="btn btn-light px-4 rounded-pill text-muted txt-body fw-bold border" @click="close">Batal</button>
           <button type="submit" form="eventBasicForm" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm" :disabled="isLoading || (!isUnlimited.total && isQuotaMismatch)">
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-            <i v-else class="bi bi-floppy-fill me-1"></i>
-            {{ isLoading ? 'Menyimpan...' : 'Simpan Event' }}
+            <!-- 🟢 KONDISI BARU BUAT TOMBOL -->
+            <span v-else-if="isEditing"><i class="bi bi-floppy-fill me-1"></i> Simpan Perubahan</span>
+            <span v-else>Selanjutnya <i class="bi bi-arrow-right ms-1"></i></span>
           </button>
         </div>
       </div>
@@ -175,7 +182,9 @@
 import { watch, reactive, computed, ref } from 'vue';
 import type { Event } from '@/types/event';
 import { useEventStore } from '@/stores/event';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
+
+const { alert: swalAlert } = useAlert();
 
 const props = defineProps<{
   show: boolean;
@@ -185,10 +194,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'save', payload: {
-    eventData: any;
-    photoBase64: null;
-  }): void;
+  (e: 'next', payload: any): void; 
+  (e: 'save', payload: any): void; // 🟢 TAMBAHIN INI
 }>();
 
 const eventStore = useEventStore();
@@ -382,7 +389,11 @@ const save = () => {
 
   // Validasi Quota hanya jalan jika BUKAN Unlimited
   if (!isUnlimited.total && isQuotaMismatch.value) {
-    Swal.fire({ icon: 'error', title: 'Alokasi Kuota Salah', text: `Total (${quotaValues.total}) harus sama dengan Ikhwan (${quotaValues.ikhwan}) + Akhwat (${quotaValues.akhwat}). ${allocationMessage.value}.` });
+    swalAlert(
+      'Alokasi Kuota Salah', 
+      `Total (${quotaValues.total}) harus sama dengan Ikhwan (${quotaValues.ikhwan}) + Akhwat (${quotaValues.akhwat}). ${allocationMessage.value}.`,
+      'error'
+    );
     return;
   }
 
@@ -390,7 +401,11 @@ const save = () => {
     const startStr = `${formState.RegStartDate} ${formState.RegStartTime}`;
     const endStr = `${formState.RegEndDate} ${formState.RegEndTime}`;
     if (new Date(endStr) <= new Date(startStr)) {
-      Swal.fire({ icon: 'warning', title: 'Waktu Tidak Valid', text: 'Waktu Tutup Pendaftaran tidak boleh lebih awal atau sama dengan Waktu Buka Pendaftaran.' });
+      swalAlert(
+        'Waktu Tidak Valid', 
+        'Waktu Tutup Pendaftaran tidak boleh lebih awal dari Waktu Buka.',
+        'warning'
+      );
       return;
     }
   }
@@ -412,8 +427,8 @@ const save = () => {
     Title: formState.Title,
     Gender: formState.Gender,
     Place: formState.Place,
-    Price: formState.Price,
-    Quota_Total: finalQuotaTotal,
+    Price: String(formState.Price), // 🟢 Dibikin String sesuai respons BE lu
+    Quota_Ikhwan_Akhwat: finalQuotaTotal, // 🟢 Ganti jadi ini biar sinkron sama DB
     Quota_Ikhwan: finalQuotaIkhwan,
     Quota_Akhwat: finalQuotaAkhwat,
     Status: isStatusActive.value ? 'active' : 'inactive',
@@ -423,7 +438,12 @@ const save = () => {
     }
   };
 
-  emit('save', { eventData: dataToEmit as any, photoBase64: null });
+  // 🟢 LOGIKA EMIT YANG BENER (TANPA BUNGKUSAN eventData)
+  if (props.isEditing) {
+    emit('save', dataToEmit); 
+  } else {
+    emit('next', dataToEmit);
+  }
 };
 </script>
 

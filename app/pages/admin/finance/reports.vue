@@ -87,12 +87,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 useHead({
   title: 'Laporan & Export'
 });
 
 definePageMeta({ layout: 'admin' });
+
+const { alert: swalAlert } = useAlert();
 
 // STATE FORM
 const form = ref({
@@ -122,29 +125,26 @@ const resetDates = () => {
 const handleExportExcel = () => {
   isLoadingExcel.value = true;
   
-  // Nanti kirim ini ke BE: console.log(form.value)
   
   setTimeout(() => {
     isLoadingExcel.value = false;
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text: 'File Rekap_Keuangan.xlsx berhasil di-download! (Simulasi)',
-      confirmButtonColor: '#198754'
-    });
+    swalAlert(
+      'Berhasil', 
+      'File Rekap_Keuangan.xlsx berhasil di-download!', 
+      'success'
+    );
   }, 1500);
 };
 
 // FUNGSI EXPORT PDF
 const handleExportPDF = () => {
-  // Validasi manual buat tombol PDF (Hanya wajib isi jika 'Semua Event')
   if (form.value.eventSK === 'ALL' && (!form.value.startDate || !form.value.endDate)) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Perhatian',
-      text: 'Harap isi Tanggal Mulai dan Akhir untuk rekap Semua Event.',
-      confirmButtonColor: '#198754'
-    });
+    // 🟢 Warning yang halus
+    swalAlert(
+      'Perhatian', 
+      'Harap isi Tanggal Mulai dan Akhir untuk rekap Semua Event.', 
+      'warning'
+    );
     return;
   }
 
@@ -152,12 +152,13 @@ const handleExportPDF = () => {
   
   setTimeout(() => {
     isLoadingPDF.value = false;
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text: 'File Rekap_Keuangan.pdf berhasil di-download! (Simulasi)',
-      confirmButtonColor: '#dc3545'
-    });
+    
+    // 🟢 Sukses PDF
+    swalAlert(
+      'Berhasil', 
+      'File Rekap_Keuangan.pdf berhasil di-download!', 
+      'success'
+    );
   }, 1500);
 };
 </script>

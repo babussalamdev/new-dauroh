@@ -186,6 +186,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
 import Swal from 'sweetalert2'; 
+import { useAlert } from '~/utils/swal';
 
 useHead({
   title: 'Manajemen Akun'
@@ -205,6 +206,7 @@ const route = useRoute();
 const store = useAdminUserStore();
 const { user } = useAuth();
 const { $apiBase } = useNuxtApp() as any; 
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 
 // --- Permission Check ---
 const canManageUsers = computed(() => {
@@ -273,15 +275,11 @@ const getStatusBadge = (status?: string) => {
 
 // --- LOGIKA RESET PASSWORD ---
 const handleResetPassword = async (targetUser: any) => {
-  const result = await Swal.fire({
-    title: 'Reset Password User?',
-    text: `Anda yakin ingin mereset password untuk user "${targetUser.Name}"? Password baru akan digenerate secara acak oleh sistem.`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#ffc107',
-    confirmButtonText: 'Ya, Reset Password',
-    cancelButtonText: 'Batal'
-  });
+  const result = await swalConfirm(
+    'Reset Password User?',
+    `Anda yakin ingin mereset password untuk user "${targetUser.Name}"? Password baru akan digenerate secara acak.`,
+    'Ya, Reset Password'
+  );
 
   if (result.isConfirmed) {
     Swal.showLoading();
@@ -292,24 +290,26 @@ const handleResetPassword = async (targetUser: any) => {
       });
 
       const newPassword = response.password || response.data?.password || response.message || "Gagal mengambil password";
-
-      await Swal.fire({
+      Swal.fire({
         title: 'Berhasil Direset!',
         html: `
           <p>Password user <b>${targetUser.Name}</b> berhasil direset.</p>
-          <div class="alert alert-success d-flex align-items-center justify-content-center gap-2 mb-0">
-            <strong class="fs-4 user-select-all" style="user-select: all;">${newPassword}</strong>
+          <div class="alert alert-success d-flex align-items-center justify-content-center gap-2 mb-0 border-0 rounded-3">
+            <strong class="fs-4 user-select-all font-monospace" style="user-select: all;">${newPassword}</strong>
           </div>
           <p class="small text-muted mt-2 mb-0">Silakan copy dan berikan password ini kepada user.</p>
         `,
         icon: 'success',
-        confirmButtonText: 'Tutup'
+        confirmButtonText: 'Tutup',
+        confirmButtonColor: '#004754',
+        customClass: {
+          popup: 'rounded-4 shadow-lg border-0'
+        }
       });
 
     } catch (err: any) {
-      console.error("Reset password error:", err);
-      const msg = err.response?.data?.message || err.message || "Terjadi kesalahan saat mereset password.";
-      Swal.fire('Gagal!', msg, 'error');
+      const msg = err.response?.data?.message || err.message || "Gagal mereset password.";
+      swalAlert('Gagal!', msg, 'error');
     }
   }
 };
@@ -319,20 +319,20 @@ const toggleBlockUser = async (targetUser: any) => {
   const isCurrentlyInactive = targetUser.Status === 'inactive';
   const newStatus = isCurrentlyInactive ? 'active' : 'inactive';
   const actionText = isCurrentlyInactive ? 'Buka Blokir' : 'Blokir';
-  const confirmColor = isCurrentlyInactive ? '#198754' : '#dc3545';
 
-  const result = await Swal.fire({
-    title: `${actionText} User?`,
-    text: `User ${targetUser.Name} akan diubah statusnya menjadi ${newStatus}.`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: confirmColor,
-    confirmButtonText: `Ya, ${actionText}`,
-    cancelButtonText: 'Batal'
-  });
+  const result = await swalConfirm(
+    `${actionText} User?`,
+    `User ${targetUser.Name} akan diubah statusnya menjadi ${newStatus}.`,
+    `Ya, ${actionText}`
+  );
 
   if (result.isConfirmed) {
-    await store.changeUserStatus(targetUser.SK, newStatus);
+    try {
+        await store.changeUserStatus(targetUser.SK, newStatus);
+        swalAlert('Berhasil', `Status user berhasil diubah menjadi ${newStatus}.`, 'success');
+    } catch (error) {
+        swalAlert('Error', 'Gagal mengubah status user.', 'error');
+    }
   }
 };
 </script>

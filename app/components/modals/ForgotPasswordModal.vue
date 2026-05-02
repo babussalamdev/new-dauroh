@@ -123,16 +123,17 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 const { $apiBase } = useNuxtApp() as any;
+const { alert: swalAlert } = useAlert();
 
 // State
 const step = ref(1);
 const loading = ref(false);
 const showPass = ref(false);
 const showConfirmPass = ref(false);
-const closeModalBtn = ref<HTMLButtonElement | null>(null); // Ref untuk tombol close
+const closeModalBtn = ref<HTMLButtonElement | null>(null);
 
 const form = reactive({
   email: '',
@@ -148,7 +149,7 @@ const isPasswordValid = computed(() => {
   return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /\d/.test(pwd);
 });
 
-// --- STEP 1: REQUEST KODE ---
+// --- REQUEST KODE ---
 const handleSendCode = async () => {
   loading.value = true;
   try {
@@ -158,26 +159,26 @@ const handleSendCode = async () => {
     );
 
     step.value = 2;
-    Swal.fire({
-      icon: 'success',
-      title: 'Kode Terkirim!',
-      text: 'Silakan cek email Anda untuk mendapatkan kode verifikasi.',
-      timer: 3000,
-      showConfirmButton: false
-    });
+    // Notifikasi Berhasil Kirim Kode
+    swalAlert(
+      'Kode Terkirim!', 
+      'Silakan cek email Anda untuk mendapatkan kode verifikasi.', 
+      'success'
+    );
 
   } catch (err: any) {
     console.error(err);
     const msg = err.response?.data?.message || "Email tidak ditemukan atau terjadi kesalahan.";
-    Swal.fire('Gagal', msg, 'error');
+    swalAlert('Gagal', msg, 'error');
   } finally {
     loading.value = false;
   }
 };
 
+// --- UBAH PASSWORD ---
 const handleChangePassword = async () => {
   if (form.newPassword !== form.confirmPassword) {
-    Swal.fire('Error', 'Konfirmasi password tidak cocok.', 'error');
+    swalAlert('Error', 'Konfirmasi password tidak cocok.', 'warning');
     return;
   }
   
@@ -188,27 +189,28 @@ const handleChangePassword = async () => {
       code: form.code,
       newPassword: form.newPassword
     };
+    
     const response = await $apiBase.put('/forgot-password', payload, {
       params: { forgotpassword: 'change' }
     });
+
+    // Tutup modal
     if (closeModalBtn.value) {
       closeModalBtn.value.click();
     }
-    const successMessage = response.data?.message
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: successMessage,
-    });
+    const successMessage = response.data?.message || 'Password berhasil diperbarui!';
+
+    // Notifikasi Berhasil Ganti Password
+    swalAlert('Berhasil!', successMessage, 'success');
     
-    // Reset form
+    // Reset form setelah modal tertutup
     setTimeout(() => resetForm(), 500);
 
   } catch (err: any) {
     console.error("Change Password Error:", err);
     const msg = err.response?.data?.message || "Kode salah atau kadaluarsa.";
-    Swal.fire('Gagal', msg, 'error');
+    swalAlert('Gagal', msg, 'error');
   } finally {
     loading.value = false;
   }
@@ -222,6 +224,8 @@ const resetForm = () => {
     form.newPassword = '';
     form.confirmPassword = '';
     loading.value = false;
+    showPass.value = false;
+    showConfirmPass.value = false;
   }, 500);
 };
 </script>

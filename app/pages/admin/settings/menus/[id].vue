@@ -129,7 +129,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 useHead({
   title: 'Control Sub Menu'
@@ -137,6 +137,7 @@ useHead({
 definePageMeta({ layout: 'admin' });
 
 const route = useRoute();
+const { alert: swalAlert } = useAlert();
 
 
 const rawParentSK = route.params.id as string; 
@@ -214,7 +215,7 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
 
 const saveSubMenu = async () => {
   if (!form.value.title || !form.value.url) {
-    Swal.fire({ icon: 'warning', title: 'Oops', text: 'Nama dan URL wajib diisi!', showConfirmButton: false, timer: 1500 });
+    swalAlert('Oops', 'Nama dan URL wajib diisi!', 'warning');
     return;
   }
 
@@ -238,10 +239,12 @@ const saveSubMenu = async () => {
     }
 
     bootstrapModal?.hide();
-    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Sub Menu telah disimpan.', showConfirmButton: false, timer: 1500 });
+  
+    swalAlert('Berhasil', 'Sub Menu telah berhasil disimpan.', 'success');
+    
     await fetchChildMenus();
   } catch (error: any) {
-    Swal.fire({ icon: 'error', title: 'Gagal', text: error.response?.data?.message || 'Terjadi kesalahan' });
+    swalAlert('Gagal', error.response?.data?.message ?? 'Terjadi kesalahan sistem', 'error');
   } finally {
     submitting.value = false;
   }

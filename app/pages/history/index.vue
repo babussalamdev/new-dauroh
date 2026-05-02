@@ -57,7 +57,7 @@
 </template>
 
 <script lang="ts" setup>
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import {computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '~/stores/user';
@@ -80,6 +80,7 @@ const userStore = useUserStore();
 const checkoutStore = useCheckoutStore();
 const eventStore = useEventStore();
 const { getSmartStatus } = useTransactionStatus();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 
 const showDetail = ref(false);
 const selectedTicketDetail = ref<any>(null);
@@ -145,9 +146,10 @@ const closeQrModal = () => {
 const resumePayment = async (ticket: any) => {
   const skTransaksi = ticket.SK;
   if (!skTransaksi || !skTransaksi.includes('#')) {
-    Swal.fire({ icon: 'error', title: 'Data Tidak Lengkap', text: 'ID Transaksi tidak valid (Harus ada #). Silakan hubungi admin.' });
+    swalAlert('Data Tidak Lengkap', 'ID Transaksi tidak valid. Silakan hubungi admin.', 'error');
     return;
   }
+  
   const smartStatus = getSmartStatus(ticket);
   if (['EXPIRED', 'CANCELLED'].includes(smartStatus)) {
     await handleExpiredFlow(skTransaksi);
@@ -161,36 +163,38 @@ const resumePayment = async (ticket: any) => {
       }
     } catch (error) {
       console.error("Gagal cek transaksi:", error);
-      Swal.fire({ icon: 'error', title: 'Kesalahan Sistem', text: 'Gagal memverifikasi status transaksi.' });
+      swalAlert('Kesalahan Sistem', 'Gagal memverifikasi status transaksi.', 'error');
     }
   }
 };
 
 const handleExpiredFlow = async (skEvent: string) => {
-  const result = await Swal.fire({
-    title: 'Pembayaran Telah Berakhir',
-    text: 'Sesi pembayaran sebelumnya sudah kadaluarsa. Apakah Anda ingin membayar ulang dengan data peserta yang sama?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#0d6efd',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Ya, Bayar Ulang',
-    cancelButtonText: 'Batal',
-    reverseButtons: true
-  });
+  const result = await swalConfirm(
+    'Pembayaran Telah Berakhir',
+    'Sesi pembayaran sebelumnya sudah kadaluarsa. Apakah Anda ingin membayar ulang dengan data peserta yang sama?',
+    'Ya, Bayar Ulang'
+  );
 
   if (result.isConfirmed) {
-    Swal.fire({ title: 'Memulihkan Data...', text: 'Mohon tunggu sebentar', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    const { $swal } = useNuxtApp() as any;
+    $swal.fire({ 
+      title: 'Memulihkan Data...', 
+      text: 'Mohon tunggu sebentar', 
+      allowOutsideClick: false, 
+      didOpen: () => { $swal.showLoading(); } 
+    });
+
     try {
       const success = await checkoutStore.restoreTransactionData(skEvent);
       if (success) {
-        Swal.close();
+        $swal.close();
         router.push('/checkout');
       } else {
         throw new Error('Gagal restore data.');
       }
     } catch (error) {
-      Swal.fire({ icon: 'error', title: 'Gagal Memulihkan Data', text: 'Terjadi kesalahan saat mengambil data peserta. Silakan coba daftar manual.', confirmButtonText: 'Tutup' });
+      $swal.close();
+      swalAlert('Gagal', 'Terjadi kesalahan saat memulihkan data peserta.', 'error');
     }
   }
 };

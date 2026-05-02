@@ -45,28 +45,30 @@ const adminRoles = [
 
       await getUser();
 
+      // 🟢 LOGIKA PEMBATASAN ROLE (REVISI POINT 2)
+      const userRole = (
+        user.value?.role ||
+        user.value?.Series ||
+        ""
+      ).toLowerCase();
+
       if (type === "admin") {
-        const userRole = (
-          user.value?.role ||
-          user.value?.Series ||
-          ""
-        ).toLowerCase();
-
+        // Cek apakah role punya izin masuk admin
         if (!adminRoles.includes(userRole)) {
-          accessToken.value = null;
-          loginTypeCookie.value = null;
-          if (process.client) {
-            localStorage.removeItem("IdToken");
-            localStorage.removeItem("RefreshToken");
-          }
-          user.value = null;
-
-          throw new Error(
-            "Akses Ditolak: Akun Anda tidak memiliki otoritas Admin."
-          );
+          await forceLogoutCleanup(); // Panggil fungsi bersih-bersih
+          throw new Error("Akses Ditolak: Anda tidak memiliki otoritas Admin.");
         }
         await router.push("/admin");
       } else {
+        // 🟢 KHUSUS ROLE USER: Cegah Root/Admin/Bendahara masuk ke dashboard user
+        // Pengecualian: Role 'registrasi' BOLEH masuk ke dashboard user
+        const restrictedAdminRoles = ["root", "admin", "bendahara"];
+        
+        if (restrictedAdminRoles.includes(userRole)) {
+           await forceLogoutCleanup();
+           throw new Error("Akun Admin/Root hanya diperbolehkan login di halaman Admin.");
+        }
+        
         await router.push("/dashboard");
       }
     } catch (error: any) {
@@ -75,6 +77,16 @@ const adminRoles = [
       loading.value = false;
     }
   };
+
+  const forceLogoutCleanup = async () => {
+    accessToken.value = null;
+    loginTypeCookie.value = null;
+    if (process.client) {
+      localStorage.removeItem("IdToken");
+      localStorage.removeItem("RefreshToken");
+    }
+    user.value = null;
+  }
 
   /**
    * Fungsi Logout

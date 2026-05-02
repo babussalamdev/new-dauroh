@@ -169,8 +169,10 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'; // 🟢 Tambahin 'watch' buat fitur reaktif
 import { useRoute } from 'vue-router';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2'; 
+import { useAlert } from '~/utils/swal';
 import { useGlobalEventStore } from '~/stores/globalEvent';
+
 
 definePageMeta({ layout: 'admin' });
 useHead({ title: 'Template Sertifikat' });
@@ -178,7 +180,7 @@ useHead({ title: 'Template Sertifikat' });
 const route = useRoute();
 const globalStore = useGlobalEventStore();
 const isDragging = ref(false);
-
+const { alert: swalAlert } = useAlert();
 const base64Image = ref<string | null>(null); 
 const imageErrors = ref<string[]>([]);
 
@@ -270,38 +272,47 @@ const showPreview = () => {
   if (config.fields.domicile) fieldsText.push("Domisili");
   if (config.fields.eventTitle) fieldsText.push("Judul Event");
 
+  // 🟢 Panggil Swal langsung (bukan lewat useNuxtApp().$swal)
   Swal.fire({
     title: 'Preview Konfigurasi',
     html: `
       <div class="txt-caption text-start mb-3">
-        <strong>Layout:</strong> ${config.layout === 'landscape' ? 'Mendatar (Landscape)' : 'Tegak (Portrait)'}<br>
-        <strong>Data Ditampilkan:</strong> ${fieldsText.join(', ') || 'Tidak ada'}
+        <strong>Layout:</strong> ${config.layout === 'landscape' ? 'Landscape' : 'Portrait'}<br>
+        <strong>Data:</strong> ${fieldsText.join(', ') || 'Tidak ada'}
       </div>
     `,
-    imageUrl: base64Image.value,
+    imageUrl: base64Image.value ?? '',
     imageAlt: 'Preview Sertifikat',
     confirmButtonText: 'Tutup',
-    confirmButtonColor: '#3085d6'
+    confirmButtonColor: '#004754',
+    customClass: {
+      popup: 'rounded-4 border-0 shadow-lg',
+      confirmButton: 'btn btn-primary rounded-pill px-4'
+    }
   });
 };
 
 const simpanTemplate = async () => {
   if (!base64Image.value || imageErrors.value.length > 0) return;
 
-  console.log("Payload yang siap dikirim:", {
-    image: base64Image.value,
-    config: config
-  });
-
+  // Swal langsung untuk loading
   Swal.fire({
     title: 'Menyimpan Template...',
     allowOutsideClick: false,
     didOpen: () => { Swal.showLoading(); }
   });
 
-  setTimeout(() => {
-    Swal.fire('Berhasil!', 'Template dan konfigurasi sertifikat berhasil disimpan.', 'success');
-  }, 1500);
+  try {
+    // Simulasi kirim API
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    Swal.close();
+    swalAlert('Berhasil!', 'Template sertifikat berhasil disimpan.', 'success');
+
+  } catch (error) {
+    Swal.close();
+    swalAlert('Gagal', 'Terjadi kesalahan saat menyimpan template.', 'error');
+  }
 };
 </script>
 

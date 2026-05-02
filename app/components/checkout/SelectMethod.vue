@@ -32,7 +32,7 @@
 import { ref, onMounted } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 // Import Gambar
 import bniLogo from '~/assets/img/bank/bni.png';
@@ -46,7 +46,8 @@ import qrisLogo from '~/assets/img/bank/qris.png';
 
 const store = useCheckoutStore();
 const router = useRouter();
-const selectedMethod = ref<string | null>(null);
+const selectedMethod = ref<string | null>(null)
+const { confirm: swalConfirm } = useAlert();
 
 // Data Bank
 const banks = [
@@ -78,38 +79,27 @@ const handleSelect = () => {
   }
 };
 
-// --- LOGIC GUARD (REVISI) ---
+// --- LOGIC GUARD ---
 onBeforeRouteLeave((to, from, next) => {
-  // 1. Kalau pindah ke Dashboard (Selesai), biarin lewat
   if (to.path === '/dashboard') {
     next();
     return;
   }
 
-  // 2. Kalau cuma ganti Step (Select -> Summary) di halaman yang sama, biarin lewat
   if (to.path === from.path) {
     next();
     return;
   }
 
-  // 3. [SOLUSI UTAMA] Cek apakah Data Checkout Masih Ada?
-  // Kalau event/participants kosong (artinya udah di-clearCheckout di Instructions sebelumnya),
-  // JANGAN TAHAN USER. Langsung next().
   if (!store.event || !store.participants || store.participants.length === 0) {
     next();
     return;
   }
-
-  // 4. Kalau data masih ada dan user mau keluar halaman lain, baru tanya
-  Swal.fire({
-    title: 'Batalkan pembayaran?',
-    text: "Data pendaftaran akan hilang.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    confirmButtonText: 'Ya, Batalkan',
-    cancelButtonText: 'Lanjut Bayar'
-  }).then((result) => {
+  swalConfirm(
+    'Batalkan pendaftaran?',
+    'Data yang sudah Anda isi akan hilang jika keluar sekarang.',
+    'Ya, Batalkan'
+  ).then((result) => {
     if (result.isConfirmed) {
       store.clearCheckout();
       next();

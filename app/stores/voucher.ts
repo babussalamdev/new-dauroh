@@ -1,13 +1,16 @@
 import { defineStore } from "pinia";
-import Swal from "sweetalert2";
+import Swal from "sweetalert2"; 
 import { useNuxtApp, useCookie } from "#app";
 import { ref, computed } from "vue";
 import { usePagination } from "~/composables/usePagination";
 import { useGlobalEventStore } from '~/stores/globalEvent';
+import { useAlert } from '~/utils/swal';
 
 export const useVoucherStore = defineStore("voucher", () => {
+  const { alert: swalAlert } = useAlert(); // 🟢 Deklarasikan alert
+  
   // STATE
-   const voucher = ref<any[]>([]);
+  const voucher = ref<any[]>([]);
   const loading = ref(false);
   const search = ref("");
   const form = ref({
@@ -42,14 +45,12 @@ export const useVoucherStore = defineStore("voucher", () => {
     form.value = { jumlah: "", nominal: "", hari: "" };
   }
 
-
-
   async function fetchVouchers() {
     const globalStore = useGlobalEventStore();
     if (!globalStore.activeEventSK) return;
 
     loading.value = true;
-    const { $apiBase } = useNuxtApp();
+    const { $apiBase } = useNuxtApp() as any;
     try {
       const res: any = await $apiBase.get(`/get-voucher?type=load-voucher&eventSK=${globalStore.activeEventSK}`);
       voucher.value = Array.isArray(res.data) ? res.data : [];
@@ -66,12 +67,13 @@ export const useVoucherStore = defineStore("voucher", () => {
     const globalStore = useGlobalEventStore();
 
     if (!globalStore.activeEventSK) {
-      Swal.fire({ icon: "warning", title: "Harap pilih Event di Dashboard terlebih dahulu!", showConfirmButton: false, timer: 1500 });
+      // 🟢 Pake swalAlert tipe warning
+      swalAlert("Oops", "Harap pilih Event di Dashboard terlebih dahulu!", "warning");
       return false;
     }
 
     loading.value = true;
-    const { $apiBase } = useNuxtApp();
+    const { $apiBase } = useNuxtApp() as any;
     const token = useCookie("AccessToken");
 
     try {
@@ -93,29 +95,38 @@ export const useVoucherStore = defineStore("voucher", () => {
           voucher.value.push(data);
         }
 
-        Swal.fire({ icon: "success", title: `Berhasil membuat ${form.value.jumlah} voucher!`, showConfirmButton: false, timer: 1500 });
+        // 🟢 Feedback Sukses yang halus
+        swalAlert("Berhasil", `Berhasil membuat ${form.value.jumlah} voucher!`, "success");
         resetForm();
         return true;
       }
     } catch (error: any) {
-      Swal.fire({ icon: "error", title: error.response?.data?.message || "Gagal membuat voucher", showConfirmButton: false, timer: 1500 });
+      // 🟢 Handling error dengan fallback pesan
+      swalAlert("Gagal", error.response?.data?.message || "Gagal membuat voucher", "error");
       return false;
     } finally {
       loading.value = false;
     }
   }
 
-async function deleteVoucherBulk(selectedSKs: string[]) {
+  async function deleteVoucherBulk(selectedSKs: string[]) {
     const globalStore = useGlobalEventStore();
 
     if (!globalStore.activeEventSK) {
-      Swal.fire({ icon: "error", title: "Error", text: "Event aktif tidak ditemukan.", showConfirmButton: false, timer: 1500 });
+      swalAlert("Error", "Event aktif tidak ditemukan.", "error");
       return false;
     }
 
+    // 🟢 Tampilkan loading manual karena ini proses bulk
+    Swal.fire({
+      title: 'Menghapus Voucher...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+
     loading.value = true;
     try {
-      const { $apiBase } = useNuxtApp();
+      const { $apiBase } = useNuxtApp() as any;
       const token = useCookie("AccessToken");
 
       const rawPK = `voucher#${globalStore.activeEventSK}`;
@@ -125,49 +136,33 @@ async function deleteVoucherBulk(selectedSKs: string[]) {
       }));
 
       const res: any = await $apiBase.delete('/delete-voucher', {
-        data: payloadData, //[{PK, SK}, {PK, SK}]
+        data: payloadData,
         headers: {
           Authorization: `Bearer ${token.value}` 
         }
       });
 
       if (res) {
-      
         voucher.value = voucher.value.filter(v => !selectedSKs.includes(v.SK));
-
-        Swal.fire({ icon: "success", title: `${selectedSKs.length} Voucher dihapus!`, showConfirmButton: false, timer: 1500 });
+        Swal.close(); // Tutup loading
+        
+        // 🟢 Beri feedback sukses
+        swalAlert("Terhapus!", `${selectedSKs.length} Voucher telah dihapus.`, "success");
         return true;
       }
     } catch (error: any) {
+      Swal.close();
       const msg = error.response?.data?.message || error.message || "Gagal menghapus voucher";
-      Swal.fire({ icon: "error", title: msg, showConfirmButton: false, timer: 1500 });
+      swalAlert("Gagal", msg, "error");
       return false;
     } finally {
       loading.value = false;
     }
   }
 
-
   return {
-    // State
-    voucher,
-    loading,
-    search,
-    form,
-
-    // Getters
-    filteredData,
-    perPage,
-    currentPage,
-    totalItems,
-    totalPages,
-    paginatedData,
-
-    // Actions
-    changePage,
-    resetForm,
-    fetchVouchers,
-    inputVoucher,
-    deleteVoucherBulk
+    voucher, loading, search, form,
+    filteredData, perPage, currentPage, totalItems, totalPages, paginatedData,
+    changePage, resetForm, fetchVouchers, inputVoucher, deleteVoucherBulk
   };
 });

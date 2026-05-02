@@ -105,8 +105,23 @@
     </div>
   </div>
 
-  <AdminEventFormModal v-if="showFormModal" :show="showFormModal" :is-editing="isEditing"
-    :event="selectedEvent ?? undefined" @close="closeFormModal" @save="handleSave" />
+  <AdminEventFormModal 
+  v-if="showFormModal" 
+  :show="showFormModal" 
+  :is-editing="isEditing"
+  :event="selectedEvent ?? undefined" 
+  @close="closeFormModal" 
+  @next="handleNextStep" 
+/>
+
+<AdminEventMediaModal 
+  v-if="showMediaModal" 
+  :show="showMediaModal" 
+  :basic-data="tempBasicData"
+  @close="closeMediaModal" 
+  @back="goBackToStep1" 
+  @saveFinal="handleFinalSave" 
+/>
 
   <AdminCommonDeleteConfirmationModal v-if="showDeleteModal" :show="showDeleteModal"
     :item-name="selectedEventForDelete ? selectedEventForDelete.Title : ''" @close="closeDeleteModal"
@@ -119,21 +134,23 @@ import { ref, onMounted } from "vue";
 import { useEventStore } from "@/stores/event";
 import type { Event } from "@/types/event";
 import Swal from "sweetalert2";
-import { useRouter } from 'vue-router'; // [TAMBAH] Router
+import { useRouter } from 'vue-router'; 
 
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
-const router = useRouter(); // [TAMBAH] Init router
+const router = useRouter();
 
 const eventStore = useEventStore();
 
 const showFormModal = ref(false);
 const showDeleteModal = ref(false);
+const showMediaModal = ref(false);
 const isEditing = ref(false);
 const selectedEvent = ref<Partial<Event> | null>(null);
 const selectedEventForDelete = ref<Event | null>(null);
+const tempBasicData = ref<any>(null);
 
-// [HAPUS] State modal detail tidak lagi diperlukan
+
 // const showDetailModal = ref(false);
 // const selectedEventForDetail = ref<Event | null>(null); 
 
@@ -179,7 +196,7 @@ const formatEventDates = (dateObj: any) => {
   return validDates.map(toDateStr).join(', ');
 };
 
-// [TAMBAH] Fungsi navigasi ke halaman detail
+// Fungsi navigasi ke halaman detail
 const navigateToPage = (event: Event | null) => {
   if (event && event.SK) {
     router.push(`/admin/event/${event.SK}`);
@@ -196,7 +213,6 @@ const navigateToCertificate = (event: Event | null) => {
   }
 };
 
-// [HAPUS] Fungsi openDetailModal, closeDetailModal, handleDetailUpdated
 
 const openAddModal = () => {
   isEditing.value = false;
@@ -209,27 +225,28 @@ const closeFormModal = () => {
   selectedEvent.value = null;
 };
 
-const handleSave = async (payload: {
-  eventData: Omit<Event, "id" | "Date" | "Picture">;
-  photoBase64: null;
-}) => {
-  let success = false;
-  try {
-    if (isEditing.value && payload.eventData.SK) {
-      success = await eventStore.updateTiketEventBasic({
-        ...payload.eventData,
-        SK: payload.eventData.SK
-      });
-    } else {
-      success = await eventStore.addTiketEventBasic(payload.eventData);
-    }
-  } catch (error) {
-    success = false;
-    Swal.fire("Error", "Terjadi kesalahan saat memproses penyimpanan.", "error");
-  }
-  if (success) {
-    closeFormModal();
-  }
+const handleNextStep = (payload: any) => {
+  tempBasicData.value = payload; 
+  showFormModal.value = false;
+  showMediaModal.value = true;
+};
+
+const goBackToStep1 = () => {
+  showMediaModal.value = false;  
+  showFormModal.value = true;    
+};
+
+
+const closeMediaModal = () => {
+  showMediaModal.value = false;
+  tempBasicData.value = null;
+};
+
+const handleFinalSave = async (finalPayload: any) => {
+  console.log("Data siap dikirim ke Backend:", finalPayload);
+  Swal.fire("Berhasil", "Data berhasil digabung! Siap integrasi ke Backend.", "success");
+  
+  closeMediaModal();
 };
 
 const openDeleteModal = (event: Event) => {

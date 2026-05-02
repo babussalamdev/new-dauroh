@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
-import Swal from "sweetalert2";
+import { useAlert } from "~/utils/swal";
 import { useAuth } from "~/composables/useAuth";
 
 // Pastikan path import ini benar sesuai folder project lu
@@ -91,6 +91,7 @@ defineEmits(['switch']);
 
 const router = useRouter();
 const { login } = useAuth();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const loading = ref(false);
 const form = reactive({ email: '', password: '' })
 const showPassword = ref(false);
@@ -108,30 +109,25 @@ const handleLogin = async () => {
       password: form.password
     });
 
-    router.push('/');
-
+    // Login sukses biasanya diarahkan router di useAuth, 
+    // tapi kalau mau pastiin lagi di sini juga boleh.
   } catch (error: any) {
     let errMsg = "Gagal Login";
     if (error.response && error.response.data) {
-      errMsg = error.response.data.error || error.response.data.message || JSON.stringify(error.response.data);
+      errMsg = error.response.data.error || error.response.data.message || "Email atau password salah.";
     } else {
       errMsg = error.message || "Terjadi kesalahan jaringan";
     }
 
     const errLower = errMsg.toLowerCase();
 
+    // 🟢 CASE 1: Belum Verifikasi (Pake swalConfirm biar halus)
     if (errLower.includes('not verified') || errLower.includes('belum verifikasi') || errLower.includes('verification')) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Akun Belum Aktif',
-        text: 'Email Anda belum diverifikasi. Silakan masukkan kode OTP.',
-        showCancelButton: true,
-        confirmButtonText: 'Verifikasi Sekarang',
-        confirmButtonColor: '#3085d6',
-        cancelButtonText: 'Nanti Saja',
-        cancelButtonColor: '#d33',
-        reverseButtons: true
-      }).then((result) => {
+      swalConfirm(
+        'Akun Belum Aktif',
+        'Email Anda belum diverifikasi. Verifikasi sekarang?',
+        'Verifikasi Sekarang'
+      ).then((result) => {
         if (result.isConfirmed) {
           router.push({
             path: '/verify',
@@ -139,12 +135,10 @@ const handleLogin = async () => {
           });
         }
       });
-    } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Masuk',
-        text: errMsg
-      });
+    } 
+    // 🟢 CASE 2: Error Biasa (Salah password/email dll)
+    else {
+      swalAlert('Gagal Masuk', errMsg, 'error');
     }
   } finally {
     loading.value = false;

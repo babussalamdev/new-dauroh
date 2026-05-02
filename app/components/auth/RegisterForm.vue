@@ -99,7 +99,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 useHead({ title: 'Daftar Akun' });
 
@@ -107,6 +107,7 @@ defineEmits(['switch']);
 
 const router = useRouter();
 const { $apiBase } = useNuxtApp();
+const { alert: swalAlert } = useAlert();
 
 const form = reactive({
   name: '',
@@ -165,27 +166,20 @@ const handleRegister = async () => {
 } catch (err) {
     const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
     const msgLower = msg.toLowerCase();
+
+    // Handle Nomor HP/WA Sudah Ada
     if (msgLower.includes('nomor') || msgLower.includes('whatsapp')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Nomor Sudah Digunakan',
-        text: msg,
-        confirmButtonColor: '#004754'
-      });
+      swalAlert('Nomor Sudah Digunakan', msg, 'error');
     } 
+    // Handle Email Sudah Terdaftar
     else if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar') || msgLower.includes('email')) {
-      sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
-
-      await Swal.fire({
-        icon: 'info',
-        title: 'Akun Sudah Terdaftar',
-        text: 'Email sudah terdaftar. Mengarahkan ke halaman verifikasi untuk kirim ulang OTP...',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      router.push({ path: '/verify', query: { email: form.email } });
+      swalAlert(
+        'Email Sudah Terdaftar', 
+        'Email ini sudah memiliki akun. Silakan login atau gunakan email lain.', 
+        'warning'
+      );
     } 
+    // 🟢 3. Handle Error Lainnya
     else {
       error.value = msg;
     }

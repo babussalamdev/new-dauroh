@@ -80,7 +80,7 @@ import { useAuth } from "~/composables/useAuth";
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import { useRouter } from 'vue-router';
 import dayjs from 'dayjs';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 const isHovered = ref(false);
 const eventStore = useEventStore();
@@ -89,6 +89,7 @@ const checkoutStore = useCheckoutStore();
 const { isLoggedIn } = useAuth();
 const { getSmartStatus } = useTransactionStatus();
 const router = useRouter();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 
 const imgUrl = ref("");
 const config = useRuntimeConfig();
@@ -241,53 +242,35 @@ const handleRegisterClick = async (eventItem) => {
     toastStore.showToast({ message: `Gagal: Status ${state.label}`, type: 'warning' });
     return;
   }
+
+  // 🟢 CASE 1: Belum Login (Pake swalConfirm)
   if (!isLoggedIn.value) {
-    Swal.fire({
-      icon: 'info',
-      title: 'Login Diperlukan',
-      text: 'Mohon login terlebih dahulu untuk mendaftar.',
-      showCancelButton: true,
-      confirmButtonText: 'Login Sekarang',
-      cancelButtonText: 'Nanti',
-      reverseButtons: true,
-      buttonsStyling: false,
-      customClass: {
-        popup: 'rounded-4 border-0 shadow-lg p-4',
-        title: 'fs-5 fw-bold text-dark mb-2',
-        htmlContainer: 'text-muted small mb-4',
-        confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium',
-        cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium'
-      },
-    }).then((result) => {
+    swalConfirm(
+      'Login Diperlukan',
+      'Mohon login terlebih dahulu untuk mendaftar event ini.',
+      'Login Sekarang'
+    ).then((result) => {
       if (result.isConfirmed) {
         router.push('/auth');
       }
     });
     return;
   }
+
   if (eventItem && eventItem.SK) {
     const pendingLog = eventStore.userLogs.find(log => {
       const isSameEvent = String(log.Subject) === String(eventItem.SK);
       const status = getSmartStatus(log);
       return isSameEvent && status === 'PENDING';
     });
+
+    // 🟢 CASE 2: Ada Transaksi Pending (Pake swalConfirm)
     if (pendingLog) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Transaksi Belum Selesai',
-        text: 'Anda memiliki pendaftaran yang belum dibayar untuk event ini. Silakan selesaikan pembayaran.',
-        confirmButtonText: 'Bayar Sekarang',
-        showCancelButton: true,
-        cancelButtonText: 'Nanti',
-        buttonsStyling: false,
-        customClass: {
-          popup: 'rounded-4 border-0 shadow-lg p-4',
-          title: 'fs-5 fw-bold text-dark mb-2',
-          htmlContainer: 'text-muted small mb-4',
-          confirmButton: 'btn btn-primary rounded-pill px-4 ms-2 shadow-sm fw-medium',
-          cancelButton: 'btn btn-light rounded-pill px-4 text-muted fw-medium'
-        }
-      }).then((result) => {
+      swalConfirm(
+        'Transaksi Belum Selesai',
+        'Anda memiliki pendaftaran yang belum dibayar untuk event ini. Selesaikan pembayaran sekarang?',
+        'Bayar Sekarang'
+      ).then((result) => {
         if (result.isConfirmed) {
           router.push('/history');
         }
@@ -296,7 +279,7 @@ const handleRegisterClick = async (eventItem) => {
       router.push(`/event/register/${eventItem.SK}`);
     }
   } else {
-    toastStore.showToast({ message: 'Data Event tidak valid', type: 'danger' });
+    swalAlert('Error', 'Data Event tidak valid', 'error');
   }
 };
 </script>

@@ -124,7 +124,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import { useAttendanceStore } from '~/stores/attendance';
 import { useGlobalEventStore } from '~/stores/globalEvent'; 
 import { usePagination } from '~/composables/usePagination';
@@ -133,7 +133,7 @@ definePageMeta({ layout: 'admin' });
 
 const store = useAttendanceStore();
 const globalStore = useGlobalEventStore();
-
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const searchQuery = ref('');
 const isProcessing = ref(false);
 
@@ -159,16 +159,11 @@ const filteredAttendees = computed(() => {
 const { perPage, currentPage, totalPages, totalItems, paginatedData, changePage } = usePagination(filteredAttendees, 10);
 
 const processManualCheckIn = (item: any) => {
-  Swal.fire({
-    title: 'Check-In Manual?',
-    text: `Konfirmasi kehadiran untuk ${item.name}`,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#0d6efd',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Ya, Hadirkan!',
-    cancelButtonText: 'Batal'
-  }).then(async (result) => {
+  swalConfirm(
+    'Check-In Manual?',
+    `Konfirmasi kehadiran untuk ${item.name}`,
+    'Ya, Hadirkan!'
+  ).then(async (result) => {
     if (result.isConfirmed) {
       isProcessing.value = true;
       
@@ -176,19 +171,13 @@ const processManualCheckIn = (item: any) => {
         const response = await store.markManualAttendance(item.pk, item.ticketId);
 
         if (response.success) {
-          Swal.fire({
-            icon: 'success',
-            title: 'Berhasil',
-            text: `${item.name} berhasil diabsen!`,
-            timer: 1500,
-            showConfirmButton: false
-          });
+          swalAlert('Berhasil', `${item.name} berhasil diabsen!`, 'success');
         } else {
-          Swal.fire('Gagal!', response.message, 'error');
+          swalAlert('Gagal!', response.message ?? 'Gagal memproses absen', 'error');
         }
 
       } catch (error: any) {
-        Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+        swalAlert('Error', 'Terjadi kesalahan sistem.', 'error');
       } finally {
         isProcessing.value = false;
       }

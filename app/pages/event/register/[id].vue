@@ -190,7 +190,7 @@ import { useCheckoutStore } from '~/stores/checkout';
 import { useUserStore } from '~/stores/user';
 import { useAuth } from '~/composables/useAuth';
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 import dayjs from 'dayjs';
 
 definePageMeta({
@@ -208,6 +208,7 @@ const userStore = useUserStore();
 const config = useRuntimeConfig();
 const { getSmartStatus } = useTransactionStatus();
 const { user } = useAuth();
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 
 const eventSK = computed(() => route.params.id ? String(route.params.id) : '');
 const imgBaseUrl = ref(config.public.img || '');
@@ -449,14 +450,12 @@ const handleSubmit = async () => {
   });
 
   if (conflictingTransaction) {
-    Swal.fire({
-      icon: 'info',
-      title: 'Sudah Terdaftar',
-      text: 'Anda memiliki tagihan aktif untuk event ini. Lanjutkan pembayaran?',
-      showCancelButton: true,
-      confirmButtonText: 'Lanjutkan Pembayaran',
-      cancelButtonText: 'Tutup',
-    }).then((result) => {
+    // 🟢 Gunakan swalConfirm buat arahin ke instruksi bayar
+    swalConfirm(
+      'Sudah Terdaftar',
+      'Anda memiliki tagihan aktif untuk event ini. Lanjutkan ke instruksi pembayaran?',
+      'Lanjutkan Bayar'
+    ).then((result) => {
       if (result.isConfirmed) {
         checkoutStore.event = {
           ...event.value!,
@@ -492,10 +491,14 @@ const handleSubmit = async () => {
         router.push('/checkout');
       }
     });
-    return; // Stop flow registrasi baru
+    return;
   }
 
-  // 4. Flow Normal (Daftar Baru)
+  if (!formState.participants.every(p => p.Name && p.Age && p.Domicile)) {
+    swalAlert('Data Belum Lengkap', 'Mohon isi semua data peserta sebelum melanjutkan.', 'warning');
+    return;
+  }
+
   if (process.client) {
     localStorage.removeItem(STORAGE_KEY.value);
   }
@@ -516,13 +519,18 @@ const handleSubmit = async () => {
     participants: finalParticipants as any[]
   };
 
-  if ((event.value.Price || 0) === 0) {
-    userStore.registerEvent(registrationData);
-    router.push('/dashboard');
+ if ((event.value.Price || 0) === 0) {
+    // 🟢 Notifikasi buat Event Gratis
+    try {
+      await userStore.registerEvent(registrationData);
+      swalAlert('Berhasil!', 'Pendaftaran event berhasil dilakukan.', 'success').then(() => {
+        router.push('/dashboard');
+      });
+    } catch (e) {
+      swalAlert('Gagal', 'Terjadi kesalahan saat mendaftar.', 'error');
+    }
   } else {
-    // Pastikan checkout store bersih sebelum start
     if (checkoutStore.clearCheckout) checkoutStore.clearCheckout();
-
     checkoutStore.startCheckout(registrationData);
     router.push('/checkout');
   }

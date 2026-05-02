@@ -18,7 +18,7 @@
 
       <div v-else>
          <div class="container pt-5 pb-4 text-center" style="max-width: 900px;">
-            <h1 class="display-5 fw-bold text-dark mb-3 lh-sm txt-title">{{ event.Title }}</h1>
+            <h1 class="display-5 fw-bold text-dark mb-3 lh-sm txt-title text-uppercase">{{ event.Title }}</h1>
 
             <div
                class="d-flex justify-content-center align-items-center gap-3 text-secondary txt-caption fw-bold text-uppercase ls-1 flex-wrap">

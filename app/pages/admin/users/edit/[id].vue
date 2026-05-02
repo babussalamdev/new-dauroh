@@ -92,7 +92,7 @@
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';
-import Swal from 'sweetalert2';
+import { useAlert } from '~/utils/swal';
 
 definePageMeta({
   layout: 'admin',
@@ -109,6 +109,7 @@ const router = useRouter();
 const store = useAdminUserStore();
 const { user } = useAuth(); 
 const { $apiBase } = useNuxtApp() as any;
+const { alert: swalAlert } = useAlert();
 
 const userId = decodeURIComponent(route.params.id as string);
 
@@ -203,13 +204,10 @@ if (foundUser) {
     
     loading.value = false;
   } else {
-    Swal.fire({
-      title: 'User Tidak Ditemukan',
-      text: `Data user dengan ID ${userId} tidak ditemukan.`,
-      icon: 'error',
-    }).then(() => {
-      router.push('/admin/users');
-    });
+    swalAlert('Error', `Data user dengan ID ${userId} tidak ditemukan.`, 'error')
+      .then(() => {
+        router.push('/admin/users');
+      });
   }
 });
 
@@ -219,6 +217,7 @@ const handleSubmit = async () => {
   try {
     const accessToken = useCookie('AccessToken').value;
     if (!accessToken) throw new Error("Sesi admin kadaluarsa.");
+    
     const payload = {
       name: form.name,
       role: form.role,
@@ -227,29 +226,20 @@ const handleSubmit = async () => {
     };
 
     await $apiBase.put(`/update-account?email=${form.email}&type=user-admin`, payload);
-
-    Swal.fire({
-    title: 'Berhasil!',
-    text: 'Data user telah diperbarui.',
-    icon: 'success',
-    timer: 2000,
-    showConfirmButton: false,
-  }).then(() => {
-    
-    store.getListaccount('all', true).then(() => {
-      
-      const targetTab = form.role === 'user' ? 'user' : 'admin'; 
-      router.push(`/admin/users?type=${targetTab}`);
+    swalAlert('Berhasil!', 'Data user telah diperbarui.', 'success').then(() => {
+      store.getListaccount('all', true).then(() => {
+        const targetTab = form.role === 'user' ? 'user' : 'admin'; 
+        router.push(`/admin/users?type=${targetTab}`);
+      });
     });
-  });
 
   } catch (error: any) {
     console.error('Gagal mengupdate user:', error);
-    Swal.fire({
-      title: 'Gagal Update',
-      text: error.response?.data?.message || error.message || 'Terjadi kesalahan saat menyimpan.',
-      icon: 'error',
-    });
+    swalAlert(
+      'Gagal Update', 
+      error.response?.data?.message ?? error.message ?? 'Terjadi kesalahan sistem.', 
+      'error'
+    );
   } finally {
     submitting.value = false;
   }

@@ -174,7 +174,8 @@ useHead({ title: 'Presensi Peserta' });
 definePageMeta({ layout: 'admin' });
 
 const store = useAttendanceStore();
-const globalStore = useGlobalEventStore(); // 🟢 2. PANGGIL GLOBAL STORE
+const globalStore = useGlobalEventStore();
+const { alert: swalAlert } = useAlert();
 
 const isExporting = ref(false);
 const searchQuery = ref('');
@@ -213,7 +214,7 @@ const {
 
 const handleExport = () => {
   if (!store.participants || store.participants.length === 0) {
-    Swal.fire({ icon: 'warning', title: 'Data Kosong', text: 'Tidak ada data kehadiran untuk di-export.' });
+    swalAlert('Data Kosong', 'Tidak ada data kehadiran untuk di-export.', 'warning');
     return;
   }
 
@@ -221,7 +222,6 @@ const handleExport = () => {
 
   try {
     const headers = ['No', 'Nama Peserta', 'Kode Tiket', 'Gender', 'Umur', 'Waktu Masuk', 'Status'];
-
     const rows = store.participants.map((p, index) => {
       return [
         index + 1,
@@ -243,7 +243,6 @@ const handleExport = () => {
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a'); 
-    // 🟢 4. UBAH NAMA FILE EXPORT BIAR NGAMBIL SK DARI GLOBAL STORE
     const fileName = `Log_Kehadiran_${globalStore.activeEventSK}_${dayjs().format('YYYYMMDD_HHmm')}.csv`;
     
     link.setAttribute('href', url);
@@ -251,18 +250,11 @@ const handleExport = () => {
     document.body.appendChild(link);
     link.click(); 
     document.body.removeChild(link); 
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text: 'File CSV berhasil didownload!',
-      timer: 2000,
-      showConfirmButton: false
-    });
+    swalAlert('Berhasil', 'File CSV berhasil didownload!', 'success');
 
   } catch (error) {
     console.error("Export Error:", error);
-    Swal.fire({ icon: 'error', title: 'Gagal Export', text: 'Terjadi kesalahan saat memproses data.' });
+    swalAlert('Gagal Export', 'Terjadi kesalahan saat memproses data.', 'error');
   } finally {
     isExporting.value = false;
   }
