@@ -136,6 +136,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useAdminUserStore } from '~/stores/adminUser';
 import { useAlert } from '~/utils/swal';
 
 useHead({
@@ -145,6 +146,7 @@ useHead({
 definePageMeta({ layout: 'admin' });
 
 const availableRoles = ref<string[]>([]);
+const userStore = useAdminUserStore();
 const menusData = ref<any[]>([]);
 const loading = ref(true);
 const submitting = ref(false);
@@ -167,20 +169,9 @@ onMounted(async () => {
     const modalEl = document.getElementById('formMenuModal');
     if (modalEl) bootstrapModal = new bootstrap.Modal(modalEl);
   }
-  await fetchAvailableRoles();
+  await userStore.fetchAvailableRoles();
   await fetchMenus();
 });
-
-const fetchAvailableRoles = async () => {
-  try {
-    const { $apiBase } = useNuxtApp() as any;
-    const res = await $apiBase.get(`/get-default?roles=all&t=${new Date().getTime()}`);
-    const rolesData = res.data || [];
-    availableRoles.value = rolesData.map((role: any) => role.SK || role.sk);
-  } catch (error) {
-    console.error("Gagal narik data role:", error);
-  }
-};
 
 const fetchMenus = async () => {
   loading.value = true;

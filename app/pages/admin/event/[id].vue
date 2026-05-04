@@ -199,17 +199,6 @@ const convertTo24h = (timeStr?: string) => {
   return `${String(h).padStart(2, '0')}:${minutes}`;
 };
 
-const convertTo12h = (time24: string | undefined) => {
-  if (!time24) return '';
-  const parts = time24.split(':');
-  if (parts.length < 2) return '';
-  let hours = parseInt(parts[0] || "0", 10);
-  const minutes = parts[1];
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12;
-  return `${String(hours).padStart(2, '0')}.${minutes} ${suffix}`;
-};
-
 const initializeData = () => {
   if (!eventData.value) return;
   contactWaInput.value = eventData.value.Whatsapp || '';

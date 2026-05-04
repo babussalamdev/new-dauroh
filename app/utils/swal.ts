@@ -6,16 +6,16 @@ export const useAlert = () => {
       title,
       text,
       icon,
-      // 🟢 1. Atur lebar (defaultnya biasanya 32rem / 512px)
+      // Atur lebar (defaultnya biasanya 32rem / 512px)
       width: '24rem', 
-      // 🟢 2. Kecilin padding biar gak terlalu bulky
+      // Kecilin padding biar gak terlalu bulky
       padding: '1.25rem',
       showConfirmButton: false,
       timer: 2000,
-      // 🟢 3. Kecilin font title & content lewat customClass
+      // font title & content lewat customClass
       customClass: {
         popup: 'rounded-4 shadow-sm border-0',
-        title: 'fs-5 fw-bold mb-1', // Pake class Bootstrap biar simpel
+        title: 'fs-5 fw-bold mb-1', // Pake class Bootstrap
         htmlContainer: 'txt-caption text-muted mt-0',
         confirmButton: 'btn btn-primary rounded-pill px-4 txt-caption',
         cancelButton: 'btn btn-light border rounded-pill px-4 txt-caption'
@@ -34,13 +34,13 @@ export const useAlert = () => {
       title,
       text,
       icon: 'question',
-      width: '26rem', // Khusus konfirmasi boleh agak lebar sedikit biar teksnya gak numpuk
+      width: '26rem',
       showCancelButton: true,
       confirmButtonText,
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#004754', // Warna brand Yayasan lu
+      confirmButtonColor: '#004754',
       cancelButtonColor: '#f8f9fa',
-      // Pastiin class tombolnya juga dikecilin sizenya
+      // class tombolnya
       customClass: {
         popup: 'rounded-4 shadow-lg border-0',
         title: 'fs-5 fw-bold',
@@ -48,7 +48,7 @@ export const useAlert = () => {
         confirmButton: 'btn btn-primary rounded-pill px-4 txt-caption py-2 ms-2',
         cancelButton: 'btn btn-light border rounded-pill px-4 txt-caption py-2'
       },
-      buttonsStyling: false // Matikan style bawaan swal biar class Bootstrap kita dominan
+      buttonsStyling: false
     });
   };
 

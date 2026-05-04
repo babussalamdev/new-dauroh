@@ -11,6 +11,7 @@ export const useAdminUserStore = defineStore("adminUser", () => {
   const loading = ref(false);
   const search = ref("");
   const currentType = ref("all");
+  const availableRoles = ref<string[]>([]);
 
   // --- Getters ---
   const filteredData = computed(() => {
@@ -112,9 +113,22 @@ async function getListaccount(type: string = 'all', forceRefresh = false) {
     }
   }
 
+  async function fetchAvailableRoles() {
+    if (availableRoles.value.length > 0) return;
+
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get(`/get-default?roles=all&t=${new Date().getTime()}`);
+      const rolesData = res.data || [];
+      availableRoles.value = rolesData.map((role: any) => role.SK || role.sk);
+    } catch (error) {
+      console.error("Gagal narik data role:", error);
+    }
+  }
+
   return {
     users, loading, search, currentType,
-    filteredData, 
+    filteredData, fetchAvailableRoles,
     
     perPage, currentPage, totalItems, totalPages, paginatedData, changePage,
     

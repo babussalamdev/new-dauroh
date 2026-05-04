@@ -190,28 +190,15 @@ const removeImage = () => {
 };
 
 // Utils Waktu ke AM/PM
-const convertTo12h = (time24: string) => {
-  if (!time24) return '';
-  const parts = time24.split(':');
-  if (parts.length < 2) return '';
-  let hours = parseInt(parts[0] || "0", 10);
-  const minutes = parts[1];
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12;
-  return `${String(hours).padStart(2, '0')}.${minutes} ${suffix}`;
-};
-
 const close = () => emit('close');
 const back = () => emit('back');
 
 const submitFinal = () => {
-  // Validasi Gambar
   if (!imageBase64.value) {
     swalAlert('Poster Kosong', 'Harap upload poster event terlebih dahulu.', 'warning');
     return;
   }
 
-  // Validasi Jadwal
   if (scheduleDays.value.length === 0) {
     swalAlert('Jadwal Kosong', 'Harap tambahkan minimal 1 hari jadwal kegiatan.', 'warning');
     return;
@@ -221,7 +208,6 @@ const submitFinal = () => {
   const schedulePayload: any = {};
 
   scheduleDays.value.forEach((day, index) => {
-    // Pastikan field terisi
     if(!day.date || !day.start_time || !day.end_time) {
       isScheduleValid = false;
       return;
@@ -230,12 +216,9 @@ const submitFinal = () => {
     const startStr = `${day.date} ${day.start_time}`;
     const endStr = `${day.date} ${day.end_time}`;
     
-    // Validasi Logika Waktu
     if (new Date(endStr) <= new Date(startStr)) {
       isScheduleValid = false;
     }
-
-    // Mapping format jadwal
     schedulePayload[`day_${index + 1}`] = {
       date: day.date,
       start_time: convertTo12h(day.start_time),
@@ -244,11 +227,11 @@ const submitFinal = () => {
   });
 
   if (!isScheduleValid) {
-    swalAlert('Jadwal Tidak Valid', 'Pastikan semua field jadwal terisi dan waktu selesai lebih lambat dari waktu mulai.', 'warning');
+    swalAlert('Jadwal Tidak Valid', 'Pastikan semua field terisi dan waktu selesai logis.', 'warning');
     return;
   }
 
-  // Gabungin data & Kirim ke Parent
+  // 3. Gabungin data & Kirim ke Parent
   const finalPayload = {
     ...props.basicData,
     Event_Schedule: schedulePayload, 

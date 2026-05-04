@@ -129,6 +129,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAdminUserStore } from '~/stores/adminUser';
 import { useAlert } from '~/utils/swal';
 
 useHead({
@@ -142,6 +143,7 @@ const { alert: swalAlert } = useAlert();
 
 const rawParentSK = route.params.id as string; 
 const parentSK = rawParentSK.replace('parent#', '');
+const userStore = useAdminUserStore();
 const availableRoles = ref<string[]>([]);
 const childMenus = ref<any[]>([]);
 const loading = ref(true);
@@ -163,7 +165,7 @@ onMounted(async () => {
     const modalEl = document.getElementById('formChildModal');
     if (modalEl) bootstrapModal = new bootstrap.Modal(modalEl);
   }
-  await fetchAvailableRoles();
+  await userStore.fetchAvailableRoles();
   await fetchChildMenus();
 });
 
@@ -181,17 +183,6 @@ const fetchChildMenus = async () => {
   }
 };
 
-const fetchAvailableRoles = async () => {
-  try {
-    const { $apiBase } = useNuxtApp() as any;
-    const res = await $apiBase.get(`/get-default?roles=all&t=${new Date().getTime()}`);
-    const rolesData = res.data || [];
-    
-    availableRoles.value = rolesData.map((role: any) => role.SK || role.sk);
-  } catch (error) {
-    console.error("Gagal narik data role:", error);
-  }
-};
 
 const openModal = (mode: 'add' | 'edit', data?: any) => {
   isEdit.value = mode === 'edit';

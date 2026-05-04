@@ -84,3 +84,16 @@ export const registrationStatus = (eventObj: Event | null | undefined) => {
 
   return { canRegister: false, message: 'Kuota Penuh' };
 };
+
+export const convertTo12h = (time24: string): string => {
+  if (!time24) return '';
+  const parts = time24.split(':');
+  if (parts.length < 2) return '';
+  
+  let hours = parseInt(parts[0] || "0", 10);
+  const minutes = parts[1];
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  
+  hours = hours % 12 || 12;
+  return `${String(hours).padStart(2, '0')}.${minutes} ${suffix}`;
+};
