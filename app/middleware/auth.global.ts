@@ -1,6 +1,9 @@
+// app/middleware/auth.global.ts
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { accessToken, user, isAdmin, getUser } = useAuth();
+  const { accessToken, user, isAdmin, getUser, logout } = useAuth()
+  const { alert: swalAlert } = useAlert();
   
+  // 1. Ambil data user jika token ada tapi data belum ada
   if (accessToken.value && !user.value) {
     try {
       await getUser();
@@ -9,32 +12,48 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
+  // PROTEKSI STATUS AKUN
+  if (user.value) {
+    const status = (user.value?.Status || user.value?.status || "").toLowerCase();
+    
+    // Jika status akun tidak aktif, paksa logout
+    if (status === 'inactive' || status === 'banned' || status === 'blocked') {
+      await swalAlert(
+        'Akses Ditolak', 
+        'Akun Anda telah dinonaktifkan. Silakan hubungi Admin.', 
+        'error'
+      );
+      
+      await logout();
+      return navigateTo('/auth');
+    }
+  }
+
   const userRole = (user.value?.role || user.value?.Series || "").toLowerCase();
 
-  // 1. Proteksi Rute Admin
+  // Proteksi Rute Admin
   if (to.path.startsWith('/admin')) {
     if (to.path === '/admin/login' && isAdmin.value) {
       return navigateTo('/admin');
     }
     
-    // Izinkan jika punya role admin (root, admin, bendahara, registrasi)
     if (to.path !== '/admin/login' && !isAdmin.value) {
       return navigateTo('/admin/login');
     }
   }
 
-  // 2. Proteksi Rute User (Dashboard, Profile, dll)
-  const userOnlyPaths = ['/dashboard', '/profile', '/history'];
+  // Proteksi Rute User (Dashboard, Profile, dll)
+  const userOnlyPaths = ['/dashboard', '/profile', '/history', '/event/register']; // Tambahin /event/register biar aman
   if (userOnlyPaths.some(path => to.path.startsWith(path))) {
     if (!accessToken.value) {
       return navigateTo('/auth');
     }
 
-    // Cegah Root & Admin masuk ke halaman user
-    // Kecuali role 'registrasi', boleh lewat.
+    // Cegah Root, Admin, & Bendahara masuk ke halaman dashboard user
+    // Khusus role 'registrasi' tetap diizinkan lewat (Pengecualian)
     const restrictedAdminRoles = ["root", "admin", "bendahara"];
     if (restrictedAdminRoles.includes(userRole) && to.path.startsWith('/dashboard')) {
-      return navigateTo('/admin'); // Tendang balik ke admin
+      return navigateTo('/admin'); 
     }
   }
 });

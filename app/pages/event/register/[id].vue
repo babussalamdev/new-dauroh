@@ -246,11 +246,33 @@ onMounted(async () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.qtyIkhwan) formState.qtyIkhwan = parsed.qtyIkhwan;
-        if (parsed.qtyAkhwat) formState.qtyAkhwat = parsed.qtyAkhwat;
-        if (parsed.participants) formState.participants = parsed.participants;
+        const now = new Date().getTime();
+        
+        // apakah draf sudah lebih dari 24 jam (86400000 milidetik)
+        const DRAFT_MAX_AGE = 86400000;
+        // Kalau draf lama gak punya timestamp, kita anggap udah expired
+        const isTooOld = parsed.timestamp ? (now - parsed.timestamp > DRAFT_MAX_AGE) : true; 
+        
+        // apakah event pendaftarannya sudah ditutup
+        let isEventExpired = false;
+        if (event.value?.Registration?.end_registration) {
+          isEventExpired = dayjs().isAfter(dayjs(event.value.Registration.end_registration));
+        }
+
+        if (isTooOld || isEventExpired) {
+          // BERSIIHKAN SAMPAH
+          localStorage.removeItem(STORAGE_KEY.value);
+          console.log("Draf pendaftaran dihapus otomatis karena kadaluarsa.");
+        } else {
+          // LOAD DRAF (Karena masih valid)
+          if (parsed.qtyIkhwan) formState.qtyIkhwan = parsed.qtyIkhwan;
+          if (parsed.qtyAkhwat) formState.qtyAkhwat = parsed.qtyAkhwat;
+          if (parsed.participants) formState.participants = parsed.participants;
+        }
       } catch (e) {
-        console.error("Failed load draft", e);
+        console.error("Gagal memuat draf", e);
+      
+        localStorage.removeItem(STORAGE_KEY.value);
       }
     }
   }
@@ -258,7 +280,11 @@ onMounted(async () => {
 
 watch(formState, (newVal) => {
   if (process.client) {
-    localStorage.setItem(STORAGE_KEY.value, JSON.stringify(newVal));
+    const draftData = {
+      ...newVal,
+      timestamp: new Date().getTime() 
+    };
+    localStorage.setItem(STORAGE_KEY.value, JSON.stringify(draftData));
   }
 }, { deep: true });
 
@@ -440,17 +466,17 @@ const handleSubmit = async () => {
   checkoutStore.noRepay()
   if (!event.value || !event.value.SK) return;
 
+  const userRole = (user.value?.role || user.value?.Role || "").toLowerCase();
+  const isRegistrasi = userRole === 'registrasi';
+
   const conflictingTransaction = userStore.transactions.find(t => {
     const tEventSK = (t.SK || '').split('#')[0];
-
     if (tEventSK !== event.value!.SK) return false;
-
     const status = getSmartStatus(t);
     return status === 'PENDING';
   });
 
-  if (conflictingTransaction) {
-    // 🟢 Gunakan swalConfirm buat arahin ke instruksi bayar
+  if (conflictingTransaction && !isRegistrasi) {
     swalConfirm(
       'Sudah Terdaftar',
       'Anda memiliki tagihan aktif untuk event ini. Lanjutkan ke instruksi pembayaran?',
