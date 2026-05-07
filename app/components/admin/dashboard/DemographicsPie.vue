@@ -1,7 +1,7 @@
 <template>
   <div class="card border-0 shadow-sm rounded-4 h-100 bg-white demographic-card">
     <div class="card-body p-3 px-4 d-flex flex-column">
-      
+
       <div class="mb-3">
         <h6 class="txt-subtitle fw-bold mb-1 text-dark">Demografi Pengguna</h6>
         <p class="txt-caption text-muted mb-0">Total Keseluruhan Akun</p>
@@ -9,13 +9,7 @@
 
       <div class="d-flex justify-content-center align-items-center flex-grow-1">
         <ClientOnly>
-          <apexchart 
-            type="pie" 
-            width="100%" 
-            height="240" 
-            :options="chartOptions" 
-            :series="series"
-          ></apexchart>
+          <apexchart type="pie" width="100%" height="240" :options="chartOptions" :series="series"></apexchart>
           <template #fallback>
             <div class="spinner-border text-primary opacity-50" role="status"></div>
           </template>
@@ -45,30 +39,30 @@ const chartOptions: ApexOptions = {
     fontFamily: 'inherit',
   },
   labels: ['Ikhwan', 'Akhwat'],
-  colors: ['#0d6efd', '#ffc107'], // Biru (Ikhwan) & Kuning (Akhwat)
+  colors: ['#0d6efd', '#ffc107'],
   stroke: {
     show: true,
-    width: 2, 
+    width: 2,
     colors: ['#ffffff']
   },
   dataLabels: {
-    enabled: true, 
+    enabled: true,
     style: {
       fontSize: '11px',
       fontWeight: 'bold',
       colors: ['#ffffff']
     },
     dropShadow: {
-      enabled: false 
+      enabled: false
     }
   },
   legend: {
-    show: true, 
-    position: 'bottom', 
-    horizontalAlign: 'center', 
+    show: true,
+    position: 'bottom',
+    horizontalAlign: 'center',
     markers: {
-      size: 5, // Dikecilin dikit biar makin rapi
-      shape: 'square', // Dibikin kotak tegass
+      size: 5,
+      shape: 'square',
     },
     itemMargin: {
       horizontal: 10,
@@ -79,8 +73,8 @@ const chartOptions: ApexOptions = {
     enabled: true,
     theme: 'light',
     y: {
-      formatter: function(val) {
-        return val + " Akun" 
+      formatter: function (val) {
+        return val + " Akun"
       }
     }
   }
@@ -91,8 +85,9 @@ const chartOptions: ApexOptions = {
 .demographic-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .demographic-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 .25rem .75rem rgba(0,0,0,.08)!important;
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .08) !important;
 }
 </style>
