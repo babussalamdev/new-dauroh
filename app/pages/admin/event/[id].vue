@@ -91,25 +91,46 @@
               <div class="d-flex justify-content-between align-items-start"><span class="text-muted txt-caption">Registrasi</span><span class="txt-body fw-bold text-end">{{ formatRegDates(eventData.Registration) }}</span></div>
               <div class="d-flex justify-content-between align-items-start"><span class="text-muted txt-caption">Lokasi</span><span class="txt-body fw-bold text-end text-truncate" style="max-width: 140px;">{{ eventData.Place }}</span></div>
               <div class="d-flex justify-content-between align-items-start"><span class="text-muted txt-caption">Peserta</span><span class="txt-body fw-bold text-end text-capitalize">{{ eventData.Gender || '-' }}</span></div>
+              
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted txt-caption">WhatsApp</span>
+                <span class="txt-body fw-bold text-end">{{ eventData.Whatsapp || '-' }}</span>
+              </div>
+
               <div class="d-flex justify-content-between align-items-start">
                 <span class="text-muted txt-caption">Kuota</span>
                 <div class="text-end">
-                  <span class="txt-body fw-bold d-block">{{ eventData.Quota_Total === 'non-quota' ? 'Tidak Terbatas' : (eventData.Quota_Total|| '-') }}</span>
-                  <small v-if="eventData.Quota_Total !== 'non-quota'" class="txt-caption text-muted">(Ikhwan: {{ eventData.Quota_Ikhwan || 0 }}, Akhwat: {{ eventData.Quota_Akhwat || 0 }})</small>
+                  
+                  <template v-if="eventData.Gender.toLowerCase().includes('ikhwan') && eventData.Gender.toLowerCase().includes('akhwat')">
+                    <span class="txt-body fw-bold d-block">
+                      {{ eventData.Quota_Total === 'non-quota' ? 'Tidak Terbatas' : (eventData.Quota_Total || '-') }}
+                    </span>
+                    <small v-if="eventData.Quota_Total !== 'non-quota'" class="txt-caption text-muted">
+                      (Ikhwan: {{ eventData.Quota_Ikhwan || 0 }}, Akhwat: {{ eventData.Quota_Akhwat || 0 }})
+                    </small>
+                  </template>
+
+                  <template v-else-if="eventData.Gender.toLowerCase() === 'ikhwan'">
+                    <span class="txt-body fw-bold d-block">
+                      {{ eventData.Quota_Ikhwan === 'non-quota' ? 'Tidak Terbatas' : (eventData.Quota_Ikhwan || '-') }}
+                    </span>
+                  </template>
+
+                  <template v-else-if="eventData.Gender.toLowerCase() === 'akhwat'">
+                    <span class="txt-body fw-bold d-block">
+                      {{ eventData.Quota_Akhwat === 'non-quota' ? 'Tidak Terbatas' : (eventData.Quota_Akhwat || '-') }}
+                    </span>
+                  </template>
+
+                  <template v-else>
+                    <span class="txt-body fw-bold d-block">-</span>
+                  </template>
+
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-start"><span class="text-muted txt-caption">Harga</span><span class="txt-body fw-bold text-primary text-end">{{ formatCurrency(eventData.Price) }}</span></div>
             </div>
-            <div class="pt-3 border-top mt-auto">
-              <h6 class="fw-bold mb-2 text-dark txt-label" style="font-size: 0.75rem;">KONTAK WHATSAPP</h6>
-              <div class="d-flex gap-2">
-                <input type="text" class="form-control form-control-sm modern-input txt-body fw-bold" placeholder="628..." v-model="contactWaInput">
-                <button class="btn btn-primary btn-sm fw-bold px-3 txt-body rounded-pill flex-shrink-0" @click="handleContactSubmit" :disabled="isSavingContact || !contactWaInput">
-                  <span v-if="isSavingContact" class="spinner-border spinner-border-sm me-1"></span>{{ isSavingContact ? '...' : 'Simpan' }}
-                </button>
-              </div>
             </div>
-          </div>
         </div>
 
         <div class="col-lg-8 col-xl-9">

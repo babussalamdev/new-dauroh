@@ -306,6 +306,37 @@ async function fetchEventDetail(SK: string) {
     }
   }
 
+
+  async function createTiketEvent(finalPayload: any): Promise<boolean> {
+    const token = useCookie("AccessToken").value;
+    if (!token) return false;
+    
+    loading.savingBasic = true;
+    const toast = useToastStore();
+    
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const payload = {
+        ...finalPayload,
+        AccessToken: token
+      };
+      const res = await $apiBase.post("/input-default?type=event", payload);
+      
+      const newEventData = res.data?.event || res.data;
+      if (newEventData?.SK) {
+        adminTiketEvent.value.unshift(mapApiToEvent(newEventData));
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Gagal create event:", error);
+      toast.showToast({ message: "Gagal membuat event baru.", type: "danger" });
+      return false;
+    } finally {
+      loading.savingBasic = false;
+    }
+  }
+
   async function addTiketEventBasic(eventData: Omit<EventBasicData, "SK">): Promise<boolean> {
     const token = useCookie("AccessToken").value;
     if (!token) return false;
@@ -375,15 +406,26 @@ async function fetchEventDetail(SK: string) {
     const token = useCookie("AccessToken").value;
     if (!token || !photoBase64) return false;
     loading.uploadPhoto = true;
+
+    // 🟢 1. AMBIL NAMA GAMBAR LAMA DARI STATE SEBELUM DIGANTI
+    const currentEvent = adminTiketEvent.value.find(d => d.SK === eventSK) || currentEventDetail.value;
+    const oldPictureName = currentEvent?.Picture || "";
+
     try {
       const { $apiBase } = useNuxtApp() as any;
-      const payload = { AccessToken: token, OldPicture: "", Picture: photoBase64.split(",")[1] };
+      
+      // 🟢 2. MASUKIN NAMA GAMBAR LAMA KE PAYLOAD
+      const payload = { 
+        AccessToken: token, 
+        OldPicture: oldPictureName,
+        Picture: photoBase64.split(",")[1] 
+      };
+      
       const res = await $apiBase.put(`/update-default?type=photo-event&sk=${eventSK}`, payload);
       const newPic = res.data?.Picture || res.data?.event?.Picture;
 
       if (newPic) {
-        const target = adminTiketEvent.value.find(d => d.SK === eventSK);
-        if (target) target.Picture = newPic;
+        if (currentEvent) currentEvent.Picture = newPic;
         if (currentEventDetail.value?.SK === eventSK) currentEventDetail.value.Picture = newPic;
       }
       useToastStore().showToast({ message: "Foto diperbarui.", type: "success" });
@@ -430,6 +472,6 @@ async function fetchEventDetail(SK: string) {
     setSearchQuery, fetchPublicTiketEvent, fetchAuthTiketEvent,
     fetchAdminTiketEvent, fetchPublicEventDetail, fetchEventDetail,
     addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
-    deleteTiketEvent, decrementQuota, updateEventSchedule, fetchViewData
+    deleteTiketEvent, decrementQuota, updateEventSchedule, fetchViewData, createTiketEvent
   };
 });

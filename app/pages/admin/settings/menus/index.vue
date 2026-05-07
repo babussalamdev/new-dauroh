@@ -102,6 +102,12 @@
               </div>
 
               <div class="col-12">
+                <label class="form-label fw-bold text-muted txt-caption mb-1">Urutan Menu (Sorting) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control bg-light border-0 shadow-sm" placeholder="Contoh: 1" v-model.number="form.orders">
+                <small class="text-muted txt-caption">Angka lebih kecil akan muncul lebih awal.</small>
+              </div>
+
+              <div class="col-12">
                 <label class="form-label fw-bold text-muted txt-caption mb-1">Icon (Class Bootstrap) <span class="text-danger">*</span></label>
                 <input type="text" class="form-control bg-light border-0 shadow-sm font-monospace text-lowercase" placeholder="bi-house-fill" v-model="form.icon">
                 <div class="form-text txt-caption mt-1"><i :class="`bi ${form.icon || 'bi-square-fill'} me-1`"></i> Preview Icon</div>
@@ -135,8 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useAdminUserStore } from '~/stores/adminUser';
+import { ref, onMounted, computed } from 'vue';
 import { useAlert } from '~/utils/swal';
 
 useHead({
@@ -146,7 +151,6 @@ useHead({
 definePageMeta({ layout: 'admin' });
 
 const availableRoles = ref<string[]>([]);
-const userStore = useAdminUserStore();
 const menusData = ref<any[]>([]);
 const loading = ref(true);
 const submitting = ref(false);
@@ -158,7 +162,16 @@ const form = ref({
   title: '',
   url: '',
   icon: 'bi-circle',
-  roles: [] as string[]
+  roles: [] as string[],
+  orders: 1
+});
+
+const sortedMenus = computed(() => {
+  return [...menusData.value].sort((a, b) => {
+    const orderA = parseInt(a.Orders || a.orders || 99);
+    const orderB = parseInt(b.Orders || b.orders || 99);
+    return orderA - orderB;
+  });
 });
 
 let bootstrapModal: any = null;
@@ -169,7 +182,6 @@ onMounted(async () => {
     const modalEl = document.getElementById('formMenuModal');
     if (modalEl) bootstrapModal = new bootstrap.Modal(modalEl);
   }
-  await userStore.fetchAvailableRoles();
   await fetchMenus();
 });
 
@@ -177,12 +189,14 @@ const fetchMenus = async () => {
   loading.value = true;
   try {
     const { $apiBase } = useNuxtApp() as any;
-    //  HANYA GET PARENT
     const res = await $apiBase.get(`/get-default?menus=parent&t=${new Date().getTime()}`);
-    menusData.value = res.data || []; 
+    menusData.value = res.data?.menu || []; 
+    availableRoles.value = res.data?.roles || [];
+    
   } catch (error) {
     console.error("Gagal load menu:", error);
     menusData.value = []; 
+    availableRoles.value = [];
   } finally {
     loading.value = false;
   }
@@ -211,7 +225,8 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
       title: data.Title || data.title || '', 
       url: data.URL || data.url || '',
       icon: data.Icon || data.icon || '',
-      roles: roleArray
+      roles: roleArray,
+      orders: data.Orders || data.orders || 1
     };
   }
   bootstrapModal?.show();
@@ -230,9 +245,10 @@ const saveMenu = async () => {
     
     const payload = {
       Title: form.value.title,
-      Icon: form.value.icon, 
+      Icon: form.value.icon,
       URL: form.value.url,
       Roles: form.value.roles.join(', '), 
+      Orders: String(form.value.orders),
       AccessToken: token
     };
 

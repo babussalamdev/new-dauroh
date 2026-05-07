@@ -14,7 +14,7 @@
         <div class="modal-body px-3 pb-3 pt-1">
           <form @submit.prevent="save" id="eventBasicForm">
 
-            <div class="card border-0 mb-3 transition-all" :class="isStatusActive ? 'bg-success-subtle' : 'bg-secondary-subtle'">
+            <div v-if="isEditing" class="card border-0 mb-3 transition-all" :class="isStatusActive ? 'bg-success-subtle' : 'bg-secondary-subtle'">
               <div class="card-body p-2 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                   <div class="icon-box rounded-circle d-flex align-items-center justify-content-center"
@@ -56,12 +56,22 @@
                 <input type="text" class="form-control modern-input txt-body fw-bold" id="eventPlaceModal" v-model="formState.Place" placeholder="Cth: Masjid Babussalam" required>
               </div>
 
-              <div class="col-12">
+              <div class="col-md-6">
                 <label for="eventPriceModal" class="form-label txt-label fw-bold text-muted">Harga Tiket <span class="text-danger">*</span></label>
                 <div class="input-group modern-input-group">
                   <span class="input-group-text border-0 bg-transparent text-muted ps-3 txt-body fw-bold">Rp</span>
                   <input type="number" class="form-control border-0 bg-transparent ps-1 txt-title fw-bold text-dark" id="eventPriceModal" v-model.number="formState.Price" placeholder="0" min="0" required>
-                  <span class="input-group-text border-0 bg-transparent text-muted pe-3 txt-caption">(Isi 0 jika gratis)</span>
+                  <span class="input-group-text border-0 bg-transparent text-muted pe-3 txt-caption">(0 = gratis)</span>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="eventWaModal" class="form-label txt-label fw-bold text-muted">Nomor WhatsApp <span class="text-danger">*</span></label>
+                <div class="input-group modern-input-group">
+                  <span class="input-group-text border-0 bg-transparent text-success ps-3 txt-body fw-bold">
+                    <i class="bi bi-whatsapp"></i>
+                  </span>
+                  <input type="text" class="form-control border-0 bg-transparent ps-1 txt-body fw-bold text-dark" id="eventWaModal" v-model="formState.Whatsapp" placeholder="Cth: 628123456789" required>
                 </div>
               </div>
 
@@ -209,12 +219,14 @@ const getInitialFormState = () => ({
   Gender: '',
   Place: '',
   Price: 0,
+  Whatsapp: '',
   HasRegStart: false,
   HasRegEnd: false,
   RegStartDate: '',
   RegStartTime: '',
   RegEndDate: '',
   RegEndTime: '',
+
 });
 
 const formState = reactive(getInitialFormState());
@@ -314,6 +326,7 @@ watch(() => props.show, (newVal) => {
       }
 
       formState.Price = d.Price || 0;
+      formState.Whatsapp = d.Whatsapp || '';
       isStatusActive.value = d.Status === 'active';
 
       // Logic Waktu Registrasi
@@ -427,8 +440,9 @@ const save = () => {
     Title: formState.Title,
     Gender: formState.Gender,
     Place: formState.Place,
-    Price: String(formState.Price), // 🟢 Dibikin String sesuai respons BE lu
-    Quota_Ikhwan_Akhwat: finalQuotaTotal, // 🟢 Ganti jadi ini biar sinkron sama DB
+    Price: String(formState.Price),
+    Whatsapp: formState.Whatsapp,
+    Quota_Ikhwan_Akhwat: finalQuotaTotal,
     Quota_Ikhwan: finalQuotaIkhwan,
     Quota_Akhwat: finalQuotaAkhwat,
     Status: isStatusActive.value ? 'active' : 'inactive',

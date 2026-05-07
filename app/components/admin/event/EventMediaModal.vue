@@ -107,8 +107,15 @@
           <button type="button" class="btn btn-light px-4 rounded-pill text-muted txt-body fw-bold border" @click="back">
             <i class="bi bi-arrow-left me-1"></i> Kembali
           </button>
-          <button type="submit" form="eventMediaForm" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm">
-            <i class="bi bi-floppy-fill me-1"></i> Simpan Event
+          <button 
+            type="button" 
+            @click="submitFinal"
+            class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm"
+            :disabled="isLoading"
+          >
+            <span v-if="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+            <i v-else class="bi bi-floppy-fill me-1"></i> 
+            {{ isLoading ? 'Menyimpan...' : 'Simpan Event' }}
           </button>
         </div>
 
@@ -120,8 +127,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useAlert } from '~/utils/swal';
+import { useEventStore } from '~/stores/event';
 
 const props = defineProps<{
   show: boolean;
@@ -130,12 +138,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'back', 'saveFinal']);
 const { alert: swalAlert } = useAlert();
+const eventStore = useEventStore();
+const isLoading = computed(() => eventStore.loading.savingBasic);
 
 const imagePreview = ref<string | null>(null);
 const imageBase64 = ref<string | null>(null);
 const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
-
 // State Jadwal Multi-hari
 const scheduleDays = ref<any[]>([]);
 
@@ -154,7 +163,7 @@ const removeScheduleDay = (index: number) => {
   scheduleDays.value.splice(index, 1);
 };
 
-// Logic Convert Base64 File
+
 const processFile = (file: File) => {
   if (file.size > 2 * 1024 * 1024) { 
     swalAlert('Ukuran Terlalu Besar', 'Maksimal ukuran gambar adalah 2MB.', 'error');
@@ -193,6 +202,16 @@ const removeImage = () => {
 const close = () => emit('close');
 const back = () => emit('back');
 
+const convertTo12h = (timeStr: string) => {
+  if (!timeStr) return '';
+  const [hourStr, minuteStr] = timeStr.split(':');
+  let hour = parseInt(hourStr, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12;
+  hour = hour ? hour : 12; 
+  return `${String(hour).padStart(2, '0')}.${minuteStr} ${ampm}`;
+};
+
 const submitFinal = () => {
   if (!imageBase64.value) {
     swalAlert('Poster Kosong', 'Harap upload poster event terlebih dahulu.', 'warning');
@@ -230,12 +249,11 @@ const submitFinal = () => {
     swalAlert('Jadwal Tidak Valid', 'Pastikan semua field terisi dan waktu selesai logis.', 'warning');
     return;
   }
-
-  // 3. Gabungin data & Kirim ke Parent
+  const rawBase64 = imageBase64.value.split(',')[1];
   const finalPayload = {
     ...props.basicData,
-    Event_Schedule: schedulePayload, 
-    photoBase64: imageBase64.value 
+    Date: schedulePayload, 
+    Picture: rawBase64
   };
 
   emit('saveFinal', finalPayload);

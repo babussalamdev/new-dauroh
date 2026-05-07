@@ -43,7 +43,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="sub in childMenus" :key="sub.SK">
+              <tr v-for="sub in sortedMenus" :key="sub.SK">
                 <td class="ps-4">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-arrow-return-right text-muted me-3"></i>
@@ -99,6 +99,11 @@
                 <input type="text" class="form-control bg-light border-0 shadow-sm font-monospace text-lowercase" placeholder="/admin/..." v-model="form.url">
               </div>
 
+              <div class="col-12">
+                <label class="form-label fw-bold text-muted txt-caption mb-1">Urutan Sub Menu <span class="text-danger">*</span></label>
+                <input type="number" class="form-control bg-light border-0 shadow-sm" placeholder="Contoh: 1" v-model.number="form.orders">
+              </div>
+
               <div class="col-12 mt-4">
                 <label class="form-label fw-bold text-muted txt-caption border-bottom pb-2 w-100 mb-3">Hak Akses Role</label>
                 <div class="d-flex flex-wrap gap-3">
@@ -127,9 +132,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAdminUserStore } from '~/stores/adminUser';
 import { useAlert } from '~/utils/swal';
 
 useHead({
@@ -143,7 +147,6 @@ const { alert: swalAlert } = useAlert();
 
 const rawParentSK = route.params.id as string; 
 const parentSK = rawParentSK.replace('parent#', '');
-const userStore = useAdminUserStore();
 const availableRoles = ref<string[]>([]);
 const childMenus = ref<any[]>([]);
 const loading = ref(true);
@@ -154,7 +157,16 @@ const form = ref({
   sk: '', 
   title: '',
   url: '',
-  roles: [] as string[]
+  roles: [] as string[],
+  orders: 1
+});
+
+const sortedMenus = computed(() => {
+  return [...childMenus.value].sort((a, b) => {
+    const orderA = parseInt(a.Orders || a.orders || 99);
+    const orderB = parseInt(b.Orders || b.orders || 99);
+    return orderA - orderB;
+  });
 });
 
 let bootstrapModal: any = null;
@@ -165,7 +177,6 @@ onMounted(async () => {
     const modalEl = document.getElementById('formChildModal');
     if (modalEl) bootstrapModal = new bootstrap.Modal(modalEl);
   }
-  await userStore.fetchAvailableRoles();
   await fetchChildMenus();
 });
 
@@ -174,10 +185,13 @@ const fetchChildMenus = async () => {
   try {
     const { $apiBase } = useNuxtApp() as any;
     const res = await $apiBase.get(`/get-default?menus=child&skparent=${parentSK}&t=${new Date().getTime()}`);
-    childMenus.value = res.data || [];
+    childMenus.value = res.data?.menu || [];
+    availableRoles.value = res.data?.roles || [];
+    
   } catch (error) {
     console.error("Gagal load sub menu:", error);
     childMenus.value = []; 
+    availableRoles.value = [];
   } finally {
     loading.value = false;
   }
@@ -188,7 +202,7 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
   isEdit.value = mode === 'edit';
   
   if (mode === 'add') {
-  form.value = { sk: '', title: '', url: '', roles: [] };
+    form.value = { sk: '', title: '', url: '', roles: [], orders: 1 };
   } else if (data) {
     let roleArray: string[] = [];
     const rolesString = data.Roles || data.roles || "";
@@ -198,7 +212,8 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
       sk: data.SK, 
       title: data.Title || data.title || '', 
       url: data.URL || data.url || '',
-      roles: roleArray
+      roles: roleArray,
+      orders: data.Orders || data.orders || 1
     };
   }
   bootstrapModal?.show();
@@ -214,11 +229,11 @@ const saveSubMenu = async () => {
   try {
     const { $apiBase } = useNuxtApp() as any;
     const token = useCookie('AccessToken').value;
-    
     const payload = {
       Title: form.value.title,
       URL: form.value.url,
       Roles: form.value.roles.join(', '), 
+      Orders: String(form.value.orders),
       AccessToken: token
     };
 

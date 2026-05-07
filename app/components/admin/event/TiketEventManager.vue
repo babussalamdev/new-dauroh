@@ -243,10 +243,20 @@ const closeMediaModal = () => {
 };
 
 const handleFinalSave = async (finalPayload: any) => {
-  console.log("Data siap dikirim ke Backend:", finalPayload);
-  Swal.fire("Berhasil", "Data berhasil digabung! Siap integrasi ke Backend.", "success");
-  
-  closeMediaModal();
+  try {
+    const success = await eventStore.createTiketEvent(finalPayload);
+    
+    if (success) {
+      Swal.fire("Berhasil", "Event baru berhasil dibuat!", "success");
+      closeMediaModal();
+      await eventStore.fetchAdminTiketEvent(); 
+    } else {
+      Swal.fire("Gagal", "Terjadi kesalahan saat menyimpan event ke server.", "error");
+    }
+  } catch (error) {
+    Swal.fire("Error", "Gagal menghubungi server.", "error");
+  } finally {
+  }
 };
 
 const openDeleteModal = (event: Event) => {

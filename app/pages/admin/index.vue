@@ -118,9 +118,19 @@ const fetchEventsByMonth = async () => {
         yrmth: selectedMonthYear.value 
       } 
     });
-    
-    // Taruh hasil array dari BE ke state activeEvents
-    activeEvents.value = res.data || [];
+    activeEvents.value = res.data?.Events || [];
+    if (res.data?.User && res.data.User.length > 0) {
+      const userData = res.data.User[0];
+      mockStats.value = {
+        participants: {
+          ikhwan: userData.ikhwan || 0,
+          akhwat: userData.akhwat || 0,
+          total: (userData.ikhwan || 0) + (userData.akhwat || 0)
+        }
+      };
+    } else {
+      mockStats.value = { participants: { ikhwan: 0, akhwat: 0, total: 0 } };
+    }
     
     // Kalau event yang aktif sekarang ga ada di daftar bulan ini, reset pilihannya
     if (!activeEvents.value.some(e => e.SK === selectedEventSK.value)) {
@@ -128,7 +138,7 @@ const fetchEventsByMonth = async () => {
       globalStore.clearActiveEvent();
     }
   } catch (error) {
-    console.error(error);
+    console.error("Gagal menarik daftar event:", error);
   } finally {
     isLoadingEvents.value = false;
   }

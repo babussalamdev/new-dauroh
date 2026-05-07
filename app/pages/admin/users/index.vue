@@ -62,8 +62,8 @@
                 </a>
               </li>
               <li>
-                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'user' }" href="#" @click.prevent="changeType('user')">
-                  <i class="bi bi-person me-2"></i>Data User
+                <a class="dropdown-item py-2 txt-body" :class="{ 'active bg-primary text-white': activeType === 'client' }" href="#" @click.prevent="changeType('client')">
+                  <i class="bi bi-person me-2"></i>Data Client
                 </a>
               </li>
             </ul>
@@ -220,7 +220,7 @@ const activeType = computed(() => (route.query.type as string) || 'all');
 
 const activeTypeLabel = computed(() => {
   if (activeType.value === 'admin') return 'Data Admin';
-  if (activeType.value === 'user-client') return 'Data User';
+  if (activeType.value === 'client') return 'Data Client';
   return 'Semua';
 });
 
@@ -243,7 +243,7 @@ watch(() => route.query.type, (newType) => {
 const formatRoleName = (role: string | null | undefined) => {
   if (!role) return '-';
   const lowerRole = String(role).toLowerCase();
-  if (lowerRole === 'user') return 'User';
+  if (lowerRole === 'client' || lowerRole === 'user') return 'Client'; 
   
   const cleanRole = String(role).replace(/_/g, ' ');
   return cleanRole.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -258,6 +258,7 @@ const getRoleBadge = (roleStr?: string) => {
     case 'admin': return 'bg-info bg-opacity-10 text-info border-info border-opacity-25';
     case 'bendahara': return 'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25';
     case 'registrasi': return 'bg-teal bg-opacity-10 text-teal border-teal border-opacity-25';
+    case 'client':
     case 'user': return 'bg-primary bg-opacity-10 text-primary border-primary border-opacity-25';            
     default: return 'bg-light text-dark border';
   }
