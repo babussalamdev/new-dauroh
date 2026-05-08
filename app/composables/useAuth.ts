@@ -9,7 +9,7 @@ export const useAuth = () => {
     sameSite: "lax",
   });
 
-  // 🟢 BIKIN COOKIE BARU KHUSUS BUAT NYIMPEN TIPE LOGIN (Biar tahan refresh)
+  // COOKIE BUAT NYIMPEN TIPE LOGIN
   const loginTypeCookie = useCookie("LoginType", {
     maxAge: 60 * 60 * 24,
     path: "/",
@@ -18,9 +18,12 @@ export const useAuth = () => {
 
   const user = useState<any>("auth_user", () => null);
   const router = useRouter();
-  const { $apiBase } = useNuxtApp();
+  
 
-const adminRoles = [
+  const nuxtApp = useNuxtApp();
+  const $apiBase = (nuxtApp as any).$apiBase;
+
+  const adminRoles = [
     "root",
     "admin",
     "bendahara",
@@ -45,7 +48,7 @@ const adminRoles = [
 
       await getUser();
 
-      // 🟢 LOGIKA PEMBATASAN ROLE (REVISI POINT 2)
+      // LOGIKA PEMBATASAN ROLE
       const userRole = (
         user.value?.role ||
         user.value?.Series ||
@@ -53,15 +56,12 @@ const adminRoles = [
       ).toLowerCase();
 
       if (type === "admin") {
-        // Cek apakah role punya izin masuk admin
         if (!adminRoles.includes(userRole)) {
-          await forceLogoutCleanup(); // Panggil fungsi bersih-bersih
+          await forceLogoutCleanup(); 
           throw new Error("Akses Ditolak: Anda tidak memiliki otoritas Admin.");
         }
         await router.push("/admin");
       } else {
-        // 🟢 KHUSUS ROLE USER: Cegah Root/Admin/Bendahara masuk ke dashboard user
-        // Pengecualian: Role 'registrasi' BOLEH masuk ke dashboard user
         const restrictedAdminRoles = ["root", "admin", "bendahara"];
         
         if (restrictedAdminRoles.includes(userRole)) {
@@ -95,12 +95,11 @@ const adminRoles = [
     loading.value = true;
 
     try {
-      // Baca dari cookie sebelum dihapus buat nentuin arah redirect
       const typeForRedirect = loginTypeCookie.value;
 
       // --- 1. CLEANUP WEBSOCKET ---
       if (process.client) {
-        const { $socket } = useNuxtApp() as any;
+        const $socket = (nuxtApp as any).$socket; 
         if ($socket && typeof $socket.close === "function") {
           console.log("🔌 Closing WebSocket connection...");
           $socket.close(1000, "Logout");
@@ -147,7 +146,6 @@ const adminRoles = [
     try {
       const res = await $apiBase.get("get-account");
       user.value = res.data;
-      
       
       if (res.data.Menus) {
         const menuStore = useUserMenuStore();

@@ -243,7 +243,7 @@ const handleRegisterClick = async (eventItem) => {
     return;
   }
 
-  // 🟢 CASE 1: Belum Login (Pake swalConfirm)
+  // Belum Login (Pake swalConfirm)
   if (!isLoggedIn.value) {
     swalConfirm(
       'Login Diperlukan',

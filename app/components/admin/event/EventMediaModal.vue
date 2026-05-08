@@ -1,6 +1,6 @@
 <template>
-  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="close">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="triggerShake">
+    <div class="modal-dialog modal-dialog-centered modal-lg" :class="{ 'modal-shake': isShaking }">
       <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
 
         <div class="modal-header border-0 px-3 pt-3 pb-2 d-flex align-items-center">
@@ -140,7 +140,7 @@ const emit = defineEmits(['close', 'back', 'saveFinal']);
 const { alert: swalAlert } = useAlert();
 const eventStore = useEventStore();
 const isLoading = computed(() => eventStore.loading.savingBasic);
-
+const { isShaking, triggerShake } = useModalShake();
 const imagePreview = ref<string | null>(null);
 const imageBase64 = ref<string | null>(null);
 const isDragging = ref(false);
@@ -261,6 +261,7 @@ const submitFinal = () => {
 </script>
 
 <style scoped>
+@import url('@/assets/css/components/modals.css');
 .backdrop-blur { backdrop-filter: blur(2px); background-color: rgba(0, 0, 0, 0.4); }
 .border-dashed { border-style: dashed !important; border-color: #dee2e6 !important; }
 .transition-all { transition: all 0.3s ease; }

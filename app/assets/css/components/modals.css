@@ -20,3 +20,13 @@
     border-radius: 0.5rem; /* Radius jangan kegedean */
   }
 }
+
+.modal-shake {
+  animation: shakeEffect 0.3s ease-in-out;
+}
+
+@keyframes shakeEffect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}

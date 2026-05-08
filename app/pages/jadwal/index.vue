@@ -89,20 +89,18 @@ const formatSingleDate = (dateObj) => {
 const isUpcoming = (dateObj) => {
   const firstDateStr = formatSingleDate(dateObj);
   if (!firstDateStr) return true; // Anggap upcoming jika tanggal belum ada
-
-  // Ini contoh sederhana, perlu parsing tanggal yang lebih robust
   try {
-    // Asumsi format 'YYYY-MM-DD' atau format lain yang bisa diparse
-    const eventDate = new Date(firstDateStr.split('/').reverse().join('-')); // Coba parse DD/MM/YYYY
+  
+    const eventDate = new Date(firstDateStr.split('/').reverse().join('-'));
     if (isNaN(eventDate.getTime())) {
       // Coba parse YYYY-MM-DD
       const eventDateAlt = new Date(firstDateStr);
-      if (isNaN(eventDateAlt.getTime())) return true; // Gagal parse, anggap upcoming
+      if (isNaN(eventDateAlt.getTime())) return true;
       return eventDateAlt >= new Date();
     }
     return eventDate >= new Date();
   } catch (e) {
-    return true; // Anggap upcoming jika ada error parsing
+    return true;
   }
 };
 </script>

@@ -1,6 +1,5 @@
 <template>
   <div class="container-fluid px-2 px-md-4 py-4">
-    
     <nav aria-label="breadcrumb" class="mb-4">
       <ol class="breadcrumb">
         <li class="breadcrumb-item">
@@ -77,7 +76,7 @@
       </div>
     </div>
 
-    <div class="modal fade" id="formMenuModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="formMenuModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
           
@@ -214,8 +213,6 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
     if (rolesString) {
       // 1. Pecah dulu data dari BE
       const rawRoles = rolesString.split(',').map((r: string) => r.trim());
-      
-      // 2. 🟢 INI KUNCI PENYARINGANNYA: 
       // Cuma ambil role yang ada di master data (availableRoles)
       roleArray = rawRoles.filter((r: string) => availableRoles.value.includes(r));
     }

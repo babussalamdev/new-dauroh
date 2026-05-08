@@ -12,15 +12,17 @@
 
       <div class="button-container mt-4">
         <div class="button-item" @click="handleButtonClick('/qr')">
-          <ButtonHeroButton :icon="QrCode" bgClass="btn-hero-custom shadow-sm" />
+          <ButtonHeroButton :icon="QrCode" :iconSize="35" bgClass="btn-hero-custom shadow-sm" />
           <p class="mt-2 mb-0 txt-caption fw-bold text-secondary">QR Code</p>
         </div>
+        
         <div class="button-item" @click="handleButtonClick('/jadwal')">
-          <ButtonHeroButton :icon="JadwalIcon" bgClass="btn-hero-custom shadow-sm" />
+          <ButtonHeroButton :icon="JadwalIcon" :iconSize="35" bgClass="btn-hero-custom shadow-sm" />
           <p class="mt-2 mb-0 txt-caption fw-bold text-secondary">Jadwal</p>
         </div>
+        
         <div class="button-item" @click="handleButtonClick('/booth')">
-          <ButtonHeroButton :icon="BoothIcon" bgClass="btn-hero-custom shadow-sm" />
+          <ButtonHeroButton :icon="BoothIcon" :iconSize="35" bgClass="btn-hero-custom shadow-sm" />
           <p class="mt-2 mb-0 txt-caption fw-bold text-secondary">Booth</p>
         </div>
       </div>

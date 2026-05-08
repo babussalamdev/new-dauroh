@@ -56,7 +56,7 @@
       </div>
     </div>
 
-    <div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addRoleModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
           

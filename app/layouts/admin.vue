@@ -61,7 +61,7 @@ body {
 
 @media (max-width: 991.98px) {
   .main-content-wrapper {
-    margin-left: 0 !important; /* Konten selalu full width */
+    margin-left: 0 !important;
     width: 100%;
   }
 }

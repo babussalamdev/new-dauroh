@@ -1,6 +1,6 @@
 <template>
-  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="close">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="triggerShake">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" :class="{ 'modal-shake': isShaking }">
       <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
 
         <div class="modal-header border-0 px-3 pt-3 pb-2 d-flex align-items-center">
@@ -205,12 +205,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'next', payload: any): void; 
-  (e: 'save', payload: any): void; // 🟢 TAMBAHIN INI
+  (e: 'save', payload: any): void;
 }>();
 
 const eventStore = useEventStore();
 const isLoading = computed(() => eventStore.loading.savingBasic);
-
+const { isShaking, triggerShake } = useModalShake();
 const isStatusActive = ref(false);
 
 const getInitialFormState = () => ({
@@ -462,6 +462,9 @@ const save = () => {
 </script>
 
 <style scoped>
+
+@import url('@/assets/css/components/modals.css');
+
 .backdrop-blur {
   backdrop-filter: blur(2px);
   background-color: rgba(0, 0, 0, 0.4);
@@ -503,21 +506,6 @@ const save = () => {
 }
 
 /* Animation */
-.animate-slide-down {
-  animation: slideDown 0.2s ease-out forwards;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 :deep(.swal2-container) {
   z-index: 2000 !important;

@@ -206,15 +206,12 @@ const handleSaveArticle = async () => {
   isSaving.value = true;
 
   try {
-    // Siapkan Payload data yang mau dikirim ke backend
     const payload = {
       Title: form.Title,
       Status: form.Status,
       Description: form.Description,
-      PictureBase64: newPhotoBase64.value // null kalau admin ga upload gambar
+      PictureBase64: newPhotoBase64.value
     };
-
-    // 🟢 TODO: Panggil fungsi store lu di sini kalau API BE udah siap
     // await articleStore.createArticle(payload);
 
     // Simulasi sukses

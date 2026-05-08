@@ -161,7 +161,6 @@ const confirmDelete = () => {
 </script>
 
 <style scoped>
-/* Pake style yang sama persis kayak event lu */
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
 

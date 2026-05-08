@@ -251,8 +251,6 @@ const handleUpdateArticle = async () => {
   isSaving.value = true;
 
   try {
-    // ... logic payload & API lu ...
-
     setTimeout(() => {
       isSaving.value = false;
       isContentChanged.value = false;
@@ -276,7 +274,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Pake styling yang persis sama kayak file create.vue lu sebelumnya */
 .sticky-sidebar { position: sticky; top: 1.5rem; }
 .Picture-container { height: 250px; border-radius: 12px; }
 .Picture-preview { width: 100%; height: 100%; object-fit: cover; }

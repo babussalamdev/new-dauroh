@@ -1,6 +1,6 @@
 <template>
-  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="close">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable custom-modal-width">
+  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="triggerShake">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable custom-modal-width" :class="{ 'modal-shake': isShaking }">
       <div class="modal-content border-0 shadow-lg rounded-4">
 
         <div class="modal-header border-0 pb-0 pt-4 px-4 align-items-start bg-white rounded-top-4">
@@ -111,6 +111,7 @@ import { useEventStore } from '~/stores/event'
 
 dayjs.locale('id')
 
+const { isShaking, triggerShake } = useModalShake();
 const props = defineProps<{
   show: boolean
   event?: Event
@@ -233,6 +234,8 @@ const formatDate = (dateObj: any) => {
 </script>
 
 <style scoped>
+@import url('@/assets/css/components/modals.css');
+
 /* --- MODAL WIDTH & RESPONSIVENESS --- */
 .custom-modal-width {
   max-width: 550px;
@@ -261,30 +264,13 @@ const formatDate = (dateObj: any) => {
   }
 }
 
-/* --- UTILITIES --- */
-.timeline-wrapper {
-  border-left: 2px solid #e9ecef;
-}
-
-.timeline-item:last-child {
-  padding-bottom: 0 !important;
-}
-
-.timeline-dot {
-  width: 14px;
-  height: 14px;
-  left: -8px;
-  top: 4px;
-  z-index: 2;
-  box-shadow: 0 0 0 2px #fff;
-}
-
+/* --- UTILITIES & ANIMATIONS --- */
 .bg-light-subtle {
   background-color: #f8f9fa;
 }
 
-.ls-1 {
-  letter-spacing: 0.5px;
+.hover-up {
+  transition: transform 0.2s ease-in-out;
 }
 
 .hover-up:hover {

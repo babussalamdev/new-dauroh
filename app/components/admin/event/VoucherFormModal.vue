@@ -1,6 +1,6 @@
 <template>
-  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="close">
-    <div class="modal-dialog modal-dialog-centered">
+  <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="triggerShake">
+    <div class="modal-dialog modal-dialog-centered" :class="{ 'modal-shake': isShaking }">
       <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
         
         <div class="modal-header border-bottom-0 px-4 pt-4 pb-2">
@@ -62,6 +62,7 @@ import { useVoucherStore } from '@/stores/voucher';
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(['close']);
 const store = useVoucherStore();
+const { isShaking, triggerShake } = useModalShake();
 
 // Reset form di Store saat modal dibuka
 watch(() => props.show, (isOpen) => {
@@ -91,7 +92,6 @@ const save = async () => {
 </script>
 
 <style scoped>
-/* Menggunakan style asli */
 @import url("~/assets/css/components/modals.css");
 
 .modal {

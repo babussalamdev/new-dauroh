@@ -47,9 +47,7 @@ async function getListaccount(type: string = 'all', forceRefresh = false) {
 
     const { $apiBase } = useNuxtApp() as any;
     try {
-    
-      const apiType = type === 'user' ? 'user' : type;
-      const res = await $apiBase.get(`/list-account?type=${apiType}`);
+      const res = await $apiBase.get(`/list-account?type=${type}`);
       const rawData = res.data || res;
 
       if (Array.isArray(rawData)) {
