@@ -98,7 +98,7 @@
             
             <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
               <div class="card-body p-0">
-                <div v-if="upcomingTickets.length > 0" class="table-responsive">
+                <div v-if="activeEvent.length > 0" class="table-responsive">
                   <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                       <tr>
@@ -108,10 +108,10 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(ticket, index) in upcomingTickets" :key="'row-' + index">
+                      <tr v-for="(ticket, index) in activeEvent" :key="'row-' + index">
                         <td class="ps-4">
                           <div class="d-flex flex-column">
-                            <span class="fw-bold text-primary txt-body">#{{ ticket.SK.slice(-6).toUpperCase() }}</span>
+                            <span class="fw-bold text-primary txt-body">#{{ (ticket.SK || '').slice(-6).toUpperCase() }}</span>
                             <span v-if="getSmartStatus(ticket) === 'PENDING'"
                               class="text-warning txt-caption fw-bold">Menunggu Verifikasi</span>
                             <span v-else class="text-success txt-caption fw-bold">Pembayaran Lunas</span>
@@ -123,7 +123,7 @@
                         </td>
                         <td class="text-center pe-4">
                           <button
-                          v-if="getSmartStatus(ticket) === 'PAID' || ['SUCCESSFUL', 'SUCCESS'].includes((ticket.Status || ticket.status || '').toUpperCase())"
+                          v-if="getSmartStatus(ticket) === 'SUCCESSFUL' || ['SUCCESSFUL', 'SUCCESS', 'PAID'].includes((ticket.Status || ticket.status || '').toUpperCase())"
                           class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm txt-caption fw-bold"
                           @click="openDetailParticipant(ticket)">
                           <i class="bi bi-people me-2"></i>Lihat Peserta
@@ -144,11 +144,10 @@
                   </table>
                 </div>
                 <div v-else class="text-center py-5">
-                  <p class="text-muted txt-body fw-bold">Belum ada riwayat transaksi.</p>
+                  <p class="text-muted txt-body fw-bold">Belum ada transaksi untuk event aktif saat ini.</p>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
