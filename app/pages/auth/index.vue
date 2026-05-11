@@ -23,8 +23,17 @@ import { useRoute } from 'vue-router';
 definePageMeta({ layout: 'auth' });
 
 const route = useRoute();
-
-const currentView = ref(route.query.view === 'register' ? 'register' : 'login');
+const currentView = ref(route.query.mode === 'register' ? 'register' : 'login');
+watch(
+  () => route.query.mode,
+  (newMode) => {
+    if (newMode === 'register') {
+      currentView.value = 'register';
+    } else {
+      currentView.value = 'login';
+    }
+  }
+);
 </script>
 
 <style scoped>

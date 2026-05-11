@@ -70,6 +70,10 @@
 import { ref, reactive } from "vue";
 import { useAuth } from "~/composables/useAuth";
 
+useHead({
+  title : ' Admin SignIn'
+})
+
 definePageMeta({ layout: "auth" });
 
 const { login, loading } = useAuth()

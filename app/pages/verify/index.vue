@@ -14,11 +14,11 @@
 
           <div class="mb-4">
             <input type="text" class="form-control form-control-lg text-center fw-bold fs-4" v-model="otpCode"
-              placeholder="X X X X X X" maxlength="6" style="letter-spacing: 0.5em;">
+              placeholder="X X X X X X" maxlength="6" style="letter-spacing: 0.5em;" :disabled="countdown <= 0">
           </div>
 
           <div class="d-grid gap-2">
-            <button class="btn btn-primary btn-lg" @click="handleVerify" :disabled="loading || !otpCode">
+            <button class="btn btn-primary btn-lg" @click="handleVerify" :disabled="loading || !otpCode || countdown <= 0">
               <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
               {{ loading ? 'Memverifikasi...' : 'Verifikasi Sekarang' }}
             </button>
@@ -30,17 +30,21 @@
             </div>
 
             <div v-else>
-              <small class="text-muted">Belum terima kode?</small>
-              <button @click="handleResendOtp" class="btn btn-link text-decoration-none btn-sm fw-bold p-0 ms-1"
+              <div class="alert alert-danger py-2 mb-2 small fw-bold">
+                <i class="bi bi-clock-history me-1"></i> Kode OTP telah kedaluwarsa.
+              </div>
+              <small class="text-muted">Silakan kirim ulang kode baru untuk melanjutkan.</small>
+              <br>
+              <button @click="handleResendOtp" class="btn btn-outline-primary btn-sm fw-bold mt-2 px-4 rounded-pill"
                 :disabled="resendLoading">
-                {{ resendLoading ? 'Mengirim...' : 'Kirim Ulang' }}
+                {{ resendLoading ? 'Mengirim...' : 'Kirim Ulang Kode' }}
               </button>
             </div>
           </div>
 
           <div class="mt-3">
             <small class="text-muted">Salah email?
-              <NuxtLink to="/auth/register" class="text-decoration-none">Daftar Ulang</NuxtLink>
+              <NuxtLink :to="{ path: '/auth', query: { mode: 'register' } }" class="text-decoration-none">Daftar Ulang</NuxtLink>
             </small>
           </div>
 
@@ -55,6 +59,10 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 import { useNuxtApp } from '#app';
+import { useAlert } from '~/utils/swal';
+import { useRegistrationStore } from '~/stores/registration'; // Sesuaikan lokasi file store lu
+
+
 
 definePageMeta({
   layout: "auth",
@@ -66,27 +74,50 @@ const route = useRoute();
 const router = useRouter();
 const { alert: swalAlert } = useAlert();
 const { $apiBase } = useNuxtApp();
+const registrationStore = useRegistrationStore();
 
 const otpCode = ref('');
 const loading = ref(false);
-const resendLoading = ref(false); // Loading khusus tombol resend
+const resendLoading = ref(false); 
 const storedData = ref<any>(null);
 
-// --- 1. LOGIKA TIMER 3 MENIT ---
-const countdown = ref(180); // 180 detik = 3 menit
+// --- 1. LOGIKA TIMER (PERSISTENT / ANTI REFRESH) ---
+const countdown = ref(0); 
 let timerInterval: any = null;
 
-const startTimer = () => {
-  countdown.value = 180; // Reset ke 3 menit
+const startTimer = (isFresh = false) => {
   if (timerInterval) clearInterval(timerInterval);
 
-  timerInterval = setInterval(() => {
-    if (countdown.value > 0) {
-      countdown.value--;
-    } else {
-      clearInterval(timerInterval); // Stop jika 0
-    }
-  }, 1000);
+  const duration = 180; // 3 menit = 180 detik
+  const now = Math.floor(Date.now() / 1000); 
+  let expiryTimeStr = sessionStorage.getItem('otp_expiry_time');
+  let expiryTime = parseInt(expiryTimeStr || '0');
+
+  // Bikin timer baru HANYA JIKA:
+  // 1. isFresh = true (User klik Kirim Ulang)
+  // 2. Belum ada otp_expiry_time di sessionStorage (Baru pertama kali masuk page verify)
+  if (isFresh || !expiryTimeStr) {
+    expiryTime = now + duration;
+    sessionStorage.setItem('otp_expiry_time', expiryTime.toString());
+  }
+
+  // Kalkulasi sisa waktu (pakai Math.max supaya nggak jadi angka minus)
+  countdown.value = Math.max(0, expiryTime - Math.floor(Date.now() / 1000));
+
+  // Kalau masih ada waktu, jalankan interval
+  if (countdown.value > 0) {
+    timerInterval = setInterval(() => {
+      const currentNow = Math.floor(Date.now() / 1000);
+      const remaining = expiryTime - currentNow;
+
+      if (remaining > 0) {
+        countdown.value = remaining;
+      } else {
+        countdown.value = 0;
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+  }
 };
 
 const formatTime = (seconds: number) => {
@@ -94,6 +125,7 @@ const formatTime = (seconds: number) => {
   const s = seconds % 60;
   return `${m}:${s < 10 ? '0' + s : s}`;
 };
+
 const emailDisplay = computed(() => {
   if (route.query.email && typeof route.query.email === 'string') {
     return route.query.email;
@@ -104,12 +136,28 @@ const emailDisplay = computed(() => {
   return 'Email tidak ditemukan';
 });
 
-onMounted(() => {
+onMounted(async () => { // Tambahkan async
+  // 1. Ambil data dari session storage (jika ada)
   const rawData = sessionStorage.getItem('temp_register_data');
   if (rawData) {
     storedData.value = JSON.parse(rawData);
+  } 
+  
+  // 2. BACKUP: Jika session kosong tapi ada email di URL (kasus user langsung login)
+  if (!storedData.value && route.query.email) {
+    storedData.value = { email: route.query.email };
   }
-  startTimer();
+
+  // 3. LOGIKA OTOMATIS RESEND
+  if (route.query.resend === 'true') {
+    await handleResendOtp();
+    router.replace({ 
+      path: '/verify', 
+      query: { email: route.query.email } 
+    });
+  } else {
+    startTimer();
+  }
 });
 
 onUnmounted(() => {
@@ -124,11 +172,14 @@ const handleResendOtp = async () => {
   }
 
   resendLoading.value = true;
+  otpCode.value = '';
+
   try {
     await $apiBase.post('/signup-account?type=user-client', storedData.value);
 
-    startTimer(); // Reset timer
-    // 🟢 Notifikasi Berhasil yang halus
+    // Paksa reset timer dari awal dengan isFresh = true
+    startTimer(true); 
+    
     swalAlert('Terkirim!', 'Kode OTP baru telah dikirim ke email Anda.', 'success');
 
   } catch (error: any) {
@@ -136,7 +187,7 @@ const handleResendOtp = async () => {
     const msg = error.response?.data?.message || 'Gagal mengirim ulang kode.';
     
     if (msg.toLowerCase().includes('exist') || msg.toLowerCase().includes('sudah terdaftar')) {
-      startTimer();
+      startTimer(true);
       swalAlert('Terkirim!', 'Kode OTP baru telah dikirim (Akun Terdaftar).', 'success');
     } else {
       swalAlert('Gagal', msg, 'error');
@@ -147,6 +198,12 @@ const handleResendOtp = async () => {
 };
 
 const handleVerify = async () => {
+  // kalau user maksa eksekusi lewat cara lain pas waktu habis
+  if (countdown.value <= 0) {
+    swalAlert('Kedaluwarsa', 'Kode OTP telah habis masa berlakunya. Silakan kirim ulang kode baru.', 'warning');
+    return;
+  }
+
   loading.value = true;
 
   try {
@@ -165,25 +222,35 @@ const handleVerify = async () => {
     };
 
     await $apiBase.post('/verify-email', payload);
-
-    // 🟢 Notifikasi Berhasil Verifikasi
-    swalAlert('Berhasil!', 'Akun Anda telah aktif. Silakan login untuk melanjutkan.', 'success')
-      .then(() => {
-        sessionStorage.removeItem('temp_register_data');
-        router.push('/auth');
-      });
+    
+    swalAlert('Berhasil!', 'Akun Anda telah aktif.', 'success')
+    .then(() => {
+      registrationStore.$reset(); 
+      
+      sessionStorage.removeItem('temp_register_data');
+      sessionStorage.removeItem('otp_expiry_time');
+      router.push('/auth');
+    });
 
   } catch (error: any) {
     console.error("Verify Error:", error);
-    let msg = error.response?.data?.message || error.message || 'Verifikasi gagal.';
+    let msg = error.response?.data?.message || error.response?.data?.error || error.message || 'Verifikasi gagal.';
+    let msgLower = msg.toLowerCase();
     
-    if (error.message.includes('Data registrasi hilang')) {
-      // 🟢 Khusus error sesi habis, kita kasih tombol arahin balik ke register
+    if (msgLower.includes('data registrasi hilang')) {
       swalAlert('Sesi Habis', 'Data registrasi tidak ditemukan. Silakan daftar ulang.', 'error')
         .then(() => {
-          router.push('/auth/register');
+          router.push({ path: '/auth', query: { mode: 'register' } }); 
         });
-    } else {
+    }
+    else if (msgLower.includes('invalid verification code')) {
+      swalAlert(
+        'Kode Tidak Valid', 
+        'Kode OTP yang Anda masukkan salah. Silakan periksa kembali dan coba lagi.', 
+        'error'
+      );
+    } 
+    else {
       swalAlert('Gagal', msg, 'error');
     }
   } finally {

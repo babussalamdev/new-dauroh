@@ -100,6 +100,8 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAlert } from '~/utils/swal';
+import Swal from 'sweetalert2';
+import { useRegistrationStore } from '~/stores/registration';
 
 useHead({ title: 'Daftar Akun' });
 
@@ -109,16 +111,8 @@ const router = useRouter();
 const { $apiBase } = useNuxtApp();
 const { alert: swalAlert } = useAlert();
 
-const form = reactive({
-  name: '',
-  email: '',
-  username: '',
-  phone_number: '',
-  gender: '',
-  birthDate: '',
-  password: '',
-  confirmPassword: ''
-});
+const registrationStore = useRegistrationStore();
+const form = registrationStore.formData;
 
 const error = ref(null);
 const loading = ref(false);
@@ -150,8 +144,9 @@ const handleRegister = async () => {
     // 1. Tembak API Register
     await $apiBase.post('/signup-account?type=user-client', userData);
 
-    // 2. Jika Sukses (200 OK) -> Simpan Session & Redirect
+    // 2. Jika Sukses -> Simpan Session & Redirect
     sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
+    sessionStorage.removeItem('otp_expiry_time');
 
     Swal.fire({
       title: 'Berhasil!',
@@ -163,30 +158,38 @@ const handleRegister = async () => {
       router.push({ path: '/verify', query: { email: form.email } });
     });
 
-} catch (err) {
-    const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
-    const msgLower = msg.toLowerCase();
+  } catch (err) {
+  const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
+  const msgLower = msg.toLowerCase();
 
-    // Handle Nomor HP/WA Sudah Ada
-    if (msgLower.includes('nomor') || msgLower.includes('whatsapp')) {
-      swalAlert('Nomor Sudah Digunakan', msg, 'error');
-    } 
-    // Handle Email Sudah Terdaftar
-    else if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar') || msgLower.includes('email')) {
-      swalAlert(
-        'Email Sudah Terdaftar', 
-        'Email ini sudah memiliki akun. Silakan login atau gunakan email lain.', 
-        'warning'
-      );
-    } 
-    // 🟢 3. Handle Error Lainnya
-    else {
-      error.value = msg;
-    }
-
-  } finally {
-    loading.value = false;
+  // 1. Handle Username
+  if (msgLower.includes('username cannot be of email format')) {
+    swalAlert(
+      'Format Username Salah',
+      'Username tidak boleh menyerupai format email (mengandung @). Silakan gunakan huruf dan angka.',
+      'error'
+    );
   }
+  // 2. Handle Nomor HP/WA Sudah Ada
+  else if (msgLower.includes('nomor') || msgLower.includes('whatsapp')) {
+    swalAlert('Nomor Sudah Digunakan', msg, 'error');
+  } 
+  // 3. Handle Email/User Sudah Terdaftar
+  else if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar') || msgLower.includes('email already')) {
+    swalAlert(
+      'Email Sudah Terdaftar', 
+      'Email ini sudah memiliki akun. Silakan login atau gunakan email lain.', 
+      'warning'
+    );
+  } 
+  // 4. Handle Error Lainnya
+  else {
+    error.value = msg;
+  }
+
+} finally {
+  loading.value = false;
+}
 };
 </script>
 

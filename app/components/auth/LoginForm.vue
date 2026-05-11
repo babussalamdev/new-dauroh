@@ -79,8 +79,6 @@ import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useAlert } from "~/utils/swal";
 import { useAuth } from "~/composables/useAuth";
-
-// Pastikan path import ini benar sesuai folder project lu
 import ModalsForgotPasswordModal from '~/components/modals/ForgotPasswordModal.vue';
 
 useHead({
@@ -121,7 +119,7 @@ const handleLogin = async () => {
 
     const errLower = errMsg.toLowerCase();
 
-    // 🟢 CASE 1: Belum Verifikasi (Pake swalConfirm biar halus)
+    // CASE 1: Belum Verifikasi
     if (errLower.includes('not verified') || errLower.includes('belum verifikasi') || errLower.includes('verification')) {
       swalConfirm(
         'Akun Belum Aktif',
@@ -131,11 +129,11 @@ const handleLogin = async () => {
         if (result.isConfirmed) {
           router.push({
             path: '/verify',
-            query: { email: form.email }
+            query: { email: form.email, resend: 'true' } //
           });
         }
       });
-    } 
+    }
     // 🟢 CASE 2: Error Biasa (Salah password/email dll)
     else {
       swalAlert('Gagal Masuk', errMsg, 'error');
