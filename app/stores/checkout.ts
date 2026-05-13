@@ -80,6 +80,7 @@ export const useCheckoutStore = defineStore(
       transactionDetails.value = null;
       removeVoucher();
       donationAmount.value = 0;
+      repay.value = false;
       currentStep.value = "select";
     }
 
@@ -134,7 +135,6 @@ export const useCheckoutStore = defineStore(
             Domicile: p.Domicile || "-",
           };
         });
-        console.log(repay.value)
         let bankCode = (paymentMethod.value || "bsm").toLowerCase();
         if (bankCode === "bsi") bankCode = "bsm";
 
@@ -144,8 +144,11 @@ export const useCheckoutStore = defineStore(
           paymentType = "wallet_account";
         }
 
+
+        const pureTicketPrice = ((event.value?.Price || 0) * participants.value.length) - discountAmount.value;
+        const validAmountToSend = pureTicketPrice > 0 ? pureTicketPrice : 0;
         const payload: any = {
-          Amount: String(finalAmount.value),
+          Amount: String(validAmountToSend),
           Name: user.value?.name || "Guest",
           Bank: bankCode,
           EventSK: eventSK,
@@ -205,9 +208,11 @@ export const useCheckoutStore = defineStore(
         if (eventStore.tiketEvent.length === 0) {
           await eventStore.fetchPublicTiketEvent();
         }
+        const rawSubject = data.Subject || data.PK || "";
+        const cleanEventSK = rawSubject.replace("event#", "").split("#")[0];
 
         const foundEvent = eventStore.tiketEvent.find(
-          (d: any) => d.SK === data.Subject,
+          (d: any) => d.SK === cleanEventSK,
         );
         const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
 
@@ -219,18 +224,19 @@ export const useCheckoutStore = defineStore(
           Age: p.Age,
           Domicile: p.Domicile,
         }));
+        donationAmount.value = Number(data.Infaq || data.infaq || 0);
 
         event.value = {
-          SK: data.SK,
-          Title: foundEvent?.Title || "Event Event",
+          SK: cleanEventSK,
+          Title: foundEvent?.Title || data.Title || "Event Event",
           Place: foundEvent?.Place || "Lokasi Online",
           Price: realPrice,
         };
-        repay.value = true
-        setStep("select");
+        
+        repay.value = true;
+        setStep("select"); // Langsung masuk ke "Pilih Bank"
         return true;
       } catch (error) {
-        console.error("🔥 Error Restore:", error);
         return false;
       } finally {
         isLoading.value = false;
@@ -249,6 +255,7 @@ export const useCheckoutStore = defineStore(
           params: { skEvent: skHash },
         });
         const paymentData = response.data?.Payment;
+        
         if (paymentData) {
           transactionDetails.value = {
             ...paymentData,
@@ -262,7 +269,10 @@ export const useCheckoutStore = defineStore(
               paymentData.va_number,
             expiryTime: paymentData.expired_date || paymentData.expiry_date,
             amount: paymentData.amount,
+            event_sk: skEvent, 
+            Subject: skEvent, 
           };
+          
           setStep("instructions");
           return true;
         }
@@ -295,6 +305,7 @@ export const useCheckoutStore = defineStore(
       voucherApplied.value = false;
       isLoading.value = false;
       donationAmount.value = 0;
+      repay.value = false;
     }
 
     return {

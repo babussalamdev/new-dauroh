@@ -96,7 +96,15 @@
               </div>
             </div>
             
-            <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h5 class="mb-0 fw-bold text-dark txt-subtitle">
+                    <i class="bi bi-list me-2 text-primary"></i>Riwayat Transaksi
+                  </h5>
+                </div> 
+                
+                <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
               <div class="card-body p-0">
                 <div v-if="activeEvent.length > 0" class="table-responsive">
                   <table class="table table-hover align-middle mb-0">
@@ -152,6 +160,8 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
     
     <HistoryDetailModal 
       :show="showDetailParticipant" 

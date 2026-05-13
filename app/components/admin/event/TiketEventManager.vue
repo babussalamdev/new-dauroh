@@ -117,7 +117,6 @@
 <AdminEventMediaModal 
   v-if="showMediaModal" 
   :show="showMediaModal" 
-  :basic-data="tempBasicData"
   @close="closeMediaModal" 
   @back="goBackToStep1" 
   @saveFinal="handleFinalSave" 
@@ -148,7 +147,6 @@ const showMediaModal = ref(false);
 const isEditing = ref(false);
 const selectedEvent = ref<Partial<Event> | null>(null);
 const selectedEventForDelete = ref<Event | null>(null);
-const tempBasicData = ref<any>(null);
 
 
 // const showDetailModal = ref(false);
@@ -215,6 +213,7 @@ const navigateToCertificate = (event: Event | null) => {
 
 
 const openAddModal = () => {
+  eventStore.resetDraftEvent();
   isEditing.value = false;
   selectedEvent.value = null;
   showFormModal.value = true;
@@ -225,8 +224,7 @@ const closeFormModal = () => {
   selectedEvent.value = null;
 };
 
-const handleNextStep = (payload: any) => {
-  tempBasicData.value = payload; 
+const handleNextStep = () => {
   showFormModal.value = false;
   showMediaModal.value = true;
 };
@@ -239,7 +237,7 @@ const goBackToStep1 = () => {
 
 const closeMediaModal = () => {
   showMediaModal.value = false;
-  tempBasicData.value = null;
+  eventStore.resetDraftEvent();
 };
 
 const handleFinalSave = async (finalPayload: any) => {

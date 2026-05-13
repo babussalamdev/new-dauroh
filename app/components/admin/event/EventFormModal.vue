@@ -130,19 +130,22 @@
                     <i class="bi bi-infinity fs-5"></i>
                     <span class="txt-caption fw-bold">Event ini Tanpa Batas Kuota (Non-Quota).</span>
                   </div>
-
                   <div v-else class="row g-2 mt-1 animate-slide-down">
 
                     <div class="col-12" v-if="!formState.Gender">
-  <span class="text-muted txt-caption fst-italic">
-    * Pilih target peserta terlebih dahulu untuk mengatur kuota.
-  </span>
-</div>
+                      <span class="text-muted txt-caption fst-italic">
+                        * Pilih target peserta terlebih dahulu untuk mengatur kuota.
+                      </span>
+                    </div>
 
                     <div class="col-12" v-if="formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
                         <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold">Total</span>
-                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" v-model.number="quotaValues.total" placeholder="100" @input="validateMinOne('total')" required>
+                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" 
+                        v-model.number="draft.quotaValues.total" 
+                        placeholder="100" 
+                        min="1" 
+                        required>
                       </div>
 
                       <div v-if="showAllocationWarning" class="mt-1 p-1 rounded-2 txt-caption fw-bold d-flex align-items-center gap-1" :class="remainingQuota === 0 ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'">
@@ -154,17 +157,22 @@
                     <div class="col-12" v-if="formState.Gender === 'Ikhwan' || formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
                         <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold" style="width: 65px;">Ikhwan</span>
-                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" v-model.number="quotaValues.ikhwan" @input="validateMinOne('ikhwan')" required>
+                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" 
+       v-model.number="draft.quotaValues.ikhwan" 
+       min="1" 
+       required>
                       </div>
                     </div>
 
                     <div class="col-12" v-if="formState.Gender === 'Akhwat' || formState.Gender === 'ikhwan, akhwat'">
                       <div class="input-group input-group-sm modern-input-group bg-white">
                         <span class="input-group-text border-0 bg-transparent text-muted txt-caption fw-bold" style="width: 65px;">Akhwat</span>
-                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" v-model.number="quotaValues.akhwat" @input="validateMinOne('akhwat')" required>
+                        <input type="number" class="form-control border-0 bg-transparent txt-body fw-bold" 
+       v-model.number="draft.quotaValues.akhwat" 
+       min="1" 
+       required>
                       </div>
                     </div>
-
                   </div>
                 </div>
               </div>
@@ -173,7 +181,7 @@
         </div>
 
         <div class="modal-footer border-0 px-3 pb-3 pt-0">
-          <button type="button" class="btn btn-light px-4 rounded-pill text-muted txt-body fw-bold border" @click="close">Batal</button>
+          <button type="button" class="btn btn-light px-4 rounded-pill text-muted txt-body fw-bold border" @click="handleCancel">Batal</button>
           <button type="submit" form="eventBasicForm" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm" :disabled="isLoading || (!isUnlimited.total && isQuotaMismatch)">
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
             <!-- 🟢 KONDISI BARU BUAT TOMBOL -->
@@ -211,28 +219,15 @@ const emit = defineEmits<{
 const eventStore = useEventStore();
 const isLoading = computed(() => eventStore.loading.savingBasic);
 const { isShaking, triggerShake } = useModalShake();
-const isStatusActive = ref(false);
 
-const getInitialFormState = () => ({
-  SK: '',
-  Title: '',
-  Gender: '',
-  Place: '',
-  Price: 0,
-  Whatsapp: '',
-  HasRegStart: false,
-  HasRegEnd: false,
-  RegStartDate: '',
-  RegStartTime: '',
-  RegEndDate: '',
-  RegEndTime: '',
-
+const draft = eventStore.draftEvent;
+const formState = computed(() => draft);
+const quotaValues = computed(() => draft.quotaValues);
+const isUnlimited = computed(() => draft.isUnlimited);
+const isStatusActive = computed({
+  get: () => draft.status === 'active',
+  set: (val) => draft.status = val ? 'active' : 'inactive'
 });
-
-const formState = reactive(getInitialFormState());
-
-const quotaValues = reactive({ total: 0, ikhwan: 0, akhwat: 0 });
-const isUnlimited = reactive({ total: false, ikhwan: false, akhwat: false }); // Cukup 'total' jadi master switch
 
 const minDate = computed(() => {
   const today = new Date();
@@ -253,8 +248,8 @@ const getMinStartTime = (selectedDate: string) => {
 };
 const getMinEndTime = (selectedEndDate: string) => {
   if (!selectedEndDate) return undefined;
-  if (selectedEndDate === formState.RegStartDate) {
-    return formState.RegStartTime;
+  if (selectedEndDate === draft.RegStartDate) {
+    return draft.RegStartTime;
   }
   if (selectedEndDate === minDate.value) {
     const now = new Date();
@@ -265,18 +260,15 @@ const getMinEndTime = (selectedEndDate: string) => {
   return undefined;
 };
 
-const validateMinOne = (field: 'total' | 'ikhwan' | 'akhwat') => {
-  if (isUnlimited.total) return; // Skip validasi kalau unlimited
-  if (quotaValues[field] === 0) { quotaValues[field] = 1; }
-};
+const remainingQuota = computed(() => (Number(draft.quotaValues.total) || 0) - ((Number(draft.quotaValues.ikhwan) || 0) + (Number(draft.quotaValues.akhwat) || 0)));
 
-const remainingQuota = computed(() => quotaValues.total - (quotaValues.ikhwan + quotaValues.akhwat));
 const isQuotaMismatch = computed(() => {
-  if (isUnlimited.total) return false; // Kalau Unlimited, gak usah cek mismatch
-  if (formState.Gender !== 'ikhwan, akhwat') return false;
+  if (draft.isUnlimited.total) return false; 
+  if (draft.Gender !== 'ikhwan, akhwat') return false;
   return remainingQuota.value !== 0;
 });
-const showAllocationWarning = computed(() => formState.Gender === 'ikhwan, akhwat' && !isUnlimited.total);
+
+const showAllocationWarning = computed(() => draft.Gender === 'ikhwan, akhwat' && !draft.isUnlimited.total);
 const allocationMessage = computed(() => {
   if (remainingQuota.value === 0) return 'OK';
   if (remainingQuota.value > 0) return `Kurang ${remainingQuota.value}`;
@@ -284,175 +276,135 @@ const allocationMessage = computed(() => {
 });
 
 const handleGenderChange = () => {
-  // Reset nilai kuota saat ganti gender biar bersih
-  quotaValues.total = 0;
-  quotaValues.ikhwan = 0;
-  quotaValues.akhwat = 0;
-
-  // Default 1 jika bukan unlimited
-  if (!isUnlimited.total) {
-    if (formState.Gender === 'Ikhwan') { quotaValues.ikhwan = 1; }
-    else if (formState.Gender === 'Akhwat') { quotaValues.akhwat = 1; }
-    else { quotaValues.total = 1; quotaValues.ikhwan = 1; quotaValues.akhwat = 1; }
+  draft.quotaValues.total = 0; draft.quotaValues.ikhwan = 0; draft.quotaValues.akhwat = 0;
+  if (!draft.isUnlimited.total) {
+    if (draft.Gender === 'Ikhwan') { draft.quotaValues.ikhwan = 1; draft.quotaValues.total = 1; }
+    else if (draft.Gender === 'Akhwat') { draft.quotaValues.akhwat = 1; draft.quotaValues.total = 1; }
+    else { draft.quotaValues.total = 1; draft.quotaValues.ikhwan = 1; draft.quotaValues.akhwat = 1; }
   }
 };
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    // 1. Reset Form ke Default
-    Object.assign(formState, getInitialFormState());
-    quotaValues.total = 0; quotaValues.ikhwan = 0; quotaValues.akhwat = 0;
-    isUnlimited.total = false; isUnlimited.ikhwan = false; isUnlimited.akhwat = false;
-    isStatusActive.value = false;
-
-    // 2. Jika Mode Edit, Isi Data
+    // 1. Cuma load data prop kalau lagi mode Edit!
+    // Kalau create new, biarin isi draft yang ada.
     if (props.isEditing && props.event) {
-      const d = props.event; // Shortcut biar pendek
+      const d = props.event; 
 
-      formState.SK = d.SK || '';
-      formState.Title = d.Title || '';
-      formState.Place = d.Place || '';
+      draft.SK = d.SK || '';
+      draft.Title = d.Title || '';
+      draft.Place = d.Place || '';
 
-      // Logic Gender
       const rawGender = (d.Gender || '').toLowerCase();
       if (rawGender.includes('ikhwan') && rawGender.includes('akhwat')) {
-        formState.Gender = 'ikhwan, akhwat';
-      } else if (rawGender === 'ikhwan') {
-        formState.Gender = 'Ikhwan';
-      } else if (rawGender === 'akhwat') {
-        formState.Gender = 'Akhwat';
-      } else {
-        formState.Gender = '';
-      }
+        draft.Gender = 'ikhwan, akhwat';
+      } else if (rawGender === 'ikhwan') { draft.Gender = 'Ikhwan';
+      } else if (rawGender === 'akhwat') { draft.Gender = 'Akhwat';
+      } else { draft.Gender = ''; }
 
-      formState.Price = d.Price || 0;
-      formState.Whatsapp = d.Whatsapp || '';
-      isStatusActive.value = d.Status === 'active';
+      draft.Price = d.Price || 0;
+      draft.Whatsapp = d.Whatsapp || '';
+      draft.status = d.Status || 'inactive';
 
-      // Logic Waktu Registrasi
       if (d.Registration) {
         const startStr = d.Registration.start_registration || '';
         if (startStr && startStr.trim() !== '') {
-          formState.HasRegStart = true;
+          draft.HasRegStart = true;
           const [sDate, sTime] = startStr.split(' ');
-          formState.RegStartDate = sDate || '';
-          formState.RegStartTime = sTime || '';
-        } else { formState.HasRegStart = false; }
+          draft.RegStartDate = sDate || '';
+          draft.RegStartTime = sTime || '';
+        } else { draft.HasRegStart = false; }
 
         const endStr = d.Registration.end_registration || '';
         if (endStr && endStr.trim() !== '') {
-          formState.HasRegEnd = true;
+          draft.HasRegEnd = true;
           const [eDate, eTime] = endStr.split(' ');
-          formState.RegEndDate = eDate || '';
-          formState.RegEndTime = eTime || '';
-        } else { formState.HasRegEnd = false; }
+          draft.RegEndDate = eDate || '';
+          draft.RegEndTime = eTime || '';
+        } else { draft.HasRegEnd = false; }
       } else {
-        formState.HasRegStart = false;
-        formState.HasRegEnd = false;
+        draft.HasRegStart = false;
+        draft.HasRegEnd = false;
       }
 
-      // --- PERBAIKAN LOGIC LOAD KUOTA ---
-      const checkIsNonQuota = (val: any) => {
-        if (!val) return false;
-        return String(val).toLowerCase().trim() === 'non-quota';
-      };
-
-      // Cek apakah ada SALAH SATU field yang isinya 'non-quota'
-      const isTotalNQ = checkIsNonQuota(d.Quota_Total);
-      const isIkhwanNQ = checkIsNonQuota(d.Quota_Ikhwan);
-      const isAkhwatNQ = checkIsNonQuota(d.Quota_Akhwat);
-
-      // Kalau salah satu Non-Quota, kita anggap Event ini Unlimited
-      if (isTotalNQ || isIkhwanNQ || isAkhwatNQ) {
-        isUnlimited.total = true;
-
-        // Reset angka visual ke 0 biar rapi
-        quotaValues.total = 0;
-        quotaValues.ikhwan = 0;
-        quotaValues.akhwat = 0;
+      const checkIsNonQuota = (val: any) => val && String(val).toLowerCase().trim() === 'non-quota';
+      if (checkIsNonQuota(d.Quota_Total) || checkIsNonQuota(d.Quota_Ikhwan) || checkIsNonQuota(d.Quota_Akhwat)) {
+        draft.isUnlimited.total = true;
+        draft.quotaValues.total = 0; draft.quotaValues.ikhwan = 0; draft.quotaValues.akhwat = 0;
       } else {
-        // Jika Quota Terbatas
-        isUnlimited.total = false;
-        quotaValues.total = Number(d.Quota_Total) || 1;
-        quotaValues.ikhwan = Number(d.Quota_Ikhwan) || 0;
-        quotaValues.akhwat = Number(d.Quota_Akhwat) || 0;
+        draft.isUnlimited.total = false;
+        draft.quotaValues.total = Number(d.Quota_Total) || 1;
+        draft.quotaValues.ikhwan = Number(d.Quota_Ikhwan) || 0;
+        draft.quotaValues.akhwat = Number(d.Quota_Akhwat) || 0;
       }
-
-    } else {
-      // Mode Create New
-      quotaValues.total = 1;
-      quotaValues.ikhwan = 1;
-      quotaValues.akhwat = 1;
+    } 
+    // JIKA BUKAN EDIT (CREATE BARU), DAN DRAFT KOSONG, KASIH DEFAULT KUOTA
+    else if (!draft.Title && draft.quotaValues.total === 0) {
+       draft.quotaValues.total = 1;
+       draft.quotaValues.ikhwan = 1;
+       draft.quotaValues.akhwat = 1;
     }
   }
 }, { immediate: true });
 
-watch(() => formState.HasRegStart, (newVal) => {
+watch(() => draft.HasRegStart, (newVal) => {
   if (!newVal) {
-    formState.HasRegEnd = false;
-    formState.RegStartDate = ''; formState.RegStartTime = '';
-    formState.RegEndDate = ''; formState.RegEndTime = '';
+    draft.HasRegEnd = false;
+    draft.RegStartDate = ''; draft.RegStartTime = '';
+    draft.RegEndDate = ''; draft.RegEndTime = '';
   }
 });
 
 const close = () => { if (!isLoading.value) emit('close'); };
 
+const handleCancel = () => {
+  eventStore.resetDraftEvent(); 
+  close();
+};
+
 const save = () => {
   if (isLoading.value) return;
 
-  // Validasi Quota hanya jalan jika BUKAN Unlimited
-  if (!isUnlimited.total && isQuotaMismatch.value) {
-    swalAlert(
-      'Alokasi Kuota Salah', 
-      `Total (${quotaValues.total}) harus sama dengan Ikhwan (${quotaValues.ikhwan}) + Akhwat (${quotaValues.akhwat}). ${allocationMessage.value}.`,
-      'error'
-    );
+  if (!draft.isUnlimited.total && isQuotaMismatch.value) {
+    swalAlert('Alokasi Kuota Salah', `Total (${draft.quotaValues.total}) harus sama dengan Ikhwan (${draft.quotaValues.ikhwan}) + Akhwat (${draft.quotaValues.akhwat}). ${allocationMessage.value}.`, 'error');
     return;
   }
 
-  if (formState.HasRegStart && formState.HasRegEnd) {
-    const startStr = `${formState.RegStartDate} ${formState.RegStartTime}`;
-    const endStr = `${formState.RegEndDate} ${formState.RegEndTime}`;
+  if (draft.HasRegStart && draft.HasRegEnd) {
+    const startStr = `${draft.RegStartDate} ${draft.RegStartTime}`;
+    const endStr = `${draft.RegEndDate} ${draft.RegEndTime}`;
     if (new Date(endStr) <= new Date(startStr)) {
-      swalAlert(
-        'Waktu Tidak Valid', 
-        'Waktu Tutup Pendaftaran tidak boleh lebih awal dari Waktu Buka.',
-        'warning'
-      );
+      swalAlert('Waktu Tidak Valid', 'Waktu Tutup Pendaftaran tidak boleh lebih awal dari Waktu Buka.', 'warning');
       return;
     }
   }
+  
   const formElement = document.getElementById('eventBasicForm') as HTMLFormElement;
   if (formElement && !formElement.checkValidity()) { formElement.reportValidity(); return; }
 
-  // LOGIC PENENTUAN NON-QUOTA
-  const finalQuotaTotal = isUnlimited.total ? 'non-quota' : quotaValues.total;
-  const finalQuotaIkhwan = isUnlimited.total ? 'non-quota' : quotaValues.ikhwan;
-  const finalQuotaAkhwat = isUnlimited.total ? 'non-quota' : quotaValues.akhwat;
+  const finalQuotaTotal = draft.isUnlimited.total ? 'non-quota' : draft.quotaValues.total;
+  const finalQuotaIkhwan = draft.isUnlimited.total ? 'non-quota' : draft.quotaValues.ikhwan;
+  const finalQuotaAkhwat = draft.isUnlimited.total ? 'non-quota' : draft.quotaValues.akhwat;
 
-  let startString = "";
-  let endString = "";
-  if (formState.HasRegStart) { startString = `${formState.RegStartDate} ${formState.RegStartTime}`; }
-  if (formState.HasRegEnd) { endString = `${formState.RegEndDate} ${formState.RegEndTime}`; }
+  let startString = ""; let endString = "";
+  if (draft.HasRegStart) { startString = `${draft.RegStartDate} ${draft.RegStartTime}`; }
+  if (draft.HasRegEnd) { endString = `${draft.RegEndDate} ${draft.RegEndTime}`; }
 
+  // 🟢 SEKARANG PAKE DRAFT.XXX SUPAYA DATANYA KEBACA!
   const dataToEmit = {
-    SK: props.isEditing ? formState.SK : null,
-    Title: formState.Title,
-    Gender: formState.Gender,
-    Place: formState.Place,
-    Price: String(formState.Price),
-    Whatsapp: formState.Whatsapp,
+    SK: props.isEditing ? draft.SK : null,
+    Title: draft.Title,
+    Gender: draft.Gender,
+    Place: draft.Place,
+    Price: String(draft.Price),
+    Whatsapp: draft.Whatsapp,
     Quota_Ikhwan_Akhwat: finalQuotaTotal,
     Quota_Ikhwan: finalQuotaIkhwan,
     Quota_Akhwat: finalQuotaAkhwat,
-    Status: isStatusActive.value ? 'active' : 'inactive',
-    Registration: {
-      start_registration: startString,
-      end_registration: endString
-    }
+    Status: draft.status,
+    Registration: { start_registration: startString, end_registration: endString }
   };
 
-  // 🟢 LOGIKA EMIT YANG BENER (TANPA BUNGKUSAN eventData)
   if (props.isEditing) {
     emit('save', dataToEmit); 
   } else {

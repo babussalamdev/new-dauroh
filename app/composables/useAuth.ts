@@ -69,7 +69,7 @@ export const useAuth = () => {
            throw new Error("Akun Admin/Root hanya diperbolehkan login di halaman Admin.");
         }
         
-        await router.push("/dashboard");
+        await router.push("/");
       }
     } catch (error: any) {
       throw error;

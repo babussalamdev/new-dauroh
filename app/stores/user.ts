@@ -38,15 +38,9 @@ export const useUserStore = defineStore("user", () => {
   });
 
   // --- ACTIONS (Functions) ---
-
-  /**
-   * Fungsi Reset State (WAJIB untuk Setup Store agar useAuth tidak error)
-   */
   function $reset() {
     tickets.value = [];
-    // user.value = null;
     isLoading.value = false;
-    console.log("♻️ User Store has been reset");
   }
 
   async function fetchUserTransactions() {
@@ -70,6 +64,8 @@ export const useUserStore = defineStore("user", () => {
       const mappedTickets = rawData.map((item: any) => {
         return {
           SK: item.SK,
+          PK: item.PK,
+          Subject: item.Subject, // 
           status: item.Status || "PENDING",
           created_at: item.CreatedAt,
           date: item.CreatedAt,
@@ -137,8 +133,6 @@ export const useUserStore = defineStore("user", () => {
             Status: newData?.Status
           } as any; 
         }
-
-        // Kembalikan data segar buat dipakai di komponen
         return {
           participants: freshParticipants,
           status: newData?.Status
@@ -164,7 +158,9 @@ export const useUserStore = defineStore("user", () => {
       trxAmount = Number(transactionDetails.amount || 0);
     }
 
-    const finalId = transactionDetails?.link_id
+    const finalId = transactionDetails?.SK
+      ? String(transactionDetails.SK)
+      : transactionDetails?.link_id
       ? String(transactionDetails.link_id)
       : String(Date.now());
 

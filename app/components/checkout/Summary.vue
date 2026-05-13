@@ -212,7 +212,6 @@ const applyVoucher = async () => {
 
     if (disc > 0) {
       store.setVoucher(code, disc);
-      // 🟢 Pake swalAlert biar animasinya halus
       swalAlert('Voucher Berhasil!', `Potongan ${formatCurrency(disc)}`, 'success');
     } else {
       throw new Error("Voucher tidak valid atau nominal 0");
@@ -231,7 +230,6 @@ const applyVoucher = async () => {
     }
 
     error.value = userMsg;
-    // 🟢 REVISI: Ganti Swal.fire manual dengan swalAlert
     swalAlert('Gagal', userMsg, 'error');
 
   } finally {

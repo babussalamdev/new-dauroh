@@ -133,7 +133,6 @@ import { useEventStore } from '~/stores/event';
 
 const props = defineProps<{
   show: boolean;
-  basicData: any; 
 }>();
 
 const emit = defineEmits(['close', 'back', 'saveFinal']);
@@ -249,9 +248,40 @@ const submitFinal = () => {
     swalAlert('Jadwal Tidak Valid', 'Pastikan semua field terisi dan waktu selesai logis.', 'warning');
     return;
   }
+
+  // 🟢 1. AMBIL DRAFT DARI PINIA
+  const draft = eventStore.draftEvent;
+
+  // 🟢 2. FORMAT LOGIC KUOTA
+  const finalQuotaTotal = draft.isUnlimited.total ? 'non-quota' : draft.quotaValues.total;
+  const finalQuotaIkhwan = draft.isUnlimited.total ? 'non-quota' : draft.quotaValues.ikhwan;
+  const finalQuotaAkhwat = draft.isUnlimited.total ? 'non-quota' : draft.quotaValues.akhwat;
+
+  // 🟢 3. FORMAT TANGGAL REGISTRASI
+  let startReg = ""; let endReg = "";
+  if (draft.HasRegStart) { startReg = `${draft.RegStartDate} ${draft.RegStartTime}`; }
+  if (draft.HasRegEnd) { endReg = `${draft.RegEndDate} ${draft.RegEndTime}`; }
+
   const rawBase64 = imageBase64.value.split(',')[1];
+  
+  // 🟢 4. GABUNGKAN SEMUANYA JADI PAYLOAD FINAL
   const finalPayload = {
-    ...props.basicData,
+    // Data dari Form Step 1 (Pinia)
+    SK: draft.SK || null,
+    Title: draft.Title,
+    Gender: draft.Gender,
+    Place: draft.Place,
+    Price: String(draft.Price),
+    Whatsapp: draft.Whatsapp,
+    Quota_Ikhwan_Akhwat: finalQuotaTotal,
+    Quota_Ikhwan: finalQuotaIkhwan,
+    Quota_Akhwat: finalQuotaAkhwat,
+    Status: draft.status,
+    Registration: { 
+      start_registration: startReg, 
+      end_registration: endReg 
+    },
+    // Data dari Form Step 2 (Lokal Modal Ini)
     Date: schedulePayload, 
     Picture: rawBase64
   };

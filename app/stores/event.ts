@@ -95,6 +95,24 @@ export const useEventStore = defineStore("event", () => {
     detailPublic: false,
   });
 
+  const draftEvent = ref({
+  SK: '',
+  Title: '',
+  Gender: '',
+  Place: '',
+  Price: 0,
+  Whatsapp: '',
+  HasRegStart: false,
+  HasRegEnd: false,
+  RegStartDate: '',
+  RegStartTime: '',
+  RegEndDate: '',
+  RegEndTime: '',
+  isUnlimited: { total: false, ikhwan: false, akhwat: false },
+  quotaValues: { total: 0, ikhwan: 0, akhwat: 0 },
+  status: 'active'
+});
+
   // Getters
   const filteredTiketEvent = computed(() => {
     if (!searchQuery.value) return tiketEvent.value || [];
@@ -153,6 +171,16 @@ export const useEventStore = defineStore("event", () => {
   }
 };
   // Actions
+function resetDraftEvent() {
+  draftEvent.value = {
+    SK: '', Title: '', Gender: '', Place: '', Price: 0, Whatsapp: '',
+    HasRegStart: false, HasRegEnd: false, RegStartDate: '', RegStartTime: '', RegEndDate: '', RegEndTime: '',
+    isUnlimited: { total: false, ikhwan: false, akhwat: false },
+    quotaValues: { total: 0, ikhwan: 0, akhwat: 0 },
+    status: 'active'
+  };
+}
+
   function setSearchQuery(query: string) {
     searchQuery.value = query;
   }
@@ -472,6 +500,6 @@ async function fetchEventDetail(SK: string) {
     setSearchQuery, fetchPublicTiketEvent, fetchAuthTiketEvent,
     fetchAdminTiketEvent, fetchPublicEventDetail, fetchEventDetail,
     addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
-    deleteTiketEvent, decrementQuota, updateEventSchedule, fetchViewData, createTiketEvent
+    deleteTiketEvent, decrementQuota, updateEventSchedule, fetchViewData, createTiketEvent, draftEvent, resetDraftEvent
   };
 });

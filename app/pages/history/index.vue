@@ -144,31 +144,44 @@ const closeQrModal = () => {
 
 // Payment Logic
 const resumePayment = async (ticket: any) => {
-  const skTransaksi = ticket.SK;
-  if (!skTransaksi || !skTransaksi.includes('#')) {
+  
+  const transactionSK = ticket.SK; 
+  let eventSK = ticket.PK || ticket.Subject || ticket.SK; 
+  eventSK = eventSK.replace('event#', '').split('#')[0];
+
+  if (!transactionSK) {
     swalAlert('Data Tidak Lengkap', 'ID Transaksi tidak valid. Silakan hubungi admin.', 'error');
     return;
   }
   
   const smartStatus = getSmartStatus(ticket);
-  if (['EXPIRED', 'CANCELLED'].includes(smartStatus)) {
-    await handleExpiredFlow(skTransaksi);
-  } else {
-    try {
-      const isTransactionValid = await checkoutStore.checkExistingTransaction(skTransaksi);
+  
+  try {
+    if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
+      await handleExpiredFlow(transactionSK);
+    } else {
+      //  PENDING
+      checkoutStore.isLoading = true;
+      const isTransactionValid = await checkoutStore.checkExistingTransaction(eventSK);
+      
       if (isTransactionValid) {
+        await checkoutStore.restoreTransactionData(transactionSK);
+        checkoutStore.setStep('instructions'); 
+        
         router.push('/checkout');
       } else {
-        await handleExpiredFlow(skTransaksi);
+        await handleExpiredFlow(transactionSK);
       }
-    } catch (error) {
-      console.error("Gagal cek transaksi:", error);
-      swalAlert('Kesalahan Sistem', 'Gagal memverifikasi status transaksi.', 'error');
     }
+  } catch (error) {
+    console.error("Gagal resume payment:", error);
+    swalAlert('Kesalahan Sistem', 'Gagal memproses transaksi.', 'error');
+  } finally {
+    checkoutStore.isLoading = false;
   }
 };
 
-const handleExpiredFlow = async (skEvent: string) => {
+const handleExpiredFlow = async (skTransaction: string) => {
   const result = await swalConfirm(
     'Pembayaran Telah Berakhir',
     'Sesi pembayaran sebelumnya sudah kadaluarsa. Apakah Anda ingin membayar ulang dengan data peserta yang sama?',
@@ -176,25 +189,18 @@ const handleExpiredFlow = async (skEvent: string) => {
   );
 
   if (result.isConfirmed) {
-    const { $swal } = useNuxtApp() as any;
-    $swal.fire({ 
-      title: 'Memulihkan Data...', 
-      text: 'Mohon tunggu sebentar', 
-      allowOutsideClick: false, 
-      didOpen: () => { $swal.showLoading(); } 
-    });
-
+    checkoutStore.isLoading = true;
     try {
-      const success = await checkoutStore.restoreTransactionData(skEvent);
+      const success = await checkoutStore.restoreTransactionData(skTransaction);
       if (success) {
-        $swal.close();
         router.push('/checkout');
       } else {
         throw new Error('Gagal restore data.');
       }
     } catch (error) {
-      $swal.close();
       swalAlert('Gagal', 'Terjadi kesalahan saat memulihkan data peserta.', 'error');
+    } finally {
+      checkoutStore.isLoading = false;
     }
   }
 };
