@@ -144,12 +144,9 @@ const closeQrModal = () => {
 
 // Payment Logic
 const resumePayment = async (ticket: any) => {
-  
   const transactionSK = ticket.SK; 
-  let eventSK = ticket.PK || ticket.Subject || ticket.SK; 
-  eventSK = eventSK.replace('event#', '').split('#')[0];
 
-  if (!transactionSK) {
+  if (!transactionSK || !transactionSK.includes('#')) {
     swalAlert('Data Tidak Lengkap', 'ID Transaksi tidak valid. Silakan hubungi admin.', 'error');
     return;
   }
@@ -160,14 +157,16 @@ const resumePayment = async (ticket: any) => {
     if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
       await handleExpiredFlow(transactionSK);
     } else {
-      //  PENDING
+      // 🟢 STATUS PENDING (Lanjut Bayar)
       checkoutStore.isLoading = true;
-      const isTransactionValid = await checkoutStore.checkExistingTransaction(eventSK);
+      
+      // PERBAIKAN DI SINI: Pake transactionSK kayak di Code 2!
+      const isTransactionValid = await checkoutStore.checkExistingTransaction(transactionSK);
       
       if (isTransactionValid) {
+        // Kalau valid, pulihkan data dan lempar ke halaman checkout (instruksi)
         await checkoutStore.restoreTransactionData(transactionSK);
         checkoutStore.setStep('instructions'); 
-        
         router.push('/checkout');
       } else {
         await handleExpiredFlow(transactionSK);
@@ -175,7 +174,7 @@ const resumePayment = async (ticket: any) => {
     }
   } catch (error) {
     console.error("Gagal resume payment:", error);
-    swalAlert('Kesalahan Sistem', 'Gagal memproses transaksi.', 'error');
+    swalAlert('Kesalahan Sistem', 'Gagal memverifikasi status transaksi.', 'error');
   } finally {
     checkoutStore.isLoading = false;
   }

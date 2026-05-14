@@ -28,10 +28,10 @@ export const useCheckoutStore = defineStore(
     });
 
     const finalAmount = computed(() => {
-      const total = (event.value?.Price || 0) * participants.value.length;
-      const final = total - discountAmount.value + donationAmount.value;
-      return final < 0 ? 0 : final;
-    });
+  const total = (event.value?.Price || 0) * participants.value.length;
+  const final = total - discountAmount.value + donationAmount.value;
+  return final < 0 ? 0 : final;
+});
 
     const hasVoucher = computed(
       () => !!voucherCode.value && voucherApplied.value,
@@ -190,7 +190,7 @@ export const useCheckoutStore = defineStore(
       }
     }
 
-    async function restoreTransactionData(skTransaction: string) {
+async function restoreTransactionData(skTransaction: string) {
       const { $apiBase } = useNuxtApp();
       const eventStore = useEventStore();
 
@@ -202,20 +202,14 @@ export const useCheckoutStore = defineStore(
           params: { type: "payment-detail", sk: skTransaction },
         });
 
+        // 🟢 TANGKAP RESPONSE JSON
         const data = response.data?.data || response.data;
         if (!data || !data.Participant) return false;
 
-        if (eventStore.tiketEvent.length === 0) {
-          await eventStore.fetchPublicTiketEvent();
-        }
         const rawSubject = data.Subject || data.PK || "";
         const cleanEventSK = rawSubject.replace("event#", "").split("#")[0];
 
-        const foundEvent = eventStore.tiketEvent.find(
-          (d: any) => d.SK === cleanEventSK,
-        );
-        const realPrice = foundEvent ? Number(foundEvent.Price) : 0;
-
+        // 🟢 ISI DATA PESERTA
         participants.value = data.Participant.map((p: any) => ({
           PK: p.PK,
           SK: p.SK,
@@ -224,19 +218,34 @@ export const useCheckoutStore = defineStore(
           Age: p.Age,
           Domicile: p.Domicile,
         }));
+        
+        // 🟢 TANGKAP INFAQ
         donationAmount.value = Number(data.Infaq || data.infaq || 0);
 
+        // 🟢 PERBAIKAN LOGIKA HARGA TIKET (Gak Pake eventStore lagi)
+        // Tangkap Total Tagihan (Amount) dari BE, fallback ke 0 kalau ga ada
+        const totalAmountFromBE = Number(data.Amount || data.amount || 0);
+        
+        // Hitung harga satuan tiket (Total Amount dikurangi Infaq, lalu dibagi jumlah orang)
+        let realPrice = 0;
+        if (participants.value.length > 0) {
+           const pureTicketTotal = totalAmountFromBE - donationAmount.value;
+           realPrice = pureTicketTotal / participants.value.length;
+        }
+
+        // 🟢 SET DATA EVENT KE STORE
         event.value = {
           SK: cleanEventSK,
-          Title: foundEvent?.Title || data.Title || "Event Event",
-          Place: foundEvent?.Place || "Lokasi Online",
-          Price: realPrice,
+          Title: data.Title || data.title || "Nama Event Tidak Tersedia", // Ambil Title dari JSON
+          Place: "Lokasi Tidak Tersedia", // Ini minor, abaikan gapapa
+          Price: realPrice < 0 ? 0 : realPrice, // Jaga-jaga biar ga minus
         };
         
         repay.value = true;
         setStep("select"); // Langsung masuk ke "Pilih Bank"
         return true;
       } catch (error) {
+        console.error("Gagal Restore Data:", error)
         return false;
       } finally {
         isLoading.value = false;

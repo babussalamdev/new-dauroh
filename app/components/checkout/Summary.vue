@@ -10,15 +10,16 @@
       <label for="voucher" class="form-label txt-label fw-bold text-secondary">Kode Voucher</label>
       <div class="input-group">
         <input type="text" class="form-control txt-body" id="voucher" placeholder="Masukkan kode voucher"
-          v-model="store.voucherCode" :disabled="loading" @keyup.enter="applyVoucher">
-        <button class="btn btn-outline-secondary txt-body fw-bold" type="button" @click="applyVoucher" :disabled="loading">
+          v-model="store.voucherCode" :disabled="loading || store.repay" @keyup.enter="applyVoucher">
+        <button class="btn btn-outline-secondary txt-body fw-bold" type="button" @click="applyVoucher" :disabled="loading || store.repay">
           <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           <span v-else>Submit</span>
         </button>
       </div>
+      <small v-if="store.repay" class="text-danger txt-caption fst-italic mt-1">*Voucher tidak dapat diubah pada sesi bayar ulang.</small>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background-color: #f8f9fa; border-left: 4px solid #0dcaf0 !important;">
+    <div v-if="!store.repay" class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background-color: #f8f9fa; border-left: 4px solid #0dcaf0 !important;">
       <h6 class="fw-bold mb-1 text-dark txt-label d-flex align-items-center">
         <i class="bi bi-heart-fill text-danger me-2"></i>Tambahkan Infaq Operasional
       </h6>
@@ -139,7 +140,9 @@ onMounted(() => {
   if (!store.paymentMethod) {
     store.setStep('select');
   }
-  store.donationAmount = 0;
+  if (!store.repay) {
+    store.donationAmount = 0;
+  }
 });
 
 const setDonation = (amount: number) => {
