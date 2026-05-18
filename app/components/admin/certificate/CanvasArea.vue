@@ -1,6 +1,11 @@
 <template>
   <div>
-    <h6 class="fw-bold txt-subtitle mb-3 border-bottom pb-2 text-dark">Desain Sertifikat (A4)</h6>
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+      <h6 class="fw-bold txt-subtitle mb-0 text-dark">Template Sertifikat</h6>
+      <button class="btn btn-sm btn-info text-white rounded-pill px-3 fw-bold shadow-sm" @click="showPreview = true" v-if="certStore.base64Image">
+        <i></i> Preview
+      </button>
+    </div>
     
     <div 
       class="upload-area border-2 border-dashed rounded-4 p-4 text-center w-100 mb-3"
@@ -32,7 +37,12 @@
           :class="certStore.config.layout"
           ref="certContainer"
         >
-          <img :src="certStore.base64Image" class="template-img" alt="Template">
+          <img 
+            :src="displayImage" 
+            class="template-img" 
+            alt="Template"
+            @error="($event.target as HTMLImageElement).style.display = 'none'"
+          >
 
           <div class="center-guide-x" v-show="activeDraggingField"></div>
           
@@ -86,18 +96,55 @@
         <li v-for="(err, index) in certStore.imageErrors" :key="index">{{ err }}</li>
       </ul>
     </div>
+
+    <div v-if="showPreview" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.8);" @click.self="showPreview = false">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <div class="modal-header border-0 d-flex justify-content-end p-2">
+             <button type="button" class="btn-close btn-close-white" @click="showPreview = false"></button>
+          </div>
+          <div class="modal-body d-flex justify-content-center p-0">
+             
+             <div class="certificate-container shadow-lg w-100" style="max-width: 1123px;" :class="certStore.config.layout">
+                <img :src="displayImage" class="template-img">
+                <div v-if="certStore.config.fields.eventTitle" class="preview-text" :style="createTextStyleObj(certStore.config.styles.eventTitle, true)">{{ certStore.previewData.eventTitle }}</div>
+                <div v-if="certStore.config.fields.name" class="preview-text" :style="createTextStyleObj(certStore.config.styles.name, true)">{{ certStore.previewData.participantName }}</div>
+                <div v-if="certStore.config.fields.domicile" class="preview-text" :style="createTextStyleObj(certStore.config.styles.domicile, true)">{{ certStore.previewData.domicile }}</div>
+             </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useCertificateStore } from '~/stores/certificate';
+import { useRoute } from 'vue-router';
+import { useRuntimeConfig } from '#app';
 
+const route = useRoute();
 const certStore = useCertificateStore();
+const config = useRuntimeConfig();
+const imgBaseUrl = ref(config.public.img || '');
 
 const isDragging = ref(false);
 const certContainer = ref<HTMLElement | null>(null);
 const imageMeta = ref({ width: 0, height: 0, size: 0, type: '' });
+
+// 🟢 STATE UNTUK BUKA/TUTUP MODAL
+const showPreview = ref(false);
+
+const displayImage = computed(() => {
+  const imgData = certStore.base64Image;
+  if (!imgData) return '';
+  if (imgData.startsWith('data:image')) return imgData;
+  if (imgData.startsWith('http')) return imgData;
+  const eventSK = route.params.id as string; 
+  return `${imgBaseUrl.value}/${eventSK}/${imgData}.webp`;
+});
 
 const validateImage = () => {
   let errors = []; 
@@ -105,10 +152,8 @@ const validateImage = () => {
     certStore.imageErrors = [];
     return;
   }
-
   if (imageMeta.value.size > 3 * 1024 * 1024) errors.push('Ukuran file terlalu besar (Maksimal 3MB).');
   if (!['image/jpeg', 'image/png'].includes(imageMeta.value.type)) errors.push('Format gambar tidak valid (Harus .JPG atau .PNG).');
-
   if (certStore.config.layout === 'landscape' && imageMeta.value.width < imageMeta.value.height) {
     errors.push('Orientasi tidak sesuai! Pilih Landscape, tapi mengunggah gambar Portrait.');
   } else if (certStore.config.layout === 'portrait' && imageMeta.value.height < imageMeta.value.width) {
@@ -126,14 +171,26 @@ const processFile = (file: File) => {
   imageMeta.value.size = file.size;
   imageMeta.value.type = file.type;
   const reader = new FileReader();
-  reader.onload = (e: any) => { 
+  
+  reader.onload = async (e: any) => { 
     const base64 = e.target.result;
     const img = new Image();
-    img.onload = () => {
+    
+    img.onload = async () => {
       imageMeta.value.width = img.width;
       imageMeta.value.height = img.height;
       certStore.base64Image = base64; 
       validateImage(); 
+      
+      if (certStore.imageErrors.length === 0) {
+        const eventSK = route.params.id as string; 
+        if (!eventSK) return;
+        try {
+          await certStore.uploadImageOnly(eventSK);
+        } catch (err) {
+          console.error("Gagal upload gambar:", err);
+        }
+      }
     };
     img.src = base64; 
   };
@@ -148,13 +205,23 @@ const resetFile = () => {
 
 const activeDraggingField = ref<string | null>(null);
 
-const createTextStyleObj = (fieldStyle: { top: number, left: number, fontSize: number, color: string }) => ({
-  top: `${fieldStyle.top}%`,
-  left: `${fieldStyle.left}%`,
-  fontSize: `${fieldStyle.fontSize}px`,
-  color: fieldStyle.color,
-  transform: 'translate(-50%, -50%)'
-});
+// Bikin Font Size Dinamis Ngikutin Ukuran Canvas
+const createTextStyleObj = (fieldStyle: { top: number, left: number, fontSize: number, color: string }, isPreview = false) => {
+  // Patokan ukuran A4
+  const baseWidth = certStore.config.layout === 'landscape' ? 1123 : 794;
+  const responsiveFontSize = (fieldStyle.fontSize / baseWidth) * 100;
+
+  return {
+    top: `${fieldStyle.top}%`,
+    left: `${fieldStyle.left}%`,
+    fontSize: `${responsiveFontSize}cqi`, // Menggunakan CSS Container Queries
+    color: fieldStyle.color,
+    transform: 'translate(-50%, -50%)',
+    // Kalau mode preview, ilangin border dashed-nya
+    border: isPreview ? 'none' : '2px dashed transparent',
+    backgroundColor: isPreview ? 'transparent' : 'rgba(255, 255, 255, 0.4)'
+  };
+};
 
 const eventTitleStyleObj = computed(() => createTextStyleObj(certStore.config.styles.eventTitle));
 const nameStyleObj = computed(() => createTextStyleObj(certStore.config.styles.name));
@@ -204,43 +271,36 @@ onUnmounted(() => {
 .border-dashed { border-style: dashed !important; }
 .upload-area { transition: all 0.3s ease; min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
 .cursor-pointer { cursor: pointer; }
-
-/* 🟢 WRAPPER SCROLLABLE (Biar aman di layar kecil) */
 .workspace-wrapper { 
-  overflow: auto; 
   display: flex; 
   justify-content: center; 
   align-items: center; 
-  min-height: 500px; 
-  max-height: 80vh; 
-  position: relative; 
   background-color: #f8f9fa;
   border-radius: 12px;
   border: 1px solid #e9ecef;
-  padding: 20px; /* Kasih jarak dikit biar scroll-nya enak */
+  padding: 20px;
+  width: 100%;
 }
 
-/* 🟢 KUNCI MATI UKURAN A4 DALAM PIXEL (1123 X 794) */
 .certificate-container { 
   overflow: hidden; 
   position: relative;
   background-color: white;
-  flex-shrink: 0; /* Biar ukurannya ga ketekan/nyusut */
+  width: 100% !important;
+  max-width: 1123px;
+  container-type: inline-size;
 }
 
+/* Rasio Kertas A4 (297mm x 210mm) */
 .certificate-container.landscape { 
-  width: 1123px !important; 
-  height: 794px !important; 
-  min-width: 1123px !important;
+  aspect-ratio: 297 / 210; 
+  height: auto !important; 
 }
-
 .certificate-container.portrait { 
-  width: 794px !important; 
-  height: 1123px !important; 
-  min-width: 794px !important;
+  aspect-ratio: 210 / 297; 
+  height: auto !important; 
 }
 
-/* 🟢 GAMBAR BACKGROUND (Samain kaya test-pdf) */
 .template-img { 
   width: 100%; 
   height: 100%; 
@@ -250,10 +310,9 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   z-index: 0;
-  pointer-events: none; /* Wajib di kanvas biar gambar ga gak sengaja ke-drag */
+  pointer-events: none; 
 }
 
-/* 🟢 TEKS DRAGGABLE (Line-height 1 dan no padding) */
 .draggable-text { 
   position: absolute; 
   cursor: move; 
@@ -261,10 +320,8 @@ onUnmounted(() => {
   font-weight: bold; 
   white-space: nowrap; 
   font-family: 'Arial', sans-serif;
-  line-height: 1; /* SAMA KAYA DI TEST-PDF */
-  padding: 0;     /* SAMA KAYA DI TEST-PDF */
-  border: 2px dashed transparent; 
-  background-color: rgba(255, 255, 255, 0.4); 
+  line-height: 1; 
+  padding: 0;     
   transition: border-color 0.15s, background-color 0.15s; 
   border-radius: 4px; 
   z-index: 20; 
@@ -272,6 +329,17 @@ onUnmounted(() => {
 .draggable-text.text-event:hover, .draggable-text.text-event:active { border-color: #0d6efd; background-color: rgba(13, 110, 253, 0.1); }
 .draggable-text.text-name:hover, .draggable-text.text-name:active { border-color: #198754; background-color: rgba(25, 135, 84, 0.1); }
 .draggable-text.text-domicile:hover, .draggable-text.text-domicile:active { border-color: #dc3545; background-color: rgba(220, 53, 69, 0.1); }
+
+.preview-text {
+  position: absolute; 
+  user-select: none; 
+  font-weight: bold; 
+  white-space: nowrap; 
+  font-family: 'Arial', sans-serif;
+  line-height: 1; 
+  padding: 0; 
+  z-index: 20; 
+}
 
 .center-guide-x { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(255, 0, 0, 0.5); border-left: 1px dashed red; transform: translateX(-50%); pointer-events: none; z-index: 10; }
 </style>

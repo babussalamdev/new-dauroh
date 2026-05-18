@@ -91,11 +91,48 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
+  // Ambil data sertifikat peserta
+  async function fetchCertificatePreview(pk: string, sk: string, esk: string) {
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const res = await $apiBase.get('/get-attendance', {
+        params: {
+          type: 'certificate-preview',
+          pk: pk,
+          sk: sk,
+          esk: esk
+        }
+      });
+      return res.data; 
+    } catch (error) {
+      console.error("Gagal tarik preview sertifikat:", error);
+      return null;
+    }
+  }
+
+  async function distributeCertificatesBulk(updatesPayload: any[]) {
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      const { accessToken } = useAuth();
+      const payload = {
+        AccessToken: accessToken.value,
+        Updates: updatesPayload
+      };
+
+      await $apiBase.put('/update-attendance?type=admin', payload);
+      return true;
+    } catch (error) {
+      console.error("Gagal membagikan sertifikat:", error);
+      return false;
+    }
+  }
   return {
     participants,
     loading,
     fetchAttendanceData,
     markManualAttendance,
-    markScanAttendance   
+    markScanAttendance,
+    fetchCertificatePreview,
+    distributeCertificatesBulk
   };
 });

@@ -23,13 +23,9 @@
             </div>
           </td>
 
-          <td class="py-3" style="max-width: 200px;">
+          <td class="py-3 text-center" style="max-width: 200px;">
             <span class="d-block txt-body fw-bold text-primary text-truncate mb-1" :title="ticket.Title || ticket.title || ticket.event?.Title">
               {{ ticket.Title || ticket.title || ticket.event?.Title || 'Event Event' }}
-            </span>
-            <span class="text-muted d-flex align-items-center text-truncate txt-caption">
-              <i class="bi bi-geo-alt-fill me-1 text-secondary opacity-50"></i>
-              {{ ticket.event?.Place || 'Lokasi Online' }}
             </span>
           </td>
 
@@ -98,10 +94,7 @@
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import dayjs from 'dayjs';
 
-// MENERIMA DATA DARI HALAMAN UTAMA
 defineProps<{ tickets: any[] }>();
-
-// MENGIRIM PERINTAH KE HALAMAN UTAMA
 defineEmits(['open-detail', 'resume-payment']);
 
 const { getSmartStatus } = useTransactionStatus();

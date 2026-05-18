@@ -35,6 +35,7 @@
 
       </div>
     </div>
+    
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4"> 
       
       <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom" v-if="globalStore.activeEventSK">
@@ -53,6 +54,19 @@
               <span v-if="isExporting" class="spinner-border spinner-border-sm me-1"></span>
               Export
             </button>
+
+            <transition name="fade">
+              <button 
+                v-if="selectedParticipants.length > 0"
+                class="btn btn-warning rounded-pill px-3 py-1 shadow-sm flex-grow-1 flex-sm-grow-0 txt-caption fw-bold text-dark" 
+                @click="handleBagikanSertifikat" 
+                :disabled="isDistributing"
+              >
+                <span v-if="isDistributing" class="spinner-border spinner-border-sm me-1"></span>
+                <i v-else class="bi bi-award-fill me-1"></i>
+                Bagikan Sertifikat ({{ selectedParticipants.length }})
+              </button>
+            </transition>
           </div>
 
           <div class="w-100" style="max-width: 400px;">
@@ -69,105 +83,160 @@
 
         </div>
       </div>
-    </div>
 
-  <div class="card-body p-0">
-    
-    <div v-if="!globalStore.activeEventSK" class="text-center py-5 text-muted bg-light px-3 rounded-bottom-4">
-      <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
-      <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu di halaman Dashboard.</p>
-      <NuxtLink to="/admin" class="btn btn-sm btn-primary mt-3 rounded-pill px-4 shadow-sm txt-caption">Ke Dashboard</NuxtLink>
-    </div>
-
-    <div v-else>
-      <CommonLoadingSpinner v-if="store.loading" class="my-5" />
-
-      <div v-else-if="filteredAttendees.length > 0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0" style="min-width: 700px;">
-            <thead>
-              <tr>
-                <th class="text-center ps-4 txt-label" style="width: 3%;">NO</th>
-                <th class="txt-label" style="width: 35%;">INFORMASI PESERTA</th>
-                <th class="txt-label" style="width: 25%;">KODE TIKET</th>
-                <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
-                <th class="text-center pe-4 txt-label" style="width: 15%;">STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
-                <td class="text-center ps-4 fw-medium text-muted txt-body">
-                  {{ (currentPage - 1) * perPage + index + 1 }}
-                </td>
-                <td>
-                  <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
-                  <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
-                </td>
-                <td>
-                  <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
-                </td>
-                <td>
-                  <div v-if="item.scanTime" class="text-dark fw-medium txt-body">
-                    <i class="bi bi-clock me-1 text-success"></i> {{ dayjs(item.scanTime).format('HH:mm:ss') }} WIB
-                  </div>
-                </td>
-                <td class="text-center pe-4">
-                  <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm txt-label">
-                    Hadir
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="card-body p-0">
+        
+        <div v-if="!globalStore.activeEventSK" class="text-center py-5 text-muted bg-light px-3 rounded-bottom-4">
+          <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
+          <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu di halaman Dashboard.</p>
+          <NuxtLink to="/admin" class="btn btn-sm btn-primary mt-3 rounded-pill px-4 shadow-sm txt-caption">Ke Dashboard</NuxtLink>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light rounded-bottom-4" v-if="totalPages > 1">
-          <span class="text-muted txt-body">
-            Halaman {{ currentPage }} dari {{ totalPages }} 
-          </span>
+        <div v-else>
+          <CommonLoadingSpinner v-if="store.loading" class="my-5" />
+
+          <div v-else-if="filteredAttendees.length > 0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" style="min-width: 700px;">
+                <thead>
+                  <tr>
+                    <th class="text-center ps-4" style="width: 4%;">
+                      <input 
+                        class="form-check-input shadow-none cursor-pointer border-secondary" 
+                        type="checkbox" 
+                        :checked="isAllSelected" 
+                        @change="toggleSelectAll"
+                      >
+                    </th>
+                    <th class="text-center txt-label" style="width: 4%;">NO</th>
+                    <th class="txt-label" style="width: 32%;">INFORMASI PESERTA</th>
+                    <th class="txt-label" style="width: 25%;">KODE TIKET</th>
+                    <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
+                    <th class="text-center txt-label" style="width: 12%;">STATUS</th>
+                    <th class="text-center pe-4 txt-label" style="width: 10%;">SERTIFIKAT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
+                    <td class="text-center ps-4 align-middle">
+                      <input 
+                        class="form-check-input shadow-none cursor-pointer border-secondary" 
+                        type="checkbox" 
+                        :value="item.ticketId" 
+                        v-model="selectedParticipants"
+                      >
+                    </td>
+                    <td class="text-center fw-medium text-muted txt-body align-middle">
+                      {{ (currentPage - 1) * perPage + index + 1 }}
+                    </td>
+                    <td class="align-middle">
+                      <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
+                      <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
+                    </td>
+                    <td class="align-middle">
+                      <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
+                    </td>
+                    <td class="align-middle">
+                      <div v-if="item.scanTime" class="text-dark fw-medium txt-body">
+                        <i class="bi bi-clock me-1 text-success"></i> {{ dayjs(item.scanTime).format('HH:mm:ss') }} WIB
+                      </div>
+                    </td>
+                    <td class="text-center align-middle">
+                      <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm txt-label">
+                        Hadir
+                      </span>
+                    </td>
+                    <td class="text-center pe-4 align-middle">
+                      <button class="btn btn-sm btn-outline-info rounded-circle shadow-sm" @click="openPreviewModal(item)" title="Preview Sertifikat">
+                        <i class="bi bi-eye-fill"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light rounded-bottom-4" v-if="totalPages > 1">
+              <span class="text-muted txt-body">
+                Halaman {{ currentPage }} dari {{ totalPages }} 
+              </span>
+              
+              <div class="btn-group shadow-sm">
+                <button 
+                  class="btn btn-outline-secondary btn-sm txt-body" 
+                  :disabled="currentPage === 1"
+                  @click="changePage(currentPage - 1)"
+                >
+                  <i class="bi bi-chevron-left"></i> Prev
+                </button>
+                <button 
+                  class="btn btn-outline-secondary btn-sm txt-body" 
+                  :disabled="currentPage === totalPages"
+                  @click="changePage(currentPage + 1)"
+                >
+                  <i class="bi bi-chevron-right"></i> Next
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div v-else class="text-center py-5 px-3">
+            <i v-if="searchQuery" class="bi bi-search fs-1 text-muted opacity-50 d-block mb-3"></i>
+            <i v-else class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-3"></i>
+            
+            <h6 class="mb-1 txt-subtitle">{{ searchQuery ? 'Data Tidak Ditemukan' : 'Belum Ada Peserta Masuk' }}</h6>
+            <p class="text-muted txt-body">
+              {{ searchQuery ? `Tidak ada peserta hadir yang cocok dengan "${searchQuery}"` : 'Belum ada data peserta yang melakukan Check-in pada event ini.' }}
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showPreview" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.8);" @click.self="showPreview = false">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <div class="modal-header border-0 d-flex justify-content-end p-2">
+             <button type="button" class="btn-close btn-close-white" @click="showPreview = false"></button>
+          </div>
           
-          <div class="btn-group shadow-sm">
-            <button 
-              class="btn btn-outline-secondary btn-sm txt-body" 
-              :disabled="currentPage === 1"
-              @click="changePage(currentPage - 1)"
-            >
-              <i class="bi bi-chevron-left"></i> Prev
-            </button>
-            <button 
-              class="btn btn-outline-secondary btn-sm txt-body" 
-              :disabled="currentPage === totalPages"
-              @click="changePage(currentPage + 1)"
-            >
-              <i class="bi bi-chevron-right"></i> Next
-            </button>
+          <div class="modal-body d-flex justify-content-center p-0 align-items-center" style="min-height: 50vh;">
+             <CommonLoadingSpinner v-if="isPreviewLoading" class="text-white" />
+             
+             <div v-else-if="participantCertData" class="certificate-container shadow-lg w-100" style="max-width: 1123px;" :class="participantCertData.Certificate_Configuration.design.layout">
+                <img :src="displayPreviewImage" class="template-img" @error="($event.target as HTMLImageElement).style.display = 'none'">
+                
+                <div v-if="participantCertData.Certificate_Configuration.design.fields.eventTitle" class="preview-text" :style="createPreviewStyleObj(participantCertData.Certificate_Configuration.design.styles.eventTitle)">
+                  {{ participantCertData.Certificate_Configuration.design.fields.eventTitle }}
+                </div>
+                
+                <div v-if="participantCertData.Certificate_Configuration.design.fields.name" class="preview-text" :style="createPreviewStyleObj(participantCertData.Certificate_Configuration.design.styles.name)">
+                  {{ participantCertData.Certificate_Configuration.design.fields.name }}
+                </div>
+                
+                <div v-if="participantCertData.Certificate_Configuration.design.fields.domicile" class="preview-text" :style="createPreviewStyleObj(participantCertData.Certificate_Configuration.design.styles.domicile)">
+                  {{ participantCertData.Certificate_Configuration.design.fields.domicile }}
+                </div>
+             </div>
           </div>
         </div>
-
       </div>
-
-      <div v-else class="text-center py-5 px-3">
-        <i v-if="searchQuery" class="bi bi-search fs-1 text-muted opacity-50 d-block mb-3"></i>
-        <i v-else class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-3"></i>
-        
-        <h6 class="mb-1 txt-subtitle">{{ searchQuery ? 'Data Tidak Ditemukan' : 'Belum Ada Peserta Masuk' }}</h6>
-        <p class="text-muted txt-body">
-          {{ searchQuery ? `Tidak ada peserta hadir yang cocok dengan "${searchQuery}"` : 'Belum ada data peserta yang melakukan Check-in pada event ini.' }}
-        </p>
-      </div>
-
     </div>
+
   </div>
-</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
-import Swal from 'sweetalert2';
 import { useAttendanceStore } from '~/stores/attendance';
 import { useGlobalEventStore } from '~/stores/globalEvent'; 
 import { usePagination } from '~/composables/usePagination';
+import { useAlert } from '~/utils/swal';
+import { useCertificateStore } from '~/stores/certificate';
+import { useRuntimeConfig } from '#app';
 
 useHead({ title: 'Presensi Peserta' });
 
@@ -175,17 +244,78 @@ definePageMeta({ layout: 'admin' });
 
 const store = useAttendanceStore();
 const globalStore = useGlobalEventStore();
-const { alert: swalAlert } = useAlert();
+const certStore = useCertificateStore();
+const config = useRuntimeConfig();
+const imgBaseUrl = ref(config.public.img || '');
+
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 
 const isExporting = ref(false);
 const searchQuery = ref('');
 
-// 🟢 3. UBAH INIT HALAMAN: Tembak API kalau SK udah ada di Global Store
-await useAsyncData('attendance-init', async () => {
+const selectedParticipants = ref<string[]>([]);
+const isDistributing = ref(false);
+
+// 🟢 STATE UNTUK MODAL PREVIEW (REAL API)
+const showPreview = ref(false);
+const isPreviewLoading = ref(false);
+const participantCertData = ref<any>(null);
+
+// 🟢 LOGIC BUKA MODAL & TEMBAK API
+const openPreviewModal = async (item: any) => {
+  if (!globalStore.activeEventSK) return;
+  
+  showPreview.value = true;
+  isPreviewLoading.value = true;
+  participantCertData.value = null; 
+
+  try {
+    const res = await store.fetchCertificatePreview(item.pk, item.ticketId, globalStore.activeEventSK);
+    
+    if (res && res.Certificate_Configuration) {
+      participantCertData.value = res;
+    } else {
+      swalAlert('Gagal', 'Sertifikat belum tersedia untuk peserta ini.', 'warning');
+      showPreview.value = false;
+    }
+  } catch (error) {
+    swalAlert('Gagal', 'Terjadi kesalahan saat memuat sertifikat.', 'error');
+    showPreview.value = false;
+  } finally {
+    isPreviewLoading.value = false;
+  }
+};
+
+// 🟢 LOGIC URL GAMBAR DARI API BE
+const displayPreviewImage = computed(() => {
+  const imgData = participantCertData.value?.Certificate_Picture;
+  if (!imgData) return '';
+  if (imgData.startsWith('http')) return imgData;
+  return `${imgBaseUrl.value}/${globalStore.activeEventSK}/${imgData}.webp`;
+});
+
+// 🟢 LOGIC FONT SIZE DINAMIS (CQI)
+const createPreviewStyleObj = (fieldStyle: any) => {
+  if (!fieldStyle) return {};
+  const baseWidth = participantCertData.value?.Certificate_Configuration?.design?.layout === 'landscape' ? 1123 : 794;
+  const responsiveFontSize = (fieldStyle.fontSize / baseWidth) * 100;
+
+  return {
+    top: `${fieldStyle.top}%`,
+    left: `${fieldStyle.left}%`,
+    fontSize: `${responsiveFontSize}cqi`,
+    color: fieldStyle.color,
+    transform: 'translate(-50%, -50%)',
+    border: 'none',
+    backgroundColor: 'transparent'
+  };
+};
+
+await useAsyncData('cert-init', async () => {
   if (globalStore.activeEventSK) {
-    await store.fetchAttendanceData('present'); 
+    await certStore.fetchCertificateData(globalStore.activeEventSK);
   } else {
-    store.participants = []; // Kosongin kalau admin blm milih event di dashboard
+    certStore.base64Image = null; 
   }
   return true;
 });
@@ -210,7 +340,60 @@ const {
   totalItems, 
   paginatedData, 
   changePage 
-} = usePagination(filteredAttendees, 10);
+} = usePagination(filteredAttendees, 20);
+
+const isAllSelected = computed(() => {
+  return filteredAttendees.value.length > 0 && selectedParticipants.value.length === filteredAttendees.value.length;
+});
+
+const toggleSelectAll = (event: Event) => {
+  const isChecked = (event.target as HTMLInputElement).checked;
+  if (isChecked) {
+    selectedParticipants.value = filteredAttendees.value.map(item => item.ticketId);
+  } else {
+    selectedParticipants.value = [];
+  }
+};
+
+const handleBagikanSertifikat = () => {
+  swalConfirm(
+    'Bagikan Sertifikat?',
+    `Anda akan memberikan akses sertifikat kepada ${selectedParticipants.value.length} peserta yang dipilih.`,
+    'Ya, Bagikan!'
+  ).then(async (result) => {
+    if (result.isConfirmed) {
+      isDistributing.value = true;
+      
+      try {
+        // OBJECT PAYLOAD
+        const updatesPayload = selectedParticipants.value.map(ticketId => {
+          // Cari data PK asli pesertanya dari store
+          const participant = store.participants.find(p => p.ticketId === ticketId);
+          return {
+            PK: participant?.pk,
+            SK: ticketId,
+            Eligible: "true"
+          };
+        });
+
+        // API KE STORE
+        const success = await store.distributeCertificatesBulk(updatesPayload);
+        
+        if (success) {
+          swalAlert('Berhasil!', `Sertifikat berhasil dibagikan ke ${selectedParticipants.value.length} peserta.`, 'success');
+          selectedParticipants.value = []; // Reset ceklis biar rapi
+        } else {
+          throw new Error("Gagal dari server");
+        }
+        
+      } catch (error) {
+        swalAlert('Gagal', 'Terjadi kesalahan saat membagikan sertifikat.', 'error');
+      } finally {
+        isDistributing.value = false;
+      }
+    }
+  });
+};
 
 const handleExport = () => {
   if (!store.participants || store.participants.length === 0) {
@@ -264,6 +447,11 @@ const handleExport = () => {
 <style scoped>
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
+
+.cursor-pointer { cursor: pointer; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
 .input-group-text, .form-control {
   padding: 0.5rem 1rem;
 }
@@ -271,4 +459,18 @@ const handleExport = () => {
   border-color: #198754;
   box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
 }
+
+/* 🚀 CSS UNTUK CANVAS RESPONSIVE DI MODAL PREVIEW */
+.certificate-container { 
+  overflow: hidden; 
+  position: relative;
+  background-color: white;
+  width: 100% !important; 
+  max-width: 1123px; 
+  container-type: inline-size; 
+}
+.certificate-container.landscape { aspect-ratio: 297 / 210; height: auto !important; }
+.certificate-container.portrait { aspect-ratio: 210 / 297; height: auto !important; }
+.template-img { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; }
+.preview-text { position: absolute; user-select: none; font-weight: bold; white-space: nowrap; font-family: 'Arial', sans-serif; line-height: 1; padding: 0; z-index: 20; }
 </style>

@@ -90,7 +90,6 @@
 </template>
 
 <script setup lang="ts">
-// 🟢 Panggil Store di sini, HAPUS defineModel dan defineProps
 import { useCertificateStore } from '~/stores/certificate'; 
 
 const certStore = useCertificateStore();

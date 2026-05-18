@@ -19,27 +19,46 @@
               <thead class="border-bottom">
                 <tr class="text-secondary txt-label fw-bold">
                   <th class="ps-3 py-2">NAMA PESERTA</th>
+                  <th class="text-center py-2">SERTIFIKAT</th>
                   <th class="text-end pe-3">TIKET</th>
                 </tr>
               </thead>
-              <tbody v-if="Array.isArray(ticket?.participants)">
-                <tr v-for="(p, idx) in ticket.participants" :key="idx">
-                  <td class="ps-3 py-2">
-                    <div class="fw-bold text-dark txt-body">{{ p.Name }}</div>
+              <tbody v-if="Array.isArray(ticket?.Participant || ticket?.participants)">
+                <tr v-for="(p, idx) in (ticket?.Participant || ticket?.participants)" :key="idx">
+                  <td class="ps-3 py-2 align-middle">
+                    <div class="fw-bold text-dark txt-body text-capitalize">{{ p.Name }}</div>
                     <span class="text-muted txt-caption">{{ p.Gender || 'Umum' }}</span>
                   </td>
-                  <td class="text-end pe-3">
-                    <button v-if="getSmartStatus(ticket) === 'SUCCESSFUL'" @click="$emit('show-qr', ticket, p)" class="btn btn-sm btn-primary py-1 px-3 rounded-pill txt-caption fw-bold">
-                      <i class="bi bi-qr-code me-1"></i> QR
-                    </button>
-                    <span v-else class="badge bg-secondary opacity-50 txt-caption">Belum Lunas</span>
-                  </td>
-                </tr>
+
+                  <td class="text-center py-2 align-middle">
+  
+                    <button 
+                    v-if="getSmartStatus(ticket) === 'SUCCESSFUL' && p.IsPresent === true && p.HasCertificate === true" 
+                    @click="$emit('download-cert', ticket, p)" 
+                    class="btn btn-sm btn-outline-success py-1 px-3 rounded-pill txt-caption fw-bold"
+                    >
+                    <i class="bi bi-award me-1"></i> Unduh Sertifikat
+                  </button>
+                  <span v-else class="text-muted txt-caption">-</span>
+                </td>
+                
+                <td class="text-end pe-3 align-middle">
+                  <button 
+                  v-if="getSmartStatus(ticket) === 'SUCCESSFUL'" 
+                  @click="$emit('show-qr', ticket, p)" 
+                  class="btn btn-sm btn-primary py-1 px-3 rounded-pill txt-caption fw-bold"
+                  >
+                  <i class="bi bi-qr-code me-1"></i> QR
+                </button>
+                <span v-else class="badge bg-secondary opacity-50 txt-caption">Belum Lunas</span>
+              </td>
+
+            </tr>
               </tbody>
 
               <tbody v-else>
                 <tr>
-                  <td colspan="2" class="text-center py-4 text-muted txt-caption">
+                  <td colspan="3" class="text-center py-4 text-muted txt-caption">
                     <div class="spinner-border spinner-border-sm me-2 text-primary"></div>
                     Memuat detail nama peserta...
                   </td>
@@ -72,7 +91,7 @@ defineProps<{
 }>();
 
 // MENGIRIM PERINTAH KE HALAMAN UTAMA
-defineEmits(['close', 'show-qr']);
+defineEmits(['close', 'show-qr', 'download-cert']);
 
 const { getSmartStatus } = useTransactionStatus();
 </script>

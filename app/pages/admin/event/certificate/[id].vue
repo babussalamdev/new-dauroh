@@ -10,7 +10,7 @@
     <div class="card content-card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
       <div class="card-header bg-white p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
-          <h5 class="mb-0 fw-bold text-dark txt-title">Upload Template Sertifikat</h5>
+          <h5 class="mb-0 fw-bold text-dark txt-title">Sertifikat</h5>
           <p class="txt-caption text-muted mt-1 mb-0">Event: <span class="fw-bold text-primary">{{ globalStore.activeEvent?.Title || 'Memuat...' }}</span></p>
         </div>
       </div>
@@ -47,43 +47,49 @@ import { useRoute } from 'vue-router';
 import Swal from 'sweetalert2'; 
 import { useAlert } from '~/utils/swal';
 import { useGlobalEventStore } from '~/stores/globalEvent';
-import { useCertificateStore } from '~/stores/certificate'; // 🟢 Import Store Baru
+import { useCertificateStore } from '~/stores/certificate';
 
 definePageMeta({ layout: 'admin' });
 useHead({ title: 'Template Sertifikat' });
-
+const route = useRoute();
 const globalStore = useGlobalEventStore();
-const certStore = useCertificateStore(); // 🟢 Inisialisasi Store
+const certStore = useCertificateStore(); 
 const { alert: swalAlert } = useAlert();
 
-// 🟢 Fungsi tombol simpan sekarang cuma nyuruh Store buat kerja
+await useAsyncData('cert-init', async () => {
+  const eventSK = route.params.id as string;
+  if (eventSK) {
+    await certStore.fetchCertificateData(eventSK);
+  } else {
+    certStore.base64Image = null; 
+  }
+  return true;
+});
+
 const handleSimpan = async () => {
   if (!certStore.base64Image || certStore.imageErrors.length > 0) return;
-
   Swal.fire({
     title: 'Menyimpan...',
-    html: 'Sedang mengirim konfigurasi ke server.',
+    html: 'Sedang menyimpan konfigurasi desain ke server.',
     allowOutsideClick: false,
     didOpen: () => { Swal.showLoading(); }
   });
 
   try {
-    // Panggil fungsi API yang ada di Store
-    await certStore.simpanKonfigurasi(globalStore.activeEventSK || 'event_dummy_123');
+    const eventSK = route.params.id as string;
+    if (!eventSK) throw new Error("Event SK tidak ditemukan di URL");
+
+    const response = await certStore.saveConfigOnly(eventSK);
     
-    Swal.fire({
-      title: 'Sukses!',
-      text: 'Data berhasil disimpan (Mock API). Silakan test generate PDF.',
-      icon: 'success',
-      confirmButtonText: 'Test Halaman PDF',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.open('/test-pdf', '_blank'); 
-      }
-    });
+    if (response.ok) {
+      swalAlert('Berhasil!', 'Konfigurasi desain berhasil disimpan.', 'success');
+    } else {
+      throw new Error("Gagal menyimpan dari API");
+    }
 
   } catch (error) {
-    Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error');
+    swalAlert('Gagal', 'Terjadi kesalahan saat menyimpan konfigurasi.', 'error');
+    console.error("Detail Error:", error);
   }
 };
 </script>
