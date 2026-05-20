@@ -37,7 +37,8 @@ export const useAttendanceStore = defineStore('attendance', () => {
         gender: p.Gender?.toLowerCase() === 'akhwat' ? 'p' : 'l', 
         age: p.Age,
         scanTime: p.CheckIn || null, 
-        status: statusType === 'present' ? 'hadir' : 'belum'
+        status: statusType === 'present' ? 'hadir' : 'belum',
+        isCertificateSent: p.Certificate_Eligible === 'true'
       }));
 
     } catch (error) {
@@ -110,7 +111,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
-  async function distributeCertificatesBulk(updatesPayload: any[]) {
+ async function distributeCertificatesBulk(updatesPayload: any[]) {
     try {
       const { $apiBase } = useNuxtApp() as any;
       const { accessToken } = useAuth();
@@ -119,13 +120,22 @@ export const useAttendanceStore = defineStore('attendance', () => {
         Updates: updatesPayload
       };
 
-      await $apiBase.put('/update-attendance?type=admin', payload);
+      await $apiBase.put('/update-attendance?type=certificate-eligible', payload);
+      updatesPayload.forEach(update => {
+        const participant = participants.value.find(p => p.ticketId === update.SK);
+        if (participant) {
+           participant.isCertificateSent = true; // Kita tandain udah dikirim
+        }
+      });
+      
       return true;
     } catch (error) {
       console.error("Gagal membagikan sertifikat:", error);
       return false;
     }
   }
+
+
   return {
     participants,
     loading,

@@ -53,7 +53,6 @@
                           <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
                             <div>
                               <h6 class="fw-bold mb-1 text-truncate-2 txt-body">{{ ticket.event.Title }}</h6>
-                              <p class="text-muted mb-2 txt-caption"><i class="bi bi-geo-alt me-1"></i>{{ ticket.event.Place }}</p>
                             </div>
                             <div class="d-flex align-items-center justify-content-between mt-auto">
                               <span v-if="getSmartStatus(ticket) === 'PENDING'"

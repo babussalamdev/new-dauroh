@@ -89,7 +89,7 @@
                     <div class="text-muted text-truncate mt-1 txt-caption text-capitalize" style="max-width: 250px;">{{ tx.eventName || tx.Title }}</div>
                   </td>
                   <td>
-                    <div class="fw-bold text-success txt-body">{{ formatRupiah((tx.totalTicketsBought || tx.qty || 1) * (tx.ticketPrice || 0)) }}</div>
+                   <div class="fw-bold text-success txt-body">{{ formatRupiah(tx.ticketPrice || 0) }}</div>
                     <div class="text-muted mt-1 txt-caption">{{ tx.totalTicketsBought || tx.qty || 0 }} Tiket Event</div>
                   </td>
                   <td>

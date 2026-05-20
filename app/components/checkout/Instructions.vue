@@ -166,6 +166,11 @@ const handleExit = () => {
 
 // --- Lifecycle & Watcher ---
 onMounted(() => {
+  if (currentStatus.value === 'SUCCESSFUL') {
+    store.setStep('success');
+    return; 
+  }
+
   if (store.transactionDetails && store.event && currentStatus.value !== 'SUCCESSFUL') {
     userStore.registerEvent({
       event: store.event,

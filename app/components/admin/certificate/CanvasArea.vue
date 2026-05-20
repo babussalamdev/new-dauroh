@@ -147,18 +147,27 @@ const displayImage = computed(() => {
 });
 
 const validateImage = () => {
-  let errors = []; 
+  let errors: string[] = []; 
   if (!certStore.base64Image) {
     certStore.imageErrors = [];
     return;
   }
-  if (imageMeta.value.size > 3 * 1024 * 1024) errors.push('Ukuran file terlalu besar (Maksimal 3MB).');
-  if (!['image/jpeg', 'image/png'].includes(imageMeta.value.type)) errors.push('Format gambar tidak valid (Harus .JPG atau .PNG).');
-  if (certStore.config.layout === 'landscape' && imageMeta.value.width < imageMeta.value.height) {
-    errors.push('Orientasi tidak sesuai! Pilih Landscape, tapi mengunggah gambar Portrait.');
-  } else if (certStore.config.layout === 'portrait' && imageMeta.value.height < imageMeta.value.width) {
-    errors.push('Orientasi tidak sesuai! Pilih Portrait, tapi mengunggah gambar Landscape.');
+
+  // 🟢 CEK FORMAT & UKURAN: Cuma jalan kalau gambar baru di-upload lokal
+  if (imageMeta.value.size > 0) {
+    if (imageMeta.value.size > 3 * 1024 * 1024) errors.push('Ukuran file terlalu besar (Maksimal 3MB).');
+    if (!['image/jpeg', 'image/png'].includes(imageMeta.value.type)) errors.push('Format gambar tidak valid (Harus .JPG atau .PNG).');
   }
+
+  // 🟢 CEK ORIENTASI: Cuma jalan kalau dimensi panjang/lebar diketahui
+  if (imageMeta.value.width > 0 && imageMeta.value.height > 0) {
+    if (certStore.config.layout === 'landscape' && imageMeta.value.width < imageMeta.value.height) {
+      errors.push('Orientasi tidak sesuai! Pilih Landscape, tapi mengunggah gambar Portrait.');
+    } else if (certStore.config.layout === 'portrait' && imageMeta.value.height < imageMeta.value.width) {
+      errors.push('Orientasi tidak sesuai! Pilih Portrait, tapi mengunggah gambar Landscape.');
+    }
+  }
+
   certStore.imageErrors = errors;
 };
 
@@ -284,19 +293,21 @@ onUnmounted(() => {
 
 .certificate-container { 
   overflow: hidden; 
-  position: relative;
-  background-color: white;
-  width: 100% !important;
-  max-width: 1123px;
-  container-type: inline-size;
+  position: relative; 
+  background-color: white; 
+  width: 100% !important; 
+  /* 🟢 max-width: 1123px dihapus dari sini */
+  container-type: inline-size; 
 }
 
-/* Rasio Kertas A4 (297mm x 210mm) */
+/* 🟢 max-width disetting berdasar orientasinya biar pas! */
 .certificate-container.landscape { 
+  max-width: 1123px;
   aspect-ratio: 297 / 210; 
   height: auto !important; 
 }
 .certificate-container.portrait { 
+  max-width: 794px;
   aspect-ratio: 210 / 297; 
   height: auto !important; 
 }

@@ -33,7 +33,7 @@
                   <td class="text-center py-2 align-middle">
   
                     <button 
-                    v-if="getSmartStatus(ticket) === 'SUCCESSFUL' && p.IsPresent === true && p.HasCertificate === true" 
+                    v-if="getSmartStatus(ticket) === 'SUCCESSFUL' && p.CheckIn && p.Certificate_Eligible === 'true'" 
                     @click="$emit('download-cert', ticket, p)" 
                     class="btn btn-sm btn-outline-success py-1 px-3 rounded-pill txt-caption fw-bold"
                     >
@@ -89,6 +89,14 @@ defineProps<{
   show: boolean, 
   ticket: any 
 }>();
+
+const canDownloadCert = (participant: any, ticket: any) => {
+  const isPaid = getSmartStatus(ticket) === 'SUCCESSFUL';
+  const isPresent = !!participant.CheckIn; // Memastikan CheckIn tidak kosong
+  const isEligible = participant.Certificate_Eligible === 'true';
+  
+  return isPaid && isPresent && isEligible;
+};
 
 // MENGIRIM PERINTAH KE HALAMAN UTAMA
 defineEmits(['close', 'show-qr', 'download-cert']);

@@ -6,4 +6,5 @@ export interface AttendanceParticipant {
   age: number;
   scanTime: string | null; 
   status: 'hadir' | 'belum';
+  isCertificateSent?: boolean;
 }

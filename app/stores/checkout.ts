@@ -175,22 +175,19 @@ export const useCheckoutStore = defineStore(
          paymentMethod: paymentMethod.value || "Bank",
         };
 
-        currentStep.value = "instructions";
+        const status = (result.status || "").toUpperCase();
+        if (status === 'SUCCESSFUL') {
+          currentStep.value = "success"; 
+        } else {
+          currentStep.value = "instructions";
+        }
         return { success: true, data: result };
-      } catch (error: any) {
-        console.error("❌ Payment Error:", error);
-        const errData = error.response?.data || {};
-        const errorMessage =
-          errData.error ||
-          errData.message ||
-          "Terjadi kesalahan saat memproses pembayaran.";
-        return { success: false, message: String(errorMessage), error };
       } finally {
         isLoading.value = false;
       }
     }
-
-async function restoreTransactionData(skTransaction: string) {
+    
+    async function restoreTransactionData(skTransaction: string) {
       const { $apiBase } = useNuxtApp();
       const eventStore = useEventStore();
 
@@ -219,26 +216,28 @@ async function restoreTransactionData(skTransaction: string) {
           Domicile: p.Domicile,
         }));
         
-        // 🟢 TANGKAP INFAQ
+        // INFAQ
         donationAmount.value = Number(data.Infaq || data.infaq || 0);
-
-        // 🟢 PERBAIKAN LOGIKA HARGA TIKET (Gak Pake eventStore lagi)
-        // Tangkap Total Tagihan (Amount) dari BE, fallback ke 0 kalau ga ada
-        const totalAmountFromBE = Number(data.Amount || data.amount || 0);
-        
-        // Hitung harga satuan tiket (Total Amount dikurangi Infaq, lalu dibagi jumlah orang)
         let realPrice = 0;
-        if (participants.value.length > 0) {
-           const pureTicketTotal = totalAmountFromBE - donationAmount.value;
-           realPrice = pureTicketTotal / participants.value.length;
+        
+        // 1. Coba tangkap harga tiket (total) murni dari BE
+        const beTicketTotal = Number(data.ticketPrice || data.TicketPrice || 0);
+        
+        if (beTicketTotal > 0 && participants.value.length > 0) {
+           realPrice = beTicketTotal / participants.value.length;
+        } else {
+           // 2. Fallback ngitung mundur (Total Tagihan - Infaq + Diskon)
+           const totalAmountFromBE = Number(data.Amount || data.amount || 0);
+           const pureTicketTotal = totalAmountFromBE - donationAmount.value + discountAmount.value; 
+           realPrice = participants.value.length > 0 ? pureTicketTotal / participants.value.length : 0;
         }
 
         // 🟢 SET DATA EVENT KE STORE
         event.value = {
           SK: cleanEventSK,
-          Title: data.Title || data.title || "Nama Event Tidak Tersedia", // Ambil Title dari JSON
-          Place: "Lokasi Tidak Tersedia", // Ini minor, abaikan gapapa
-          Price: realPrice < 0 ? 0 : realPrice, // Jaga-jaga biar ga minus
+          Title: data.Title || data.title || "Nama Event Tidak Tersedia",
+          Place: "Lokasi Tidak Tersedia",
+          Price: realPrice < 0 ? 0 : realPrice,
         };
         
         repay.value = true;
