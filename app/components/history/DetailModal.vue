@@ -31,16 +31,14 @@
                   </td>
 
                   <td class="text-center py-2 align-middle">
-  
-                    <button 
-                    v-if="getSmartStatus(ticket) === 'SUCCESSFUL' && p.CheckIn && p.Certificate_Eligible === 'true'" 
-                    @click="$emit('download-cert', ticket, p)" 
-                    class="btn btn-sm btn-outline-success py-1 px-3 rounded-pill txt-caption fw-bold"
-                    >
-                    <i class="bi bi-award me-1"></i> Unduh Sertifikat
-                  </button>
-                  <span v-else class="text-muted txt-caption">-</span>
-                </td>
+                    <ButtonCertificateButton 
+                    v-if="canDownloadCert(p, ticket)"
+                    :pk="ticket.SK" 
+                    :sk="p.SK"
+                    :esk="ticket.SK ? ticket.SK.split('#')[0] : ''"
+                    />
+                    <span v-else class="text-muted txt-caption">-</span>
+                  </td>
                 
                 <td class="text-end pe-3 align-middle">
                   <button 

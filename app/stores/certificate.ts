@@ -7,6 +7,7 @@ export const useCertificateStore = defineStore('certificate', {
     base64Image: null as string | null,
     oldPictureName: "" as string, 
     imageErrors: [] as string[],
+    certificateData: null as any,
     
     previewData: {
       eventTitle: "JUDUL EVENT",
@@ -26,7 +27,6 @@ export const useCertificateStore = defineStore('certificate', {
   }),
 
   actions: {
-    // TARIK DATA DARI SERVER
     async fetchCertificateData(eventSK: string) {
       try {
         const { $apiBase } = useNuxtApp() as any;
@@ -34,11 +34,21 @@ export const useCertificateStore = defineStore('certificate', {
         const res = await $apiBase.get('/get-default', {
           params: { type: 'event', sk: eventSK }
         });
+        
         const dataPayload = res.data?.event || res.data;
-        const eventData = Array.isArray(dataPayload) ? dataPayload[0] : dataPayload;
+        let eventData = null;
+        if (Array.isArray(dataPayload)) {
+          eventData = dataPayload.find((item: any) => item.SK === eventSK);
+          if (!eventData) eventData = dataPayload[0];
+        } else {
+          eventData = dataPayload;
+        }
 
         if (eventData) {
-          // Set Gambar & Nama Lama
+          // Set data event
+          this.certificateData = eventData;
+
+          // Set Gambar & Nama
           if (eventData.Certificate_Picture) {
             this.base64Image = eventData.Certificate_Picture;
             this.oldPictureName = eventData.Certificate_Picture;
@@ -50,6 +60,11 @@ export const useCertificateStore = defineStore('certificate', {
           // Set Konfigurasi / Koordinat
           if (eventData.Certificate_Configuration?.design) {
             this.config = eventData.Certificate_Configuration.design;
+          }
+
+          // Set Preview Title otomatis dari nama event asli
+          if (eventData.Title) {
+            this.previewData.eventTitle = eventData.Title;
           }
         }
         return true;

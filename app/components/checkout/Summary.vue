@@ -214,7 +214,9 @@ const applyVoucher = async () => {
     if (disc > store.totalAmount) disc = store.totalAmount;
 
     if (disc > 0) {
-      store.setVoucher(code, disc);
+      const voucherSK = finalData.SK || code; 
+      store.setVoucher(voucherSK, disc); 
+      
       swalAlert('Voucher Berhasil!', `Potongan ${formatCurrency(disc)}`, 'success');
     } else {
       throw new Error("Voucher tidak valid atau nominal 0");

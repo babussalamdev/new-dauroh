@@ -70,6 +70,7 @@ export const useUserStore = defineStore("user", () => {
           created_at: item.CreatedAt,
           date: item.CreatedAt,
           amount: item.Amount,
+          infaq: item.Infaq, 
           participants: item.Participant,
           title: item.Title,
           Expired_Date: item.Expired_Date || item.expired_date || "-",

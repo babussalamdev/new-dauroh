@@ -29,9 +29,17 @@
         <i class="bi bi-qr-code-scan me-2"></i> Lihat Tiket & QR Code
       </button>
 
-      <button class="btn btn-outline-secondary rounded-pill py-2 fw-bold txt-body" @click="triggerDownload">
-        <i class="bi bi-download me-2"></i> Download Kuitansi
-      </button>
+      <ReceiptButton 
+        v-if="store.transactionDetails"
+        class="btn btn-outline-secondary rounded-pill py-2 fw-bold txt-body w-100"
+        :transaction="store.transactionDetails"
+        :event="store.event"
+        :participants="store.participants"
+        :discountAmount="store.discountAmount"
+        :infaqAmount="store.donationAmount"
+      >
+        Download Kuitansi
+      </ReceiptButton>
 
       <button class="btn btn-link text-decoration-none text-muted mt-2 fw-bold txt-body" @click="toDashboard">
         Kembali ke Dashboard
@@ -47,14 +55,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { useRouter } from 'vue-router';
-import { jsPDF } from "jspdf";
-import dayjs from "dayjs";
-import bgReceiptImage from '~/assets/img/Bg-Receipt.png';
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
-};
-// Nanti import ReceiptPayment disini pas udah dibuat
+import ReceiptButton from '~/components/button/ReceiptButton.vue';
 
 const store = useCheckoutStore();
 const router = useRouter();
@@ -77,40 +78,6 @@ const ticketData = computed(() => ({
 
 const showQr = () => {
   showQrModal.value = true;
-};
-
-const triggerDownload = async () => {
-  if (!store.transactionDetails) {
-     alert("Data transaksi tidak ditemukan. Silakan kembali ke riwayat.");
-     return;
-  }
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-  // 🟢 2. PAKE VARIABEL HASIL IMPORT DI DALAM FETCH
-  const imgData = await fetch(bgReceiptImage).then(r => r.blob()).then(blob => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  });
-
-  // 2. Gambar Background
-  doc.addImage(imgData as string, 'PNG', 0, 0, 210, 297); // A4 size
-
-  // 3. Masukin Teks (Koordinat X, Y)
-  doc.setFontSize(16);
-  doc.text("BUKTI PEMBAYARAN", 105, 40, { align: 'center' });
-
-  doc.setFontSize(12);
-  doc.text(`ID Transaksi : ${store.transactionDetails?.id}`, 20, 60);
-  doc.text(`Tanggal      : ${dayjs.unix(store.transactionDetails?.created_at).format('DD MMM YYYY HH:mm')}`, 20, 70);
-  doc.text(`Event        : ${store.event?.Title}`, 20, 80);
-  doc.text(`Total Bayar  : ${formatCurrency(Number(store.transactionDetails?.amount || 0))}`, 20, 90);
-  doc.text("Status       : LUNAS", 20, 100);
-
-  // 4. Download
-  doc.save(`Bukti Payment_${store.event?.Title}.pdf`);
 };
 
 const toDashboard = () => {

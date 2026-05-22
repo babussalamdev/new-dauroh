@@ -7,7 +7,9 @@
           <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Event Info</th>
           <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Peserta</th>
           <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Status</th>
-          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Total</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Harga Tiket</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Infaq</th>
+          <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Invoice</th>
           <th scope="col" class="pe-4 py-3 text-uppercase text-secondary txt-label fw-bold text-center" style="width: 150px;">Aksi</th>
         </tr>
       </thead>
@@ -38,8 +40,8 @@
           <td class="py-3 text-center">
             <div class="d-flex flex-column align-items-center gap-1">
               <template v-if="getSmartStatus(ticket) === 'SUCCESSFUL'">
-                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1 small-7">
-                  <i class="bi bi-check-circle-fill me-1"></i>Lunas
+                <span class="badge rounded-pill text-success border border-success-subtle px-2 py-1 small-7">
+                  <i class="bi bi-check-circle-fill me-1"></i>Successful
                 </span>
               </template>
 
@@ -61,7 +63,29 @@
           </td>
 
           <td class="py-3 text-center">
-            <span class="txt-body fw-bold text-dark">{{ formatCurrency(ticket.amount) }}</span>
+            <span class="txt-body fw-bold text-dark">{{ formatCurrency(ticket.amount || ticket.Amount) }}</span>
+          </td>
+
+          <td class="py-3 text-center">
+            <span class="txt-body fw-bold text-dark">
+              {{ formatCurrency(ticket.infaq || ticket.Infaq || 0) }}
+            </span>
+            </td>
+
+          <td class="py-3 text-center">
+            <ReceiptButton
+              v-if="getSmartStatus(ticket) === 'SUCCESSFUL'"
+              class="btn btn-xs btn-outline-primary border shadow-sm py-1 px-2 d-inline-flex align-items-center justify-content-center gap-1 rounded-pill txt-caption fw-bold"
+              :transaction="ticket"
+              :event="ticket.event || { Title: ticket.Title || ticket.title }"
+              :participants="ticket.Participant || ticket.participants || []"
+              :discountAmount="ticket.discount || ticket.Discount || 0"
+              :infaqAmount="ticket.infaq || ticket.Infaq || 0"
+            >
+              Download
+            </ReceiptButton>
+            
+            <span v-else class="text-muted txt-caption" style="font-size: 0.7rem;">-</span>
           </td>
 
           <td class="pe-4 py-3 text-center">
@@ -93,6 +117,7 @@
 <script setup lang="ts">
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import dayjs from 'dayjs';
+import ReceiptButton from '~/components/button/ReceiptButton.vue';
 
 defineProps<{ tickets: any[] }>();
 defineEmits(['open-detail', 'resume-payment']);

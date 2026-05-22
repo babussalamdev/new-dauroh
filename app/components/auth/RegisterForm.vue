@@ -141,7 +141,7 @@ const handleRegister = async () => {
   };
 
   try {
-    // 1. Tembak API Register
+    // API Register
     await $apiBase.post('/signup-account?type=user-client', userData);
 
     // 2. Jika Sukses -> Simpan Session & Redirect

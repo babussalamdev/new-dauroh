@@ -44,6 +44,8 @@ import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
+useHead({ title: 'Metode Pembayaran' });
+
 const store = useCheckoutStore();
 const router = useRouter();
 const selectedMethod = ref<string | null>(null)

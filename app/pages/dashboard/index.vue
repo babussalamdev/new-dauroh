@@ -18,9 +18,8 @@
                     <button class="nav-link rounded-3 px-4 py-2 txt-body fw-bold" :class="{ active: activeTab === 'active' }"
                       @click="activeTab = 'active'">
                       Event Aktif
-                      <span class="ms-1 badge txt-caption"
-                        :class="activeTab === 'active' ? 'bg-white text-primary' : 'bg-secondary text-white'">
-                        {{ activeEvent.length }}
+                      <span class="ms-1 badge txt-caption" :class="activeTab === 'active' ? 'bg-white text-primary' : 'bg-secondary text-white'">
+                        {{ uniqueActiveEvent.length }}
                       </span>
                     </button>
                   </li>
@@ -35,8 +34,8 @@
 
               <div class="card-body bg-white pt-0">
                 <div v-if="activeTab === 'active'">
-                  <div v-if="activeEvent.length > 0" class="row g-3">
-                    <div v-for="(ticket, index) in activeEvent" :key="'active-' + index" class="col-md-6 col-lg-4">
+                  <div v-if="uniqueActiveEvent.length > 0" class="row g-3">
+                    <div v-for="(ticket, index) in uniqueActiveEvent" :key="'active-' + index" class="col-md-6 col-lg-4">
                       <div class="card h-100 border rounded-4 hover-shadow transition">
                         <div class="d-flex flex-row h-100">
                           <div class="p-2">
@@ -246,6 +245,16 @@ const activeEvent = computed(() => {
     if (dates.length === 0) return true;
     const lastDate = dates.reduce((max, curr) => curr.date > max ? curr.date : max, dates[0].date);
     return dayjs().isBefore(dayjs(lastDate).add(1, 'day'));
+  });
+});
+
+const uniqueActiveEvent = computed(() => {
+  const seen = new Set();
+  return activeEvent.value.filter(t => {
+    const eventSK = (t.SK || '').split('#')[0];
+    if (seen.has(eventSK)) return false; 
+    seen.add(eventSK);
+    return true; 
   });
 });
 

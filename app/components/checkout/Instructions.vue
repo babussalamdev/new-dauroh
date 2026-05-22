@@ -82,6 +82,8 @@ import mandiriLogo from '~/assets/img/bank/mandiri.png';
 import permataLogo from '~/assets/img/bank/permata.png';
 import qrisLogo from '~/assets/img/bank/qris.png';
 
+useHead({ title: 'Instruksi Pembayaran' });
+
 const { $connectSocket, $closeSocket } = useNuxtApp(); // Ambil plugin socket
 const config = useRuntimeConfig();
 const store = useCheckoutStore();
@@ -89,6 +91,7 @@ const userStore = useUserStore();
 const router = useRouter();
 const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const showQrModal = ref(false);
+const isExplicitExit = ref(false);
 
 // --- Computed Helpers ---
 const currentStatus = computed(() => {
@@ -137,7 +140,6 @@ const BankComponents: any = {
 };
 
 const currentBankComponent = computed(() => {
-  // [FIX 3] MAPPING BSM -> BSI BIAR PANDUAN MUNCUL
   let method = (store.transactionDetails?.paymentMethod || '').toUpperCase();
   if (method === 'BSM') method = 'BSI';
 
@@ -160,8 +162,10 @@ const handleExpiredState = () => {
     store.setStep('select');
   });
 };
+
 const handleExit = () => {
-  router.push('/dashboard');
+  isExplicitExit.value = true; // Tandain kalau user emang niat keluar
+  router.push('/dashboard'); 
 };
 
 // --- Lifecycle & Watcher ---
@@ -207,26 +211,43 @@ const handleCloseQr = () => {
 
 // Guard Navigation
 onBeforeRouteLeave((to, from, next) => {
-  if (isPaid.value || to.path === '/dashboard') {
+  // Kalau udah dibayar lunas, langsung lolosin
+  if (isPaid.value) {
     next();
     return;
   }
+  
   if (to.path === from.path) {
     next();
     return;
   }
 
-  // 🟢 Pake swalConfirm dari utility
+  // Skenario 1: Kalau user klik tombol "Bayar Nanti"
+  if (isExplicitExit.value || to.path === '/dashboard') {
+    next(); // Izinkan pindah halaman TANPA Swal
+    
+    // Kasih jeda 300ms biar pindah halaman dulu, baru store-nya dibersihin (mencegah UI kedip)
+    setTimeout(() => {
+      store.clearCheckout();
+    }, 300);
+    return;
+  }
+
+  // Skenario 2: Kalau user klik tombol Back di Browser atau ganti URL manual
   swalConfirm(
     'Keluar halaman?',
     'Anda bisa melanjutkan pembayaran nanti lewat menu Riwayat.',
     'Ya, Keluar'
   ).then((result) => {
     if (result.isConfirmed) {
-      store.clearCheckout();
-      next();
+      next(); // Izinkan pindah halaman
+      
+      // Sama, kasih jeda biar transisinya mulus
+      setTimeout(() => {
+        store.clearCheckout();
+      }, 300);
     } else {
-      next(false);
+      next(false); // Batal keluar, tetep stay di halaman Instruksi
     }
   });
 });

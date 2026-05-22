@@ -11,7 +11,7 @@
       <div class="card-header bg-white p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
           <h5 class="mb-0 fw-bold text-dark txt-title">Sertifikat</h5>
-          <p class="txt-caption text-muted mt-1 mb-0">Event: <span class="fw-bold text-primary">{{ globalStore.activeEvent?.Title || 'Memuat...' }}</span></p>
+          <p class="txt-caption text-muted mt-1 mb-0">Event: <span class="fw-bold text-primary">{{ certStore.certificateData?.Title || certStore.certificateData?.title || 'Memuat...' }}</span></p>
         </div>
       </div>
 
@@ -46,13 +46,11 @@
 import { useRoute } from 'vue-router';
 import Swal from 'sweetalert2'; 
 import { useAlert } from '~/utils/swal';
-import { useGlobalEventStore } from '~/stores/globalEvent';
 import { useCertificateStore } from '~/stores/certificate';
 
 definePageMeta({ layout: 'admin' });
 useHead({ title: 'Template Sertifikat' });
 const route = useRoute();
-const globalStore = useGlobalEventStore();
 const certStore = useCertificateStore(); 
 const { alert: swalAlert } = useAlert();
 

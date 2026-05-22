@@ -113,7 +113,7 @@ const processTicket = async (code: string) => {
       throw new Error("Data QR Code tidak lengkap.");
     }
 
-    // 2. Tembak API Backend
+    // API Backend
    const response = await $apiBase.put('/update-attendance?type=scan', {
     PK: qrData.pk,
     SK: qrData.sk

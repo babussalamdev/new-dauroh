@@ -26,12 +26,11 @@ export const useCheckoutStore = defineStore(
       if (!event.value || !participants.value) return 0;
       return (event.value.Price || 0) * participants.value.length;
     });
-
     const finalAmount = computed(() => {
-  const total = (event.value?.Price || 0) * participants.value.length;
-  const final = total - discountAmount.value + donationAmount.value;
-  return final < 0 ? 0 : final;
-});
+      const total = (event.value?.Price || 0) * participants.value.length;
+      const final = total - discountAmount.value + donationAmount.value;
+      return final < 0 ? 0 : final;
+    });
 
     const hasVoucher = computed(
       () => !!voucherCode.value && voucherApplied.value,
@@ -158,6 +157,7 @@ export const useCheckoutStore = defineStore(
           sender_bank_type: paymentType,
           repay: repay.value,
           Infaq: donationAmount.value ? String(donationAmount.value) : "0",
+          Voucher: voucherCode.value || "",
           ...(voucherCode.value && { VoucherCode: voucherCode.value }),
         };
 
@@ -187,7 +187,7 @@ export const useCheckoutStore = defineStore(
       }
     }
     
-    async function restoreTransactionData(skTransaction: string) {
+  async function restoreTransactionData(skTransaction: string) {
       const { $apiBase } = useNuxtApp();
       const eventStore = useEventStore();
 
@@ -203,10 +203,9 @@ export const useCheckoutStore = defineStore(
         const data = response.data?.data || response.data;
         if (!data || !data.Participant) return false;
 
-        const rawSubject = data.Subject || data.PK || "";
-        const cleanEventSK = rawSubject.replace("event#", "").split("#")[0];
+        const fullEventSK = data.SK || data.Participant[0]?.PK || skTransaction;
 
-        // 🟢 ISI DATA PESERTA
+        // DATA PESERTA
         participants.value = data.Participant.map((p: any) => ({
           PK: p.PK,
           SK: p.SK,
@@ -218,26 +217,29 @@ export const useCheckoutStore = defineStore(
         
         // INFAQ
         donationAmount.value = Number(data.Infaq || data.infaq || 0);
-        let realPrice = 0;
         
-        // 1. Coba tangkap harga tiket (total) murni dari BE
-        const beTicketTotal = Number(data.ticketPrice || data.TicketPrice || 0);
-        
-        if (beTicketTotal > 0 && participants.value.length > 0) {
-           realPrice = beTicketTotal / participants.value.length;
+        // Cek kalau transaksi sebelumnya pakai voucher, balikin datanya!
+        if (data.VoucherCode || data.Voucher) {
+            voucherCode.value = data.VoucherCode || data.Voucher || "";
+            discountAmount.value = Number(data.Discount || data.discount || 0); 
+            voucherApplied.value = true;
         } else {
-           // 2. Fallback ngitung mundur (Total Tagihan - Infaq + Diskon)
-           const totalAmountFromBE = Number(data.Amount || data.amount || 0);
-           const pureTicketTotal = totalAmountFromBE - donationAmount.value + discountAmount.value; 
-           realPrice = participants.value.length > 0 ? pureTicketTotal / participants.value.length : 0;
+            removeVoucher();
         }
+
+        let realPrice = 0;
+        const totalAmountFromBE = Number(data.Amount || data.amount || 0);
+        const pureTicketTotal = totalAmountFromBE + discountAmount.value; 
+        
+        realPrice = participants.value.length > 0 ? pureTicketTotal / participants.value.length : 0;
 
         // 🟢 SET DATA EVENT KE STORE
         event.value = {
-          SK: cleanEventSK,
+          SK: fullEventSK, // 👈 SEKARANG UDAH FULL TERKIRIM (3a89f9#b5ab2e)
           Title: data.Title || data.title || "Nama Event Tidak Tersedia",
           Place: "Lokasi Tidak Tersedia",
           Price: realPrice < 0 ? 0 : realPrice,
+          Picture: data.Picture || data.event?.Picture || data.event?.picture || "",
         };
         
         repay.value = true;
