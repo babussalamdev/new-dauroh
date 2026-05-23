@@ -307,7 +307,7 @@ onUnmounted(() => {
   height: auto !important; 
 }
 .certificate-container.portrait { 
-  max-width: 794px;
+  max-width: 700px;
   aspect-ratio: 210 / 297; 
   height: auto !important; 
 }

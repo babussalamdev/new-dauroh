@@ -134,7 +134,9 @@ import { useEventStore } from "@/stores/event";
 import type { Event } from "@/types/event";
 import Swal from "sweetalert2";
 import { useRouter } from 'vue-router'; 
+import { useAlert } from '~/utils/swal';
 
+const { alert: swalAlert } = useAlert();
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 const router = useRouter();
@@ -245,14 +247,14 @@ const handleFinalSave = async (finalPayload: any) => {
     const success = await eventStore.createTiketEvent(finalPayload);
     
     if (success) {
-      Swal.fire("Berhasil", "Event baru berhasil dibuat!", "success");
+      swalAlert("Berhasil", "Event baru berhasil dibuat!", "success");
       closeMediaModal();
       await eventStore.fetchAdminTiketEvent(); 
     } else {
-      Swal.fire("Gagal", "Terjadi kesalahan saat menyimpan event ke server.", "error");
+      swalAlert("Gagal", "Terjadi kesalahan saat menyimpan event ke server.", "error");
     }
   } catch (error) {
-    Swal.fire("Error", "Gagal menghubungi server.", "error");
+    swalAlert("Error", "Gagal menghubungi server.", "error");
   } finally {
   }
 };

@@ -3,7 +3,7 @@
     <div v-if="!eventStore.loading.tiketEvent && eventStore.tiketEvent.length > 0" id="tiketEvent"
       class="carousel-wrapper" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
       
-      <div class="d-flex card-container-flex" ref="scrollContainer">
+      <div class="d-flex card-container-flex" :class="{ 'center-on-desktop': eventStore.tiketEvent.length < 4 }" ref="scrollContainer">
         
         <div v-for="event in eventStore.tiketEvent" :key="event.SK" class="event-card-wrapper">
           <div class="text-decoration-none d-block h-100 position-relative"
@@ -50,13 +50,13 @@
       </div>
 
       <button class="custom-nav-btn prev-btn" type="button" @click="scrollPrev"
-        v-show="eventStore.tiketEvent.length > 1">
+        v-show="eventStore.tiketEvent.length > 4">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Previous</span>
       </button>
       
       <button class="custom-nav-btn next-btn" type="button" @click="scrollNext"
-        v-show="eventStore.tiketEvent.length > 1">
+        v-show="eventStore.tiketEvent.length > 4">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
       </button>
@@ -347,6 +347,13 @@ const handleRegisterClick = async (eventItem) => {
 
 @media (min-width: 992px) {
   .event-card-wrapper { width: calc(25% - 0.75rem); }
+}
+
+@media (min-width: 768px) {
+  .center-on-desktop {
+    justify-content: center !important;
+    width: 100% !important;
+  }
 }
 
 /* 🟢 FIX TOMBOL PREV/NEXT: Background dihapus & disembunyiin di mobile */
