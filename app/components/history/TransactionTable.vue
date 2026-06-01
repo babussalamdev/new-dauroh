@@ -63,7 +63,7 @@
           </td>
 
           <td class="py-3 text-center">
-            <span class="txt-body fw-bold text-dark">{{ formatCurrency(ticket.amount || ticket.Amount) }}</span>
+            <span class="txt-body fw-bold text-dark">{{ formatCurrency(ticket.amount || ticket.Amount|| 0) }}</span>
           </td>
 
           <td class="py-3 text-center">

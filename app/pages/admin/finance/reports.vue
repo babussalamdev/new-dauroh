@@ -77,6 +77,7 @@
 </template>
 
 <script setup lang="ts">
+import { useNuxtApp } from '#app';
 import { ref } from 'vue';
 import { useAlert } from '~/utils/swal';
 import { useGlobalEventStore } from '~/stores/globalEvent';
@@ -93,22 +94,70 @@ const globalStore = useGlobalEventStore();
 const isLoadingExcel = ref(false);
 
 // FUNGSI EXPORT EXCEL
-const handleExportExcel = () => {
+const handleExportExcel = async () => {
   if (!globalStore.activeEventSK) return;
 
   isLoadingExcel.value = true;
+  const { $apiBase } = useNuxtApp();
   
-  // 🟢 Nanti di sini tinggal tembak API:
-  // await $apiBase.get(`/export-excel?sk=${globalStore.activeEventSK}`);
+  try {
+    const response = await $apiBase.get('/get-finance', {
+      params: { 
+        type: 'export', 
+        sk: globalStore.activeEventSK 
+      }
+    });
 
-  setTimeout(() => {
-    isLoadingExcel.value = false;
+    const result = response.data?.data || response.data;
+
+    // Pastiin data base64-nya beneran nyampe
+    if (!result || !result.base64data) {
+      throw new Error("Data laporan kosong atau tidak valid dari server.");
+    }
+
+    // Convert Base64 ke wujud File Binary (Blob)
+    const base64Data = result.base64data;
+    const fileName = result.filename || `Report_Keuangan_${globalStore.activeEventSK}.xlsx`;
+    
+    // Proses Decode native
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    
+    // file .xlsx
+    const blob = new Blob([byteArray], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+
+    // Trigger Download
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+
+    // Kasih notif sukses
     swalAlert(
       'Berhasil', 
-      'File Rekap_Keuangan.xlsx berhasil di-download!', 
+      `File ${fileName} berhasil di-download!`, 
       'success'
     );
-  }, 1500);
+
+  } catch (error: any) {
+    console.error("Gagal Export Excel:", error);
+    swalAlert(
+      'Gagal', 
+      error.message || 'Terjadi kesalahan saat mengunduh laporan Excel.', 
+      'error'
+    );
+  } finally {
+    isLoadingExcel.value = false;
+  }
 };
 
 </script>
