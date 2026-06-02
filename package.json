@@ -41,7 +41,6 @@
     "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
     "@types/bootstrap": "^5.2.10",
     "@types/node": "^24.5.2",
-    "baseline-browser-mapping": "^2.8.29",
     "sass-embedded": "^1.93.2"
   }
 }

@@ -5,7 +5,7 @@
     class="btn btn-sm btn-outline-success py-1 px-3 rounded-pill txt-caption fw-bold"
   >
     <span v-if="isGenerating" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-    <i v-else class="bi bi-award me-1"></i>
+    <i v-else></i>
     {{ isGenerating ? 'Menyiapkan...' : 'Unduh Sertifikat' }}
   </button>
 </template>

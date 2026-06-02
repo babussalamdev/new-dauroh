@@ -91,9 +91,11 @@
                       </span>
                     </td>
                     
-                    <td class="text-muted txt-caption">{{ v.Expired }}</td>
+                    <td class="txt-caption" :class="isExpired(v.Expired) ? 'text-danger fw-bold' : 'text-muted'">
+                      {{ v.Expired }}
+                    </td>
                     <td class="fw-medium text-dark txt-body">Rp{{ formatCurrency(v.Nominal) }}</td>
-                    <td class="txt-caption text-muted">{{ v.User || '-' }}</td>
+                    <td class="txt-caption text-muted">{{ v.Username || '-' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -197,6 +199,14 @@ await useAsyncData('voucher-init', async () => {
 });
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID').format(val);
+
+const isExpired = (dateStr: string) => {
+  if (!dateStr) return false;
+  // Ambil tanggal hari ini dengan format YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
+  // Kalau tanggal expired lebih kecil (sebelum) hari ini, berarti true (kadaluarsa)
+  return dateStr < today;
+};
 </script>
 
 <style scoped>

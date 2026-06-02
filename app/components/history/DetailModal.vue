@@ -20,7 +20,7 @@
                 <tr class="text-secondary txt-label fw-bold">
                   <th class="ps-3 py-2">NAMA PESERTA</th>
                   <th class="text-center py-2">SERTIFIKAT</th>
-                  <th class="text-end pe-3">TIKET</th>
+                  <th class="text-center pe-3">TIKET</th>
                 </tr>
               </thead>
               <tbody v-if="Array.isArray(ticket?.Participant || ticket?.participants)">
@@ -40,7 +40,7 @@
                     <span v-else class="text-muted txt-caption">-</span>
                   </td>
                 
-                <td class="text-end pe-3 align-middle">
+                <td class="text-center pe-3 align-middle">
                   <button 
                   v-if="getSmartStatus(ticket) === 'SUCCESSFUL'" 
                   @click="$emit('show-qr', ticket, p)" 

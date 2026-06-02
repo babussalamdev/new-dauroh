@@ -136,8 +136,8 @@
                       </span>
                     </td>
                     <td class="text-center pe-4 align-middle">
-                      <button class="btn btn-sm btn-outline-info rounded-circle shadow-sm" @click="openPreviewModal(item)" title="Preview Sertifikat">
-                        <i class="bi bi-eye-fill"></i>
+                      <button class="btn btn-link text-secondary" @click="openPreviewModal(item)" title="Preview Sertifikat">
+                        <i class="bi bi-eye-fill fs-5"></i>
                       </button>
                     </td>
                   </tr>

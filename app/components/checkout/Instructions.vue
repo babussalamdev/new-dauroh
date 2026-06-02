@@ -84,7 +84,7 @@ import qrisLogo from '~/assets/img/bank/qris.png';
 
 useHead({ title: 'Instruksi Pembayaran' });
 
-const { $connectSocket, $closeSocket } = useNuxtApp(); // Ambil plugin socket
+const { $connectSocket, $closeSocket } = useNuxtApp();
 const config = useRuntimeConfig();
 const store = useCheckoutStore();
 const userStore = useUserStore();
@@ -96,11 +96,9 @@ const isExplicitExit = ref(false);
 // --- Computed Helpers ---
 const currentStatus = computed(() => {
   if (store.isExpired) return 'EXPIRED';
-
-  // Pastikan status aman dari null
   const rawStatus = (store.transactionDetails?.status || 'PENDING').toUpperCase();
 
-  if (['SUCCESSFUL', 'PAID', 'SETTLED'].includes(rawStatus)) return 'SUCCESSFUL';
+  if (['SUCCESSFUL'].includes(rawStatus)) return 'SUCCESSFUL';
   if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(rawStatus)) return 'EXPIRED';
 
   return 'PENDING';
@@ -132,7 +130,7 @@ const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 
 const BankComponents: any = {
   'BNI': defineAsyncComponent(() => import('~/components/bank/BNI.vue')),
   'BRI': defineAsyncComponent(() => import('~/components/bank/BRI.vue')),
-  'BSI': defineAsyncComponent(() => import('~/components/bank/BSI.vue')), // Key tetap BSI
+  'BSI': defineAsyncComponent(() => import('~/components/bank/BSI.vue')),
   'CIMB': defineAsyncComponent(() => import('~/components/bank/CIMB.vue')),
   'DANAMON': defineAsyncComponent(() => import('~/components/bank/Danamon.vue')),
   'MANDIRI': defineAsyncComponent(() => import('~/components/bank/Mandiri.vue')),
@@ -148,23 +146,19 @@ const currentBankComponent = computed(() => {
 
 // --- Helper: Handle Expired Logic ---
 const handleExpiredState = () => {
-  // 🟢 Pake swalAlert tipe 'error' biar dapet animasi halus
+  isExplicitExit.value = true;
   swalAlert(
     'Waktu Habis!', 
     'Sesi pembayaran Anda telah berakhir.', 
     'error'
   ).then(() => {
-    if (store.resetTransaction) store.resetTransaction();
-    else {
-      store.transactionDetails = null;
-      store.paymentMethod = null;
-    }
-    store.setStep('select');
+    store.clearCheckout();
+    router.push('/history');
   });
 };
 
 const handleExit = () => {
-  isExplicitExit.value = true; // Tandain kalau user emang niat keluar
+  isExplicitExit.value = true;
   router.push('/dashboard'); 
 };
 
@@ -196,7 +190,6 @@ watch(currentStatus, (newStatus) => {
     handleExpiredState();
   }
   else if (status === 'SUCCESSFUL') {
-    // Register ulang/update status saat sukses
     userStore.registerEvent({
       event: store.event,
       participants: store.participants,
@@ -211,7 +204,6 @@ const handleCloseQr = () => {
 
 // Guard Navigation
 onBeforeRouteLeave((to, from, next) => {
-  // Kalau udah dibayar lunas, langsung lolosin
   if (isPaid.value) {
     next();
     return;
@@ -221,33 +213,27 @@ onBeforeRouteLeave((to, from, next) => {
     next();
     return;
   }
-
-  // Skenario 1: Kalau user klik tombol "Bayar Nanti"
-  if (isExplicitExit.value || to.path === '/dashboard') {
-    next(); // Izinkan pindah halaman TANPA Swal
-    
-    // Kasih jeda 300ms biar pindah halaman dulu, baru store-nya dibersihin (mencegah UI kedip)
+  if (isExplicitExit.value || to.path === '/dashboard' || to.path === '/history') {
+    next();
     setTimeout(() => {
       store.clearCheckout();
     }, 300);
     return;
   }
 
-  // Skenario 2: Kalau user klik tombol Back di Browser atau ganti URL manual
   swalConfirm(
     'Keluar halaman?',
     'Anda bisa melanjutkan pembayaran nanti lewat menu Riwayat.',
     'Ya, Keluar'
   ).then((result) => {
     if (result.isConfirmed) {
-      next(); // Izinkan pindah halaman
-      
-      // Sama, kasih jeda biar transisinya mulus
+      next();
+    
       setTimeout(() => {
         store.clearCheckout();
       }, 300);
     } else {
-      next(false); // Batal keluar, tetep stay di halaman Instruksi
+      next(false);
     }
   });
 });

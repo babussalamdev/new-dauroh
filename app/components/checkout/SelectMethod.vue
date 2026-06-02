@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useAlert } from '~/utils/swal';
@@ -50,6 +50,7 @@ const store = useCheckoutStore();
 const router = useRouter();
 const selectedMethod = ref<string | null>(null)
 const { confirm: swalConfirm } = useAlert();
+const isRepay = computed(() => store.repay === true);
 
 // Data Bank
 const banks = [
@@ -70,8 +71,13 @@ onMounted(() => {
   }
   selectedMethod.value = store.paymentMethod;
 });
+
 const handleBack = () => {
-  router.back();
+  if (isRepay.value) {
+    router.push('/history');
+  } else {
+    router.back();
+  }
 };
 
 const handleSelect = () => {
@@ -85,6 +91,7 @@ const handleSelect = () => {
 onBeforeRouteLeave((to, from, next) => {
   if (to.path === '/dashboard') {
     next();
+    setTimeout(() => store.clearCheckout(), 300);
     return;
   }
 
@@ -97,18 +104,37 @@ onBeforeRouteLeave((to, from, next) => {
     next();
     return;
   }
-  swalConfirm(
-    'Batalkan pendaftaran?',
-    'Data yang sudah Anda isi akan hilang jika keluar sekarang.',
-    'Ya, Batalkan'
-  ).then((result) => {
-    if (result.isConfirmed) {
-      store.clearCheckout();
-      next();
-    } else {
-      next(false);
-    }
-  });
+
+  // KETIKA REPAY (BAYAR ULANG)
+  if (isRepay.value) {
+    swalConfirm(
+      'Batal pilih metode?',
+      'Anda bisa melanjutkan pembayaran lagi nanti lewat menu Riwayat Pendaftaran.',
+      'Ya, Keluar'
+    ).then((result) => {
+      if (result.isConfirmed) {
+        store.clearCheckout();
+        next();
+      } else {
+        next(false);
+      }
+    });
+  } 
+  //KETIKA PENDAFTARAN BARU
+  else {
+    swalConfirm(
+      'Batalkan pendaftaran?',
+      'Data yang sudah Anda isi akan hilang jika keluar sekarang.',
+      'Ya, Batalkan'
+    ).then((result) => {
+      if (result.isConfirmed) {
+        store.clearCheckout();
+        next();
+      } else {
+        next(false);
+      }
+    });
+  }
 });
 </script>
 

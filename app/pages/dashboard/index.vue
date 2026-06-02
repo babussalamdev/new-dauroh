@@ -94,23 +94,24 @@
               </div>
             </div>
             
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-              <div class="card-header bg-white border-0 py-3">
+            <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              
+              <div class="card-header bg-white border-bottom py-3">
                 <div class="d-flex align-items-center justify-content-between">
                   <h5 class="mb-0 fw-bold text-dark txt-subtitle">
                     <i class="bi bi-list me-2 text-primary"></i>Riwayat Transaksi
                   </h5>
                 </div> 
-                
-                <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+              </div>
+              
               <div class="card-body p-0">
                 <div v-if="activeEvent.length > 0" class="table-responsive">
                   <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                       <tr>
-                        <th class="border-0 txt-label text-uppercase fw-bold text-muted">Transaksi</th>
+                        <th class="border-0 txt-label text-uppercase fw-bold text-muted ps-4">Transaksi</th>
                         <th class="border-0 txt-label text-uppercase fw-bold text-muted">Detail Event</th>
-                        <th class="border-0 txt-label text-uppercase fw-bold text-muted text-center">Tiket</th>
+                        <th class="border-0 txt-label text-uppercase fw-bold text-muted text-center pe-4">Tiket</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -129,11 +130,11 @@
                         </td>
                         <td class="text-center pe-4">
                           <button
-                          v-if="getSmartStatus(ticket) === 'SUCCESSFUL' || ['SUCCESSFUL', 'SUCCESS', 'PAID'].includes((ticket.Status || ticket.status || '').toUpperCase())"
-                          class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm txt-caption fw-bold"
-                          @click="openDetailParticipant(ticket)">
-                          <i class="bi bi-people me-2"></i>Lihat Peserta
-                        </button>
+                            v-if="getSmartStatus(ticket) === 'SUCCESSFUL' || ['SUCCESSFUL', 'SUCCESS', 'PAID'].includes((ticket.Status || ticket.status || '').toUpperCase())"
+                            class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm txt-caption fw-bold"
+                            @click="openDetailParticipant(ticket)">
+                            <i class="bi bi-people me-2"></i>Lihat Peserta
+                          </button>
 
                           <span v-else-if="getSmartStatus(ticket) === 'PENDING'"
                             class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill txt-caption fw-bold">
@@ -153,7 +154,6 @@
                   <p class="text-muted txt-body fw-bold">Belum ada transaksi untuk event aktif saat ini.</p>
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -174,8 +174,6 @@
       :participant="selectedParticipantForQr"
       @close="closeQrModal" 
     />
-
-  </div>
 </template>
 
 <script setup>
