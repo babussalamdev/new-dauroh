@@ -15,7 +15,13 @@
       </div>
     </div>
 
-    <div class="card-body p-3 bg-white">
+    <div v-if="!globalStore.activeEventSK" class="text-center py-5 text-muted bg-light px-3 rounded-bottom-4">
+      <i class="bi bi-arrow-up-circle fs-1 mb-2 d-block text-secondary" style="opacity: 0.5;"></i>
+      <p class="mb-0 fw-medium txt-body">Silakan pilih <strong>Event</strong> terlebih dahulu di halaman Dashboard.</p>
+      <NuxtLink to="/admin" class="btn btn-sm btn-primary mt-3 rounded-pill px-4 shadow-sm txt-caption">Ke Dashboard</NuxtLink>
+    </div>
+
+    <div v-else class="card-body p-3 bg-white">
       <CommonLoadingSpinner v-if="isLoading" class="my-5" />
 
       <div v-else>

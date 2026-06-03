@@ -434,15 +434,11 @@ async function fetchEventDetail(SK: string) {
     const token = useCookie("AccessToken").value;
     if (!token || !photoBase64) return false;
     loading.uploadPhoto = true;
-
-    // 🟢 1. AMBIL NAMA GAMBAR LAMA DARI STATE SEBELUM DIGANTI
     const currentEvent = adminTiketEvent.value.find(d => d.SK === eventSK) || currentEventDetail.value;
     const oldPictureName = currentEvent?.Picture || "";
 
     try {
       const { $apiBase } = useNuxtApp() as any;
-      
-      // 🟢 2. MASUKIN NAMA GAMBAR LAMA KE PAYLOAD
       const payload = { 
         AccessToken: token, 
         OldPicture: oldPictureName,
@@ -462,6 +458,31 @@ async function fetchEventDetail(SK: string) {
       return false;
     } finally {
       loading.uploadPhoto = false;
+    }
+  }
+
+  async function deleteEventPhoto(eventSK: string, oldpic: string) {
+    const token = useCookie("AccessToken").value;
+    if (!token) return false;
+
+    try {
+      const { $apiBase } = useNuxtApp() as any;
+      
+      await $apiBase.delete('/delete-default', {
+        params: { 
+          type: 'photo-event', 
+          sk: eventSK, 
+          oldpic: oldpic 
+        },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("Gagal menghapus poster event:", error);
+      return false;
     }
   }
 
@@ -493,13 +514,27 @@ async function fetchEventDetail(SK: string) {
     apply(currentPublicEventDetail.value);
   }
 
+  function incrementQuota(sk: string, total: number, ikhwan: number, akhwat: number) {
+    const add = (val: any, amt: number) => (val === 'non-quota' ? 'non-quota' : Number(val) + amt);
+
+    const apply = (target: Event | null) => {
+      if (!target || target.SK !== sk) return;
+      target.Quota_Total = add(target.Quota_Total, total);
+      target.Quota_Ikhwan = add(target.Quota_Ikhwan, ikhwan);
+      target.Quota_Akhwat = add(target.Quota_Akhwat, akhwat);
+    };
+
+    apply(tiketEvent.value.find(e => e.SK === sk) || null);
+    apply(currentPublicEventDetail.value);
+  }
+
   return {
     searchQuery, loading, tiketEvent, adminTiketEvent, userLogs,
     currentEventDetail, currentPublicEventDetail,
     filteredTiketEvent, tiketEventChunks, filteredAdminTiketEvent,
     setSearchQuery, fetchPublicTiketEvent, fetchAuthTiketEvent,
     fetchAdminTiketEvent, fetchPublicEventDetail, fetchEventDetail,
-    addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto,
-    deleteTiketEvent, decrementQuota, updateEventSchedule, fetchViewData, createTiketEvent, draftEvent, resetDraftEvent
+    addTiketEventBasic, updateTiketEventBasic, uploadEventPhoto, deleteEventPhoto,
+    deleteTiketEvent, decrementQuota, incrementQuota, updateEventSchedule, fetchViewData, createTiketEvent, draftEvent, resetDraftEvent
   };
 });

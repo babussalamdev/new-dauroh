@@ -5,7 +5,6 @@
       <div class="card-body p-3 px-4 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
         <div>
           <h3 class="mb-1 text-dark txt-title">Ahlan wa Sahlan, {{ user?.name || 'Admin' }}! 👋</h3>
-          
           <p class="text-muted mb-0 txt-caption">
             Dashboard manajemen sistem 
             <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 ms-1 txt-label">
@@ -17,39 +16,39 @@
         <div class="d-flex flex-column flex-sm-row gap-2 text-md-end">
           
           <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden" 
-     style="width: 200px; border: 1px solid #ced4da; height: 38px;"> 
-  <span class="input-group-text bg-light border-0 py-1 ps-3 pe-0">
-    <i class="bi calendar text-muted" style="font-size: 0.8rem;"></i>
-  </span>
-  <input type="month" 
-         class="form-control border-0 txt-caption fw-medium ps-2 pe-3 py-1 shadow-none"
-         style="font-size: 0.75rem; background-color: #f8f9fa; height: 100%;"
-         v-model="selectedMonthYear" 
-         @change="fetchEventsByMonth" 
-         :disabled="isLoadingEvents">
-</div>
+          style="width: 200px; border: 1px solid #ced4da; height: 38px;"> 
+          <span class="input-group-text bg-light border-0 py-1 ps-3 pe-0">
+            <i class="bi calendar text-muted" style="font-size: 0.8rem;"></i>
+          </span>
+          <input type="month" 
+           class="form-control border-0 txt-caption fw-medium ps-2 pe-3 py-1 shadow-none"
+           style="font-size: 0.75rem; background-color: #f8f9fa; height: 100%;"
+           v-model="selectedMonthYear" 
+           @change="fetchEventsByMonth" 
+           :disabled="isLoadingEvents">
+          </div>
+          
+          <select class="form-select form-select-sm border-success shadow-sm rounded-pill px-3 py-1 txt-caption fw-medium"
+          v-model="selectedEventSK" 
+          @change="handleEventSelection" 
+          :disabled="isLoadingEvents || activeEvents.length === 0" 
+          style="width: 250px; height: 38px;"
+          >
 
-<select class="form-select form-select-sm border-success shadow-sm rounded-pill px-3 py-1 txt-caption fw-medium"
-        v-model="selectedEventSK" 
-        @change="handleEventSelection" 
-        :disabled="isLoadingEvents || activeEvents.length === 0" 
-        style="width: 250px; height: 38px;">
-  <option value="" disabled>{{ isLoadingEvents ? 'Memuat...' : (activeEvents.length === 0 ? 'Event Kosong' : '-- Pilih Event --') }}</option>
-  
-  <option v-for="event in activeEvents" :key="event.SK" :value="event.SK" :title="event.Title.toUpperCase()">
-    {{ event.Title.length > 25 ? event.Title.substring(0, 25).toUpperCase() + '...' : event.Title.toUpperCase() }}
-  </option>
-</select>
-
-        </div>
+          <option value="" disabled>{{ isLoadingEvents ? 'Memuat...' : (activeEvents.length === 0 ? 'Event Kosong' : '-- Pilih Event --') }}</option>
+          <option v-for="event in activeEvents" :key="event.SK" :value="event.SK" :title="event.Title.toUpperCase()">
+            {{ event.Title.length > 25 ? event.Title.substring(0, 25).toUpperCase() + '...' : event.Title.toUpperCase() }}
+          </option>
+        </select>
       </div>
     </div>
-
-    <div v-if="globalStore.activeEventSK" class="animate-fade-in mb-4">
-      <CommonLoadingSpinner v-if="isLoadingEventData" class="my-4" />
-      <div v-else>
-        <AdminDashboardEventStats :stats="eventStats" />
-        <AdminDashboardAttendanceRatio :stats="eventStats" :genderType="selectedEventGender" />
+  </div>
+  
+  <div v-if="globalStore.activeEventSK" class="animate-fade-in mb-4">
+    <CommonLoadingSpinner v-if="isLoadingEventData" class="my-4" />
+    <div v-else>
+      <AdminDashboardEventStats :stats="eventStats" />
+      <AdminDashboardAttendanceRatio :stats="eventStats" :genderType="selectedEventGender" />
       </div>
     </div>
     

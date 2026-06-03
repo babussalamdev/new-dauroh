@@ -135,6 +135,32 @@ export const useCertificateStore = defineStore('certificate', {
         console.error("Gagal save config:", error);
         throw error;
       }
+    },
+
+    async deleteCertificateImage(eventSK: string, oldpic: string) {
+      const token = useCookie("AccessToken").value;
+      if (!token) return false;
+
+      try {
+        const { $apiBase } = useNuxtApp() as any;
+        
+        await $apiBase.delete('/delete-default', {
+          params: { 
+            type: 'certificate-photo', 
+            sk: eventSK, 
+            oldpic: oldpic 
+          },
+          
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        return true;
+      } catch (error: any) {
+        console.error("Gagal menghapus gambar sertifikat:", error);
+        return false;
+      }
     }
   }
 });

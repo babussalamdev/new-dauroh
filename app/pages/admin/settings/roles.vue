@@ -15,8 +15,7 @@
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 txt-title fw-bold text-dark">Daftar Role Sistem</h5>
-        
+        <h6 class="mb-0 fw-bold txt-subtitle text-dark">Daftar Role</h6>
         <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm fw-medium" @click="openModal">
           <i class="bi bi-plus-lg me-1"></i> Tambah Role
         </button>

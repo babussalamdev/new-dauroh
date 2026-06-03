@@ -43,7 +43,7 @@
                   </div>
                   <div class="d-flex justify-content-center gap-2">
                     <label for="posterUploadPage" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold txt-caption mb-0 cursor-pointer">Ganti</label>
-                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold txt-caption" @click="previewUrl = null; newPhotoBase64 = null">Hapus</button>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold txt-caption" @click="handleDeletePicture">Hapus</button>
                   </div>
                 </div>
               </div>
@@ -154,7 +154,7 @@
                 </div>
               </div>
               <div class="text-end mt-3 border-top pt-3 mt-auto">
-                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 txt-body fw-bold" :disabled="isSavingSchedule">
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 txt-body fw-bold" :disabled="isSavingSchedule || !isScheduleChanged">
                   <span v-if="isSavingSchedule" class="spinner-border spinner-border-sm me-1"></span>
                   <i v-else class="bi bi-floppy-fill me-1"></i> Simpan Jadwal
                 </button>
@@ -170,6 +170,7 @@
 </template>
 
 <script setup lang="ts">
+import { useAlert } from '~/utils/swal';
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useEventStore } from '@/stores/event';
@@ -178,6 +179,7 @@ import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 
 definePageMeta({ layout: 'admin' });
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const config = useRuntimeConfig();
 const route = useRoute();
 const eventStore = useEventStore();
@@ -207,6 +209,17 @@ const contentForm = reactive({ Description: '' });
 const eventData = computed(() => eventStore.currentEventDetail);
 const breadcrumbItems = computed(() => [{ text: 'Manajemen Event', to: '/admin/events' }, { text: eventData.value?.Title || 'Detail Event' }]);
 const minDateJadwal = computed(() => eventData.value?.Registration?.end_registration ? eventData.value.Registration.end_registration.split(' ')[0] : '');
+
+const isScheduleChanged = computed(() => {
+  if (!eventData.value?.Date && formState.scheduleDays.length > 0) return true;
+  if (Object.keys(eventData.value?.Date || {}).length !== formState.scheduleDays.length) return true;
+  return JSON.stringify(formState.scheduleDays) !== JSON.stringify(
+    Object.values(eventData.value?.Date || {}).map((day: any, index: number) => ({
+      tempId: index, ...day,
+      start_time: convertTo24h(day.start_time), end_time: convertTo24h(day.end_time)
+    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  );
+});
 
 const convertTo24h = (timeStr?: string) => {
   if (!timeStr) return '';
@@ -305,6 +318,40 @@ const handlePictureSubmit = async () => {
   const success = await eventStore.uploadEventPhoto(eventData.value.SK, newPhotoBase64.value);
   if (success) { toastStore.showToast({ message: 'Poster diperbarui', type: 'success' }); newPhotoBase64.value = null; }
   isSavingPicture.value = false;
+};
+
+const handleDeletePicture = async () => {
+  // 1. Kalau cuma ngehapus preview gambar baru yang belum di-save
+  if (newPhotoBase64.value && !eventData.value?.Picture) {
+    previewUrl.value = null;
+    newPhotoBase64.value = null;
+    return;
+  }
+
+  // 2. Kalau beneran ada gambar lama dari server
+  if (eventData.value?.Picture && eventData.value?.SK) {
+    const result = await swalConfirm(
+      'Hapus Poster?',
+      'Poster event ini akan dihapus permanen dari sistem.',
+      'Ya, Hapus'
+    );
+
+    if (result.isConfirmed) {
+      const success = await eventStore.deleteEventPhoto(eventData.value.SK, eventData.value.Picture);
+      if (success) {
+        swalAlert('Berhasil!', 'Poster berhasil dihapus.', 'success');
+        previewUrl.value = null;
+        newPhotoBase64.value = null;
+        // Opsional: update lokal state eventData biar gambarnya kosong
+        eventData.value.Picture = null; 
+      } else {
+        swalAlert('Gagal', 'Terjadi kesalahan saat menghapus poster dari server.', 'error');
+      }
+    }
+  } else {
+     previewUrl.value = null;
+     newPhotoBase64.value = null;
+  }
 };
 
 const addScheduleDay = () => { formState.scheduleDays.push({ tempId: Date.now(), date: '', start_time: '', end_time: '' }); };

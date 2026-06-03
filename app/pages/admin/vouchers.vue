@@ -18,7 +18,7 @@
         <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width: 0;">
           
           <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
-            <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Vouchers</h5>
+            <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Vouchers</h6>
             
             <span v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
               {{ globalStore.activeEvent?.Title }}

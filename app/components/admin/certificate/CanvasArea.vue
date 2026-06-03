@@ -120,11 +120,13 @@
 </template>
 
 <script setup lang="ts">
+import { useAlert } from '~/utils/swal';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useCertificateStore } from '~/stores/certificate';
 import { useRoute } from 'vue-router';
 import { useRuntimeConfig } from '#app';
 
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const route = useRoute();
 const certStore = useCertificateStore();
 const config = useRuntimeConfig();
@@ -206,17 +208,49 @@ const processFile = (file: File) => {
   reader.readAsDataURL(file); 
 };
 
-const resetFile = () => { 
-  certStore.base64Image = null; 
-  certStore.imageErrors = [];
-  imageMeta.value = { width: 0, height: 0, size: 0, type: '' };
+const resetFile = async () => { 
+  const eventSK = route.params.id as string;
+  const currentImg = certStore.base64Image;
+
+  if (currentImg && !currentImg.startsWith('data:image')) {
+    
+    // Keluarin Pop-up Konfirmasi
+    const result = await swalConfirm(
+      'Hapus Template?',
+      'Template sertifikat ini akan dihapus permanen dari sistem.',
+      'Ya, Hapus'
+    );
+
+    if (result.isConfirmed) {
+      const success = await certStore.deleteCertificateImage(eventSK, currentImg);
+      
+      if (success) {
+        swalAlert('Berhasil!', 'Template sertifikat berhasil dihapus.', 'success');
+        
+        // Bersihin kanvas dari layar
+        certStore.base64Image = null; 
+        certStore.oldPictureName = "";
+        certStore.imageErrors = [];
+        imageMeta.value = { width: 0, height: 0, size: 0, type: '' };
+      } else {
+        swalAlert('Gagal', 'Terjadi kesalahan saat menghapus gambar dari server.', 'error');
+      }
+    }
+  } 
+  // Gambar masih Base64 (Cuma batalin preview file yang baru di-browse)
+  else {
+    certStore.base64Image = null; 
+    certStore.oldPictureName = "";
+    certStore.imageErrors = [];
+    imageMeta.value = { width: 0, height: 0, size: 0, type: '' };
+  }
 };
 
 const activeDraggingField = ref<string | null>(null);
 
 // Bikin Font Size Dinamis Ngikutin Ukuran Canvas
 const createTextStyleObj = (fieldStyle: { top: number, left: number, fontSize: number, color: string }, isPreview = false) => {
-  // Patokan ukuran A4
+  //  ukuran A4
   const baseWidth = certStore.config.layout === 'landscape' ? 1123 : 794;
   const responsiveFontSize = (fieldStyle.fontSize / baseWidth) * 100;
 
@@ -226,7 +260,6 @@ const createTextStyleObj = (fieldStyle: { top: number, left: number, fontSize: n
     fontSize: `${responsiveFontSize}cqi`, // Menggunakan CSS Container Queries
     color: fieldStyle.color,
     transform: 'translate(-50%, -50%)',
-    // Kalau mode preview, ilangin border dashed-nya
     border: isPreview ? 'none' : '2px dashed transparent',
     backgroundColor: isPreview ? 'transparent' : 'rgba(255, 255, 255, 0.4)'
   };

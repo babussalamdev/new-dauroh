@@ -13,11 +13,7 @@
 
     <div class="card content-card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Daftar Pengajuan Booth</h5>
-        <button class="btn btn-outline-primary btn-sm" @click="store.fetchSubmissions" :disabled="store.loading">
-          <i :class="store.loading ? 'spinner-border spinner-border-sm' : 'bi bi-arrow-clockwise'"></i>
-          <span class="ms-1">Refresh</span>
-        </button>
+        <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Pengajuan Booth</h6>
       </div>
       <div class="card-body">
         

@@ -4,7 +4,7 @@
       <div class="card-body p-3 px-md-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
         
         <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
-          <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Log Kehadiran</h5>
+          <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Log Kehadiran</h6>
           
           <div v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
             {{ globalStore.activeEvent?.Title }}

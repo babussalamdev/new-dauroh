@@ -4,7 +4,7 @@
    <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
   
   <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
-    <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">Manajemen Event</h5>
+    <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Manajemen Event</h6>
   </div>
 
   <div class="d-flex flex-shrink-0 flex-wrap">
@@ -49,13 +49,16 @@
               
               <td class="fw-bold txt-body text-dark">{{ event.Title }}</td>
               
-              <td class="text-muted txt-caption fw-bold">{{ event.Place || "-" }}</td>
+              <td class="fw-bold txt-body text-dark">{{ event.Place || "-" }}</td>
               
               <td class="text-capitalize">
-                <span :class="['badge bg-opacity-10 border', event.Gender.toLowerCase() === 'campur' ? 'bg-secondary text-secondary border-secondary' : (event.Gender.toLowerCase() === 'ikhwan' ? 'bg-info text-info border-info' : 'bg-warning text-warning border-warning')]" style="font-size: 0.7rem;">
-                   {{ event.Gender }}
-                </span>
-              </td>
+                <span 
+                class="badge" 
+                :class="event.Gender.toLowerCase() === 'ikhwan' ? 'badge-ikhwan' : (event.Gender.toLowerCase() === 'akhwat' ? 'badge-akhwat' : 'badge-umum')" 
+                style="font-size: 0.7rem;">
+                {{ event.Gender }}
+              </span>
+            </td>
               
               <td class="fw-bold txt-body">{{ formatCurrency(event.Price) }}</td>
 
@@ -294,5 +297,25 @@ img[src$="placeholder-Picture.png"] {
   object-fit: contain;
   padding: 5px;
   background-color: #f8f9fa;
+}
+/* Biru untuk Ikhwan */
+.badge-ikhwan {
+  background-color: rgba(13, 202, 240, 0.1) !important;
+  color: #0dcaf0;
+  border: 1px solid #0dcaf0;
+}
+
+/* Pink untuk Akhwat */
+.badge-akhwat {
+  background-color: rgba(214, 51, 132, 0.1); 
+  color: #d63384;
+  border: 1px solid #d63384;
+}
+
+/* Ungu untuk Umum */
+.badge-umum {
+  background-color: rgba(111, 66, 193, 0.1); 
+  color: #6f42c1;
+  border: 1px solid #6f42c1;
 }
 </style>

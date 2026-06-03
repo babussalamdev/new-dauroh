@@ -21,9 +21,7 @@
           <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
               <div class="d-flex flex-column align-items-start gap-1 w-100" style="min-width: 0;">
-                <h5 class="mb-0 txt-title fw-bold text-dark text-truncate w-100">
-                  <i class="bi bi-file-earmark-arrow-down text-success me-2"></i>Export Laporan
-                </h5>
+                <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Export Laporan</h6>
                 
                 <div v-if="globalStore.activeEventSK" class="text-primary fw-medium txt-caption text-truncate w-100">
                   {{ globalStore.activeEvent?.Title }}
