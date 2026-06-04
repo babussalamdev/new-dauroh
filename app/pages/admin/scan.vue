@@ -98,10 +98,10 @@ const onScanSuccess = (decodedText: string) => {
 // API CALL KE BACKEND
 const processTicket = async (code: string) => {
   loading.value = true;
-  if(scanner) scanner.pause(); // Stop kamera bentar biar ga dobel scan
+  if(scanner) scanner.pause();
 
   try {
-    // 1. Ekstrak JSON dari QR Code
+    // Ekstrak JSON dari QR Code
     let qrData;
     try {
       qrData = JSON.parse(code);
@@ -113,15 +113,22 @@ const processTicket = async (code: string) => {
       throw new Error("Data QR Code tidak lengkap.");
     }
 
-    // API Backend
-   const response = await $apiBase.put('/update-attendance?type=scan', {
-    PK: qrData.pk,
-    SK: qrData.sk
-  });
+    // Tarik Token dari Cookie
+    const token = useCookie("AccessToken").value;
+    if (!token) {
+      throw new Error("Sesi login tidak valid. Silakan login ulang.");
+    }
 
-    const beData = response.data; // Nangkep response dari backend
+    // payload
+    const response = await $apiBase.put('/update-attendance?type=scan', {
+      AccessToken: token, 
+      PK: qrData.pk,
+      SK: qrData.sk
+    });
 
-    // 3. Tampilkan Hasil Sukses
+    const beData = response.data;
+
+    // Tampilkan Hasil Sukses
     scanResult.value = { 
       success: true, 
       message: 'Check-in Berhasil', 
@@ -134,27 +141,40 @@ const processTicket = async (code: string) => {
 
   } catch (error: any) {
     console.error("Scan Error:", error);
+    let errorMsg = 'Tiket Tidak Dikenali atau Gagal Update';
     
-    // Nangkep pesan error dari Backend (kalau tiket udah kepake dll)
-    const errorMsg = error.response?.data?.message || error.message || 'Tiket Tidak Dikenali atau Gagal Update';
+    if (error.response?.data) {
+      if (typeof error.response.data === 'string') {
+        errorMsg = error.response.data;
+      } 
+      else if (error.response.data.message) {
+        errorMsg = error.response.data.message;
+      }
+    } else if (error.message) {
+       errorMsg = error.message;
+    }
     
     scanResult.value = { 
       success: false, 
-      message: 'Gagal Check-in', 
+      message: 'Sudah Check-in',
       data: { 
         participantName: errorMsg,
-        time: dayjs().format('HH:mm:ss WIB')
       } 
     };
     playSound(false);
   } finally {
     loading.value = false;
+    setTimeout(() => {
+      if (scanResult.value) {
+        resetScan();
+      }
+    }, 2500);
   }
 };
 
 const resetScan = () => {
   scanResult.value = null;
-  if(scanner) scanner.resume(); // Nyalain kamera lagi pas di-close
+  if(scanner) scanner.resume();
 };
 
 const playSound = (isSuccess: boolean) => {

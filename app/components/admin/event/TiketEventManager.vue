@@ -7,8 +7,20 @@
     <h6 class="mb-0 fw-bold txt-subtitle text-dark text-truncate w-100">Manajemen Event</h6>
   </div>
 
-  <div class="d-flex flex-shrink-0 flex-wrap">
-    <button class="btn btn-primary rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium" @click="openAddModal">
+  <div class="d-flex flex-shrink-0 flex-wrap gap-2 align-items-center">
+    <div class="input-group input-group-sm" style="width: 200px;">
+      <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+      <input type="text" class="form-control border-start-0 ps-0 bg-light shadow-none txt-caption" placeholder="Cari judul event..." v-model="searchQuery">
+    </div>
+    
+    <div class="input-group input-group-sm" style="width: 150px;">
+      <input type="date" class="form-control bg-light shadow-none txt-caption text-muted" v-model="filterDate" title="Filter berdasarkan tanggal acara">
+      <button v-if="filterDate" class="btn btn-light border" @click="filterDate = ''" title="Reset Tanggal">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+
+    <button class="btn btn-primary btn-sm rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium ms-1" @click="openAddModal">
       Tambah Event
     </button>
   </div>
@@ -31,8 +43,8 @@
             </tr>
           </thead>
           
-          <tbody v-if="!eventStore.loading.adminTiketEvent && eventStore.adminTiketEvent.length > 0">
-            <tr v-for="event in eventStore.filteredAdminTiketEvent" :key="event.SK || event.Title">
+          <tbody v-if="!eventStore.loading.adminTiketEvent && displayedEvents.length > 0">
+            <tr v-for="event in displayedEvents" :key="event.SK || event.Title">
 
               <td class="text-center fw-bold txt-body text-muted ps-4">
                 {{ formatEventDates(event.Date) }}
@@ -87,11 +99,11 @@
             </tr>
           </tbody>
           
-          <tbody v-else-if="!eventStore.loading.adminTiketEvent && eventStore.adminTiketEvent.length === 0">
+          <tbody v-else-if="!eventStore.loading.adminTiketEvent && displayedEvents.length === 0">
             <tr>
               <td colspan="8" class="text-center text-muted py-5">
-                 <i class="bi bi-calendar-x fs-1 d-block mb-2 opacity-50"></i>
-                 <span class="txt-body fw-bold">Belum ada data event.</span>
+                <i class="bi bi-search fs-1 d-block mb-2 opacity-50"></i>
+                <span class="txt-body fw-bold">Tidak ada event yang sesuai pencarian.</span>
               </td>
             </tr>
           </tbody>
@@ -105,8 +117,33 @@
           </tbody>
         </table>
       </div>
-    </div>
+      
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 px-4 border-top bg-white gap-3" v-if="totalPages > 0 && !eventStore.loading.adminTiketEvent">
+    <span class="txt-caption text-muted fw-medium">
+      Menampilkan {{ startIndex + 1 }} - {{ endIndex }} dari {{ totalFilteredEvents }} event
+    </span>
+    <div class="d-flex align-items-center gap-1">
+          
+          <button class="btn btn-sm p-0 border-0 bg-transparent shadow-none text-dark d-flex align-items-center" 
+                  @click="currentPage--" 
+                  :disabled="currentPage === 1">
+            <i class="bi bi-chevron-left fw-bold"></i>
+          </button>
+          
+          <span class="txt-caption fw-bold text-muted px-2">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
+
+          <button class="btn btn-sm p-0 border-0 bg-transparent shadow-none text-dark d-flex align-items-center" 
+                  @click="currentPage++" 
+                  :disabled="currentPage === totalPages">
+            <i class="bi bi-chevron-right fw-bold"></i>
+          </button>
+
+        </div>
   </div>
+</div>
+</div>
 
   <AdminEventFormModal 
   v-if="showFormModal" 
@@ -132,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useEventStore } from "@/stores/event";
 import type { Event } from "@/types/event";
 import Swal from "sweetalert2";
@@ -152,7 +189,15 @@ const showMediaModal = ref(false);
 const isEditing = ref(false);
 const selectedEvent = ref<Partial<Event> | null>(null);
 const selectedEventForDelete = ref<Event | null>(null);
+// STATE UNTUK FILTER & PAGINATION
+const searchQuery = ref('');
+const filterDate = ref('');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
 
+watch([searchQuery, filterDate], () => {
+  currentPage.value = 1;
+});
 
 // const showDetailModal = ref(false);
 // const selectedEventForDetail = ref<Event | null>(null); 
@@ -276,11 +321,48 @@ const confirmDelete = () => {
   }
   closeDeleteModal();
 };
-</script>
 
+// LOGIC FILTERING DATA
+const processedEvents = computed(() => {
+  let data = eventStore.adminTiketEvent || [];
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    data = data.filter(e => e.Title?.toLowerCase().includes(q));
+  }
+
+  if (filterDate.value) {
+    data = data.filter(e => {
+      if (!e.Date) return false;
+      const eventDates = Object.values(e.Date).map((d: any) => d?.date);
+      return eventDates.includes(filterDate.value);
+    });
+  }
+
+  return data;
+});
+
+// LOGIC PAGINATION
+const totalFilteredEvents = computed(() => processedEvents.value.length);
+const totalPages = computed(() => Math.ceil(totalFilteredEvents.value / itemsPerPage.value) || 1);
+
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
+const endIndex = computed(() => Math.min(startIndex.value + itemsPerPage.value, totalFilteredEvents.value));
+
+const displayedEvents = computed(() => {
+  return processedEvents.value.slice(startIndex.value, endIndex.value);
+});
+
+</script>
 <style scoped>
 @import url("~/assets/css/admin/cards.css");
 @import url("~/assets/css/admin/tables.css");
+
+.page-item.active .page-link {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+}
 
 .text-capitalize {
   text-transform: capitalize;
