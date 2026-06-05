@@ -41,8 +41,11 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-              <a href="#" class="text-decoration-none txt-caption fw-bold" data-bs-toggle="modal"
-                data-bs-target="#forgotPasswordModal">
+              <a href="#" class="text-decoration-none txt-caption fw-bold" 
+                data-bs-toggle="modal"
+                data-bs-target="#forgotPasswordModal"
+                data-bs-backdrop="static" 
+                data-bs-keyboard="false">
                 Lupa password?
               </a>
             </div>

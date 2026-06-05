@@ -25,8 +25,8 @@
 
     <div class="d-grid gap-2 col-md-8 mx-auto" style="max-width: 350px;">
 
-      <button class="btn btn-primary rounded-pill py-2 fw-bold shadow-sm txt-body" @click="showQr">
-        <i class="bi bi-qr-code-scan me-2"></i> Lihat Tiket & QR Code
+      <button class="btn btn-primary rounded-pill py-2 fw-bold shadow-sm txt-body" @click="showDetailModal = true">
+        <i class="bi bi-ticket-detailed me-2"></i> Lihat Detail Tiket
       </button>
 
       <ReceiptButton 
@@ -38,7 +38,7 @@
         :discountAmount="store.discountAmount"
         :infaqAmount="store.donationAmount"
       >
-        Download Kuitansi
+        Download Invoice
       </ReceiptButton>
 
       <button class="btn btn-link text-decoration-none text-muted mt-2 fw-bold txt-body" @click="toDashboard">
@@ -46,7 +46,22 @@
       </button>
     </div>
 
-    <ModalsQrCodeModal v-if="showQrModal" :show="showQrModal" :ticket="ticketData" :participant="store.participants[0]" @close="showQrModal = false" />
+    <HistoryDetailModal 
+      v-if="showDetailModal" 
+      :show="showDetailModal" 
+      :transaction="store.transactionDetails" 
+      :ticket="ticketData" 
+      @close="showDetailModal = false" 
+      @show-qr="handleShowQr" 
+    />
+
+    <ModalsQrCodeModal 
+      v-if="showQrModal" 
+      :show="showQrModal" 
+      :ticket="selectedTicket" 
+      :participant="selectedParticipant" 
+      @close="closeQrAndBack" 
+    />
 
   </div>
 </template>
@@ -56,10 +71,23 @@ import { ref, computed, onMounted } from 'vue';
 import { useCheckoutStore } from '~/stores/checkout';
 import { useRouter } from 'vue-router';
 import ReceiptButton from '~/components/button/ReceiptButton.vue';
+import HistoryDetailModal from '~/components/history/DetailModal.vue';
 
 const store = useCheckoutStore();
 const router = useRouter();
+
+const showDetailModal = ref(false);
 const showQrModal = ref(false);
+const selectedTicket = ref<any>(null);
+const selectedParticipant = ref<any>(null);
+
+const ticketData = computed(() => ({
+  event: store.event,
+  participants: store.participants,
+  SK: store.activeEventSK,
+  status: store.transactionDetails?.status,
+  amount: store.transactionDetails?.amount
+}));
 
 onMounted(async () => {
   if (!store.event || !store.participants.length) {
@@ -70,14 +98,18 @@ onMounted(async () => {
     }
   }
 });
-const ticketData = computed(() => ({
-  event: store.event,
-  participants: store.participants,
-  SK: store.activeEventSK
-}));
 
-const showQr = () => {
-  showQrModal.value = true;
+const handleShowQr = (ticket: any, participant: any) => {
+  selectedTicket.value = ticket;
+  selectedParticipant.value = participant;
+  
+  showDetailModal.value = false; // Tutup dulu modal detailnya
+  showQrModal.value = true;      // Baru buka modal QR
+};
+
+const closeQrAndBack = () => {
+  showQrModal.value = false;     // Tutup modal QR
+  showDetailModal.value = true;  // Buka lagi modal detailnya
 };
 
 const toDashboard = () => {

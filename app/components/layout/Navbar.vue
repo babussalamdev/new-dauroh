@@ -42,7 +42,7 @@
           <li class="nav-item" v-if="!isLoggedIn">
             <div class="d-flex align-items-center gap-3">
               <NuxtLink class="nav-link text-dark txt-body fw-bold" to="/auth">Login</NuxtLink>
-              <NuxtLink to="/auth" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm">Buat Akun</NuxtLink>
+              <NuxtLink to="/auth?mode=register" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm">Buat Akun</NuxtLink>
             </div>
           </li>
 

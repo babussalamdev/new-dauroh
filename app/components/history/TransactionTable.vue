@@ -89,7 +89,7 @@
           </td>
 
           <td class="pe-4 py-3 text-center">
-            <div class="d-flex flex-column gap-2 mx-auto" style="max-width: 120px;">
+            <div class="d-flex flex-column mx-auto" style="max-width: 120px;">
               <button @click="$emit('open-detail', ticket)" class="btn btn-xs btn-outline-secondary border shadow-sm py-1 px-2 d-flex align-items-center justify-content-center gap-1 rounded-pill txt-caption fw-bold">
                 <i class="bi bi-eye"></i> Detail
               </button>
@@ -101,10 +101,6 @@
               <button v-else-if="getSmartStatus(ticket) === 'PENDING'" class="btn btn-xs btn-primary text-white py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm rounded-pill txt-caption fw-bold" @click="$emit('resume-payment', ticket)">
                 <i class="bi bi-credit-card"></i> Bayar
               </button>
-
-              <span v-else-if="getSmartStatus(ticket) === 'SUCCESSFUL'" class="text-success txt-caption fw-bold p-1">
-                <i class="bi bi-patch-check"></i> SUCCESS
-              </span>
             </div>
           </td>
           

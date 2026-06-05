@@ -48,8 +48,7 @@
       </div>
     </div>
   </div>
-  <div v-if="show" class="modal-backdrop fade show"></div>
-</template>
+  </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
@@ -82,7 +81,6 @@ const qrColor = computed(() => {
   return '0d6efd'; // Biru (Ikhwan)
 });
 
-// 🟢 QR CODE DIKEMBALIKAN KE WARNA HITAM DEFAULT
 const qrUrl = computed(() => {
   if (!props.participant && !props.ticket) return '';
   
@@ -92,7 +90,6 @@ const qrUrl = computed(() => {
   };
   
   const encodedData = encodeURIComponent(JSON.stringify(payload));
-  // Parameter &color dihapus biar warnanya balik jadi hitam murni
   return `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodedData}&margin=10`;
 });
 
@@ -125,31 +122,30 @@ const downloadQr = async () => {
     canvas.width = img.width + (padding * 2);
     canvas.height = img.height + padding + footerHeight;
 
-    // Background Putih
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 🟢 GAMBAR BINGKAI TIPIS DI KANVAS SESUAI GENDER
+    // Border QR
     ctx.strokeStyle = "#" + qrColor.value;
     ctx.lineWidth = 4;
     ctx.strokeRect(padding, padding, img.width, img.height);
 
-    // Tempel QR Hitam
+    
     ctx.drawImage(img, padding, padding);
 
-    // Judul Event (Abu-abu)
+    // Judul Event
     const eventTitle = props.ticket?.event?.Title || props.ticket?.Title || 'Event Dauroh';
     ctx.fillStyle = "#6c757d";
     ctx.font = "16px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(eventTitle, canvas.width / 2, img.height + padding + 30);
 
-    // Nama Peserta (Hitam Bold)
+    // Nama Peserta
     ctx.fillStyle = "#000000";
     ctx.font = "bold 32px sans-serif";
     ctx.fillText(name.toUpperCase(), canvas.width / 2, img.height + padding + 70);
 
-    // Kode SK (Warna sesuai gender)
+    // (Warna sesuai gender)
     ctx.fillStyle = "#" + qrColor.value;
     ctx.font = "bold 20px monospace";
     ctx.fillText(`ID: ${participantSK.value}`, canvas.width / 2, img.height + padding + 105);

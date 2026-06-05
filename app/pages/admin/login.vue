@@ -44,7 +44,13 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-              <a href="#!" class="text-decoration-none txt-caption fw-medium">Lupa password?</a>
+              <a href="#" @click.prevent class="text-decoration-none txt-caption fw-medium"
+                data-bs-toggle="modal"
+                data-bs-target="#forgotPasswordModal"
+                data-bs-backdrop="static" 
+                data-bs-keyboard="false">
+                Lupa password?
+              </a>
             </div>
 
             <div class="d-grid gap-2">
@@ -64,6 +70,7 @@
       </div>
     </div>
   </div>
+  <ModalsForgotPasswordModal />
 </template>
 
 <script setup>
