@@ -179,6 +179,9 @@ import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 
 definePageMeta({ layout: 'admin' });
+
+useHead({ title: 'Detail Event' });
+
 const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const config = useRuntimeConfig();
 const route = useRoute();

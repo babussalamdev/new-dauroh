@@ -55,9 +55,6 @@
 
           <div v-else-if="store.paginatedData.length > 0">
             <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
-               <div class="txt-caption text-muted">
-                 Menampilkan <strong>{{ store.paginatedData.length }}</strong> data.
-               </div>
                <div class="input-group input-group-sm shadow-sm" style="max-width: 300px;">
                   <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
                   <input type="text" class="form-control bg-light border-0 txt-body" placeholder="Cari kode..." v-model="store.search" @input="store.changePage(1)">
