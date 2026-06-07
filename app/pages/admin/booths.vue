@@ -1,15 +1,6 @@
 <template>
   <div>
-    <nav aria-label="breadcrumb" class="mb-3">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
-            <i class="bi bi-house-door-fill me-1"></i>Home
-          </NuxtLink>
-        </li>
-        <li class="breadcrumb-item active txt-caption fw-bold text-secondary" aria-current="page">Pengajuan Booth</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Pengajuan Booth'}]" />
 
     <div class="card content-card">
       <div class="card-header d-flex justify-content-between align-items-center">

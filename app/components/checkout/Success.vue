@@ -33,7 +33,7 @@
         v-if="store.transactionDetails"
         class="btn btn-outline-secondary rounded-pill py-2 fw-bold txt-body w-100"
         :transaction="store.transactionDetails"
-        :event="store.event"
+        :event="store.event as any"
         :participants="store.participants"
         :discountAmount="store.discountAmount"
         :infaqAmount="store.donationAmount"

@@ -1,18 +1,7 @@
 <template>
   <div class="container-fluid px-2 px-md-4 py-4">
     
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
-            <i class="bi bi-house-door-fill me-1"></i>Home
-          </NuxtLink>
-        </li>
-
-        <li class="breadcrumb-item txt-caption text-muted">Keuangan</li>
-        <li class="breadcrumb-item active txt-caption text-dark fw-bold" aria-current="page">Dashboard Pendapatan</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Keuangan'}, {text: 'Dashboard Pendapatan'}]" />
 
     <AdminFinanceRevenueSummary 
       :is-loading="financeStore.loadingSummary"

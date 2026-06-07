@@ -60,7 +60,6 @@ const chartOptions: ApexOptions = {
     fontFamily: 'inherit',
     animations: {
       enabled: true,
-      easing: 'easeinout',
       speed: 800
     }
   },
@@ -129,7 +128,6 @@ const chartOptions: ApexOptions = {
     position: 'bottom',
     horizontalAlign: 'center',
     markers: {
-      radius: 12,
     },
     itemMargin: {
       horizontal: 15,

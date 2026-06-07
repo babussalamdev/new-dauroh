@@ -1,16 +1,6 @@
 <template>
   <div class="container-fluid px-2 px-md-4 py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
-            <i class="bi bi-house-door-fill me-1"></i>Home
-          </NuxtLink>
-        </li>
-        <li class="breadcrumb-item txt-caption text-muted">Pengaturan</li>
-        <li class="breadcrumb-item active txt-caption text-dark fw-bold" aria-current="page">Control Menu</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Pengaturan'}, {text: 'Control Menu'}]" />
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       <div class="card-header bg-white p-3 px-md-4 py-md-3 border-bottom d-flex justify-content-between align-items-center">
@@ -205,7 +195,7 @@ const openModal = (mode: 'add' | 'edit', data?: any) => {
   isEdit.value = mode === 'edit';
   
   if (mode === 'add') {
-    form.value = { sk: '', title: '', url: '', icon: 'bi-app', roles: [] }; 
+    form.value = { sk: '', title: '', url: '', icon: 'bi-app', roles: [], orders: 1 }; 
   } else if (data) {
     let roleArray: string[] = [];
     const rolesString = data.Roles || data.roles || "";

@@ -1,11 +1,6 @@
 <template>
   <div class="container-fluid px-2 px-md-4 py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin/events" class="text-decoration-none txt-caption text-muted">Manajemen Event</NuxtLink></li>
-        <li class="breadcrumb-item active txt-caption text-dark fw-bold" aria-current="page">Template Sertifikat</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Manajemen Event', to: '/admin/events'}, {text: 'Template Sertifikat'}]" />
 
     <div class="card content-card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
       <div class="card-header bg-white p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">

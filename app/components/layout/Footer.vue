@@ -1,6 +1,6 @@
 <template>
   <footer class="footer mt-5 py-5 border-top">
-    <div class="container">
+    <div class="container-fluid px-3 px-lg-5">
       <div class="d-flex flex-column flex-lg-row justify-content-center align-items-center gap-4 mb-4">
 
         <div class="d-flex flex-column flex-sm-row align-items-center gap-4">

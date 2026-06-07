@@ -1,17 +1,6 @@
 <template>
   <div>
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item">
-          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
-            <i class="bi bi-house-door-fill me-1"></i>Home
-          </NuxtLink>
-        </li>
-        <li class="breadcrumb-item active txt-caption fw-bold text-secondary" aria-current="page">
-          Manajemen Event
-        </li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Manajemen Tiket'}]" />
 
     <AdminEventTiketEventManager />
   </div>

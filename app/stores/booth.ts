@@ -30,12 +30,8 @@ export const useBoothStore = defineStore("booth", {
       const toastStore = useToastStore();
 
       try {
-        // --- INI ADALAH BAGIAN API YANG DIBERI KOMENTAR ---
-        // const response = await $apiBase.get('/api/booth-requests');
-        // this.submissions = response.data; // <-- Data asli akan diisi di sini
-
-        // Karena API di-comment, this.submissions akan tetap kosong
-        this.submissions = []; // Pastikan kosong sesuai permintaan "no dummy data"
+        const response = await $apiBase.get('/api/booth-requests');
+        this.submissions = response.data;
 
       } catch (error: any) {
         toastStore.showToast({
@@ -60,10 +56,9 @@ export const useBoothStore = defineStore("booth", {
       submission.status = newStatus; // Langsung ubah di state
 
       try {
-        // --- INI ADALAH BAGIAN API YANG DIBERI KOMENTAR ---
-        // await $apiBase.put(`/api/booth-requests/${submissionId}/status`, { 
-        //   status: newStatus 
-        // });
+        await $apiBase.put(`/api/booth-requests/${submissionSK}/status`, { 
+          status: newStatus 
+        });
 
         toastStore.showToast({
           message: `Status untuk "${submission.boothName}" berhasil diubah.`,

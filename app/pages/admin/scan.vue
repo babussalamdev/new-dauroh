@@ -1,6 +1,7 @@
 <template>
   <div class="container-fluid px-4 py-4 d-flex flex-column align-items-center">
-    
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Scan Presensi'}]" class="w-100 mb-3" />
+
     <div class="card shadow-sm border-0 rounded-4 w-100 mb-3" style="max-width: 450px;">
       <div class="card-body p-4 text-center">
         

@@ -1,6 +1,6 @@
 <template>
   <nav class="fixed-navbar navbar navbar-expand-lg navbar-light py-3 sticky-top" :class="{ 'scrolled': isScrolled }">
-    <div class="container">
+    <div class="container-fluid px-3 px-lg-5">
       <NuxtLink class="navbar-brand fw-bold text-dark-custom" to="/">
         <img src="/assets/img/Logo-Mahad.png" alt="Event Tickets Logo" style="height: 40px;" class="me-2">
         <span class="txt-subtitle fw-bold d-none d-sm-inline">tiket.sisalam.id</span>

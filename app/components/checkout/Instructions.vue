@@ -169,7 +169,7 @@ onMounted(() => {
     return; 
   }
 
-  if (store.transactionDetails && store.event && currentStatus.value !== 'SUCCESSFUL') {
+  if (store.transactionDetails && store.event) {
     userStore.registerEvent({
       event: store.event,
       participants: store.participants,

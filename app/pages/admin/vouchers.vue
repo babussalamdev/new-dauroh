@@ -1,15 +1,6 @@
 <template>
   <div>
-    <nav aria-label="breadcrumb" class="mb-3">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <NuxtLink to="/admin" class="text-decoration-none txt-caption fw-bold text-primary">
-            <i class="bi bi-house-door-fill me-1"></i>Home
-          </NuxtLink>
-        </li>
-        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Manajemen Voucher</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Manajemen Voucher'}]" />
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       
@@ -202,7 +193,10 @@ const isExpired = (dateStr: string) => {
   // Ambil tanggal hari ini dengan format YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
   // Kalau tanggal expired lebih kecil (sebelum) hari ini, berarti true (kadaluarsa)
-  return dateStr < today;
+  if (today) {
+    return dateStr < today;
+  }
+  return false;
 };
 </script>
 

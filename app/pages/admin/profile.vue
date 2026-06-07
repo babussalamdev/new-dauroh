@@ -1,11 +1,6 @@
 <template>
   <div>
-    <nav aria-label="breadcrumb" class="mb-3">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Profil Saya</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Profil Saya'}]" />
 
     <div class="row g-4"> 
       

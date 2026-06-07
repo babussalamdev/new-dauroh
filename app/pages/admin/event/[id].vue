@@ -1,15 +1,6 @@
 <template>
   <div class="container-fluid px-4 py-4">
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
-      <AdminCommonBreadcrumb :items="breadcrumbItems" />
-      <div v-if="eventData">
-        <span class="badge px-3 py-2 rounded-pill d-flex align-items-center gap-2 txt-caption fw-bold"
-          :class="eventData.Status === 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
-          <i class="bi" :class="eventData.Status === 'active' ? 'bi-circle-fill' : 'bi-pause-circle-fill'"></i>
-          {{ eventData.Status === 'active' ? 'Published' : 'Draft' }}
-        </span>
-      </div>
-    </div>
+    <CommonBreadcrumb :items="breadcrumbItems" class="mb-4" />
 
     <div v-if="eventStore.loading.detail" class="text-center py-5">
       <div class="spinner-border text-primary border-2" role="status" style="width: 3rem; height: 3rem;"></div>
@@ -346,7 +337,7 @@ const handleDeletePicture = async () => {
         previewUrl.value = null;
         newPhotoBase64.value = null;
         // Opsional: update lokal state eventData biar gambarnya kosong
-        eventData.value.Picture = null; 
+        eventData.value.Picture = undefined; 
       } else {
         swalAlert('Gagal', 'Terjadi kesalahan saat menghapus poster dari server.', 'error');
       }

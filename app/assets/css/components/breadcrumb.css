@@ -1,0 +1,78 @@
+/* ============================================
+   BREADCRUMB - Shared Styles
+   Digunakan oleh CommonBreadcrumb.vue
+   untuk admin & public pages
+   ============================================ */
+
+.app-breadcrumb {
+  background-color: #f8f9fb;
+  border-radius: 0.625rem;
+  padding: 0.65rem 1.1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.2s ease;
+}
+
+.app-breadcrumb:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.app-breadcrumb .breadcrumb {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.app-breadcrumb .breadcrumb-item a {
+  text-decoration: none;
+  color: var(--color-primary, #004754);
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.app-breadcrumb .breadcrumb-item a:hover {
+  color: var(--color-secondary, #CFAB7A);
+  opacity: 0.9;
+}
+
+.app-breadcrumb .breadcrumb-item a i,
+.app-breadcrumb .breadcrumb-item span i {
+  font-size: 0.8rem;
+  margin-right: 0.3rem;
+  vertical-align: baseline;
+}
+
+.app-breadcrumb .breadcrumb-item.active {
+  color: #6c757d;
+  font-weight: 400;
+}
+
+/* Custom separator */
+.app-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+  content: '›';
+  font-size: 1.1rem;
+  color: #adb5bd;
+  font-weight: 600;
+  padding: 0 0.4rem;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .app-breadcrumb {
+    padding: 0.5rem 0.85rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .app-breadcrumb .breadcrumb {
+    font-size: 0.8rem;
+  }
+
+  .app-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    font-size: 1rem;
+    padding: 0 0.3rem;
+  }
+}

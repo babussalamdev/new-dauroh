@@ -1,6 +1,6 @@
 <template>
   <section class="hero-section">
-    <div class="container text-center">
+    <div class="container-fluid text-center px-3 px-lg-5">
       
       <h1 class="display-5 txt-title fw-bold mb-5 text-dark">
         Event <span class="text-primary">Babussalam</span>

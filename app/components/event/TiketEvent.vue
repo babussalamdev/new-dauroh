@@ -1,9 +1,9 @@
 <template>
-  <div class="container mt-0">
+  <div class="container-fluid px-3 px-lg-5 mt-0">
     <div v-if="!eventStore.loading.tiketEvent && eventStore.tiketEvent.length > 0" id="tiketEvent"
       class="carousel-wrapper" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
       
-      <div class="d-flex card-container-flex" :class="{ 'center-on-desktop': eventStore.tiketEvent.length < 4 }" ref="scrollContainer">
+      <div class="d-flex card-container-flex" ref="scrollContainer">
         
         <div v-for="event in eventStore.tiketEvent" :key="event.SK" class="event-card-wrapper">
           <div class="text-decoration-none d-block h-100 position-relative"
@@ -264,7 +264,7 @@ const handleRegisterClick = async (eventItem) => {
       return isSameEvent && status === 'PENDING';
     });
 
-    // 🟢 CASE 2: Ada Transaksi Pending (Pake swalConfirm)
+    // Ada Transaksi Pending (Pake swalConfirm)
     if (pendingLog) {
       swalConfirm(
         'Transaksi Belum Selesai',
@@ -285,11 +285,12 @@ const handleRegisterClick = async (eventItem) => {
 </script>
 
 <style scoped>
-/* 🟢 Wrapper utama */
 .carousel-wrapper {
   position: relative;
   padding-left: 45px;
   padding-right: 45px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .card-disabled {
@@ -337,6 +338,14 @@ const handleRegisterClick = async (eventItem) => {
   scroll-snap-align: start;
 }
 
+.event-card-wrapper:first-child {
+  margin-left: auto;
+}
+
+.event-card-wrapper:last-child {
+  margin-right: auto;
+}
+
 @media (min-width: 576px) {
   .event-card-wrapper { width: calc(50% - 0.5rem); }
 }
@@ -349,12 +358,7 @@ const handleRegisterClick = async (eventItem) => {
   .event-card-wrapper { width: calc(25% - 0.75rem); }
 }
 
-@media (min-width: 768px) {
-  .center-on-desktop {
-    justify-content: center !important;
-    width: 100% !important;
-  }
-}
+
 
 /* 🟢 FIX TOMBOL PREV/NEXT: Background dihapus & disembunyiin di mobile */
 .custom-nav-btn {

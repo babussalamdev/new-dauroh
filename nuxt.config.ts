@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     "@/assets/css/variables.scss",
     "@/assets/css/admin/tables.css",
     "@/assets/css/typography.css",
+    "@/assets/css/components/breadcrumb.css",
   ],
 
   app: {

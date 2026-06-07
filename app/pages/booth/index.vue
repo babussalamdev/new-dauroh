@@ -1,5 +1,6 @@
 <template>
   <div class="container py-5">
+    <CommonBreadcrumb :items="[{text: 'Beranda', to: '/', icon: 'bi bi-house'}, {text: 'Sewa Booth'}]" />
     <div class="row justify-content-center">
       <div class="col-lg-8">
         

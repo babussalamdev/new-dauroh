@@ -1,13 +1,7 @@
 <template>
   <div class="container-fluid px-4 py-4">
     
-    <nav aria-label="breadcrumb" class="mb-3">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
-        <li class="breadcrumb-item txt-caption text-muted">Presensi</li>
-        <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Absen Manual</li>
-      </ol>
-    </nav>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Presensi'}, {text: 'Absen Manual'}]" />
 
     <div class="card content-card border-0 shadow-sm rounded-4 mb-4">
       

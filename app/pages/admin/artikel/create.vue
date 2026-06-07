@@ -3,13 +3,7 @@
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
       <div>
         <h4 class="txt-title text-dark mb-1">Tambah Informasi Baru</h4>
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Dashboard</NuxtLink></li>
-            <li class="breadcrumb-item"><NuxtLink to="/admin/artikel" class="text-decoration-none txt-caption text-muted">Informasi</NuxtLink></li>
-            <li class="breadcrumb-item active txt-caption text-dark fw-bold" aria-current="page">Tambah Baru</li>
-          </ol>
-        </nav>
+        <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Informasi', to: '/admin/artikel'}, {text: 'Tambah Baru'}]" />
       </div>
     </div>
 

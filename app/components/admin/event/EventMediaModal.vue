@@ -204,7 +204,7 @@ const back = () => emit('back');
 const convertTo12h = (timeStr: string) => {
   if (!timeStr) return '';
   const [hourStr, minuteStr] = timeStr.split(':');
-  let hour = parseInt(hourStr, 10);
+  let hour = parseInt(hourStr || '', 10);
   const ampm = hour >= 12 ? 'PM' : 'AM';
   hour = hour % 12;
   hour = hour ? hour : 12; 

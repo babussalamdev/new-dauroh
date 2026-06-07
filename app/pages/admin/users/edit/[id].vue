@@ -1,15 +1,6 @@
 <template>
   <div>
-    <div class="page-header mb-4">
-      <h1 class="page-title txt-title">Edit User</h1>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><NuxtLink to="/admin" class="text-decoration-none txt-caption text-muted">Home</NuxtLink></li>
-          <li class="breadcrumb-item"><NuxtLink to="/admin/users" class="text-decoration-none txt-caption text-muted">Data Peserta</NuxtLink></li>
-          <li class="breadcrumb-item active fw-medium txt-caption text-dark" aria-current="page">Edit User</li>
-        </ol>
-      </nav>
-    </div>
+    <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Manajemen User', to: '/admin/users'}, {text: 'Edit User'}]" />
 
     <div class="card content-card border-0 shadow-sm rounded-4">
       <div class="card-header bg-white py-3 px-4 border-bottom">

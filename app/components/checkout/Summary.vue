@@ -252,7 +252,7 @@ const handlePay = async () => {
       store.setStep('instructions');
     }
     else {
-      const errMsg = (result.message || '').toLowerCase();
+      const errMsg = (result.data?.message || '').toLowerCase();
       
       if (errMsg.includes('booking pending') || errMsg.includes('memiliki booking') || errMsg.includes('pending')) {
         await swalAlert(
@@ -264,13 +264,13 @@ const handlePay = async () => {
         return;
       }
 
-      const isSoldOut = result.error?.response?.status === 400 && (errMsg.includes('habis') || errMsg.includes('sold'));
+      const isSoldOut = result.data?.error?.response?.status === 400 && (errMsg.includes('habis') || errMsg.includes('sold'));
       if (isSoldOut) {
         await swalAlert('Mohon Maaf', 'Kuota tiket sudah habis.', 'error');
         store.clearCheckout();
         router.push('/');
       } else {
-        throw new Error(result.message || 'Gagal membuat transaksi.');
+        throw new Error(result.data?.message || 'Gagal membuat transaksi.');
       }
     }
   } catch (err: any) {

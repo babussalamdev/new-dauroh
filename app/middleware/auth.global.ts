@@ -23,14 +23,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // ==========================================
   // FUNGSI HELPER AUTO-REDIRECT (CUMA DI FILE INI)
   // ==========================================
-  const autoRedirect = (path, doLogout = false) => {
+  const autoRedirect = (path: string, doLogout = false) => {
     let isRedirecting = false;
     const execute = async () => {
       if (isRedirecting) return;
       isRedirecting = true;
      
       if (typeof document !== 'undefined') {
-        const confirmBtn = document.querySelector('.swal2-confirm');
+        const confirmBtn = document.querySelector('.swal2-confirm') as HTMLElement | null;
         if (confirmBtn) confirmBtn.click();
       }
 

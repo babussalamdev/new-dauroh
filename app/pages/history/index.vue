@@ -1,6 +1,5 @@
 <template>
   <div class="container py-4 py-md-5">
-    
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
 
       <div class="bg-white p-3 p-md-4 border-bottom d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
