@@ -113,8 +113,10 @@ const closeQrAndBack = () => {
 };
 
 const toDashboard = () => {
-  store.clearCheckout();
   router.push('/dashboard');
+  setTimeout(() => {
+    store.clearCheckout();
+  }, 300);
 };
 </script>
 

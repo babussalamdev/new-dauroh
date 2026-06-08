@@ -76,6 +76,18 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       }
       return navigateTo('/admin/login');
     }
+
+    if (to.path !== '/admin/login' && isAdmin.value) {
+      if (userRole === 'admin' && to.path.startsWith('/admin/settings')) {
+        return navigateTo('/admin');
+      }
+      if (userRole === 'bendahara' && to.path !== '/admin' && !to.path.startsWith('/admin/finance') && !to.path.startsWith('/admin/profile')) {
+        return navigateTo('/admin');
+      }
+      if (userRole === 'registrasi' && to.path !== '/admin' && !to.path.startsWith('/admin/kehadiran') && !to.path.startsWith('/admin/profile')) {
+        return navigateTo('/admin');
+      }
+    }
   }
 
   // ==========================================
@@ -92,7 +104,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       return navigateTo('/auth');
     }
 
-    const restrictedAdminRoles = ["root", "admin", "bendahara"];
+    const restrictedAdminRoles = ["root", "admin", "bendahara", "registrasi"];
     if (restrictedAdminRoles.includes(userRole) && to.path.startsWith('/dashboard')) {
       return navigateTo('/admin'); 
     }

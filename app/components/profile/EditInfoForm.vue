@@ -45,7 +45,7 @@
       </form>
       
       <div class="mt-auto pt-4 text-end border-top">
-        <button type="submit" form="updateProfileForm" class="btn btn-primary rounded-pill txt-body fw-bold px-4 shadow-sm" :disabled="profileLoading">
+        <button type="submit" form="updateProfileForm" class="btn btn-primary rounded-pill txt-body fw-bold px-4 shadow-sm" :disabled="profileLoading || !isFormChanged">
           <span v-if="profileLoading" class="spinner-border spinner-border-sm me-2" role="status"
             aria-hidden="true"></span>
           {{ profileLoading ? 'Menyimpan...' : 'Simpan Info Profil' }}
@@ -90,6 +90,11 @@ const profileLoading = ref(false);
 const profileError = ref<string | null>(null);
 
 // Populate Form Logic
+const originalProfile = ref("");
+const isFormChanged = computed(() => {
+  return JSON.stringify(profileForm) !== originalProfile.value;
+});
+
 const populateForm = (userData: any) => {
   if (!userData) return;
   profileForm.name = userData.name || '';
@@ -97,6 +102,8 @@ const populateForm = (userData: any) => {
   profileForm.phone_number = formatPhoneDisplay(userData.phone_number || userData.PhoneNumber || '');
   profileForm.birth_date = userData.birth_date || userData.Birth_Date || '';
   profileForm.gender = userData.gender || userData.Gender || '';
+  
+  originalProfile.value = JSON.stringify(profileForm);
 };
 
 onMounted(async () => {
@@ -144,6 +151,7 @@ const handleUpdateProfile = async () => {
       user.value.gender = profileForm.gender;
       user.value.phone_number = profileForm.phone_number;
     }
+    originalProfile.value = JSON.stringify(profileForm);
 
     // 🟢 Notifikasi Berhasil yang Halus
     swalAlert('Berhasil', 'Informasi profil berhasil diperbarui.', 'success');

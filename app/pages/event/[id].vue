@@ -211,7 +211,6 @@ onMounted(async () => {
          eventStore.currentPublicEventDetail?.SK === eventSK && 
          eventStore.currentPublicEventDetail?.isDetailFetched
       ) {
-         console.log("⚡ Ambil data dari kulkas Pinia!");
          event.value = eventStore.currentPublicEventDetail;
          isLoadingDetail.value = false;
          return; 

@@ -39,7 +39,7 @@
             </form>
             
             <div class="text-end mt-auto pt-3"> 
-              <button type="submit" form="updateProfileForm" class="btn btn-primary rounded-pill px-4 txt-body fw-medium" :disabled="profileLoading">
+              <button type="submit" form="updateProfileForm" class="btn btn-primary rounded-pill px-4 txt-body fw-medium" :disabled="profileLoading || !isFormChanged">
                 <span v-if="profileLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                 <i v-else class="bi bi-floppy-fill me-1"></i>
                 {{ profileLoading ? 'Menyimpan...' : 'Simpan Info Profil' }}
@@ -174,6 +174,11 @@ const profileForm = reactive({
 const profileLoading = ref(false);
 const profileError = ref<string | null>(null);
 
+const originalProfile = ref("");
+const isFormChanged = computed(() => {
+  return JSON.stringify(profileForm) !== originalProfile.value;
+});
+
 const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
@@ -211,6 +216,7 @@ onMounted(async () => {
     profileForm.email = user.value.email || '';
     profileForm.phone_number = formatPhoneDisplay(user.value.phone_number || user.value.Whatsapp || user.value.PhoneNumber);
     profileForm.role = user.value.role || user.value.Series || user.value.Role || 'user';
+    originalProfile.value = JSON.stringify(profileForm);
   }
 });
 
@@ -235,6 +241,7 @@ const handleUpdateProfile = async () => {
         user.value.name = profileForm.name;
         user.value.phone_number = profileForm.phone_number;
     }
+    originalProfile.value = JSON.stringify(profileForm);
 
     // 🟢 Notifikasi Sukses yang Halus
     swalAlert('Berhasil', 'Profil Anda berhasil diperbarui.', 'success');

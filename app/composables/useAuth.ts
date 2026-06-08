@@ -101,7 +101,6 @@ export const useAuth = () => {
       if (process.client) {
         const $socket = (nuxtApp as any).$socket; 
         if ($socket && typeof $socket.close === "function") {
-          console.log("🔌 Closing WebSocket connection...");
           $socket.close(1000, "Logout");
         }
       }

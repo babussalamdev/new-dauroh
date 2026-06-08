@@ -84,7 +84,7 @@ const handleSubmit = async () => {
 
   try {
     // const response = await $apiBase.post('/api/booth-requests', form);
-    // console.log('API Response:', response.data);
+
 
     // Simulasi penundaan API
     await new Promise(resolve => setTimeout(resolve, 1000));

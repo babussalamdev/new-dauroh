@@ -7,25 +7,25 @@ export default defineNuxtPlugin((nuxtApp) => {
   const connectWebSocket = (wsUrl: string) => {
     if (!process.client) return;
     if (!wsUrl || !wsUrl.includes("sk=")) {
-      console.warn("⚠️ WS URL tidak valid atau parameter 'sk' hilang.");
+      // console.warn("⚠️ WS URL tidak valid atau parameter 'sk' hilang.");
       return;
     }
 
     // 2. Proteksi Double Connection
     if (socket) {
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-        console.log("ℹ️ WS sudah aktif atau sedang menyambung.");
+
         return;
       }
       socket.close();
     }
 
     try {
-      console.log("🔌 Menginisialisasi WS...");
+
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
-        console.log("✅ WS Connected");
+
         if (reconnectTimeout) clearTimeout(reconnectTimeout);
       };
 
@@ -35,18 +35,18 @@ export default defineNuxtPlugin((nuxtApp) => {
           const checkOut = useCheckoutStore();        
           checkOut.setStep('success');
         } catch (error) {
-          console.error("❌ WS Message Error:", error);
+          // console.error("❌ WS Message Error:", error);
         }
       };
 
       socket.onclose = (event) => {
         if (event.code !== 1000 && event.code !== 1001) {
-          console.warn(`⚠️ WS Terputus (Code: ${event.code}). Mencoba menyambung ulang dalam 5 detik...`);          
+          // console.warn(`⚠️ WS Terputus (Code: ${event.code}). Mencoba menyambung ulang dalam 5 detik...`);          
           reconnectTimeout = setTimeout(() => {
             connectWebSocket(wsUrl);
           }, 5000);
         } else {
-          console.log("🔌 WS ditutup secara normal.");
+
         }
         socket = null;
       };
@@ -55,11 +55,11 @@ export default defineNuxtPlugin((nuxtApp) => {
         if (socket?.readyState === WebSocket.CLOSING || socket?.readyState === WebSocket.CLOSED) {
           return;
         }
-        console.error("❌ WS Error detected:", err);
+        // console.error("❌ WS Error detected:", err);
       };
 
     } catch (e) {
-      console.error("❌ Gagal membuat instance WebSocket:", e);
+      // console.error("❌ Gagal membuat instance WebSocket:", e);
     }
   };
 
@@ -68,7 +68,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (socket) {
       socket.close(1000, "Normal Closure");
       socket = null;
-      console.log("🔌 WS manual close dipanggil.");
+
     }
   };
 

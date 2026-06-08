@@ -8,10 +8,6 @@
     </div>
 
     <ul class="nav flex-column mt-3">
-      <li class="nav-item px-3 mb-2">
-        <span class="nav-category txt-title text-white-50">MENU UTAMA</span>
-      </li>
-
       <template v-for="(menu, index) in menuStore.menus" :key="index">
         
         <li v-if="!menu.subMenus || menu.subMenus.length === 0" class="nav-item">

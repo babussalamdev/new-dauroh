@@ -91,7 +91,7 @@
                       <div class="mb-2">
                         <label class="form-label txt-caption text-muted mb-1">Buka</label>
                         <div class="input-group input-group-sm">
-                          <input type="date" class="form-control modern-input txt-body fw-bold" v-model="formState.RegStartDate" :required="formState.HasRegStart" :min="minDate">
+                          <input type="date" class="form-control modern-input txt-body fw-bold" v-model="formState.RegStartDate" :required="formState.HasRegStart" :min="minDate" :max="maxRegEndDate">
                           <input type="time" class="form-control modern-input txt-body fw-bold" step="1" v-model="formState.RegStartTime" :required="formState.HasRegStart" :min="getMinStartTime(formState.RegStartDate)">
                         </div>
                       </div>
@@ -103,7 +103,7 @@
 
                       <div v-if="formState.HasRegEnd">
                         <div class="input-group input-group-sm">
-                          <input type="date" class="form-control modern-input txt-body fw-bold" v-model="formState.RegEndDate" :required="formState.HasRegEnd" :min="formState.RegStartDate || minDate">
+                          <input type="date" class="form-control modern-input txt-body fw-bold" v-model="formState.RegEndDate" :required="formState.HasRegEnd" :min="formState.RegStartDate || minDate" :max="maxRegEndDate">
                           <input type="time" class="form-control modern-input txt-body fw-bold" step="1" v-model="formState.RegEndTime" :required="formState.HasRegEnd" :min="getMinEndTime(formState.RegEndDate)">
                         </div>
                       </div>
@@ -182,7 +182,7 @@
 
         <div class="modal-footer border-0 px-3 pb-3 pt-0">
           <button type="button" class="btn btn-light px-4 rounded-pill text-muted txt-body fw-bold border" @click="handleCancel">Batal</button>
-          <button type="submit" form="eventBasicForm" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm" :disabled="isLoading || (!isUnlimited.total && isQuotaMismatch)">
+          <button type="submit" form="eventBasicForm" class="btn btn-primary px-4 rounded-pill txt-body fw-bold shadow-sm" :disabled="isLoading || (!isUnlimited.total && isQuotaMismatch) || (isEditing && !isFormChanged)">
             <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
             <!-- 🟢 KONDISI BARU BUAT TOMBOL -->
             <span v-else-if="isEditing"><i class="bi bi-floppy-fill me-1"></i> Simpan Perubahan</span>
@@ -221,6 +221,13 @@ const isLoading = computed(() => eventStore.loading.savingBasic);
 const { isShaking, triggerShake } = useModalShake();
 
 const draft = eventStore.draftEvent;
+
+const originalDraft = ref("");
+const isFormChanged = computed(() => {
+  if (!props.isEditing) return true;
+  return JSON.stringify(draft) !== originalDraft.value;
+});
+
 const formState = computed(() => draft);
 const quotaValues = computed(() => draft.quotaValues);
 const isUnlimited = computed(() => draft.isUnlimited);
@@ -261,6 +268,22 @@ const getMinEndTime = (selectedEndDate: string) => {
 };
 
 const remainingQuota = computed(() => (Number(draft.quotaValues.total) || 0) - ((Number(draft.quotaValues.ikhwan) || 0) + (Number(draft.quotaValues.akhwat) || 0)));
+
+const maxRegEndDate = computed(() => {
+  if (!props.event || !props.event.Date) return undefined;
+  let minDate = '';
+  const dates = props.event.Date;
+  if (typeof dates === 'object') {
+    Object.values(dates).forEach((day: any) => {
+      if (day && day.date) {
+        if (!minDate || day.date < minDate) {
+          minDate = day.date;
+        }
+      }
+    });
+  }
+  return minDate || undefined;
+});
 
 const isQuotaMismatch = computed(() => {
   if (draft.isUnlimited.total) return false; 
@@ -337,6 +360,8 @@ watch(() => props.show, (newVal) => {
         draft.quotaValues.ikhwan = Number(d.Quota_Ikhwan) || 0;
         draft.quotaValues.akhwat = Number(d.Quota_Akhwat) || 0;
       }
+      
+      originalDraft.value = JSON.stringify(draft);
     } 
     // JIKA BUKAN EDIT (CREATE BARU), DAN DRAFT KOSONG, KASIH DEFAULT KUOTA
     else if (!draft.Title && draft.quotaValues.total === 0) {
@@ -376,6 +401,13 @@ const save = () => {
     if (new Date(endStr) <= new Date(startStr)) {
       swalAlert('Waktu Tidak Valid', 'Waktu Tutup Pendaftaran tidak boleh lebih awal dari Waktu Buka.', 'warning');
       return;
+    }
+  }
+
+  if (maxRegEndDate.value && draft.HasRegStart) {
+    if (draft.RegStartDate > maxRegEndDate.value || (draft.HasRegEnd && draft.RegEndDate > maxRegEndDate.value)) {
+       swalAlert('Tanggal Tidak Valid', `Pendaftaran tidak boleh melewati hari-H kegiatan (${maxRegEndDate.value})`, 'warning');
+       return;
     }
   }
   

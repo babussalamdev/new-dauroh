@@ -83,7 +83,7 @@
                       {{ v.Expired }}
                     </td>
                     <td class="fw-medium text-dark txt-body">Rp{{ formatCurrency(v.Nominal) }}</td>
-                    <td class="txt-caption text-muted">{{ v.Username || '-' }}</td>
+                    <td class="txt-caption text-muted">{{ v.Series || '-' }}</td>
                   </tr>
                 </tbody>
               </table>

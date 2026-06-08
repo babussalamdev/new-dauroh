@@ -53,7 +53,7 @@
             <div class="mb-3">
               <label for="password" class="form-label txt-label fw-bold text-secondary">Password</label>
               <div class="password-wrapper">
-                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control txt-body"
+                <input :type="showPassword ? 'text' : 'password'" id="password" v-model="form.password" class="form-control txt-body"
                   placeholder="Masukkan password" autocomplete="new-password" required />
                 <span @click="showPassword = !showPassword" class="password-toggle-icon">
                   <i :class="showPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
@@ -64,7 +64,7 @@
             <div class="mb-3">
               <label for="confirmPassword" class="form-label txt-label fw-bold text-secondary">Konfirmasi Password</label>
               <div class="password-wrapper">
-                <input :type="showConfirmPassword ? 'text' : 'password'" v-model="form.confirmPassword"
+                <input :type="showConfirmPassword ? 'text' : 'password'" id="confirmPassword" v-model="form.confirmPassword"
                   class="form-control txt-body" placeholder="Ulangi password" autocomplete="new-password" required />
                 <span @click="showConfirmPassword = !showConfirmPassword" class="password-toggle-icon">
                   <i :class="showConfirmPassword ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
@@ -144,7 +144,7 @@ const handleRegister = async () => {
     // API Register
     await $apiBase.post('/signup-account?type=user-client', userData);
 
-    // 2. Jika Sukses -> Simpan Session & Redirect
+    // Jika Sukses -> Simpan Session & Redirect
     sessionStorage.setItem('temp_register_data', JSON.stringify(userData));
     sessionStorage.removeItem('otp_expiry_time');
 
@@ -162,7 +162,7 @@ const handleRegister = async () => {
   const msg = err.response?.data?.message || err.response?.data?.error || 'Terjadi kesalahan.';
   const msgLower = msg.toLowerCase();
 
-  // 1. Handle Username
+  // Handle Username
   if (msgLower.includes('username cannot be of email format')) {
     swalAlert(
       'Format Username Salah',
@@ -170,11 +170,11 @@ const handleRegister = async () => {
       'error'
     );
   }
-  // 2. Handle Nomor HP/WA Sudah Ada
+  // 2Handle Nomor HP/WA Sudah Ada
   else if (msgLower.includes('nomor') || msgLower.includes('whatsapp')) {
     swalAlert('Nomor Sudah Digunakan', msg, 'error');
   } 
-  // 3. Handle Email/User Sudah Terdaftar
+  // Handle Email/User Sudah Terdaftar
   else if (msgLower.includes('already exists') || msgLower.includes('sudah terdaftar') || msgLower.includes('email already')) {
     swalAlert(
       'Email Sudah Terdaftar', 
@@ -182,7 +182,7 @@ const handleRegister = async () => {
       'warning'
     );
   } 
-  // 4. Handle Error Lainnya
+  // Handle Error Lainnya
   else {
     error.value = msg;
   }

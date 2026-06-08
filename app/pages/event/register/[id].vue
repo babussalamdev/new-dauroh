@@ -262,7 +262,7 @@ onMounted(async () => {
         if (isTooOld || isEventExpired) {
           // BERSIIHKAN SAMPAH
           localStorage.removeItem(STORAGE_KEY.value);
-          console.log("Draf pendaftaran dihapus otomatis karena kadaluarsa.");
+
         } else {
           // LOAD DRAF (Karena masih valid)
           if (parsed.qtyIkhwan) formState.qtyIkhwan = parsed.qtyIkhwan;

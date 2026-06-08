@@ -58,7 +58,7 @@
       <p class="txt-body text-muted mb-0">Silakan pilih bulan/tahun dan klik event pada menu di atas.</p>
     </div>
 
-    <AdminDashboardGlobalOverview :mockStats="mockStats" />
+    <AdminDashboardGlobalOverview v-if="isGlobalSystemVisible" :mockStats="mockStats" />
 
   </div>
 </template>
@@ -90,8 +90,13 @@ const isLoadingEventData = ref(false);
 
 const userRoleLabel = computed(() => {
   const role = user.value?.role;
-  const roles: Record<string, string> = { root: 'Root', admin: 'Administrator' };
+  const roles: Record<string, string> = { root: 'Root', admin: 'Administrator', bendahara: 'Bendahara', registrasi: 'Registrasi' };
   return (role && roles[role]) ? roles[role] : 'Administrator';
+});
+
+const isGlobalSystemVisible = computed(() => {
+  const role = user.value?.role?.toLowerCase();
+  return role === 'root' || role === 'admin';
 });
 
 const mockStats = ref({

@@ -50,9 +50,9 @@
         <span class="fw-bold text-dark">{{ formatCurrency(store.totalAmount) }}</span>
       </li>
 
-      <li v-if="store.donationAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 txt-body text-success">
+      <li v-if="store.donationAmount > 0" class="list-group-item d-flex justify-content-between align-items-center px-0 txt-body text-success text-break">
         <span>Infaq Dakwah Babussalam</span>
-        <span class="fw-bold">+ {{ formatCurrency(store.donationAmount) }}</span>
+        <span class="fw-bold ms-2 text-end">+ {{ formatCurrency(store.donationAmount) }}</span>
       </li>
 
       <li v-if="store.discountAmount > 0"
@@ -61,9 +61,9 @@
         <span class="fw-bold">- {{ formatCurrency(store.discountAmount) }}</span>
       </li>
 
-      <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light rounded-3 mt-2 p-2">
+      <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-light rounded-3 mt-2 p-2 text-break">
         <span class="txt-body fw-bold text-dark">TOTAL</span>
-        <span class="txt-subtitle fw-bold text-primary">{{ formatCurrency(store.finalAmount) }}</span>
+        <span class="txt-subtitle fw-bold text-primary ms-2 text-end">{{ formatCurrency(store.finalAmount) }}</span>
       </li>
     </ul>
 
@@ -152,6 +152,9 @@ const setDonation = (amount: number) => {
 
 const handleCustomDonation = () => {
   if (customDonation.value !== null && customDonation.value >= 0) {
+    if (customDonation.value > 999999999) {
+      customDonation.value = 999999999;
+    }
     store.donationAmount = customDonation.value;
   } else {
     store.donationAmount = 0;
@@ -274,7 +277,8 @@ const handlePay = async () => {
       }
     }
   } catch (err: any) {
-    error.value = err.message || 'Gagal memproses pembayaran.';
+    const apiError = err.response?.data?.error || err.response?.data?.message;
+    error.value = apiError || err.message || 'Gagal memproses pembayaran.';
     swalAlert('Gagal', error.value || 'Terjadi kesalahan sistem.', 'error');
   } finally {
     loading.value = false;

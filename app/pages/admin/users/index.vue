@@ -247,7 +247,7 @@ const getRoleBadge = (roleStr?: string) => {
     case 'root': return 'bg-dark text-white border-dark';
     case 'admin': return 'bg-info bg-opacity-10 text-info border-info border-opacity-25';
     case 'bendahara': return 'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25';
-    case 'registrasi': return 'bg-teal bg-opacity-10 text-teal border-teal border-opacity-25';
+    case 'registrasi': return 'bg-success bg-opacity-10 text-success border-success border-opacity-25';
     case 'client':
     case 'user': return 'bg-primary bg-opacity-10 text-primary border-primary border-opacity-25';            
     default: return 'bg-light text-dark border';

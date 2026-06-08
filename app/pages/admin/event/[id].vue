@@ -407,7 +407,6 @@ const handleUpdateBasicInfo = async (payload: any) => {
   if (success) {
     toastStore.showToast({ message: 'Info Dasar diperbarui', type: 'success' });
     closeEditBasicModal();
-    setTimeout(() => { window.location.reload(); }, 800);
   }
 };
 
