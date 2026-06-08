@@ -353,6 +353,29 @@ const removeScheduleDay = (index: number) => { formState.scheduleDays.splice(ind
 
 const handleScheduleSubmit = async () => {
   if (!eventSK) return;
+
+  // Validasi waktu lampau untuk hari ini
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const nowTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  let isPastError = false;
+  for (const day of formState.scheduleDays) {
+    if (day.date === todayStr && day.start_time < nowTimeStr) {
+      isPastError = true;
+      break;
+    }
+    if (day.end_time <= day.start_time) {
+      swalAlert('Waktu Tidak Valid', 'Waktu selesai harus setelah waktu mulai.', 'warning');
+      return;
+    }
+  }
+
+  if (isPastError) {
+    swalAlert('Waktu Tidak Valid', 'Waktu mulai kegiatan untuk hari ini tidak boleh di masa lalu.', 'warning');
+    return;
+  }
+
   isSavingSchedule.value = true;
   const payload: any = {};
   formState.scheduleDays.forEach((day, i) => {

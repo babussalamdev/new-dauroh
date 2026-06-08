@@ -47,7 +47,7 @@
                 class="p-3 border rounded-3 bg-light-subtle d-flex justify-content-between align-items-center transition-hover">
                 <div>
                   <span class="txt-body fw-bold text-dark d-block">Tiket Ikhwan</span>
-                  <span class="txt-caption fw-bold" :class="getDynamicQuotaColor(quotaInfo.ikhwan, formState.qtyIkhwan)">
+                  <span class="txt-caption fw-bold" :class="getDynamicQuotaColor(remainingQuota.ikhwan, formState.qtyIkhwan)">
                     {{ getDynamicQuotaText(event?.Quota_Ikhwan, event?.Sold_Ikhwan, formState.qtyIkhwan) }}
                   </span>
                 </div>
@@ -60,7 +60,7 @@
                     style="width: 40px; background: transparent;" :value="formState.qtyIkhwan" readonly>
                   <button class="btn btn-icon rounded-circle btn-sm btn-primary text-white"
                     @click="updateTicket('ikhwan', 1)"
-                    :disabled="isMaxReached || isQuotaReached(quotaInfo.ikhwan, formState.qtyIkhwan)">
+                    :disabled="isMaxReached || isQuotaReached(remainingQuota.ikhwan, formState.qtyIkhwan)">
                     <i class="bi bi-plus"></i>
                   </button>
                 </div>
@@ -70,7 +70,7 @@
                 class="p-3 border rounded-3 bg-light-subtle d-flex justify-content-between align-items-center transition-hover">
                 <div>
                   <span class="txt-body fw-bold text-dark d-block">Tiket Akhwat</span>
-                  <span class="txt-caption fw-bold" :class="getDynamicQuotaColor(quotaInfo.akhwat, formState.qtyAkhwat)">
+                  <span class="txt-caption fw-bold" :class="getDynamicQuotaColor(remainingQuota.akhwat, formState.qtyAkhwat)">
                     {{ getDynamicQuotaText(event?.Quota_Akhwat, event?.Sold_Akhwat, formState.qtyAkhwat) }}
                   </span>
                 </div>
@@ -83,7 +83,7 @@
                     style="width: 40px; background: transparent;" :value="formState.qtyAkhwat" readonly>
                   <button class="btn btn-icon rounded-circle btn-sm btn-primary text-white"
                     @click="updateTicket('akhwat', 1)"
-                    :disabled="isMaxReached || isQuotaReached(quotaInfo.akhwat, formState.qtyAkhwat)">
+                    :disabled="isMaxReached || isQuotaReached(remainingQuota.akhwat, formState.qtyAkhwat)">
                     <i class="bi bi-plus"></i>
                   </button>
                 </div>
@@ -312,12 +312,17 @@ const canShowAkhwat = computed(() => {
   return g.includes('akhwat') || g.includes('ikhwan, akhwat');
 });
 
-const quotaInfo = computed(() => {
+const remainingQuota = computed(() => {
   if (!event.value) return { ikhwan: 0, akhwat: 0, total: 0 };
+  const getRemain = (quota: any, sold: any) => {
+    if (quota === 'non-quota') return 'non-quota';
+    const remain = Number(quota || 0) - Number(sold || 0);
+    return remain > 0 ? remain : 0;
+  };
   return {
-    ikhwan: event.value.Quota_Ikhwan,
-    akhwat: event.value.Quota_Akhwat,
-    total: event.value.Quota_Total
+    ikhwan: getRemain(event.value.Quota_Ikhwan, event.value.Sold_Ikhwan),
+    akhwat: getRemain(event.value.Quota_Akhwat, event.value.Sold_Akhwat),
+    total: getRemain(event.value.Quota_Total, event.value.Sold_Total)
   };
 });
 
@@ -331,20 +336,20 @@ const getDynamicQuotaText = (quotaTotal: any, soldTotal: any, selectedQty: numbe
   return 'Habis';
 };
 
-const getDynamicQuotaColor = (quotaTotal: any, selectedQty: number) => {
-  if (quotaTotal === 'non-quota') return 'text-success';
-  if (typeof quotaTotal === 'number') {
-    const remaining = quotaTotal - selectedQty;
-    if (remaining <= 0) return 'text-danger fw-bold';
-    if (remaining < 5) return 'text-warning fw-bold';
+const getDynamicQuotaColor = (remain: any, selectedQty: number) => {
+  if (remain === 'non-quota') return 'text-success';
+  if (typeof remain === 'number') {
+    const dynamicRemain = remain - selectedQty;
+    if (dynamicRemain <= 0) return 'text-danger fw-bold';
+    if (dynamicRemain < 5) return 'text-warning fw-bold';
     return 'text-muted';
   }
   return 'text-danger';
 };
 
-const isQuotaReached = (quotaTotal: any, selectedQty: number) => {
-  if (quotaTotal === 'non-quota') return false;
-  return selectedQty >= quotaTotal;
+const isQuotaReached = (remain: any, selectedQty: number) => {
+  if (remain === 'non-quota') return false;
+  return selectedQty >= remain;
 }
 
 const soldOutMessage = ref("Mohon maaf, kuota tiket sudah habis.");
@@ -400,11 +405,11 @@ const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
 
   if (type === 'ikhwan') {
     const newVal = formState.qtyIkhwan + change;
-    if (typeof quotaInfo.value.ikhwan === 'number' && quotaInfo.value.ikhwan > 0 && newVal > quotaInfo.value.ikhwan) return;
+    if (typeof remainingQuota.value.ikhwan === 'number' && newVal > remainingQuota.value.ikhwan) return;
     if (newVal >= 0) formState.qtyIkhwan = newVal;
   } else {
     const newVal = formState.qtyAkhwat + change;
-    if (typeof quotaInfo.value.akhwat === 'number' && quotaInfo.value.akhwat > 0 && newVal > quotaInfo.value.akhwat) return;
+    if (typeof remainingQuota.value.akhwat === 'number' && newVal > remainingQuota.value.akhwat) return;
     if (newVal >= 0) formState.qtyAkhwat = newVal;
   }
   generateForms();

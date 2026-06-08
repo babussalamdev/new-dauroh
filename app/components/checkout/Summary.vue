@@ -251,10 +251,8 @@ const handlePay = async () => {
 
   try {
     const result = await store.createPayment();
-    if (result.success) {
-      store.setStep('instructions');
-    }
-    else {
+    // Do not force 'instructions' here, createPayment already sets the correct step (success or instructions)
+    if (!result.success) {
       const errMsg = (result.data?.message || '').toLowerCase();
       
       if (errMsg.includes('booking pending') || errMsg.includes('memiliki booking') || errMsg.includes('pending')) {

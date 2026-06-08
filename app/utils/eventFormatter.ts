@@ -97,3 +97,15 @@ export const convertTo12h = (time24: string): string => {
   hours = hours % 12 || 12;
   return `${String(hours).padStart(2, '0')}.${minutes} ${suffix}`;
 };
+
+export const convertTo24h = (timeStr?: string): string => {
+  if (!timeStr) return '';
+  const cleanStr = timeStr.replace('.', ':');
+  const [time, modifier] = cleanStr.split(' ');
+  if (!time) return '';
+  let [hours, minutes] = time.split(':');
+  let h = parseInt(hours || "0", 10);
+  if (modifier?.toUpperCase() === 'PM' && h < 12) h += 12;
+  if (modifier?.toUpperCase() === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${minutes}`;
+};

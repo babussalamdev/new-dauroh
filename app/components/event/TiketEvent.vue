@@ -81,6 +81,7 @@ import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import { useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import { useAlert } from '~/utils/swal';
+import { convertTo24h } from '~/utils/eventFormatter';
 
 const isHovered = ref(false);
 const eventStore = useEventStore();
@@ -184,8 +185,13 @@ const getButtonState = (eventItem) => {
   if (eventItem.Date) {
     const dates = Object.values(eventItem.Date);
     if (dates.length > 0) {
-      const lastEventDateStr = dates.reduce((max, current) => (current.date > max ? current.date : max), dates[0].date);
-      const eventEndTime = dayjs(`${lastEventDateStr}T23:59:59`);
+      const lastDayObj = dates.reduce((maxObj, current) => (current.date > maxObj.date ? current : maxObj), dates[0]);
+      
+      const time24 = convertTo24h(lastDayObj.end_time) || '23:59:59';
+      // Pastikan formatnya HH:mm:ss
+      const finalTime = time24.length === 5 ? `${time24}:00` : time24;
+      
+      const eventEndTime = dayjs(`${lastDayObj.date}T${finalTime}`);
       if (eventEndTime.isValid() && now.isAfter(eventEndTime)) {
         return { label: 'Selesai', disabled: true, cssClass: 'btn-secondary' };
       }
@@ -205,19 +211,29 @@ const getButtonState = (eventItem) => {
       return { label: 'Ditutup', disabled: true, cssClass: 'btn-secondary' };
     }
   }
-  let relevantQuota = 'non-quota';
+  let totalQ = 'non-quota';
+  let soldQ = 0;
+  
   const gender = (eventItem.Gender || '').toLowerCase().trim();
   if (gender.includes('ikhwan') && gender.includes('akhwat')) {
-    relevantQuota = eventItem.Quota_Total;
+    totalQ = eventItem.Quota_Total;
+    soldQ = eventItem.Sold_Total;
   } else if (gender.includes('akhwat') || gender.includes('perempuan') || gender.includes('wanita')) {
-    relevantQuota = eventItem.Quota_Akhwat;
+    totalQ = eventItem.Quota_Akhwat;
+    soldQ = eventItem.Sold_Akhwat;
   } else if (gender.includes('ikhwan') || gender.includes('laki') || gender.includes('pria')) {
-    relevantQuota = eventItem.Quota_Ikhwan;
+    totalQ = eventItem.Quota_Ikhwan;
+    soldQ = eventItem.Sold_Ikhwan;
   } else {
-    relevantQuota = eventItem.Quota_Total;
+    totalQ = eventItem.Quota_Total;
+    soldQ = eventItem.Sold_Total;
   }
-  if (relevantQuota !== 'non-quota' && Number(relevantQuota) <= 0) {
-    return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
+  
+  if (totalQ !== 'non-quota') {
+    const remain = Number(totalQ) - Number(soldQ || 0);
+    if (remain <= 0) {
+      return { label: 'Habis', disabled: true, cssClass: 'btn-secondary' };
+    }
   }
   return { label: 'Daftar', disabled: false, cssClass: 'btn-primary' };
 };
@@ -225,12 +241,11 @@ const getButtonState = (eventItem) => {
 const getCardStatus = (eventItem) => {
   const buttonState = getButtonState(eventItem);
   const label = buttonState.label;
-  if (['Habis', 'Selesai', 'Ditutup', 'Non-Aktif'].includes(label)) {
+  if (['Habis', 'Selesai', 'Ditutup'].includes(label)) {
     let overlayText = '';
     if (label === 'Habis') overlayText = 'SOLD OUT';
     else if (label === 'Selesai') overlayText = 'SELESAI';
     else if (label === 'Ditutup') overlayText = 'DITUTUP';
-    else if (label === 'Non-Aktif') overlayText = 'NON AKTIF';
     return { isDisabled: true, overlayText: overlayText };
   }
   return { isDisabled: false, overlayText: null };

@@ -294,12 +294,24 @@ const getDayName = (dateObj: any) => {
    return new Date(rawDates[0]).toLocaleDateString('id-ID', { weekday: 'long' });
 };
 
+const convertTo24h = (timeStr?: string) => {
+  if (!timeStr) return '';
+  const cleanStr = timeStr.replace('.', ':');
+  const [time, modifier] = cleanStr.split(' ');
+  if (!time) return '';
+  let [hours, minutes] = time.split(':');
+  let h = parseInt(hours || "0", 10);
+  if (modifier?.toUpperCase() === 'PM' && h < 12) h += 12;
+  if (modifier?.toUpperCase() === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}.${minutes}`;
+};
+
 const getTimeRange = (dateObj: any) => {
    if (!dateObj) return '-';
    const first = Object.values(dateObj)[0] as any;
    if (!first) return '-';
-   const s = first.start_time?.substring(0, 5) || '??';
-   const e = first.end_time?.substring(0, 5) || '??';
+   const s = convertTo24h(first.start_time) || '??';
+   const e = convertTo24h(first.end_time) || '??';
    return `${s} - ${e} WIB`;
 };
 
