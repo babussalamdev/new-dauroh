@@ -167,6 +167,7 @@ export const useCheckoutStore = defineStore(
 
         const result = response.data;
         transactionDetails.value = {
+          ...transactionDetails.value,
           ...result,
           vaNumber: result.receiver_bank_account?.account_number || result.va_number,
          expired_date: result.expired_date,
@@ -233,13 +234,22 @@ export const useCheckoutStore = defineStore(
         
         realPrice = participants.value.length > 0 ? pureTicketTotal / participants.value.length : 0;
 
+        const realEventSK = fullEventSK.split('#')[0];
+        const existingEvent = eventStore.tiketEvent.find(e => e.SK === realEventSK);
+
         // 🟢 SET DATA EVENT KE STORE
         event.value = {
-          SK: fullEventSK, // 👈 SEKARANG UDAH FULL TERKIRIM (3a89f9#b5ab2e)
-          Title: data.Title || data.title || "Nama Event Tidak Tersedia",
-          Place: "Lokasi Tidak Tersedia",
+          SK: realEventSK,
+          Title: data.Title || data.title || existingEvent?.Title || "Nama Event Tidak Tersedia",
+          Place: existingEvent?.Place || "Lokasi Tidak Tersedia",
           Price: realPrice < 0 ? 0 : realPrice,
-          Picture: data.Picture || data.event?.Picture || data.event?.picture || "",
+          Picture: data.Picture || data.event?.Picture || data.event?.picture || existingEvent?.Picture || "",
+        };
+
+        transactionDetails.value = {
+          ...transactionDetails.value,
+          SK: fullEventSK,
+          event_sk: fullEventSK
         };
         
         repay.value = true;

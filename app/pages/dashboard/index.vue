@@ -118,7 +118,6 @@
                       <tr v-for="(ticket, index) in activeEvent" :key="'row-' + index">
                         <td class="ps-4">
                           <div class="d-flex flex-column">
-                            <span class="fw-bold text-primary txt-body">#{{ (ticket.SK || '').slice(-6).toUpperCase() }}</span>
                             <span v-if="getSmartStatus(ticket) === 'PENDING'"
                               class="text-warning txt-caption fw-bold">Menunggu Verifikasi</span>
                             <span v-else class="text-success txt-caption fw-bold">Pembayaran Lunas</span>
@@ -130,7 +129,7 @@
                         </td>
                         <td class="text-center pe-4">
                           <button
-                            v-if="getSmartStatus(ticket) === 'SUCCESSFUL' || ['SUCCESSFUL', 'SUCCESS', 'PAID'].includes((ticket.Status || ticket.status || '').toUpperCase())"
+                            v-if="['SUCCESSFUL', 'UPCOMING'].includes(getSmartStatus(ticket)) || ['SUCCESSFUL', 'SUCCESS', 'PAID', 'UPCOMING'].includes((ticket.Status || ticket.status || '').toUpperCase())"
                             class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm txt-caption fw-bold"
                             @click="openDetailParticipant(ticket)">
                             <i class="bi bi-people me-2"></i>Lihat Peserta
@@ -207,7 +206,7 @@ const upcomingTickets = computed(() => {
   return allTickets
     .map(item => {
       if (!item.event || Object.keys(item.event).length === 0) {
-        const eventSK = (item.SK || '').split('#')[0];
+        const eventSK = (item.Subject || item.SK || '').split('#')[0];
         const foundEvent = eventStore.tiketEvent.find(e => e.SK === eventSK);
         return { ...item, event: foundEvent || {} };
       }
@@ -249,7 +248,7 @@ const activeEvent = computed(() => {
 const uniqueActiveEvent = computed(() => {
   const seen = new Set();
   return activeEvent.value.filter(t => {
-    const eventSK = (t.SK || '').split('#')[0];
+    const eventSK = (t.Subject || t.SK || '').split('#')[0];
     if (seen.has(eventSK)) return false; 
     seen.add(eventSK);
     return true; 

@@ -32,7 +32,13 @@ export default defineNuxtPlugin((nuxtApp) => {
       socket.onmessage = (event) => {
         try {
           if (!event.data) return;
-          const checkOut = useCheckoutStore();        
+          const checkOut = useCheckoutStore();
+          
+          if (checkOut.transactionDetails) {
+            checkOut.transactionDetails.status = 'SUCCESSFUL';
+            checkOut.transactionDetails.Status = 'SUCCESSFUL';
+          }
+          
           checkOut.setStep('success');
         } catch (error) {
           // console.error("❌ WS Message Error:", error);

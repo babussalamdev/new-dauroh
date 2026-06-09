@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 export const useTransactionStatus = () => {
   const getSmartStatus = (item: any) => {
     const dbStatus = (item.Status || item.status || '').toUpperCase();
-    if (['PAID', 'SUCCESS', 'SETTLED', 'SUCCESSFUL'].includes(dbStatus)) return 'SUCCESSFUL';
+    if (['PAID', 'SUCCESS', 'SETTLED', 'SUCCESSFUL', 'UPCOMING'].includes(dbStatus)) return 'SUCCESSFUL';
     if (['CANCELLED', 'FAILED'].includes(dbStatus)) return 'CANCELLED';
     if (dbStatus === 'EXPIRED') return 'EXPIRED';
     if (dbStatus === 'PENDING' || !dbStatus) {

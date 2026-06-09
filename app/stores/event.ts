@@ -43,7 +43,7 @@ const mapApiToEvent = (event: ApiEventRaw): Event => ({
   Sold_Total: parseSold(event.Sold_Ikhwan_Akhwat),
   Sold_Ikhwan: parseSold(event.Sold_Ikhwan),
   Sold_Akhwat: parseSold(event.Sold_Akhwat),
-  Picture: event.Picture || undefined,
+  Picture: event.Picture || event.picture || undefined,
   Status: event.Status || 'inactive',
   Description: event.Description || "",
   Whatsapp: event.Whatsapp || "",

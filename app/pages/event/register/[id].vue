@@ -486,40 +486,27 @@ const handleSubmit = async () => {
       'Sudah Terdaftar',
       'Anda memiliki tagihan aktif untuk event ini. Lanjutkan ke instruksi pembayaran?',
       'Lanjutkan Bayar'
-    ).then((result) => {
+    ).then(async (result) => {
       if (result.isConfirmed) {
-        checkoutStore.event = {
-          ...event.value!,
-          SK: (event.value?.SK || '') as string,
-          Title: event.value?.Title || '',
-          Price: event.value?.Price || 0
-        } as any;
-
-        const rawParticipants = conflictingTransaction.participants || formState.participants;
-
-        checkoutStore.participants = rawParticipants.map((p: any) => ({
-          Name: p.Name || '',
-          Gender: p.Gender || 'Ikhwan',
-          Email: p.Email || user.value?.email || '',
-          Age: p.Age || 0,
-          Domicile: p.Domicile || ''
-        }));
-
-        checkoutStore.transactionDetails = {
-          ...conflictingTransaction,
-          status: 'PENDING',
-          amount: conflictingTransaction.amount,
-          vaNumber: conflictingTransaction.va_number || conflictingTransaction.receiver_bank_account?.account_number,
-          expiryTime: conflictingTransaction.expired_date || conflictingTransaction.expiryTime,
-          paymentMethod: conflictingTransaction.sender_bank || conflictingTransaction.paymentMethod || 'Bank',
-        };
-
-        if (checkoutStore.setStep) {
-          checkoutStore.setStep('instructions');
-        } else {
-          checkoutStore.currentStep = 'instructions';
+        checkoutStore.isLoading = true;
+        try {
+          const isTransactionValid = await checkoutStore.checkExistingTransaction(conflictingTransaction.SK);
+          
+          if (isTransactionValid) {
+            await checkoutStore.restoreTransactionData(conflictingTransaction.SK);
+            checkoutStore.setStep('instructions'); 
+            router.push('/checkout');
+          } else {
+            // Jika expired di Flip, arahkan untuk pilih bank ulang
+            await checkoutStore.restoreTransactionData(conflictingTransaction.SK);
+            router.push('/checkout');
+          }
+        } catch (error) {
+          console.error("Gagal memulihkan transaksi:", error);
+          swalAlert('Kesalahan', 'Gagal memulihkan data transaksi.', 'error');
+        } finally {
+          checkoutStore.isLoading = false;
         }
-        router.push('/checkout');
       }
     });
     return;

@@ -193,6 +193,7 @@ watch(currentStatus, (newStatus) => {
     userStore.registerEvent({
       event: store.event,
       participants: store.participants,
+      transactionDetails: { ...store.transactionDetails, status: 'SUCCESSFUL' }
     });
     store.setStep('success');
   }

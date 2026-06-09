@@ -150,12 +150,12 @@ export const useUserStore = defineStore("user", () => {
     const { event, participants, transactionDetails } = payload;
     const eventStore = useEventStore();
 
-    let initialStatus: UserTicket["status"] = "Upcoming";
+    let initialStatus: UserTicket["status"] = "SUCCESSFUL";
     let trxAmount = 0;
 
     if (transactionDetails) {
       initialStatus =
-        transactionDetails.status === "PENDING" ? "PENDING" : "Upcoming";
+        transactionDetails.status === "PENDING" ? "PENDING" : "SUCCESSFUL";
       trxAmount = Number(transactionDetails.amount || 0);
     }
 
@@ -175,6 +175,7 @@ export const useUserStore = defineStore("user", () => {
       participants: participants || [],
       total_participants: participants?.length || 0,
       status: initialStatus,
+      Status: initialStatus,
       amount: trxAmount || (event?.Price || 0) * (participants?.length || 1),
       va_number:
         transactionDetails?.vaNumber ||
