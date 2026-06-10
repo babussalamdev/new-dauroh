@@ -62,6 +62,7 @@ export const useUserStore = defineStore("user", () => {
       }
 
       const mappedTickets = rawData.map((item: any) => {
+        const existing = tickets.value.find(t => t.SK === item.SK);
         return {
           SK: item.SK,
           PK: item.PK,
@@ -74,6 +75,7 @@ export const useUserStore = defineStore("user", () => {
           participants: item.Participant,
           title: item.Title,
           Expired_Date: item.Expired_Date || item.expired_date || "-",
+          event: existing?.event,
         } as UserTicket;
       });
 

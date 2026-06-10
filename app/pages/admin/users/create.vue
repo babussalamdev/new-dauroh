@@ -67,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Buat User' });
 import { reactive, computed, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';

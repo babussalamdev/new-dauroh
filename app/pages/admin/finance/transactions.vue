@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-2 px-md-4 py-4">
+  <div>
     
     <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Keuangan'}, {text: 'Data Transaksi'}]" />
 
@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Transaksi Keuangan' });
 import { watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useFinanceStore } from '~/stores/finance';

@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Edit User' });
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminUserStore } from '~/stores/adminUser';

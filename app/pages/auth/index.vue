@@ -17,6 +17,7 @@
 </template>
 
 <script setup>
+useHead({ title: 'Masuk' });
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 

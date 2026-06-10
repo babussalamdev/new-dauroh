@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-4 py-4">
+  <div>
     
     <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Presensi'}, {text: 'Absen Manual'}]" />
 
@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Kehadiran Manual' });
 import { ref, computed } from 'vue';
 import { useAlert } from '~/utils/swal';
 import { useAttendanceStore } from '~/stores/attendance';

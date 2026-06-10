@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-2 px-md-4 py-4">
+  <div>
     
     <div class="card border-0 shadow-sm rounded-4 mb-3 bg-white">
       <div class="card-body p-3 px-4 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
@@ -100,7 +100,7 @@ const isGlobalSystemVisible = computed(() => {
 });
 
 const mockStats = ref({
-  participants: { ikhwan: 1240, akhwat: 980, total: 2220 }
+  participants: { ikhwan: 0, akhwat: 0, total: 0 }
 });
 
 const eventStats = ref({

@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-4 py-4">
+  <div>
     <CommonBreadcrumb :items="breadcrumbItems" class="mb-4" />
 
     <div v-if="eventStore.loading.detail" class="text-center py-5">

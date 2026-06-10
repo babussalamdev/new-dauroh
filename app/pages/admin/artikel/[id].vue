@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-4 py-4">
+  <div>
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
       <div>
         <h4 class="txt-title text-dark mb-1">Edit Artikel</h4>
@@ -93,6 +93,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Edit Artikel' });
 import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from '~/utils/swal';
@@ -237,7 +238,7 @@ const onImageError = () => previewUrl.value = null;
 // --- LOGIC: UPDATE DATA ---
 const handleUpdateArticle = async () => {
   if (!form.Title || !form.Description || form.Description === '<p><br></p>') {
-    // 🟢 Ganti ke swalAlert
+    // ðŸŸ¢ Ganti ke swalAlert
     swalAlert('Oops!', 'Judul dan Konten tidak boleh kosong!', 'warning');
     return;
   }
@@ -251,13 +252,13 @@ const handleUpdateArticle = async () => {
       isBasicChanged.value = false;
       isImageChanged.value = false;
       
-      // 🟢 Notifikasi Sukses yang halus
+      // ðŸŸ¢ Notifikasi Sukses yang halus
       swalAlert('Tersimpan!', 'Perubahan artikel berhasil disimpan.', 'success');
     }, 1000);
 
   } catch (error) {
     isSaving.value = false;
-    // 🟢 Ganti ke swalAlert
+    // ðŸŸ¢ Ganti ke swalAlert
     swalAlert('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
   }
 };

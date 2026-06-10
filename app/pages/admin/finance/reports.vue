@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-2 px-md-4 py-4">
+  <div>
     
     <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Keuangan'}, {text: 'Laporan & Export'}]" />
 

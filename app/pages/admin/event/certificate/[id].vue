@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-2 px-md-4 py-4">
+  <div>
     <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Manajemen Event', to: '/admin/events'}, {text: 'Template Sertifikat'}]" />
 
     <div class="card content-card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">

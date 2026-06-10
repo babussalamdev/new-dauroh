@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-2 px-md-4 py-4">
+  <div>
     
     <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Manajemen Akun'}]" />
     
@@ -214,12 +214,12 @@ const activeTypeLabel = computed(() => {
   return 'Semua';
 });
 
-// 🟢 FUNGSI BARU: Buat ngubah tab tanpa ngereload web (tapi update URL)
+// ðŸŸ¢ FUNGSI BARU: Buat ngubah tab tanpa ngereload web (tapi update URL)
 const changeType = (type: string) => {
   router.push({ query: { ...route.query, type } });
 };
 
-// 🟢 Tembak API setiap URL-nya berubah (misal dari hasil klik tab)
+// ðŸŸ¢ Tembak API setiap URL-nya berubah (misal dari hasil klik tab)
 watch(() => route.query.type, (newType) => {
     const type = (newType as string) || 'all';
     store.search = ''; 

@@ -183,6 +183,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Edit User' });
 import { ref, computed, reactive, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEventStore } from '~/stores/event';

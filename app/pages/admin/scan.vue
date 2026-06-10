@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-4 py-4 d-flex flex-column align-items-center">
+  <div>
     <CommonBreadcrumb :items="[{text: 'Dashboard', to: '/admin', icon: 'bi bi-house'}, {text: 'Scan Presensi'}]" class="w-100 mb-3" />
 
     <div class="card shadow-sm border-0 rounded-4 w-100 mb-3" style="max-width: 450px;">
@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Scan QR' });
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useNuxtApp } from '#app';

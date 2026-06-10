@@ -46,22 +46,22 @@
             </div>
           </li>
 
-          <li class="nav-item dropdown" v-if="isLoggedIn">
+          <li class="nav-item dropdown" v-if="isLoggedIn" ref="dropdownRef">
             <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center gap-2 txt-body fw-bold text-dark" type="button"
-              data-bs-toggle="dropdown" aria-expanded="false">
+              @click="isDropdownOpen = !isDropdownOpen" :aria-expanded="isDropdownOpen">
               <i class="bi bi-person-circle text-primary fs-5"></i>
               <span>{{ userName }}</span>
             </button>
 
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2" :class="{ show: isDropdownOpen }">
               <li>
-                <NuxtLink class="dropdown-item rounded-3 txt-body fw-bold" to="/profile">
+                <NuxtLink class="dropdown-item rounded-3 txt-body fw-bold" to="/profile" @click="isDropdownOpen = false">
                   <i class="bi bi-person-gear me-2 text-secondary"></i> Profil Saya
                 </NuxtLink>
               </li>
 
               <li v-if="!isAdmin">
-                <NuxtLink class="dropdown-item rounded-3 txt-body fw-bold" to="/history">
+                <NuxtLink class="dropdown-item rounded-3 txt-body fw-bold" to="/history" @click="isDropdownOpen = false">
                   <i class="bi bi-clock-history me-2 text-secondary"></i> Riwayat Pendaftaran
                 </NuxtLink>
               </li>
@@ -71,7 +71,7 @@
               </li>
 
               <li>
-                <button class="dropdown-item rounded-3 text-danger txt-body fw-bold" @click="handleLogout">
+                <button class="dropdown-item rounded-3 text-danger txt-body fw-bold" @click="handleLogout(); isDropdownOpen = false">
                   <i class="bi bi-box-arrow-right me-2"></i> Logout
                 </button>
               </li>
@@ -156,6 +156,14 @@ import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import { useGlobalEventStore } from '~/stores/globalEvent'
 import { useFinanceStore } from '~/stores/finance'
+import { onClickOutside } from '@vueuse/core'
+
+const isDropdownOpen = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
+
+onClickOutside(dropdownRef, () => {
+  isDropdownOpen.value = false
+})
 
 const isScrolled = ref(false)
 const { user, logout, isLoggedIn, isAdmin } = useAuth()
@@ -230,6 +238,11 @@ onMounted(() => {
 <style scoped>
 @import url("~/assets/css/layout/navbar.css");
 .dropdown-toggle::after {
-  display: block
+  display: block;
+}
+.dropdown-menu-end.show {
+  right: 0;
+  left: auto;
+  position: absolute;
 }
 </style>

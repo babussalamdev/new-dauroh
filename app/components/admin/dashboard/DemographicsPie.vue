@@ -20,7 +20,7 @@ Ini kodingan hasil *upgrade*-nya cuy, lu tinggal *copy-paste* ngegantiin isi fil
     <div class="card-body p-3 px-4 d-flex flex-column">
 
       <div class="mb-3">
-        <h6 class="txt-subtitle fw-bold mb-1 text-dark">Demografi Pengguna</h6>
+        <h6 class="txt-subtitle fw-bold m-0 text-dark">Demografi Pengguna</h6>
         <p class="txt-caption text-muted mb-0">Total Keseluruhan Akun</p>
       </div>
 

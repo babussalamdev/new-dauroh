@@ -335,7 +335,7 @@ const handleRegisterClick = async () => {
          },
       }).then((result) => {
          if (result.isConfirmed) {
-            router.push('/auth/login');
+            router.push('/auth');
          }
       });
       return;

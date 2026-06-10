@@ -9,16 +9,16 @@
         <span class="navbar-text me-3 d-none d-sm-block" v-if="userName">
           Halo, {{ userName }}
         </span>
-        <div class="dropdown">
-          <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <div class="dropdown" ref="dropdownRef">
+          <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" @click.prevent="isDropdownOpen = !isDropdownOpen" :aria-expanded="isDropdownOpen">
             <i class="bi bi-person-circle fs-3"></i>
           </a>
-          <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+          <ul class="dropdown-menu dropdown-menu-end text-small shadow" :class="{ show: isDropdownOpen }">
             <li>
-              <NuxtLink class="dropdown-item" to="/admin/profile">Profil</NuxtLink> 
+              <NuxtLink class="dropdown-item" to="/admin/profile" @click="isDropdownOpen = false">Profil</NuxtLink> 
               </li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">Logout</a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="handleLogout(); isDropdownOpen = false">Logout</a></li>
           </ul>
         </div>
       </div>
@@ -27,11 +27,20 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAdminSidebar } from '~/composables/useAdminSidebar';
 import Swal from 'sweetalert2';
 import { useGlobalEventStore } from '~/stores/globalEvent';
 import { useFinanceStore } from '~/stores/finance';
+import { onClickOutside } from '@vueuse/core';
+
+const isDropdownOpen = ref(false);
+const dropdownRef = ref(null);
+
+onClickOutside(dropdownRef, () => {
+  isDropdownOpen.value = false;
+});
 
 const { user, logout } = useAuth();
 const isSidebarOpen = useAdminSidebar();
@@ -79,5 +88,10 @@ const handleLogout = async () => {
 }
 #sidebarToggle {
   color: #333;
+}
+.dropdown-menu-end.show {
+  right: 0;
+  left: auto;
+  position: absolute;
 }
 </style>

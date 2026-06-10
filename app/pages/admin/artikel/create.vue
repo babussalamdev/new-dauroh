@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-4 py-4">
+  <div>
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
       <div>
         <h4 class="txt-title text-dark mb-1">Tambah Informasi Baru</h4>
@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Buat Artikel' });
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAlert } from '~/utils/swal';
@@ -212,7 +213,7 @@ const handleSaveArticle = async () => {
     setTimeout(() => {
       isSaving.value = false;
       
-      // 🟢 2. Notifikasi Berhasil (Pake swalAlert tipe 'success')
+      // ðŸŸ¢ 2. Notifikasi Berhasil (Pake swalAlert tipe 'success')
       swalAlert('Berhasil!', 'Informasi Yayasan berhasil diterbitkan.', 'success')
         .then(() => {
           router.push('/admin/artikel'); 
@@ -221,7 +222,7 @@ const handleSaveArticle = async () => {
 
   } catch (error) {
     isSaving.value = false;
-    // 🟢 3. Notifikasi Gagal (Pake swalAlert tipe 'error')
+    // ðŸŸ¢ 3. Notifikasi Gagal (Pake swalAlert tipe 'error')
     swalAlert('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
   }
 };

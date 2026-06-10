@@ -55,6 +55,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Verifikasi Sertifikat' });
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';

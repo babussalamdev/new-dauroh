@@ -18,12 +18,12 @@
         </li>
 
         <li v-else class="nav-item">
-          <div class="nav-link collapsed cursor-pointer" data-bs-toggle="collapse" :data-bs-target="`#collapse-${index}`" role="button">
+          <div class="nav-link cursor-pointer" :class="{ collapsed: !openedMenus.includes(index) }" @click="toggleMenu(index)" role="button">
             <i :class="`bi ${menu.icon} me-2`"></i>
             {{ menu.title }}
-            <i class="bi bi-chevron-down ms-auto"></i>
+            <i class="bi bi-chevron-down ms-auto" :style="{ transform: openedMenus.includes(index) ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }"></i>
           </div>
-          <div class="collapse" :id="`collapse-${index}`">
+          <div class="collapse" :class="{ show: openedMenus.includes(index) }">
             <ul class="nav flex-column sub-menu">
               <li v-for="sub in menu.subMenus" :key="sub.title" class="nav-item">
                 <NuxtLink :to="sub.url" class="nav-link" active-class="active">
@@ -47,10 +47,19 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useUserMenuStore } from '~/stores/userMenu';
 
-// Nangkep data menu yang udah diisi sama useAuth tadi
 const menuStore = useUserMenuStore();
+const openedMenus = ref([]);
+
+const toggleMenu = (index) => {
+  if (openedMenus.value.includes(index)) {
+    openedMenus.value = openedMenus.value.filter(i => i !== index);
+  } else {
+    openedMenus.value.push(index);
+  }
+};
 </script>
 
 <style scoped>

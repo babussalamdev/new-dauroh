@@ -16,6 +16,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Checkout' });
 // 1. Import Store
 import { useCheckoutStore } from '~/stores/checkout'
 

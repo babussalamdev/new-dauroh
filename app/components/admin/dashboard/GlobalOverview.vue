@@ -25,7 +25,7 @@
 
           <div class="col-12 col-lg-7 d-flex flex-column">
             <div class="mb-3">
-              <h6 class="txt-body fw-bold mb-1 text-dark">Akses Cepat</h6>
+              <h6 class="txt-subtitle fw-bold m-0 text-dark">Akses Cepat</h6>
               <p class="txt-caption text-muted mb-0">Navigasi instan untuk operasional harian</p>
             </div>
             
