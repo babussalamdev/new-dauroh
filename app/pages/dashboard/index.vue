@@ -208,18 +208,21 @@ const upcomingTickets = computed(() => {
       if (!item.event || Object.keys(item.event).length === 0) {
         const eventSK = (item.Subject || item.SK || '').split('#')[0];
         const foundEvent = eventStore.tiketEvent.find(e => e.SK === eventSK);
-        return { ...item, event: foundEvent || {} };
+        return { 
+          ...item, 
+          event: foundEvent || { Title: item.Title || 'Event Tidak Diketahui', Picture: item.Picture || '' } 
+        };
       }
       return item;
     })
     .filter(item => {
-  const smartStatus = getSmartStatus(item);
-  const rawStatus = (item.Status || item.status || '').toUpperCase();
-  const isPaid = ['SUCCESSFUL', 'PAID', 'SUCCESS', 'UPCOMING', 'ACTIVE'].includes(rawStatus) || smartStatus === 'SUCCESSFUL';
-  const isPending = smartStatus === 'PENDING';
+      const smartStatus = getSmartStatus(item);
+      const rawStatus = (item.Status || item.status || '').toUpperCase();
+      const isPaid = ['SUCCESSFUL', 'PAID', 'SUCCESS', 'UPCOMING', 'ACTIVE'].includes(rawStatus) || smartStatus === 'SUCCESSFUL';
+      const isPending = smartStatus === 'PENDING';
 
-  return isPaid || isPending;
-});
+      return isPaid || isPending;
+    });
 });
 
 onMounted(async () => {
@@ -261,7 +264,11 @@ const completedEvent = computed(() => {
     const dates = Object.values(t.event.Date);
     if (dates.length === 0) return false;
     const lastDate = dates.reduce((max, curr) => curr.date > max ? curr.date : max, dates[0].date);
-    return dayjs().isAfter(dayjs(lastDate).add(1, 'day'));
+    
+    const isPast = dayjs().isAfter(dayjs(lastDate).add(1, 'day'));
+    const isUnder7Days = dayjs().isBefore(dayjs(lastDate).add(8, 'day'));
+    
+    return isPast && isUnder7Days;
   });
 });
 

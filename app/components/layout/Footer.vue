@@ -32,7 +32,6 @@
 </template>
 
 <script setup>
-// Tidak ada logika JS spesifik di sini
 </script>
 
 <style scoped>

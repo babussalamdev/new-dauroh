@@ -97,7 +97,9 @@ onMounted(async () => {
   if (eventStore.tiketEvent.length === 0) {
     await eventStore.fetchPublicTiketEvent();
   }
-  await userStore.fetchUserTransactions();
+  if (userStore.tickets.length === 0) {
+    await userStore.fetchUserTransactions();
+  }
 });
 
 // Computed Properties

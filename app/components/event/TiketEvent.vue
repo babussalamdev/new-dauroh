@@ -115,10 +115,12 @@ const scrollPrev = () => {
 onMounted(() => {
   imgUrl.value = config.public.img;
 
-  if (isLoggedIn.value) {
-    eventStore.fetchAuthTiketEvent();
-  } else {
-    eventStore.fetchPublicTiketEvent();
+  if (eventStore.tiketEvent.length === 0) {
+    if (isLoggedIn.value) {
+      eventStore.fetchAuthTiketEvent();
+    } else {
+      eventStore.fetchPublicTiketEvent();
+    }
   }
 });
 

@@ -18,10 +18,7 @@
           
           <td class="ps-4 py-3">
             <div class="d-flex flex-column">
-              <span class="txt-body fw-bold text-dark mb-1">{{ formatDate(ticket.CreatedAt || ticket.created_at || ticket.date) }}</span>
-              <span class="badge bg-light text-secondary border rounded-1 txt-caption fw-bold text-start" style="width: fit-content;" :title="ticket.SK">
-                {{ ticket.id || ticket.SK }}
-              </span>
+              <span class="txt-body text-center fw-bold text-dark mb-1">{{ formatDate(ticket.CreatedAt || ticket.created_at || ticket.date) }}</span>
             </div>
           </td>
 

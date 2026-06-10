@@ -1,7 +1,14 @@
 {
   "name": "nuxt-app",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
+  "contributors": [
+    "Self-Taught",
+    "Haikal Ahnaf Abqori",
+    "Akbar Hermawan"
+    
+  ],
   "overrides": {
     "@pinia-plugin-persistedstate/nuxt": {
       "@pinia/nuxt": "$@pinia/nuxt"

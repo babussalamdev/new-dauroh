@@ -67,6 +67,7 @@
             <div class="text-center mt-4 pt-3 border-top">
               <p class="text-muted txt-caption mb-1">Belum punya akun?</p>
               <a href="#" @click.prevent="$emit('switch', 'register')" class="text-decoration-none txt-body fw-bold text-primary">Daftar Sekarang</a>
+              <p class="text-secondary txt-caption opacity-75">ver {{ pkg.version }}</p>
             </div>
           </form>
         </div>
@@ -83,6 +84,7 @@ import { useRouter } from "vue-router";
 import { useAlert } from "~/utils/swal";
 import { useAuth } from "~/composables/useAuth";
 import ModalsForgotPasswordModal from '~/components/modals/ForgotPasswordModal.vue';
+import pkg from '~~/package.json';
 
 useHead({
   title: 'Login'
