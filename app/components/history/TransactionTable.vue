@@ -3,7 +3,7 @@
     <table class="table table-hover align-middle mb-0">
       <thead class="bg-light">
         <tr>
-          <th scope="col" class="ps-4 py-3 text-uppercase text-secondary txt-label fw-bold text-center">Tanggal & ID</th>
+          <th scope="col" class="ps-4 py-3 text-uppercase text-secondary txt-label fw-bold text-center">Tanggal</th>
           <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Event Info</th>
           <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Peserta</th>
           <th scope="col" class="py-3 text-uppercase text-secondary txt-label fw-bold text-center">Status</th>

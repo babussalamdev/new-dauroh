@@ -10,15 +10,24 @@ export const useAttendanceStore = defineStore('attendance', () => {
   // --- STATE ---
   const participants = ref<AttendanceParticipant[]>([]); 
   const loading = ref(false);
+  const lastFetchedEventAttendance = ref('');
+  const lastFetchedStatusType = ref('');
 
   // --- ACTIONS ---
   async function fetchAttendanceData(statusType: 'present' | 'not-present' = 'present') {
     const globalStore = useGlobalEventStore(); 
 
-    if (!globalStore.activeEventSK) return; 
+    if (!globalStore.activeEventSK) {
+      lastFetchedEventAttendance.value = '';
+      return; 
+    }
+    
+    if (lastFetchedEventAttendance.value === globalStore.activeEventSK && lastFetchedStatusType.value === statusType && participants.value.length > 0) {
+      return;
+    }
     
     loading.value = true;
-    participants.value = [];
+    // participants.value = [];
 
     try {
       const { $apiBase } = useNuxtApp() as any;
@@ -40,6 +49,9 @@ export const useAttendanceStore = defineStore('attendance', () => {
         status: statusType === 'present' ? 'hadir' : 'belum',
         isCertificateSent: p.Certificate_Eligible === 'true'
       }));
+
+      lastFetchedEventAttendance.value = globalStore.activeEventSK;
+      lastFetchedStatusType.value = statusType;
 
     } catch (error) {
       console.error("Gagal ambil data kehadiran:", error);

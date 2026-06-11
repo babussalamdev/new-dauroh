@@ -23,8 +23,8 @@
                   <th class="text-center pe-3">TIKET</th>
                 </tr>
               </thead>
-              <tbody v-if="Array.isArray(ticket?.Participant || ticket?.participants)">
-                <tr v-for="(p, idx) in (ticket?.Participant || ticket?.participants)" :key="idx">
+              <tbody v-if="Array.isArray(ticket?.participants) ? true : Array.isArray(ticket?.Participant) ? true : false">
+                <tr v-for="(p, idx) in (Array.isArray(ticket?.participants) ? ticket?.participants : ticket?.Participant)" :key="idx">
                   <td class="ps-3 py-2 align-middle">
                     <div class="fw-bold text-dark txt-body text-capitalize">{{ p.Name }}</div>
                     <span class="text-muted txt-caption">{{ p.Gender || 'Umum' }}</span>

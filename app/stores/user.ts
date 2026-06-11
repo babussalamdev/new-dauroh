@@ -64,18 +64,20 @@ export const useUserStore = defineStore("user", () => {
       const mappedTickets = rawData.map((item: any) => {
         const existing = tickets.value.find(t => t.SK === item.SK);
         return {
+          ...item,
           SK: item.SK,
           PK: item.PK,
-          Subject: item.Subject, // 
+          Subject: item.Subject || (item.SK || '').split('#')[0],
           status: item.Status || "PENDING",
           created_at: item.CreatedAt,
           date: item.CreatedAt,
           amount: item.Amount,
           infaq: item.Infaq, 
           participants: item.Participant,
-          title: item.Title,
+          title: item.Title || item.title,
+          Picture: item.Picture,
           Expired_Date: item.Expired_Date || item.expired_date || "-",
-          event: existing?.event,
+          event: item.event || existing?.event,
         } as UserTicket;
       });
 
@@ -108,24 +110,43 @@ export const useUserStore = defineStore("user", () => {
       });
       
       const newData = res.data;
-      
       if (newData) {
         let freshParticipants: any[] = [];
         
-        if (Array.isArray(newData.Participant)) {
- 
-          freshParticipants = newData.Participant.map((p: any) => ({
+        let rawParticipants = [];
+        if (Array.isArray(newData)) {
+          rawParticipants = newData;
+        } else if (Array.isArray(newData.data)) {
+          rawParticipants = newData.data;
+        } else if (Array.isArray(newData.Participant)) {
+          rawParticipants = newData.Participant;
+        } else if (typeof newData.Participant === 'string') {
+          try {
+            const parsed = JSON.parse(newData.Participant);
+            if (Array.isArray(parsed)) rawParticipants = parsed;
+          } catch(e) {}
+        }
+        
+        if (rawParticipants.length === 0) {
+          if (newData.Name) {
+            rawParticipants = [newData];
+          } else if (newData.Participant && newData.Participant.Name) {
+            rawParticipants = [newData.Participant];
+          }
+        }
+        
+        if (rawParticipants.length > 0) {
+          freshParticipants = rawParticipants.map((p: any) => ({
             ...p,
              Name: p.Name,
              Gender: p.Gender || '-',
-
              Age: Number(p.Age || 0),
              Domicile: p.Domicile || '-'
-            }));
-          }
+          }));
+        }
 
-       
-        const index = tickets.value.findIndex(t => t.SK === skRaw);
+     
+      const index = tickets.value.findIndex(t => t.SK === skRaw);
         
         // Kalau ketemu, update datanya secara reaktif
         if (index !== -1) {

@@ -12,17 +12,25 @@ export const useFinanceStore = defineStore("finance", () => {
     totalTicketsSold: 0
   });
   const loadingSummary = ref(false);
+  const lastFetchedEventSummary = ref('');
 
   // State buat Transactions
   const transactions = ref<any[]>([]);
   const loadingTx = ref(false);
+  const lastFetchedEventTx = ref('');
 
-  // Action 1: Fetch Ringkasan Keuangan
+  // Fetch Ringkasan Keuangan
   async function fetchSummary() {
     const globalStore = useGlobalEventStore();
 
     if (!globalStore.activeEventSK) {
       summary.value = { totalPendapatan: 0, totalTiketPrice: 0, totalInfaq: 0, totalTicketsSold: 0 };
+      lastFetchedEventSummary.value = '';
+      return;
+    }
+
+    // Cache check
+    if (lastFetchedEventSummary.value === globalStore.activeEventSK) {
       return;
     }
 
@@ -37,6 +45,7 @@ export const useFinanceStore = defineStore("finance", () => {
       } else if (res) {
         summary.value = res;
       }
+      lastFetchedEventSummary.value = globalStore.activeEventSK;
     } catch (error) {
       console.error("Gagal memuat ringkasan keuangan:", error);
       summary.value = { totalPendapatan: 0, totalTiketPrice: 0, totalInfaq: 0, totalTicketsSold: 0 };
@@ -45,12 +54,18 @@ export const useFinanceStore = defineStore("finance", () => {
     }
   }
 
-  // Action  2: Fetch Daftar Transaksi
+  // Fetch Daftar Transaksi
   async function fetchTransactions() {
     const globalStore = useGlobalEventStore();
 
     if (!globalStore.activeEventSK) {
       transactions.value = [];
+      lastFetchedEventTx.value = '';
+      return;
+    }
+
+    // Cache check
+    if (lastFetchedEventTx.value === globalStore.activeEventSK && transactions.value.length > 0) {
       return;
     }
 
@@ -74,7 +89,7 @@ export const useFinanceStore = defineStore("finance", () => {
     }
   }
 
-  // Action 3: Jalanin Keduanya Barengan (Biar gampang dipanggil di halaman)
+  // Jalanin Keduanya Barengan
   async function fetchAllFinanceData() {
     // Pake Promise.all biar nembak API-nya paralel (barengan)
     await Promise.all([

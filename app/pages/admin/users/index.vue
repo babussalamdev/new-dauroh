@@ -214,19 +214,15 @@ const activeTypeLabel = computed(() => {
   return 'Semua';
 });
 
-// ðŸŸ¢ FUNGSI BARU: Buat ngubah tab tanpa ngereload web (tapi update URL)
 const changeType = (type: string) => {
   router.push({ query: { ...route.query, type } });
 };
 
-// ðŸŸ¢ Tembak API setiap URL-nya berubah (misal dari hasil klik tab)
+// Tembak API setiap URL-nya berubah
 watch(() => route.query.type, (newType) => {
     const type = (newType as string) || 'all';
     store.search = ''; 
-    
-    // Langsung lempar 'type' mentah-mentah ke store. 
-    // JANGAN PAKE apiType DI SINI LAGI!
-    store.getListaccount(type, true);
+    store.getListaccount(type, false);
 }, { immediate: true });
 
 // --- Helpers ---

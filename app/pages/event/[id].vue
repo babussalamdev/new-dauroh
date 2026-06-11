@@ -346,7 +346,7 @@ const handleRegisterClick = async () => {
       await userStore.fetchUserTransactions();
 
       const pendingTicket = userStore.tickets.find(ticket => {
-         const ticketEventSK = ticket.event?.SK || ticket.EventSK || ticket.SK;
+         const ticketEventSK = ticket.Subject || ticket.event?.SK || ticket.EventSK;
          const status = getSmartStatus(ticket);
          const isTimeUp = ticket.Expired_Date ? dayjs().isAfter(dayjs(ticket.Expired_Date)) : false;
          return (String(ticketEventSK) === String(eventSK)) && (status === 'PENDING') && !isTimeUp;

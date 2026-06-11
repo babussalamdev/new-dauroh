@@ -39,7 +39,7 @@
                       <div class="card h-100 border rounded-4 hover-shadow transition">
                         <div class="d-flex flex-row h-100">
                           <div class="p-2">
-                            <NuxtImg v-if="ticket.event.Picture"
+                            <NuxtImg v-if="ticket.event.Picture && ticket.event.Picture !== 'undefined'"
                               :src="`${imgBaseUrl}/${ticket.event.SK}/${ticket.event.Picture}.webp`"
                               class="rounded-3 object-fit-cover shadow-sm" style="width: 100px; height: 100px;"
                               :alt="ticket.event.Title" loading="lazy" />
@@ -210,7 +210,7 @@ const upcomingTickets = computed(() => {
         const foundEvent = eventStore.tiketEvent.find(e => e.SK === eventSK);
         return { 
           ...item, 
-          event: foundEvent || { Title: item.Title || 'Event Tidak Diketahui', Picture: item.Picture || '' } 
+          event: foundEvent || { SK: eventSK, Title: item.Title || item.title || 'Event Tidak Diketahui', Picture: item.Picture || '' } 
         };
       }
       return item;

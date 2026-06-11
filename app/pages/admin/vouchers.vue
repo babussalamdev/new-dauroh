@@ -20,7 +20,7 @@
           </div>
         </div>
 
-        <div class="d-flex gap-2 flex-shrink-0 flex-wrap" v-if="globalStore.activeEventSK">
+        <div class="d-flex flex-shrink-0 flex-wrap" v-if="globalStore.activeEventSK">
           
           <button v-if="selectedIds.length > 0" class="btn btn-danger rounded-pill px-3 py-1 shadow-sm txt-caption fw-medium d-flex align-items-center" @click="handleBulkDelete">
             <i style="font-size: 0.8rem;"></i> Hapus ({{ selectedIds.length }})
@@ -59,11 +59,11 @@
                     <th class="ps-4" style="width: 40px;">
                       <input type="checkbox" class="form-check-input" :checked="isAllSelected" @change="toggleSelectAll">
                     </th>
-                    <th class="txt-label">VOUCHER CODE</th>
+                    <th class="text-center txt-label">VOUCHER CODE</th>
                     <th class="text-center txt-label">STATUS</th>
-                    <th class="txt-label">EXPIRED</th>
-                    <th class="txt-label">DISKON</th>
-                    <th class="txt-label">USER</th>
+                    <th class="text-center txt-label">EXPIRED</th>
+                    <th class="text-center txt-label">DISKON</th>
+                    <th class="text-center txt-label">USER</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -71,7 +71,7 @@
                     <td class="ps-4">
                       <input type="checkbox" class="form-check-input" :value="v.SK" v-model="selectedIds">
                     </td>
-                    <td class="fw-bold text-dark txt-body">{{ v.SK }}</td>
+                    <td class="fw-bold text-dark txt-body text-center">{{ v.SK }}</td>
                     
                     <td class="text-center">
                       <span :class="['badge rounded-pill px-3 py-1 shadow-sm txt-label', v.Status === 'active' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-secondary bg-opacity-10 text-muted border']">
@@ -79,11 +79,11 @@
                       </span>
                     </td>
                     
-                    <td class="txt-caption" :class="isExpired(v.Expired) ? 'text-danger fw-bold' : 'text-muted'">
+                    <td class="txt-caption text-center" :class="isExpired(v.Expired) ? 'text-danger fw-bold' : 'text-muted'">
                       {{ v.Expired }}
                     </td>
-                    <td class="fw-medium text-dark txt-body">Rp{{ formatCurrency(v.Nominal) }}</td>
-                    <td class="txt-caption text-muted">{{ v.Series || '-' }}</td>
+                    <td class="text-center fw-medium text-dark txt-body">Rp{{ formatCurrency(v.Nominal) }}</td>
+                    <td class="text-center txt-caption text-muted">{{ v.Series || '-' }}</td>
                   </tr>
                 </tbody>
               </table>

@@ -203,7 +203,9 @@ watch([searchQuery, filterDate], () => {
 // const selectedEventForDetail = ref<Event | null>(null); 
 
 onMounted(() => {
-  eventStore.fetchAdminTiketEvent();
+  if (eventStore.adminTiketEvent.length === 0) {
+    eventStore.fetchAdminTiketEvent();
+  }
 });
 
 const formatCurrency = (value: number | null | undefined) => {

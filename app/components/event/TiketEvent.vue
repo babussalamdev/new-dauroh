@@ -1,11 +1,11 @@
 <template>
   <div class="container-fluid px-3 px-lg-5 mt-0">
-    <div v-if="!eventStore.loading.tiketEvent && eventStore.tiketEvent.length > 0" id="tiketEvent"
+    <div v-if="!eventStore.loading.tiketEvent && filteredEvents.length > 0" id="tiketEvent"
       class="carousel-wrapper" @mouseenter="isHovered = true" @mouseleave="isHovered = false">
       
       <div class="d-flex card-container-flex" ref="scrollContainer">
         
-        <div v-for="event in eventStore.tiketEvent" :key="event.SK" class="event-card-wrapper">
+        <div v-for="event in filteredEvents" :key="event.SK" class="event-card-wrapper">
           <div class="text-decoration-none d-block h-100 position-relative"
             :class="{ 'card-disabled': getCardStatus(event).isDisabled }" style="cursor: pointer;"
             @click="handleCardClick(event)">
@@ -13,11 +13,15 @@
             <div class="card event-card rounded-4 border-0 shadow-sm overflow-hidden h-100">
               <div class="position-relative">
                 <img 
+                v-if="event.Picture && event.Picture !== 'undefined'"
                 :src="`${imgUrl}/${event.SK}/${event.Picture}.webp`" 
                 class="card-img-top"
                 :alt="event.Title" 
                 loading="lazy" 
                 />
+                <div v-else class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted" style="height: 200px;">
+                  <i class="bi bi-image text-secondary fs-1 opacity-50"></i>
+                </div>
                 
                 <span v-if="event.topOverlay" class="overlay-top txt-caption fw-bold">{{ event.topOverlay }}</span>
 
@@ -50,13 +54,13 @@
       </div>
 
       <button class="custom-nav-btn prev-btn" type="button" @click="scrollPrev"
-        v-show="eventStore.tiketEvent.length > 4">
+        v-show="filteredEvents.length > 4">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Previous</span>
       </button>
       
       <button class="custom-nav-btn next-btn" type="button" @click="scrollNext"
-        v-show="eventStore.tiketEvent.length > 4">
+        v-show="filteredEvents.length > 4">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
       </button>
@@ -72,10 +76,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useEventStore } from "~/stores/event";
 import { useToastStore } from '~/stores/toast';
 import { useCheckoutStore } from '~/stores/checkout';
+import { useUserStore } from '~/stores/user';
 import { useAuth } from "~/composables/useAuth";
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
 import { useRouter } from 'vue-router';
@@ -83,8 +88,16 @@ import dayjs from 'dayjs';
 import { useAlert } from '~/utils/swal';
 import { convertTo24h } from '~/utils/eventFormatter';
 
+const props = defineProps({
+  category: {
+    type: String,
+    default: 'semua'
+  }
+});
+
 const isHovered = ref(false);
 const eventStore = useEventStore();
+const userStore = useUserStore();
 const toastStore = useToastStore();
 const checkoutStore = useCheckoutStore();
 const { isLoggedIn } = useAuth();
@@ -95,6 +108,26 @@ const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 const imgUrl = ref("");
 const config = useRuntimeConfig();
 const loadingEventId = ref(null);
+
+const filteredEvents = computed(() => {
+  if (!props.category || props.category === 'semua') {
+    return eventStore.tiketEvent;
+  }
+  return eventStore.tiketEvent.filter(event => {
+    const gender = (event.Gender || '').toLowerCase();
+    const hasIkhwan = gender.includes('ikhwan');
+    const hasAkhwat = gender.includes('akhwat');
+
+    if (props.category === 'umum') {
+      return hasIkhwan && hasAkhwat;
+    } else if (props.category === 'ikhwan') {
+      return hasIkhwan && !hasAkhwat;
+    } else if (props.category === 'akhwat') {
+      return hasAkhwat && !hasIkhwan;
+    }
+    return true;
+  });
+});
 
 const scrollContainer = ref(null);
 
@@ -275,7 +308,7 @@ const handleRegisterClick = async (eventItem) => {
   }
 
   if (eventItem && eventItem.SK) {
-    const pendingLog = eventStore.userLogs.find(log => {
+    const pendingLog = userStore.tickets.find(log => {
       const isSameEvent = String(log.Subject) === String(eventItem.SK);
       const status = getSmartStatus(log);
       return isSameEvent && status === 'PENDING';
