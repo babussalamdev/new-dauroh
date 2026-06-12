@@ -67,6 +67,18 @@
 
     </div>
 
+    <!-- Empty State -->
+    <div v-else-if="!eventStore.loading.tiketEvent && filteredEvents.length === 0" 
+         class="d-flex flex-column align-items-center justify-content-center text-center py-5 my-5">
+      <div class="bg-light rounded-circle d-inline-flex p-4 mb-3 shadow-sm">
+        <i class="bi bi-calendar-x text-secondary display-4 opacity-50"></i>
+      </div>
+      <h5 class="txt-subtitle fw-bold text-dark mb-2">Belum Ada Event</h5>
+      <p class="text-muted txt-body mb-0" style="max-width: 400px;">
+        Saat ini belum ada event atau dauroh yang tersedia untuk kategori ini. Silakan cek kembali nanti ya!
+      </p>
+    </div>
+
     <ModalsEventDetailModal :show="showDetailEvent" :event="selectedEvent" @close="closeDetailModal"
       @register="handleRegisterFromDetail" />
 

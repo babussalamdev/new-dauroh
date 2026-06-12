@@ -39,10 +39,10 @@
                       <div class="card h-100 border rounded-4 hover-shadow transition">
                         <div class="d-flex flex-row h-100">
                           <div class="p-2">
-                            <NuxtImg v-if="ticket.event.Picture && ticket.event.Picture !== 'undefined'"
-                              :src="`${imgBaseUrl}/${ticket.event.SK}/${ticket.event.Picture}.webp`"
+                            <NuxtImg v-if="(ticket.Picture || ticket.event?.Picture) && (ticket.Picture || ticket.event?.Picture) !== 'undefined'"
+                              :src="`${imgBaseUrl}/${ticket.SK ? ticket.SK.split('#')[0] : ticket.event?.SK}/${ticket.Picture || ticket.event?.Picture}.webp`"
                               class="rounded-3 object-fit-cover shadow-sm" style="width: 100px; height: 100px;"
-                              :alt="ticket.event.Title" loading="lazy" />
+                              :alt="ticket.event?.Title || ticket.title" loading="lazy" />
                             <div v-else
                               class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted"
                               style="width: 100px; height: 100px;">
@@ -227,9 +227,7 @@ const upcomingTickets = computed(() => {
 
 onMounted(async () => {
   if (isLoggedIn.value) {
-    if (userStore.tickets.length === 0) {
-      await userStore.fetchUserTransactions();
-    }
+    await userStore.fetchUserTransactions();
   }
   
   if (eventStore.tiketEvent.length === 0) {

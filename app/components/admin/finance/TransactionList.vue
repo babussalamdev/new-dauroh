@@ -97,7 +97,7 @@
                   </td>
                   <td>
                     <div class="badge bg-light text-dark border fw-medium px-2 py-1 txt-caption text-uppercase">
-                      {{ tx.paymentMethod || tx.Sender_Bank }} {{ tx.Sender_Bank_Type ? tx.Sender_Bank_Type.replace('_', ' ') : '' }}
+                      {{ tx.Sender_Bank }} {{ tx.Sender_Bank_Type ? tx.Sender_Bank_Type.replace('_', ' ') : '' }}
                     </div>
                   </td>
                   <td class="text-center pe-4">
