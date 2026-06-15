@@ -109,3 +109,63 @@ export const convertTo24h = (timeStr?: string): string => {
   if (modifier?.toUpperCase() === 'AM' && h === 12) h = 0;
   return `${String(h).padStart(2, '0')}:${minutes}`;
 };
+
+export const formatEventDates = (dateObj: any) => {
+  if (!dateObj || typeof dateObj !== 'object') return '-';
+
+  const rawDates = Object.values(dateObj)
+    .map((d: any) => d?.date)
+    .filter((d: any) => typeof d === 'string' && d) as string[];
+
+  const validDates = rawDates
+    .map(dateStr => new Date(dateStr))
+    .filter(d => !isNaN(d.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  if (validDates.length === 0) return '-';
+
+  const first = validDates[0]!;
+  const toDateStr = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const toMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+  const isSameMonthYear = validDates.every(d => d.getMonth() === first.getMonth() && d.getFullYear() === first.getFullYear());
+
+  if (isSameMonthYear) {
+    const days = validDates.map(d => d.getDate());
+    const monthYear = toMonthYear(first);
+    return `${days.join(', ')} ${monthYear}`;
+  }
+
+  return validDates.map(toDateStr).join(', ');
+};
+
+export const getDetailedSchedule = (dateObj: any) => {
+  if (!dateObj || typeof dateObj !== 'object') return [];
+
+  const rawValues = Object.values(dateObj).filter((d: any) => d && d.date);
+  
+  return rawValues
+    .map((d: any) => {
+      const dateObj = new Date(d.date);
+      if (isNaN(dateObj.getTime())) return null;
+      
+      const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      const s = convertTo24h(d.start_time) || '??';
+      const e = convertTo24h(d.end_time) || '??';
+      
+      return {
+        date: dateStr,
+        time: `${s} - ${e} WIB`,
+        rawDate: dateObj
+      };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.rawDate.getTime() - b.rawDate.getTime());
+};
+
+export const getPercentage = (sold: number | string | undefined, total: number | string | undefined) => {
+  const s = Number(sold) || 0;
+  const t = Number(total) || 0;
+  if (t === 0) return 0;
+  return Math.min(100, Math.round((s / t) * 100));
+};

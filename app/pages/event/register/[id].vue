@@ -161,7 +161,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill txt-body fw-bold shadow-sm"
                   :disabled="totalTickets === 0">
-                  Bayar Sekarang <i class="bi bi-arrow-right-short fs-5 align-middle"></i>
+                  Bayar Sekarang
                 </button>
               </div>
             </div>

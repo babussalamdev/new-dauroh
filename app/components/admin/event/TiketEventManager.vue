@@ -217,35 +217,6 @@ const formatCurrency = (value: number | null | undefined) => {
   }).format(value);
 };
 
-const formatEventDates = (dateObj: any) => {
-  if (!dateObj || typeof dateObj !== 'object') return '-';
-
-  const rawDates = Object.values(dateObj)
-    .map((d: any) => d?.date)
-    .filter((d: any) => typeof d === 'string' && d) as string[];
-
-  const validDates = rawDates
-    .map(dateStr => new Date(dateStr))
-    .filter(d => !isNaN(d.getTime()))
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  if (validDates.length === 0) return '-';
-
-  const first = validDates[0]!;
-  const toDateStr = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  const toMonthYear = (d: Date) => d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-
-  const isSameMonthYear = validDates.every(d => d.getMonth() === first.getMonth() && d.getFullYear() === first.getFullYear());
-
-  if (isSameMonthYear) {
-    const days = validDates.map(d => d.getDate());
-    const monthYear = toMonthYear(first);
-    return `${days.join(', ')} ${monthYear}`;
-  }
-
-  return validDates.map(toDateStr).join(', ');
-};
-
 // Fungsi navigasi ke halaman detail
 const navigateToPage = (event: Event | null) => {
   if (event && event.SK) {

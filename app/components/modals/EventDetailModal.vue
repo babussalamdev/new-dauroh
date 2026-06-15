@@ -21,25 +21,23 @@
           <div class="row g-3 mb-4">
             
             <div class="col-12">
-              <div class="d-flex align-items-center gap-3 p-3 bg-light-subtle rounded-3 border border-light-subtle">
-                <div class="bg-white p-2 rounded-circle shadow-sm text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                  <i class="bi bi-calendar3 fs-5"></i>
-                </div>
-                <div>
-                  <span class="text-muted fw-bold text-uppercase txt-label d-block mb-1">Tanggal Event</span>
-                  <span class="fw-bold text-dark txt-body">{{ formatDate(event?.Date) }}</span>
+              <div class="d-flex flex-column p-3 bg-light-subtle rounded-3 border border-light-subtle">
+                <span class="text-muted fw-bold text-uppercase txt-label d-block mb-2">Jadwal Event</span>
+                <div class="d-flex flex-column gap-2">
+                  <div v-for="(day, i) in getDetailedSchedule(event?.Date)" :key="i" class="d-flex justify-content-between align-items-center bg-white p-2 rounded-2 border border-light">
+                    <span class="text-secondary txt-caption"><i class="bi bi-calendar-event me-2"></i>{{ day.date }}</span>
+                    <span class="text-dark txt-caption fw-bold"><i class="bi bi-clock me-1 text-primary"></i>{{ day.time }}</span>
+                  </div>
                 </div>
               </div>
             </div>
             
             <div class="col-12">
-              <div class="d-flex align-items-center gap-3 p-3 bg-light-subtle rounded-3 border border-light-subtle">
-                <div class="bg-white p-2 rounded-circle shadow-sm text-danger d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                  <i class="bi bi-geo-alt-fill fs-5"></i>
-                </div>
-                <div>
-                  <span class="text-muted fw-bold text-uppercase txt-label d-block mb-1">Lokasi Event</span>
-                  <span class="fw-bold text-dark txt-body">{{ event?.Place || 'Informasi menyusul' }}</span>
+              <div class="d-flex flex-column p-3 bg-light-subtle rounded-3 border border-light-subtle">
+                <span class="text-muted fw-bold text-uppercase txt-label d-block mb-2">Lokasi Event</span>
+                <div class="d-flex align-items-center gap-2 bg-white p-2 rounded-2 border border-light">
+                  <i class="bi bi-geo-alt-fill text-danger ms-1"></i>
+                  <span class="text-dark txt-caption fw-bold">{{ event?.Place || 'Informasi menyusul' }}</span>
                 </div>
               </div>
             </div>
@@ -54,30 +52,46 @@
             </div>
 
             <template v-else>
-              <div v-if="isIkhwanShow" :class="gridColClass">
-                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <span class="text-muted d-block mb-1 txt-caption fw-bold">Sisa Kuota Ikhwan</span>
-                  <h5 class="mb-0 fw-bold txt-subtitle" :class="getQuotaColor(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan))">
-                    {{ formatModalQuota(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan)) }}
-                  </h5>
-                </div>
-              </div>
+              <div class="col-12">
+                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle d-flex flex-column gap-3">
+                  <div v-if="isIkhwanShow">
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                      <span class="text-secondary txt-caption fw-bold"><i class="bi bi-people me-1"></i>Sisa Kuota Ikhwan</span>
+                      <div>
+                        <span class="fw-bold fs-0 text-primary">{{ formatQuota(getRemaining(event?.Quota_Ikhwan, event?.Sold_Ikhwan)) }}</span>
+                        <span class="text-secondary txt-caption"> / {{ event?.Quota_Ikhwan }}</span>
+                      </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                      <div class="progress-bar rounded-pill bg-primary" role="progressbar" :style="`width: ${getPercentage(event?.Sold_Ikhwan, event?.Quota_Ikhwan)}%;`" :aria-valuenow="getPercentage(event?.Sold_Ikhwan, event?.Quota_Ikhwan)" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
 
-              <div v-if="isAkhwatShow" :class="gridColClass">
-                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <span class="text-muted d-block mb-1 txt-caption fw-bold">Sisa Kuota Akhwat</span>
-                  <h5 class="mb-0 fw-bold txt-subtitle" :class="getQuotaColor(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat))">
-                    {{ formatModalQuota(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat)) }}
-                  </h5>
-                </div>
-              </div>
+                  <div v-if="isAkhwatShow">
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                      <span class="text-secondary txt-caption fw-bold"><i class="bi bi-people me-1"></i>Sisa Kuota Akhwat</span>
+                      <div>
+                        <span class="fw-bold fs-0 text-danger">{{ formatQuota(getRemaining(event?.Quota_Akhwat, event?.Sold_Akhwat)) }}</span>
+                        <span class="text-secondary txt-caption"> / {{ event?.Quota_Akhwat }}</span>
+                      </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                      <div class="progress-bar rounded-pill bg-danger" role="progressbar" :style="`width: ${getPercentage(event?.Sold_Akhwat, event?.Quota_Akhwat)}%;`" :aria-valuenow="getPercentage(event?.Sold_Akhwat, event?.Quota_Akhwat)" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
 
-              <div v-if="showTotal(event) && !showIkhwan && !showAkhwat" class="col-12">
-                <div class="p-3 bg-light-subtle rounded-3 border border-light-subtle h-100 text-center">
-                  <span class="text-muted d-block mb-1 txt-caption fw-bold">Tiket Tersedia</span>
-                  <h5 class="mb-0 fw-bold txt-subtitle" :class="getQuotaColor(getRemaining(event?.Quota_Total, event?.Sold_Total))">
-                    {{ formatModalQuota(getRemaining(event?.Quota_Total, event?.Sold_Total)) }}
-                  </h5>
+                  <div v-if="showTotal(event) && !isIkhwanShow && !isAkhwatShow">
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                      <span class="text-secondary txt-caption text-uppercase fw-bold"><i class="bi bi-people me-1"></i>Umum</span>
+                      <div>
+                        <span class="fw-bold fs-6 text-primary">{{ formatQuota(getRemaining(event?.Quota_Total, event?.Sold_Total)) }}</span>
+                        <span class="text-secondary txt-caption"> / {{ event?.Quota_Total }}</span>
+                      </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                      <div class="progress-bar rounded-pill bg-primary" role="progressbar" :style="`width: ${getPercentage(event?.Sold_Total, event?.Quota_Total)}%;`" :aria-valuenow="getPercentage(event?.Sold_Total, event?.Quota_Total)" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </template>
@@ -127,10 +141,6 @@ const eventStore = useEventStore()
 // --- KONEKSI GRID LAYOUT ---
 const isIkhwanShow = computed(() => showIkhwan(props.event));
 const isAkhwatShow = computed(() => showAkhwat(props.event));
-
-const gridColClass = computed(() => {
-  return (isIkhwanShow.value && isAkhwatShow.value) ? 'col-6' : 'col-12'
-})
 
 // --- [CORE LOGIC] BUTTON STATE ---
 const buttonState = computed(() => {
@@ -189,46 +199,10 @@ const buttonState = computed(() => {
 });
 
 // --- LOGIC LAINNYA ---
-const formatModalQuota = (val: number | string) => {
-  if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return '∞';
-  if (val === 0 || val === '0') return 'Habis';
-  return `${val}`;
-};
-
-const getQuotaColor = (val: number | string) => {
-  if (String(val).toLowerCase() === 'non-quota' || val === 'Tanpa Batas') return 'text-success';
-  const numVal = Number(val);
-  if (numVal <= 0) return 'text-danger';
-  if (numVal < 10) return 'text-warning';
-  return 'text-primary';
-};
-
 const close = () => emit('close')
 const register = () => {
   if (!buttonState.value.disabled) {
     emit('register', props.event)
-  }
-};
-
-const formatDate = (dateObj: any) => {
-  if (!dateObj || typeof dateObj !== 'object') return 'Akan Datang';
-  const rawDates = Object.values(dateObj)
-    .map((d: any) => d?.date)
-    .filter(Boolean) as string[];
-    
-  if (rawDates.length === 0) return 'Akan Datang';
-  rawDates.sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf());
-  if (rawDates.length === 1) {
-    return dayjs(rawDates[0]).format('DD MMMM YYYY'); 
-  }
-  const firstDate = dayjs(rawDates[0]);
-  const lastDate = dayjs(rawDates[rawDates.length - 1]);
-  if (firstDate.format('MM YYYY') === lastDate.format('MM YYYY')) {
-    return `${firstDate.format('DD')}-${lastDate.format('DD MMMM YYYY')}`;
-  } else if (firstDate.format('YYYY') === lastDate.format('YYYY')) {
-    return `${firstDate.format('DD MMMM')} - ${lastDate.format('DD MMMM YYYY')}`;
-  } else {
-    return `${firstDate.format('DD MMMM YYYY')} - ${lastDate.format('DD MMMM YYYY')}`;
   }
 };
 </script>

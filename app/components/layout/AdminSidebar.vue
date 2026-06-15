@@ -38,10 +38,6 @@
     </ul>
 
     <div class="mt-auto p-3 text-center">
-      <NuxtLink to="/" class="btn btn-outline-secondary btn-sm w-100 mb-2">
-        <i class="bi bi-box-arrow-left me-2 txt-body text-white"></i>
-        Kembali ke Situs
-      </NuxtLink>
       <small class="text-secondary txt-caption d-block">ver {{ pkg.version }}</small>
     </div>
   </div>

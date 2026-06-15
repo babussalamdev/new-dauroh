@@ -22,7 +22,7 @@
 
             <div
                class="d-flex justify-content-center align-items-center gap-3 text-secondary txt-caption fw-bold text-uppercase ls-1 flex-wrap">
-               <span><i class="bi bi-calendar3 me-1"></i> {{ formatDate(event.Date) }}</span>
+               <span><i class="bi bi-calendar3 me-1"></i> {{ formatEventDates(event.Date) }} </span>
                <span class="text-light-gray d-none d-sm-inline">|</span>
                <span><i class="bi bi-geo-alt me-1"></i> {{ event.Place }}</span>
             </div>
@@ -95,43 +95,57 @@
                      </div>
 
                      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
-                        <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                           <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
-                              <i class="bi bi-pie-chart-fill text-primary"></i> Sisa Kuota
-                           </h6>
-                        </div>
                         <div class="card-body p-4">
-
                            <div v-if="isNonQuota(event)" class="text-center py-2">
-                              <span
-                                 class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill txt-body fw-bold">
-                                 <i class="bi bi-infinity me-1"></i> Tanpa Batas
+                              <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill txt-body fw-bold">
+                                 <i class="bi bi-infinity me-1"></i> Kuota Tanpa Batas
                               </span>
                            </div>
 
-                           <div v-else class="d-flex flex-column gap-3">
-                              <div v-if="showIkhwan(event)"
-                                 class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-primary">
-                                 <span class="txt-caption fw-bold text-secondary ps-1">Ikhwan</span>
-                                 <span class="fw-bold text-dark txt-body">
-                                    {{ formatQuota(getRemaining(event.Quota_Ikhwan, event.Sold_Ikhwan)) }}
-                                 </span>
+                           <div v-else class="d-flex flex-column gap-4">
+                              <div v-if="showIkhwan(event)">
+                                 <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div class="d-flex align-items-center gap-2 fw-bold text-secondary">
+                                       <i class="bi bi-people"></i> <span class="txt-caption text-uppercase">Sisa Kuota Ikhwan</span>
+                                    </div>
+                                    <div>
+                                       <span class="fw-bold fs-0 text-primary">{{ formatQuota(getRemaining(event.Quota_Ikhwan, event.Sold_Ikhwan)) }}</span>
+                                       <span class="text-secondary txt-caption"> / {{ event.Quota_Ikhwan }}</span>
+                                    </div>
+                                 </div>
+                                 <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar rounded-pill bg-primary" role="progressbar" :style="`width: ${getPercentage(event.Sold_Ikhwan, event.Quota_Ikhwan)}%;`" :aria-valuenow="getPercentage(event.Sold_Ikhwan, event.Quota_Ikhwan)" aria-valuemin="0" aria-valuemax="100"></div>
+                                 </div>
                               </div>
 
-                              <div v-if="showAkhwat(event)"
-                                 class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3 border-start border-4 border-danger">
-                                 <span class="txt-caption fw-bold text-secondary ps-1">Akhwat</span>
-                                 <span class="fw-bold text-dark txt-body">
-                                    {{ formatQuota(getRemaining(event.Quota_Akhwat, event.Sold_Akhwat)) }}
-                                 </span>
+                              <div v-if="showAkhwat(event)">
+                                 <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div class="d-flex align-items-center gap-2 fw-bold text-secondary">
+                                       <i class="bi bi-people"></i> <span class="txt-caption text-uppercase">Sisa Kuota Akhwat</span>
+                                    </div>
+                                    <div>
+                                       <span class="fw-bold fs-0 text-danger">{{ formatQuota(getRemaining(event.Quota_Akhwat, event.Sold_Akhwat)) }}</span>
+                                       <span class="text-secondary txt-caption"> / {{ event.Quota_Akhwat }}</span>
+                                    </div>
+                                 </div>
+                                 <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar rounded-pill bg-danger" role="progressbar" :style="`width: ${getPercentage(event.Sold_Akhwat, event.Quota_Akhwat)}%;`" :aria-valuenow="getPercentage(event.Sold_Akhwat, event.Quota_Akhwat)" aria-valuemin="0" aria-valuemax="100"></div>
+                                 </div>
                               </div>
 
-                              <div v-if="showTotal(event) && !showIkhwan(event) && !showAkhwat(event)"
-                                 class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
-                                 <span class="txt-caption fw-bold text-secondary">Tiket Tersedia</span>
-                                 <span class="fw-bold text-dark txt-body">
-                                    {{ formatQuota(getRemaining(event.Quota_Total, event.Sold_Total)) }}
-                                 </span>
+                              <div v-if="showTotal(event) && !showIkhwan(event) && !showAkhwat(event)">
+                                 <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div class="d-flex align-items-center gap-2 fw-bold text-secondary">
+                                       <i class="bi bi-people"></i> <span class="txt-caption text-uppercase">Sisa Kuota Umum</span>
+                                    </div>
+                                    <div>
+                                       <span class="fw-bold fs-5 text-primary">{{ formatQuota(getRemaining(event.Quota_Total, event.Sold_Total)) }}</span>
+                                       <span class="text-secondary txt-caption"> / {{ event.Quota_Total }}</span>
+                                    </div>
+                                 </div>
+                                 <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar rounded-pill bg-primary" role="progressbar" :style="`width: ${getPercentage(event.Sold_Total, event.Quota_Total)}%;`" :aria-valuenow="getPercentage(event.Sold_Total, event.Quota_Total)" aria-valuemin="0" aria-valuemax="100"></div>
+                                 </div>
                               </div>
                            </div>
                         </div>
@@ -140,27 +154,42 @@
                      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
                         <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
                            <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
-                              <i class="bi bi-info-circle-fill text-primary"></i> Detail Event
+                              <i class="bi bi-info-circle-fill text-primary"></i> Jadwal Event
                            </h6>
                         </div>
                         <div class="card-body p-4">
                            <ul class="list-unstyled mb-0 d-flex flex-column gap-3 txt-body text-secondary">
-                              <li class="d-flex justify-content-between border-bottom pb-2">
-                                 <span class="txt-body">Tanggal</span>
-                                 <span class="fw-bold text-dark txt-body">{{ formatDate(event.Date) }}</span>
-                              </li>
-                              <li class="d-flex justify-content-between border-bottom pb-2">
-                                 <span class="txt-body">Jam</span>
-                                 <span class="fw-bold text-dark txt-body">{{ getTimeRange(event.Date) }}</span>
-                              </li>
-
-                              <li class="d-flex justify-content-between">
-                                 <span class="txt-body">Total Kapasitas</span>
-                                 <span class="fw-bold text-dark text-end txt-body" style="max-width: 60%;">
-                                    {{ totalQuotaDisplay(event) }}
-                                 </span>
+                              <li class="border-bottom pb-2">
+                                 <div class="d-flex flex-column gap-2 mt-1">
+                                    <div v-for="(day, i) in getDetailedSchedule(event.Date)" :key="i" class="d-flex justify-content-between align-items-center bg-light p-2 rounded-3">
+                                       <span class="text-secondary txt-caption"><i class="bi bi-calendar-event me-1"></i>{{ day.date }}</span>
+                                       <span class="fw-bold text-dark txt-caption"><i class="bi bi-clock me-1 text-primary"></i>{{ day.time }}</span>
+                                    </div>
+                                 </div>
                               </li>
                            </ul>
+                        </div>
+                     </div>
+
+                     <!-- DUMMY LOKASI EVENT MAP -->
+                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                        <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                           <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
+                              <i class="bi bi-geo-alt-fill text-danger"></i> Lokasi Event
+                           </h6>
+                        </div>
+                        <div class="card-body p-4">
+                           <div class="mb-3">
+                              <span class="text-secondary txt-caption"><i class="bi bi-map me-1"></i>Detail alamat lengkap akan tampil di sini</span>
+                           </div>
+                           <a href="https://maps.app.goo.gl/yjs96J4n19Qam1pP6" target="_blank" class="d-block rounded-3 overflow-hidden border position-relative text-decoration-none" style="height: 150px;">
+                              <img src="~/assets/img/iframe.png" alt="Lokasi Peta" class="w-100 h-100" style="object-fit: cover; opacity: 0.8;">
+                              <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-10 transition-all hover-opacity-50">
+                                 <div class="bg-white text-dark px-3 py-2 rounded-pill fw-bold shadow-sm txt-caption d-flex align-items-center gap-2 hover-up">
+                                    <i class="bi bi-box-arrow-up-right text-primary"></i> Buka Maps
+                                 </div>
+                              </div>
+                           </a>
                         </div>
                      </div>
 
@@ -262,28 +291,6 @@ const onImageError = (e: Event) => {
 const formatCurrency = (val: number | string) => {
    if (!val || Number(val) === 0) return 'GRATIS';
    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(val));
-};
-
-const formatDate = (dateObj: any) => {
-  if (!dateObj || typeof dateObj !== 'object') return 'Akan Datang';
-  const rawDates = Object.values(dateObj)
-    .map((d: any) => d?.date)
-    .filter(Boolean) as string[];
-    
-  if (rawDates.length === 0) return 'Akan Datang';
-  rawDates.sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf());
-  if (rawDates.length === 1) {
-    return dayjs(rawDates[0]).format('DD MMMM YYYY'); 
-  }
-  const firstDate = dayjs(rawDates[0]);
-  const lastDate = dayjs(rawDates[rawDates.length - 1]);
-  if (firstDate.format('MM YYYY') === lastDate.format('MM YYYY')) {
-    return `${firstDate.format('DD')}-${lastDate.format('DD MMMM YYYY')}`;
-  } else if (firstDate.format('YYYY') === lastDate.format('YYYY')) {
-    return `${firstDate.format('DD MMMM')} - ${lastDate.format('DD MMMM YYYY')}`;
-  } else {
-    return `${firstDate.format('DD MMMM YYYY')} - ${lastDate.format('DD MMMM YYYY')}`;
-  }
 };
 
 const getDayName = (dateObj: any) => {

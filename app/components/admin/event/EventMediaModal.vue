@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="modal fade show d-block backdrop-blur" tabindex="-1" @click.self="triggerShake">
-    <div class="modal-dialog modal-dialog-centered modal-lg" :class="{ 'modal-shake': isShaking }">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" :class="{ 'modal-shake': isShaking }">
       <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
 
         <div class="modal-header border-0 px-3 pt-3 pb-2 d-flex align-items-center">
