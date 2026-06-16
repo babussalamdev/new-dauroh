@@ -29,7 +29,7 @@ export const useAlert = () => {
     });
   };
 
-  const confirm = (title: string, text: string, confirmButtonText: string = 'Ya, Lanjutkan') => {
+  const confirm = (title: string, text: string, confirmButtonText: string = 'Ya, Lanjutkan', preConfirm?: () => Promise<any>) => {
     return Swal.fire({
       title,
       text,
@@ -40,6 +40,9 @@ export const useAlert = () => {
       cancelButtonText: 'Batal',
       confirmButtonColor: '#004754',
       cancelButtonColor: '#f8f9fa',
+      showLoaderOnConfirm: !!preConfirm,
+      preConfirm: preConfirm,
+      allowOutsideClick: () => !Swal.isLoading(),
       // class tombolnya
       customClass: {
         popup: 'rounded-4 shadow-lg border-0',

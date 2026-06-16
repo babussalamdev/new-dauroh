@@ -179,9 +179,6 @@
                            </h6>
                         </div>
                         <div class="card-body p-4">
-                           <div class="mb-3">
-                              <span class="text-secondary txt-caption"><i class="bi bi-map me-1"></i>Detail alamat lengkap akan tampil di sini</span>
-                           </div>
                            <a href="https://maps.app.goo.gl/yjs96J4n19Qam1pP6" target="_blank" class="d-block rounded-3 overflow-hidden border position-relative text-decoration-none" style="height: 150px;">
                               <img src="~/assets/img/iframe.png" alt="Lokasi Peta" class="w-100 h-100" style="object-fit: cover; opacity: 0.8;">
                               <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-10 transition-all hover-opacity-50">

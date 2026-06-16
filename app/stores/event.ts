@@ -278,8 +278,16 @@ function resetDraftEvent() {
         };
 
         currentPublicEventDetail.value = fullData;
-        if (existingEvent) {
-          Object.assign(existingEvent, fullData);
+
+        // update list kalau udah ada
+        const index = tiketEvent.value.findIndex(e => String(e.SK) === String(SK));
+        if (index !== -1) {
+          if (!fullData.Picture && tiketEvent.value[index].Picture) {
+            fullData.Picture = tiketEvent.value[index].Picture;
+          }
+          tiketEvent.value[index] = { ...tiketEvent.value[index], ...fullData };
+        } else {
+          tiketEvent.value.push(fullData);
         }
         
       } else {

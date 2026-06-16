@@ -119,6 +119,7 @@
 <script setup lang="ts">
 useHead({ title: 'Kehadiran Manual' });
 import { ref, computed } from 'vue';
+import Swal from 'sweetalert2';
 import { useAlert } from '~/utils/swal';
 import { useAttendanceStore } from '~/stores/attendance';
 import { useGlobalEventStore } from '~/stores/globalEvent'; 
@@ -157,25 +158,25 @@ const processManualCheckIn = (item: any) => {
   swalConfirm(
     'Check-In Manual?',
     `Konfirmasi kehadiran untuk ${item.name}`,
-    'Ya, Hadirkan!'
-  ).then(async (result) => {
-    if (result.isConfirmed) {
+    'Ya, Hadirkan!',
+    async () => {
       isProcessing.value = true;
-      
       try {
         const response = await store.markManualAttendance(item.pk, item.ticketId);
-
-        if (response.success) {
-          swalAlert('Berhasil', `${item.name} berhasil diabsen!`, 'success');
-        } else {
-          swalAlert('Gagal!', response.message ?? 'Gagal memproses absen', 'error');
+        if (!response.success) {
+          Swal.showValidationMessage(response.message ?? 'Gagal memproses absen');
         }
-
+        return response;
       } catch (error: any) {
-        swalAlert('Error', 'Terjadi kesalahan sistem.', 'error');
+        Swal.showValidationMessage('Terjadi kesalahan sistem.');
+        return { success: false };
       } finally {
         isProcessing.value = false;
       }
+    }
+  ).then((result) => {
+    if (result.isConfirmed && result.value?.success) {
+      swalAlert('Berhasil', `${item.name} berhasil diabsen!`, 'success');
     }
   });
 };

@@ -91,9 +91,6 @@
                   <button class="btn btn-sm text-warning p-0 border-0 bg-transparent shadow-none" @click="navigateToCertificate(event)" :disabled="!event.SK" title="Kelola Sertifikat">
                     <i class="bi bi-patch-check-fill fs-5"></i>
                   </button>
-                  <button class="btn btn-sm text-danger p-0 border-0 bg-transparent shadow-none" @click="openDeleteModal(event)" title="Hapus">
-                    <i class="bi bi-trash fs-5"></i>
-                  </button>
                 </div>
               </td>
             </tr>

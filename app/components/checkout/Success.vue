@@ -94,8 +94,20 @@ onMounted(async () => {
     if (store.transactionDetails?.event_sk) {
        await store.checkExistingTransaction(store.transactionDetails.event_sk);
     } else {
-       router.replace('/dashboard');
+       router.replace('/dashboard?refresh=1');
     }
+  } else {
+    // Inject locally so Dashboard sees it instantly without waiting for API
+    const userStore = useUserStore();
+    userStore.registerEvent({
+      event: store.event,
+      participants: store.participants,
+      transactionDetails: {
+        ...store.transactionDetails,
+        paymentMethod: store.paymentMethod,
+        amount: store.transactionDetails?.amount,
+      }
+    });
   }
 });
 
@@ -113,7 +125,7 @@ const closeQrAndBack = () => {
 };
 
 const toDashboard = () => {
-  router.push('/dashboard');
+  router.push('/dashboard?refresh=1');
   setTimeout(() => {
     store.clearCheckout();
   }, 300);

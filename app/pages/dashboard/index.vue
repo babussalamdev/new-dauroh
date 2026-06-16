@@ -5,160 +5,113 @@
         <div class="row g-4">
 
           <div class="col-lg-12">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-              <div class="card-header bg-white border-0 py-3">
+            
+            <!-- Section Perlu Tindakan (Pending) -->
+            <div v-if="pendingTickets.length > 0" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              <div class="card-header bg-white border-bottom-0 py-3 pb-0">
                 <div class="d-flex align-items-center justify-content-between">
                   <h5 class="mb-0 fw-bold text-dark txt-subtitle">
-                    <i class="bi bi-calendar2-week me-2 text-primary"></i>Agenda Event
+                    <i class="bi bi-exclamation-circle me-2 text-warning"></i>Menunggu Pembayaran
                   </h5>
                 </div>
-
-                <ul class="nav nav-pills mt-3 bg-light p-1 rounded-3 d-inline-flex">
-                  <li class="nav-item">
-                    <button class="nav-link rounded-3 px-4 py-2 txt-body fw-bold" :class="{ active: activeTab === 'active' }"
-                      @click="activeTab = 'active'">
-                      Event Aktif
-                      <span class="ms-1 badge txt-caption" :class="activeTab === 'active' ? 'bg-white text-primary' : 'bg-secondary text-white'">
-                        {{ uniqueActiveEvent.length }}
-                      </span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link rounded-3 px-4 py-2 txt-body fw-bold" :class="{ active: activeTab === 'completed' }"
-                      @click="activeTab = 'completed'">
-                      Sudah Selesai
-                    </button>
-                  </li>
-                </ul>
               </div>
 
-              <div class="card-body bg-white pt-0">
-                <div v-if="activeTab === 'active'">
-                  <div v-if="uniqueActiveEvent.length > 0" class="row g-3">
-                    <div v-for="(ticket, index) in uniqueActiveEvent" :key="'active-' + index" class="col-md-6 col-lg-4">
-                      <div class="card h-100 border rounded-4 hover-shadow transition">
-                        <div class="d-flex flex-row h-100">
-                          <div class="p-2">
-                            <NuxtImg v-if="(ticket.Picture || ticket.event?.Picture) && (ticket.Picture || ticket.event?.Picture) !== 'undefined'"
-                              :src="`${imgBaseUrl}/${ticket.SK ? ticket.SK.split('#')[0] : ticket.event?.SK}/${ticket.Picture || ticket.event?.Picture}.webp`"
-                              class="rounded-3 object-fit-cover shadow-sm" style="width: 100px; height: 100px;"
-                              :alt="ticket.event?.Title || ticket.title" loading="lazy" />
-                            <div v-else
-                              class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted"
-                              style="width: 100px; height: 100px;">
-                              <i class="bi bi-image display-6 opacity-50"></i>
-                            </div>
+              <div class="card-body bg-white pt-3">
+                <div class="row g-3">
+                  <div v-for="(ticket, index) in pendingTickets" :key="'pending-' + index" class="col-md-6 col-lg-4">
+                    <div class="card h-100 border rounded-4 hover-shadow transition border-warning-subtle">
+                      <div class="d-flex flex-row h-100">
+                        <div class="p-2">
+                          <NuxtImg v-if="(ticket.Picture || ticket.picture || ticket.event?.Picture || ticket.event?.picture) && (ticket.Picture || ticket.picture || ticket.event?.Picture || ticket.event?.picture) !== 'undefined'"
+                            :src="`${imgBaseUrl}/${ticket.eventSK}/${ticket.Picture || ticket.picture || ticket.event?.Picture || ticket.event?.picture}.webp`"
+                            class="rounded-3 object-fit-cover shadow-sm" style="width: 100px; height: 100px;"
+                            :alt="ticket.event?.Title || ticket.title" loading="lazy" />
+                          <div v-else
+                            class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted"
+                            style="width: 100px; height: 100px;">
+                            <i class="bi bi-image display-6 opacity-50"></i>
                           </div>
-                          <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
-                            <div>
-                              <h6 class="fw-bold mb-1 text-truncate-2 txt-body">{{ ticket.event.Title }}</h6>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between mt-auto">
-                              <span v-if="getSmartStatus(ticket) === 'PENDING'"
-                                class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle txt-caption fw-bold">
-                                Belum Bayar
-                              </span>
-                              <span v-else
-                                class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle txt-caption fw-bold">
-                                Terdaftar
-                              </span>
-                              <NuxtLink :to="`/event/${ticket.event.SK}`"
-                                class="btn btn-link btn-sm p-0 text-decoration-none txt-caption fw-bold">Detail</NuxtLink>
-                            </div>
+                        </div>
+                        <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
+                          <div>
+                            <h6 class="fw-bold mb-1 text-truncate-2 txt-body">{{ ticket.event?.Title || ticket.Title }}</h6>
+                            <p class="text-muted txt-caption mb-1 fw-bold">{{ formatCurrency(ticket.amount) }}</p>
+                            <p class="text-danger txt-caption fw-bold mb-0" style="font-size: 0.75rem;">Sisa Waktu: {{ getRemainingTime(ticket) }}</p>
+                          </div>
+                          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-auto pt-2">
+                            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle txt-caption fw-bold text-nowrap">
+                              Belum Bayar
+                            </span>
+                            <button class="btn btn-primary btn-sm rounded-pill px-3 txt-caption fw-bold shadow-sm text-nowrap" @click="resumePayment(ticket)">
+                              Bayar
+                            </button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div v-else class="text-center py-5">
-                    <i class="bi bi-calendar-x display-4 text-light-emphasis"></i>
-                    <p class="text-muted mt-3 txt-body fw-bold">Belum ada event aktif yang diikuti.</p>
-                  </div>
-                </div>
-
-                <div v-else>
-                  <div v-if="completedEvent.length > 0" class="row g-3">
-                    <div v-for="(ticket, index) in completedEvent" :key="'comp-' + index" class="col-md-6 col-lg-4">
-                      <div class="card h-100 border rounded-4 opacity-75 grayscale bg-light">
-                        <div class="p-3">
-                          <h6 class="fw-bold mb-1 text-truncate txt-body">{{ ticket.event.Title }}</h6>
-                          <p class="text-muted mb-0 txt-caption"><i class="bi bi-check2-all me-1"></i>Selesai pada {{ formatDate(ticket.event.Date) }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="text-center py-5">
-                    <p class="text-muted txt-body fw-bold">Riwayat event belum tersedia.</p>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div v-if="activeTab === 'active'" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-              
-              <div class="card-header bg-white border-bottom py-3">
+
+            <!-- Section Tiket Aktif (Ready to use) -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              <div class="card-header bg-white border-bottom-0 py-3 pb-0">
                 <div class="d-flex align-items-center justify-content-between">
                   <h5 class="mb-0 fw-bold text-dark txt-subtitle">
-                    <i class="bi bi-list me-2 text-primary"></i>Riwayat Transaksi
+                    <i class="bi bi-calendar2-week me-2 text-primary"></i>Tiket Anda
                   </h5>
-                </div> 
+                </div>
               </div>
-              
-              <div class="card-body p-0">
-                <div v-if="activeEvent.length > 0" class="table-responsive">
-                  <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                      <tr>
-                        <th class="border-0 txt-label text-uppercase fw-bold text-muted ps-4">Transaksi</th>
-                        <th class="border-0 txt-label text-uppercase fw-bold text-muted">Detail Event</th>
-                        <th class="border-0 txt-label text-uppercase fw-bold text-muted text-center pe-4">Tiket</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(ticket, index) in activeEvent" :key="'row-' + index">
-                        <td class="ps-4">
-                          <div class="d-flex flex-column">
-                            <span v-if="getSmartStatus(ticket) === 'PENDING'"
-                              class="text-warning txt-caption fw-bold">Menunggu Verifikasi</span>
-                            <span v-else class="text-success txt-caption fw-bold">Pembayaran Lunas</span>
+
+              <div class="card-body bg-white pt-3">
+                <div v-if="validActiveTickets.length > 0" class="row g-3">
+                  <div v-for="(ticket, index) in validActiveTickets" :key="'active-' + index" class="col-md-6 col-lg-4">
+                    <div class="card h-100 border rounded-4 hover-shadow transition">
+                      <div class="d-flex flex-row h-100">
+                        <div class="p-2">
+                          <NuxtImg v-if="(ticket.Picture || ticket.picture || ticket.event?.Picture || ticket.event?.picture) && (ticket.Picture || ticket.picture || ticket.event?.Picture || ticket.event?.picture) !== 'undefined'"
+                            :src="`${imgBaseUrl}/${ticket.eventSK}/${ticket.Picture || ticket.picture || ticket.event?.Picture || ticket.event?.picture}.webp`"
+                            class="rounded-3 object-fit-cover shadow-sm" style="width: 100px; height: 100px;"
+                            :alt="ticket.event?.Title || ticket.title" loading="lazy" />
+                          <div v-else
+                            class="rounded-3 bg-light d-flex align-items-center justify-content-center text-muted"
+                            style="width: 100px; height: 100px;">
+                            <i class="bi bi-image display-6 opacity-50"></i>
                           </div>
-                        </td>
-                        <td>
-                          <span class="fw-bold d-block text-dark txt-body mb-1">{{ ticket.event.Title }}</span>
-                          <span class="text-muted txt-caption">{{ Array.isArray(ticket.participants) ? ticket.participants.length : (ticket.participants || 0) }} Peserta • {{ formatCurrency(ticket.amount) }}</span>
-                        </td>
-                        <td class="text-center pe-4">
-                          <button
-                            v-if="['SUCCESSFUL', 'UPCOMING'].includes(getSmartStatus(ticket)) || ['SUCCESSFUL', 'SUCCESS', 'PAID', 'UPCOMING'].includes((ticket.Status || ticket.status || '').toUpperCase())"
-                            class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm txt-caption fw-bold"
-                            @click="openDetailParticipant(ticket)">
-                            <i class="bi bi-people me-2"></i>Lihat Peserta
-                          </button>
-
-                          <span v-else-if="getSmartStatus(ticket) === 'PENDING'"
-                            class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill txt-caption fw-bold">
-                            <i class="bi bi-hourglass-split me-1"></i>Belum Lunas
-                          </span>
-
-                          <span v-else
-                            class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill txt-caption fw-bold">
-                            Tidak Valid
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                        </div>
+                        <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
+                          <div>
+                            <h6 class="fw-bold mb-1 text-truncate-2 txt-body">{{ ticket.event?.Title || ticket.Title }}</h6>
+                            <p class="text-muted txt-caption fw-bold mb-0"><i class="bi bi-calendar-event me-1"></i>{{ formatTicketDate(ticket.event?.Date) }}</p>
+                          </div>
+                          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-auto pt-2">
+                            <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle txt-caption fw-bold text-nowrap">
+                              Siap Dipakai
+                            </span>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 txt-caption fw-bold text-nowrap" @click="openDetailParticipant(ticket)">
+                              QR Code
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div v-else class="text-center py-5">
-                  <p class="text-muted txt-body fw-bold">Belum ada transaksi untuk event aktif saat ini.</p>
+                <div v-else-if="pendingTickets.length === 0 && !isLoading" class="text-center py-5">
+                  <i class="bi bi-calendar-x display-4 text-light-emphasis"></i>
+                  <p class="text-muted mt-3 txt-body fw-bold">Belum ada agenda kajian aktif.</p>
+                </div>
+                <div v-else-if="!isLoading" class="text-center py-5">
+                  <p class="text-muted txt-body fw-bold">Belum ada tiket aktif.</p>
                 </div>
               </div>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
     
     <HistoryDetailModal 
       :show="showDetailParticipant" 
@@ -173,47 +126,88 @@
       :participant="selectedParticipantForQr"
       @close="closeQrModal" 
     />
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from '~/stores/user';
 import { useEventStore } from '~/stores/event';
+import { useCheckoutStore } from '~/stores/checkout';
 import { useAuth } from '~/composables/useAuth';
 import { useTransactionStatus } from '~/composables/useTransactionStatus';
+import { useAlert } from '~/utils/swal';
+import { useRouter, useRoute } from 'vue-router';
 import dayjs from 'dayjs';
 
 useHead({ title: 'Dashboard' });
 
-
+const router = useRouter();
+const route = useRoute();
 const config = useRuntimeConfig();
 const imgBaseUrl = ref(config.public.img || '');
 const { isLoggedIn } = useAuth();
 const userStore = useUserStore();
 const eventStore = useEventStore();
+const checkoutStore = useCheckoutStore();
 const { getSmartStatus } = useTransactionStatus();
-const activeTab = ref('active');
+const { alert: swalAlert, confirm: swalConfirm } = useAlert();
 
+const isLoading = ref(true);
 const showQrModal = ref(false);
 const showDetailParticipant = ref(false);
 const selectedTicket = ref(null);
 const selectedTicketForQr = ref(null);
 const selectedParticipantForQr = ref(null);
+const currentTime = ref(dayjs());
+
+let timerInterval;
+
+onMounted(async () => {
+  // Update time every minute for countdowns
+  timerInterval = setInterval(() => {
+    currentTime.value = dayjs();
+  }, 60000);
+
+  const forceRefresh = route.query.refresh === '1';
+
+  if (isLoggedIn.value) {
+    if (!userStore.hasFetched || forceRefresh) {
+      await userStore.fetchUserTransactions();
+      if (forceRefresh) {
+        router.replace({ query: {} }); // Bersihkan URL biar gak fetch terus kalau di-refresh
+      }
+    }
+  }
+  
+  if (eventStore.tiketEvent.length === 0) {
+    await eventStore.fetchPublicTiketEvent();
+  }
+  isLoading.value = false;
+});
+
+onUnmounted(() => {
+  clearInterval(timerInterval);
+});
+
+// All upcoming (Pending + Successful) mapped with event data
 const upcomingTickets = computed(() => {
-  const allTickets = userStore.tickets || userStore.getDashboardData || [];
+  const allTickets = userStore.tickets || [];
   if (!Array.isArray(allTickets)) return [];
 
   return allTickets
     .map(item => {
-      if (!item.event || Object.keys(item.event).length === 0) {
-        const eventSK = (item.Subject || item.SK || '').split('#')[0];
-        const foundEvent = eventStore.tiketEvent.find(e => e.SK === eventSK);
-        return { 
-          ...item, 
-          event: foundEvent || { SK: eventSK, Title: item.Title || item.title || 'Event Tidak Diketahui', Picture: item.Picture || '' } 
-        };
-      }
-      return item;
+      const eventSK = (item.Subject || item.SK || '').split('#')[0];
+      const foundEvent = eventStore.tiketEvent.find(e => e.SK === eventSK);
+      
+      // Pastikan event data selengkap mungkin ngambil dari eventStore (katalog utama)
+      const mergedEvent = foundEvent ? { ...item.event, ...foundEvent } : (item.event || {});
+      
+      return { 
+        ...item,
+        eventSK: eventSK,
+        event: mergedEvent
+      };
     })
     .filter(item => {
       const smartStatus = getSmartStatus(item);
@@ -225,50 +219,118 @@ const upcomingTickets = computed(() => {
     });
 });
 
-onMounted(async () => {
-  if (isLoggedIn.value) {
-    await userStore.fetchUserTransactions();
-  }
-  
-  if (eventStore.tiketEvent.length === 0) {
-    await eventStore.fetchPublicTiketEvent();
-  }
+// 1. Pending Tickets
+const pendingTickets = computed(() => {
+  return upcomingTickets.value.filter(t => getSmartStatus(t) === 'PENDING');
 });
 
-// Filter Event Aktif vs Selesai
-const activeEvent = computed(() => {
+// 2. Valid Active Tickets (Successful and Date not passed)
+const validActiveTickets = computed(() => {
   return upcomingTickets.value.filter(t => {
-    if (!t.event.Date) return true;
-    const dates = Object.values(t.event.Date);
-    if (dates.length === 0) return true;
-    const lastDate = dates.reduce((max, curr) => curr.date > max ? curr.date : max, dates[0].date);
-    return dayjs().isBefore(dayjs(lastDate).add(1, 'day'));
-  });
-});
-
-const uniqueActiveEvent = computed(() => {
-  const seen = new Set();
-  return activeEvent.value.filter(t => {
-    const eventSK = (t.Subject || t.SK || '').split('#')[0];
-    if (seen.has(eventSK)) return false; 
-    seen.add(eventSK);
-    return true; 
-  });
-});
-
-const completedEvent = computed(() => {
-  return upcomingTickets.value.filter(t => {
-    if (!t.event.Date) return false;
+    if (getSmartStatus(t) !== 'SUCCESSFUL') return false;
+    
+    // Jika event tidak ada atau Date tidak ditemukan (event inactive), sembunyikan
+    if (!t.event || !t.event.Date) return false; 
+    
     const dates = Object.values(t.event.Date);
     if (dates.length === 0) return false;
-    const lastDate = dates.reduce((max, curr) => curr.date > max ? curr.date : max, dates[0].date);
     
-    const isPast = dayjs().isAfter(dayjs(lastDate).add(1, 'day'));
-    const isUnder7Days = dayjs().isBefore(dayjs(lastDate).add(8, 'day'));
+    // Find the latest day of the event
+    const lastDateObj = dates.reduce((max, curr) => curr.date > max.date ? curr : max, dates[0]);
     
-    return isPast && isUnder7Days;
+    let endDateTime = dayjs(lastDateObj.date).endOf('day');
+    
+    // Parse end_time if available
+    if (lastDateObj.end_time) {
+      const timeMatch = lastDateObj.end_time.match(/(\d+)\.(\d+)\s*(AM|PM)/i);
+      if (timeMatch) {
+        let hour = parseInt(timeMatch[1], 10);
+        const minute = parseInt(timeMatch[2], 10);
+        const ampm = timeMatch[3].toUpperCase();
+        if (ampm === 'PM' && hour < 12) hour += 12;
+        if (ampm === 'AM' && hour === 12) hour = 0;
+        endDateTime = dayjs(lastDateObj.date).hour(hour).minute(minute).second(0);
+      }
+    }
+    
+    return dayjs().isBefore(endDateTime);
   });
 });
+
+const getRemainingTime = (ticket) => {
+  const expiredDateStr = ticket.Expired_Date || ticket.expired_date;
+  if (!expiredDateStr) return '-';
+  const diffMinutes = dayjs(expiredDateStr).diff(currentTime.value, 'minute');
+  if (diffMinutes <= 0) return 'Kadaluarsa';
+  
+  const hours = Math.floor(diffMinutes / 60);
+  const mins = diffMinutes % 60;
+  
+  if (hours > 24) {
+    const days = Math.floor(hours / 24);
+    return `${days} Hari`;
+  }
+  
+  if (hours > 0) return `${hours}j ${mins}m`;
+  return `${mins} menit`;
+};
+
+const resumePayment = async (ticket) => {
+  const transactionSK = ticket.SK; 
+
+  if (!transactionSK || !transactionSK.includes('#')) {
+    swalAlert('Data Tidak Lengkap', 'ID Transaksi tidak valid. Silakan hubungi admin.', 'error');
+    return;
+  }
+  
+  const smartStatus = getSmartStatus(ticket);
+  
+  try {
+    if (['EXPIRED', 'CANCELLED', 'FAILED'].includes(smartStatus)) {
+      await handleExpiredFlow(transactionSK);
+    } else {
+      checkoutStore.isLoading = true;
+      const isTransactionValid = await checkoutStore.checkExistingTransaction(transactionSK);
+      
+      if (isTransactionValid) {
+        await checkoutStore.restoreTransactionData(transactionSK);
+        checkoutStore.setStep('instructions'); 
+        router.push('/checkout');
+      } else {
+        await handleExpiredFlow(transactionSK);
+      }
+    }
+  } catch (error) {
+    console.error("Gagal resume payment:", error);
+    swalAlert('Kesalahan Sistem', 'Gagal memverifikasi status transaksi.', 'error');
+  } finally {
+    checkoutStore.isLoading = false;
+  }
+};
+
+const handleExpiredFlow = async (skTransaction) => {
+  const result = await swalConfirm(
+    'Pembayaran Telah Berakhir',
+    'Sesi pembayaran sebelumnya sudah kadaluarsa. Apakah Anda ingin membayar ulang dengan data peserta yang sama?',
+    'Ya, Bayar Ulang'
+  );
+
+  if (result.isConfirmed) {
+    checkoutStore.isLoading = true;
+    try {
+      const success = await checkoutStore.restoreTransactionData(skTransaction);
+      if (success) {
+        router.push('/checkout');
+      } else {
+        swalAlert('Gagal', 'Tidak dapat memulihkan data. Silakan mendaftar ulang.', 'error');
+      }
+    } catch (e) {
+      swalAlert('Gagal', 'Terjadi kesalahan sistem.', 'error');
+    } finally {
+      checkoutStore.isLoading = false;
+    }
+  }
+};
 
 const openDetailParticipant = async (ticket) => {
   selectedTicket.value = ticket;
@@ -318,7 +380,7 @@ const formatCurrency = (val) => {
   }).format(Number(val));
 };
 
-const formatDate = (dateObj) => {
+const formatTicketDate = (dateObj) => {
   if (!dateObj) return '-';
   const dates = Object.values(dateObj);
   if (dates.length === 0) return '-';
@@ -341,38 +403,11 @@ const formatDate = (dateObj) => {
   transition: all 0.3s ease;
 }
 
-.nav-pills .nav-link {
-  color: #6c757d;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.nav-pills .nav-link.active {
-  background-color: #ffffff;
-  color: var(--color-primary);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
 .text-truncate-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  /* Vendor prefix */
-  line-clamp: 2;
-  /* Standard property (Saran Audit) */
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.small-8 {
-  font-size: 0.8rem;
-}
-
-.grayscale {
-  filter: grayscale(1);
-}
-
-.table thead th {
-  letter-spacing: 0.5px;
 }
 
 .rounded-4 {

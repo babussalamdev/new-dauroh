@@ -23,8 +23,16 @@ export const useCertificateStore = defineStore('certificate', {
         name: { top: 55, left: 50, fontSize: 30, color: '#000000' },
         domicile: { top: 68, left: 50, fontSize: 20, color: '#444444' }
       }
-    }
+    },
+    originalConfigHash: ""
   }),
+
+  getters: {
+    hasChanges: (state) => {
+      const currentHash = JSON.stringify({ design: { layout: state.config.layout, styles: state.config.styles, fields: state.config.fields } });
+      return state.originalConfigHash !== currentHash;
+    }
+  },
 
   actions: {
     async fetchCertificateData(eventSK: string) {
@@ -61,6 +69,7 @@ export const useCertificateStore = defineStore('certificate', {
           if (eventData.Certificate_Configuration?.design) {
             this.config = eventData.Certificate_Configuration.design;
           }
+          this.originalConfigHash = JSON.stringify({ design: { layout: this.config.layout, styles: this.config.styles, fields: this.config.fields } });
 
           // Set Preview Title otomatis dari nama event asli
           if (eventData.Title) {
@@ -129,6 +138,7 @@ export const useCertificateStore = defineStore('certificate', {
         };
 
         await $apiBase.put(`/update-default?type=event&sk=${eventSK}`, payload);
+        this.originalConfigHash = JSON.stringify(payload.Certificate_Configuration);
         return { ok: true };
 
       } catch (error: any) {

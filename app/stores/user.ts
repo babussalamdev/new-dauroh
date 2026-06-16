@@ -12,6 +12,7 @@ export const useUserStore = defineStore("user", () => {
   const tickets = useStorage<UserTicket[]>("user_tickets_v2", []);
   // const user = ref<UserProfile | null>(null);
   const isLoading = ref(false);
+  const hasFetched = ref(false);
 
   // --- GETTERS (Computed) ---
   const transactions = computed(() => tickets.value);
@@ -81,7 +82,26 @@ export const useUserStore = defineStore("user", () => {
         } as UserTicket;
       });
 
-      tickets.value = mappedTickets.sort(
+      const now = new Date().getTime();
+      const recentLocals = tickets.value.filter(t => {
+        const tEventSK = (t.Subject || (t.event && t.event.SK) || t.SK || '').split('#')[0];
+        
+        const notInMapped = !mappedTickets.some((m: any) => {
+          const mEventSK = (m.Subject || (m.event && m.event.SK) || m.SK || '').split('#')[0];
+          const isSameEvent = mEventSK === tEventSK;
+          
+          const mPartCount = Array.isArray(m.participants) ? m.participants.length : (m.participants || 1);
+          const tPartCount = Array.isArray(t.participants) ? t.participants.length : (t.participants || 1);
+          const isSameParticipants = mPartCount === tPartCount;
+          
+          return m.SK === t.SK || (t.id && m.SK === t.id) || (isSameEvent && isSameParticipants);
+        });
+
+        const ageInMs = now - new Date(t.created_at || 0).getTime();
+        return notInMapped && ageInMs < 10 * 60 * 1000; // Keep for 10 mins
+      });
+
+      tickets.value = [...mappedTickets, ...recentLocals].sort(
         (a, b) =>
           new Date(b.created_at || 0).getTime() -
           new Date(a.created_at || 0).getTime(),
@@ -90,6 +110,7 @@ export const useUserStore = defineStore("user", () => {
       console.error("Fetch Transactions Error:", error);
     } finally {
       isLoading.value = false;
+      hasFetched.value = true;
     }
   }
 
@@ -191,6 +212,7 @@ export const useUserStore = defineStore("user", () => {
     const newTicket: UserTicket = {
       SK: finalId,
       id: finalId,
+      Subject: event?.SK,
       date: new Date().toISOString(),
       created_at: new Date().toISOString(),
       title: event?.Title || "Event Event",
@@ -255,6 +277,7 @@ export const useUserStore = defineStore("user", () => {
     tickets,
     // user,
     isLoading,
+    hasFetched,
     // Getters
     transactions,
     getAllTickets,

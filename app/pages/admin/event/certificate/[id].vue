@@ -27,7 +27,7 @@
       <div class="card-footer bg-light p-4 border-top d-flex justify-content-end gap-2">
         <button 
           class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm py-2 txt-body transition-hover" 
-          :disabled="!certStore.base64Image || certStore.imageErrors.length > 0"
+          :disabled="!certStore.base64Image || certStore.imageErrors.length > 0 || !certStore.hasChanges"
           @click="handleSimpan"
         >
           <i class="bi bi-cloud-arrow-up-fill me-2"></i> Simpan Konfigurasi

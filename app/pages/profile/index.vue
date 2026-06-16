@@ -2,7 +2,9 @@
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-lg-10">
-        <h1 class="mb-4 text-center">Edit Profil</h1>
+        <h4 class="mb-0 fw-bold text-dark text-center">
+            <i class="text-primary"></i>Edit Profil
+          </h4>
 
         <div class="row g-4">
           <div class="col-lg-6">

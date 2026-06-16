@@ -159,7 +159,7 @@ const handleExpiredState = () => {
 
 const handleExit = () => {
   isExplicitExit.value = true;
-  router.push('/dashboard'); 
+  router.push('/dashboard?refresh=1'); 
 };
 
 // --- Lifecycle & Watcher ---

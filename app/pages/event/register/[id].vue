@@ -538,13 +538,29 @@ const handleSubmit = async () => {
     participants: finalParticipants as any[]
   };
 
- if ((event.value.Price || 0) === 0) {
-    // 🟢 Notifikasi buat Event Gratis
+  if ((event.value.Price || 0) === 0) {
     try {
-      await userStore.registerEvent(registrationData);
-      swalAlert('Berhasil!', 'Pendaftaran event berhasil dilakukan.', 'success').then(() => {
-        router.push('/dashboard');
-      });
+      if (checkoutStore.clearCheckout) checkoutStore.clearCheckout();
+      checkoutStore.startCheckout(registrationData);
+      checkoutStore.paymentMethod = "free";
+      
+      const res = await checkoutStore.createPayment();
+      
+      if (res && res.success) {
+        // success! The backend recorded it.
+        // We inject locally so it appears immediately!
+        await userStore.registerEvent({
+           event: checkoutStore.event,
+           participants: checkoutStore.participants,
+           transactionDetails: checkoutStore.transactionDetails
+        });
+        
+        swalAlert('Berhasil!', 'Pendaftaran event berhasil dilakukan.', 'success').then(() => {
+          router.push('/dashboard?refresh=1');
+        });
+      } else {
+        swalAlert('Gagal', 'Terjadi kesalahan saat mendaftar.', 'error');
+      }
     } catch (e) {
       swalAlert('Gagal', 'Terjadi kesalahan saat mendaftar.', 'error');
     }
