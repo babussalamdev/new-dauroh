@@ -39,16 +39,25 @@ export const useAttendanceStore = defineStore('attendance', () => {
       });
 
       const rawData = res.data || [];
-      participants.value = rawData.map((p: any) => ({
-        pk: p.PK, 
-        name: p.Name,
-        ticketId: p.SK, 
-        gender: p.Gender?.toLowerCase() === 'akhwat' ? 'p' : 'l', 
-        age: p.Age,
-        scanTime: p.CheckIn || null, 
-        status: statusType === 'present' ? 'hadir' : 'belum',
-        isCertificateSent: p.Certificate_Eligible === 'true'
-      }));
+      participants.value = rawData.map((p: any) => {
+        let parsedScanTime = p.CheckIn || null;
+        
+        // Kompatibilitas mundur: jika data di DB masih string (format lama), ubah ke format object dinamis
+        if (typeof parsedScanTime === 'string') {
+          parsedScanTime = { "1": parsedScanTime };
+        }
+
+        return {
+          pk: p.PK, 
+          name: p.Name,
+          ticketId: p.SK, 
+          gender: p.Gender?.toLowerCase() === 'akhwat' ? 'p' : 'l', 
+          age: p.Age,
+          scanTime: parsedScanTime, 
+          status: statusType === 'present' ? 'hadir' : 'belum',
+          isCertificateSent: p.Certificate_Eligible === 'true'
+        };
+      });
 
       lastFetchedEventAttendance.value = globalStore.activeEventSK;
       lastFetchedStatusType.value = statusType;
@@ -61,7 +70,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
   }
 
   // Fungsi untuk check-in Manual (Admin)
-  async function markManualAttendance(pk: string, sk: string) {
+  async function markManualAttendance(pk: string, sk: string, sessions: Record<string, boolean>) {
     try {
       const { $apiBase } = useNuxtApp() as any;
       const { accessToken } = useAuth();
@@ -69,7 +78,8 @@ export const useAttendanceStore = defineStore('attendance', () => {
       const payload = {
         AccessToken: accessToken.value,
         PK: pk,
-        SK: sk
+        SK: sk,
+        Sessions: sessions // TODO: Backend harus mengekstrak sesi mana saja yang dicentang
       };
 
       await $apiBase.put('/update-attendance?type=admin', payload);

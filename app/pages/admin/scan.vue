@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid px-4 py-4 d-flex flex-column align-items-center">
+  <div class="content-fluid p-3 p-md-4 d-flex flex-column align-items-center">
     <CommonBreadcrumb :items="[{ text: 'Dashboard', to: '/admin', icon: 'bi bi-house' }, { text: 'Scan Presensi' }]"
       class="w-100 mb-3" />
 
@@ -7,6 +7,18 @@
       <div class="card-body p-4 text-center">
 
         <h6 class="txt-subtitle text-dark mb-3">Arahkan ke QR-Code Peserta</h6>
+
+        <!-- DROPDOWN SESI JIKA LEBIH DARI 1 HARI -->
+        <div v-if="globalStore.activeEventDays.length > 1" class="mb-3 d-flex justify-content-center">
+          <div class="input-group input-group-sm" style="max-width: 200px;">
+            <span class="input-group-text bg-white border-end-0 text-primary"><i class="bi bi-calendar-event"></i></span>
+            <select class="form-select form-select-sm border-start-0 fw-bold text-primary" v-model="selectedDay">
+              <option v-for="day in globalStore.activeEventDays" :key="day" :value="day">
+                Sesi Hari Ke-{{ day }}
+              </option>
+            </select>
+          </div>
+        </div>
 
         <div class="mx-auto rounded-4 overflow-hidden border bg-light mb-4 position-relative"
           style="max-width: 250px; min-height: 250px;">
@@ -58,6 +70,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 import { useNuxtApp } from '#app';
+import { useGlobalEventStore } from '~/stores/globalEvent';
 import dayjs from 'dayjs';
 
 definePageMeta({
@@ -69,9 +82,16 @@ definePageMeta({
 });
 
 const { $apiBase } = useNuxtApp() as any;
+const globalStore = useGlobalEventStore();
 
 const loading = ref(false);
 const scanResult = ref<any>(null);
+const selectedDay = ref('1');
+
+// Set default day jika ada
+if (globalStore.activeEventDays.length > 0) {
+  selectedDay.value = globalStore.activeEventDays[0];
+}
 
 let scanner: any = null;
 let scannerStarted = false;
@@ -226,7 +246,8 @@ const processTicket = async (code: string) => {
       {
         AccessToken: token,
         PK: qrData.pk,
-        SK: qrData.sk
+        SK: qrData.sk,
+        Session: `hari_${selectedDay.value}` // TODO: Backend needs to support this parameter
       }
     );
 

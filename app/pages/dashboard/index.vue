@@ -100,7 +100,10 @@
                 </div>
                 <div v-else-if="pendingTickets.length === 0 && !isLoading" class="text-center py-5">
                   <i class="bi bi-calendar-x display-4 text-light-emphasis"></i>
-                  <p class="text-muted mt-3 txt-body fw-bold">Belum ada agenda kajian aktif.</p>
+                  <p class="text-muted mt-3 mb-2 txt-body fw-bold">Belum ada agenda kajian aktif.</p>
+                  <NuxtLink to="/" class="btn btn-outline-primary btn-sm rounded-pill px-4 shadow-sm txt-caption fw-bold">
+                    Cari Event
+                  </NuxtLink>
                 </div>
                 <div v-else-if="!isLoading" class="text-center py-5">
                   <p class="text-muted txt-body fw-bold">Belum ada tiket aktif.</p>

@@ -58,7 +58,12 @@
                     <th class="txt-label" style="width: 30%;">NAMA PESERTA</th>
                     <th class="txt-label" style="width: 25%;">KODE TIKET</th>
                     <th class="txt-label" style="width: 15%;">L/P</th>
-                    <th class="text-center pe-4 txt-label" style="width: 25%;">AKSI</th>
+                    <template v-if="globalStore.activeEventDays.length <= 1">
+                      <th class="text-center pe-4 txt-label" style="width: 25%;">KEHADIRAN</th>
+                    </template>
+                    <template v-else>
+                      <th v-for="day in globalStore.activeEventDays" :key="'th-'+day" class="text-center txt-label" style="width: 10%;">HARI KE-{{ day }}</th>
+                    </template>
                   </tr>
                 </thead>
                 <tbody>
@@ -68,14 +73,23 @@
                     <td><span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span></td>
                     <td class="text-muted txt-body">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }}</td>
                     
-                    <td class="text-center pe-4">
-                      <span v-if="item.status === 'hadir'" class="text-success fw-bold txt-body">
-                        <i class="bi bi-check2-all me-1"></i> {{ item.scanTime }} WIB
-                      </span>
-                      <button v-else @click="processManualCheckIn(item)" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-none txt-caption fw-bold" :disabled="isProcessing">
-                        <i class="bi bi-check-circle me-1"></i> Check In
-                      </button>
-                    </td>
+                    <template v-if="globalStore.activeEventDays.length <= 1">
+                      <td class="text-center pe-4 align-middle">
+                        <button @click="processManualCheckIn(item, '1')" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-none txt-caption fw-bold" :disabled="isProcessing">
+                          <i class="bi bi-check-lg me-1"></i> Check In
+                        </button>
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td v-for="day in globalStore.activeEventDays" :key="'td-'+day" class="text-center align-middle">
+                        <div v-if="item.scanTime && (item.scanTime as any)[day]" class="text-success fw-bold">
+                          <i class="bi bi-check-lg fs-4"></i>
+                        </div>
+                        <button v-else @click="processManualCheckIn(item, day)" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 shadow-none txt-caption fw-bold" :disabled="isProcessing">
+                          Check In
+                        </button>
+                      </td>
+                    </template>
                   </tr>
 
                   <tr v-if="paginatedData.length === 0">
@@ -146,7 +160,11 @@ await useAsyncData('attendance-manual-init', async () => {
 const filteredAttendees = computed(() => {
   if (!store.participants) return [];
   return store.participants.filter(item => {
-    if (item.status !== 'belum') return false;
+    // Cek apakah semua hari sudah di-absen
+    const allDaysCheckedIn = globalStore.activeEventDays.length > 0 && 
+                             globalStore.activeEventDays.every(day => item.scanTime && (item.scanTime as any)[day]);
+    if (allDaysCheckedIn) return false;
+
     return item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
            item.ticketId.toLowerCase().includes(searchQuery.value.toLowerCase());
   });
@@ -154,31 +172,37 @@ const filteredAttendees = computed(() => {
 
 const { perPage, currentPage, totalPages, totalItems, paginatedData, changePage } = usePagination(filteredAttendees, 10);
 
-const processManualCheckIn = (item: any) => {
-  swalConfirm(
-    'Check-In Manual?',
-    `Konfirmasi kehadiran untuk ${item.name}`,
-    'Ya, Hadirkan!',
-    async () => {
-      isProcessing.value = true;
-      try {
-        const response = await store.markManualAttendance(item.pk, item.ticketId);
-        if (!response.success) {
-          Swal.showValidationMessage(response.message ?? 'Gagal memproses absen');
-        }
-        return response;
-      } catch (error: any) {
-        Swal.showValidationMessage('Terjadi kesalahan sistem.');
-        return { success: false };
-      } finally {
-        isProcessing.value = false;
+const processManualCheckIn = async (item: any, day: string) => {
+  const label = globalStore.activeEventDays.length > 1 ? `Hari Ke-${day}` : 'Kehadiran';
+  
+  const result = await swalConfirm(
+    `Check In Manual (${label})`,
+    `Apakah Anda yakin ingin melakukan check in manual untuk peserta ${item.name}?`,
+    'Ya, Check In'
+  );
+
+  if (result.isConfirmed) {
+    isProcessing.value = true;
+    try {
+      // NOTE UNTUK BACKEND: Pastikan API tetap mengembalikan data ini jika peserta belum absen SEMUA sesi
+      const payload: Record<string, boolean> = { [day]: true };
+      const res = await store.markManualAttendance(item.pk, item.ticketId, payload);
+      
+      if (res.success) {
+        swalAlert('Berhasil', `Peserta berhasil check-in manual untuk ${label}.`, 'success');
+        if (!item.scanTime) item.scanTime = {};
+        item.scanTime[day] = new Date().toISOString(); // Local update
+        item.status = 'hadir'; // Status is mainly symbolic now
+      } else {
+        swalAlert('Gagal', res.message || 'Terjadi kesalahan saat check-in.', 'error');
       }
+    } catch (error) {
+      console.error("Manual CheckIn Error:", error);
+      swalAlert('Error', 'Gagal terhubung ke server.', 'error');
+    } finally {
+      isProcessing.value = false;
     }
-  ).then((result) => {
-    if (result.isConfirmed && result.value?.success) {
-      swalAlert('Berhasil', `${item.name} berhasil diabsen!`, 'success');
-    }
-  });
+  }
 };
 </script>
 

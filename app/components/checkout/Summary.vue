@@ -91,12 +91,19 @@
       </table>
     </div>
 
-    <div class="d-flex justify-content-between mt-4">
+    <div class="mb-4 mt-2 p-3 bg-light rounded-3 border d-flex align-items-start gap-2">
+      <input class="form-check-input mt-1 shadow-none" type="checkbox" id="termsCheck" v-model="isTermsAccepted" style="flex-shrink: 0; width: 1.3em; height: 1.3em;">
+      <label class="form-check-label txt-caption fw-medium text-dark lh-sm pt-1" for="termsCheck" style="cursor: pointer;">
+        Saya telah membaca dan menyetujui <a href="#" class="text-primary fw-bold text-decoration-none" data-bs-toggle="modal" data-bs-target="#termsModal" @click.prevent>Syarat & Ketentuan</a> yang berlaku.
+      </label>
+    </div>
+
+    <div class="d-flex justify-content-between">
       <button class="btn btn-light border px-4 rounded-pill txt-body fw-bold text-muted" @click="store.setStep('select')" :disabled="loading">
         <i class="bi bi-arrow-left me-1"></i> Kembali
       </button>
 
-      <button class="btn btn-primary px-5 rounded-pill txt-body fw-bold shadow-sm" @click="handlePay" :disabled="loading">
+      <button class="btn btn-primary px-5 rounded-pill txt-body fw-bold shadow-sm" @click="handlePay" :disabled="loading || !isTermsAccepted">
         <span v-if="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
         {{ loading ? 'Memproses...' : 'Bayar Sekarang' }}
       </button>
@@ -107,6 +114,9 @@
   <a href="https://wa.me/628123456789" target="_blank" class="btn btn-success whatsapp-fab rounded-pill shadow-sm px-3 txt-body fw-bold d-inline-flex align-items-center mt-4">
     <i class="bi bi-whatsapp me-2 fs-5"></i> Bantuan
   </a>
+
+  <!-- Modal Syarat & Ketentuan -->
+  <CheckoutTermsModal />
 </template>
 
 <script setup lang="ts">
@@ -135,6 +145,7 @@ const { accessToken } = useAuth();
 const loading = ref(false);
 const error = ref<string | null>(null);
 const customDonation = ref<number | null>(null);
+const isTermsAccepted = ref(false);
 
 onMounted(() => {
   if (!store.paymentMethod) {

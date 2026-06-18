@@ -98,8 +98,12 @@
                     <th class="text-center txt-label" style="width: 4%;">NO</th>
                     <th class="txt-label" style="width: 32%;">INFORMASI PESERTA</th>
                     <th class="txt-label" style="width: 25%;">KODE TIKET</th>
-                    <th class="txt-label" style="width: 20%;">WAKTU MASUK</th>
-                    <th class="text-center txt-label" style="width: 12%;">STATUS</th>
+                    <template v-if="globalStore.activeEventDays.length <= 1">
+                      <th class="text-center txt-label" style="width: 20%;">KEHADIRAN</th>
+                    </template>
+                    <template v-else>
+                      <th v-for="day in globalStore.activeEventDays" :key="'th-'+day" class="text-center txt-label" style="width: 10%;">HARI KE-{{ day }}</th>
+                    </template>
                     <th class="text-center pe-4 txt-label" style="width: 10%;">SERTIFIKAT</th>
                   </tr>
                 </thead>
@@ -125,16 +129,22 @@
                     <td class="align-middle">
                       <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
                     </td>
-                    <td class="align-middle">
-                      <div v-if="item.scanTime" class="text-dark fw-medium txt-body">
-                        <i class="bi bi-clock me-1 text-success"></i> {{ dayjs(item.scanTime).format('HH:mm:ss') }} WIB
-                      </div>
-                    </td>
-                    <td class="text-center align-middle">
-                      <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 shadow-sm txt-label">
-                        Hadir
-                      </span>
-                    </td>
+                    <template v-if="globalStore.activeEventDays.length <= 1">
+                      <td class="text-center align-middle">
+                        <div v-if="item.scanTime && (item.scanTime as any)['1']" class="text-success fw-bold">
+                          <i class="bi bi-check-lg fs-4"></i>
+                        </div>
+                        <div v-else class="text-muted fw-bold fs-5">-</div>
+                      </td>
+                    </template>
+                    <template v-else>
+                      <td v-for="day in globalStore.activeEventDays" :key="'td-'+day" class="text-center align-middle">
+                        <div v-if="item.scanTime && (item.scanTime as any)[day]" class="text-success fw-bold">
+                          <i class="bi bi-check-lg fs-4"></i>
+                        </div>
+                        <div v-else class="text-muted fw-bold fs-5">-</div>
+                      </td>
+                    </template>
                     <td class="text-center pe-4 align-middle">
                       <button class="btn btn-link text-secondary" @click="openPreviewModal(item)" title="Preview Sertifikat">
                         <i class="bi bi-eye-fill fs-5"></i>
@@ -219,11 +229,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import dayjs from 'dayjs';
 import { useAttendanceStore } from '~/stores/attendance';
-import { useGlobalEventStore } from '~/stores/globalEvent'; 
+import { useGlobalEventStore } from '~/stores/globalEvent';
 import { usePagination } from '~/composables/usePagination';
 import { useAlert } from '~/utils/swal';
+import dayjs from 'dayjs';
+import Swal from 'sweetalert2';
 import { useRuntimeConfig } from '#app';
 
 const store = useAttendanceStore();
@@ -388,11 +399,17 @@ const handleExport = () => {
   }
   isExporting.value = true;
   try {
-    const headers = ['No', 'Nama Peserta', 'Kode Tiket', 'Gender', 'Umur', 'Waktu Masuk', 'Status'];
+    const isMultiDay = globalStore.activeEventDays.length > 1;
+    const dayHeaders = globalStore.activeEventDays.map(d => isMultiDay ? `Hari ke-${d}` : `Waktu Masuk`);
+    const headers = ['No', 'Nama Peserta', 'Kode Tiket', 'Gender', 'Umur', ...dayHeaders, 'Status (Semua)'];
+    
     const rows = store.participants.map((p, index) => {
+      const dayValues = globalStore.activeEventDays.map(d => {
+         return p.scanTime && (p.scanTime as any)[d] ? (p.scanTime as any)[d] : 'Belum Absen';
+      });
       return [
         index + 1, `"${p.name}"`, p.ticketId, p.gender === 'l' ? 'Ikhwan' : 'Akhwat',
-        p.age, p.scanTime || 'Belum Absen', p.status.toUpperCase()
+        p.age, ...dayValues, p.status.toUpperCase()
       ];
     });
 

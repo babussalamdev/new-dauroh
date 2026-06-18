@@ -151,7 +151,7 @@ const fetchEventsByMonth = async () => {
 const handleEventSelection = () => {
   const selected = activeEvents.value.find(e => e.SK === selectedEventSK.value);
   if (selected) {
-    globalStore.setActiveEvent(selected.SK, selected.Title);
+    globalStore.setActiveEvent(selected.SK, selected.Title, selected.Date);
     fetchEventDashboardData();
   }
 };
