@@ -96,15 +96,14 @@
                       >
                     </th>
                     <th class="text-center txt-label" style="width: 4%;">NO</th>
-                    <th class="txt-label" style="width: 32%;">INFORMASI PESERTA</th>
-                    <th class="txt-label" style="width: 25%;">KODE TIKET</th>
-                    <template v-if="globalStore.activeEventDays.length <= 1">
+                    <th class="txt-label" style="width: 45%;">INFORMASI PESERTA</th>
+                    <template v-if="displayDays.length <= 1">
                       <th class="text-center txt-label" style="width: 20%;">KEHADIRAN</th>
                     </template>
                     <template v-else>
-                      <th v-for="day in globalStore.activeEventDays" :key="'th-'+day" class="text-center txt-label" style="width: 10%;">HARI KE-{{ day }}</th>
+                      <th v-for="day in displayDays" :key="'th-'+day" class="text-center txt-label" style="width: 15%;">HARI KE-{{ day }}</th>
                     </template>
-                    <th class="text-center pe-4 txt-label" style="width: 10%;">SERTIFIKAT</th>
+                    <th class="text-center pe-4 txt-label" style="width: 15%;">SERTIFIKAT</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,10 +125,7 @@
                       <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
                       <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
                     </td>
-                    <td class="align-middle">
-                      <span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span>
-                    </td>
-                    <template v-if="globalStore.activeEventDays.length <= 1">
+                    <template v-if="displayDays.length <= 1">
                       <td class="text-center align-middle">
                         <div v-if="item.scanTime && (item.scanTime as any)['1']" class="text-success fw-bold">
                           <i class="bi bi-check-lg fs-4"></i>
@@ -138,7 +134,7 @@
                       </td>
                     </template>
                     <template v-else>
-                      <td v-for="day in globalStore.activeEventDays" :key="'td-'+day" class="text-center align-middle">
+                      <td v-for="day in displayDays" :key="'td-'+day" class="text-center align-middle">
                         <div v-if="item.scanTime && (item.scanTime as any)[day]" class="text-success fw-bold">
                           <i class="bi bi-check-lg fs-4"></i>
                         </div>
@@ -315,6 +311,29 @@ onMounted(() => {
 // Panggil API-nya lagi kalau admin ganti pilihan Event di atas
 watch(() => globalStore.activeEventSK, () => {
   loadAttendanceList();
+});
+
+const displayDays = computed(() => {
+  if (globalStore.activeEventDays.length > 1) {
+    return globalStore.activeEventDays;
+  }
+  
+  // Deteksi otomatis dari keys scanTime peserta jika list-event belum mengirim Date
+  let maxDays = 1;
+  store.participants.forEach(p => {
+    if (p.scanTime && typeof p.scanTime === 'object') {
+      const keys = Object.keys(p.scanTime).map(Number).filter(n => !isNaN(n));
+      if (keys.length > 0) {
+        maxDays = Math.max(maxDays, ...keys);
+      }
+    }
+  });
+
+  if (maxDays > 1) {
+    return Array.from({ length: maxDays }, (_, i) => String(i + 1));
+  }
+
+  return ['1'];
 });
 
 const filteredAttendees = computed(() => {

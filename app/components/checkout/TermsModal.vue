@@ -1,12 +1,12 @@
 <template>
-  <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+  <div class="modal fade" id="termsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
       <div class="modal-content border-0 shadow-lg rounded-4" style="max-height: 75vh;">
         <div class="modal-header border-bottom-0 pb-0">
           <h5 class="modal-title fw-bold text-dark txt-subtitle" id="termsModalLabel">
             <i class="bi bi-shield-check text-primary me-2"></i>Syarat & Ketentuan
           </h5>
-          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close" @click="$event.target.blur()"></button>
         </div>
         <div class="modal-body px-4 py-4 text-muted txt-body">
           <p class="mb-4 text-dark fw-medium">Dengan melakukan pembayaran, Anda dianggap telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan berikut:</p>
@@ -39,7 +39,7 @@
           </ul>
         </div>
         <div class="modal-footer border-top-0 pt-0">
-          <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm txt-body" data-bs-dismiss="modal">Saya Mengerti</button>
+          <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm txt-body" data-bs-dismiss="modal" @click="$event.target.blur()">Saya Mengerti</button>
         </div>
       </div>
     </div>

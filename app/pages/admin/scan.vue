@@ -8,17 +8,6 @@
 
         <h6 class="txt-subtitle text-dark mb-3">Arahkan ke QR-Code Peserta</h6>
 
-        <!-- DROPDOWN SESI JIKA LEBIH DARI 1 HARI -->
-        <div v-if="globalStore.activeEventDays.length > 1" class="mb-3 d-flex justify-content-center">
-          <div class="input-group input-group-sm" style="max-width: 200px;">
-            <span class="input-group-text bg-white border-end-0 text-primary"><i class="bi bi-calendar-event"></i></span>
-            <select class="form-select form-select-sm border-start-0 fw-bold text-primary" v-model="selectedDay">
-              <option v-for="day in globalStore.activeEventDays" :key="day" :value="day">
-                Sesi Hari Ke-{{ day }}
-              </option>
-            </select>
-          </div>
-        </div>
 
         <div class="mx-auto rounded-4 overflow-hidden border bg-light mb-4 position-relative"
           style="max-width: 250px; min-height: 250px;">
@@ -86,12 +75,6 @@ const globalStore = useGlobalEventStore();
 
 const loading = ref(false);
 const scanResult = ref<any>(null);
-const selectedDay = ref('1');
-
-// Set default day jika ada
-if (globalStore.activeEventDays.length > 0) {
-  selectedDay.value = globalStore.activeEventDays[0];
-}
 
 let scanner: any = null;
 let scannerStarted = false;
@@ -246,20 +229,27 @@ const processTicket = async (code: string) => {
       {
         AccessToken: token,
         PK: qrData.pk,
-        SK: qrData.sk,
-        Session: `hari_${selectedDay.value}` // TODO: Backend needs to support this parameter
+        SK: qrData.sk
       }
     );
 
     const beData = response.data;
+
+    let scanTimeStr = null;
+    if (beData.CheckIn && typeof beData.CheckIn === 'object') {
+      const times: string[] = Object.values(beData.CheckIn);
+      scanTimeStr = times.sort().reverse()[0];
+    } else if (typeof beData.CheckIn === 'string') {
+      scanTimeStr = beData.CheckIn;
+    }
 
     scanResult.value = {
       success: true,
       message: 'Check-in Berhasil',
       data: {
         participantName: beData.Name || 'Peserta',
-        time: beData.CheckIn
-          ? dayjs(beData.CheckIn).format('HH:mm:ss')
+        time: scanTimeStr
+          ? dayjs(scanTimeStr).format('HH:mm:ss')
           : dayjs().format('HH:mm:ss')
       }
     };

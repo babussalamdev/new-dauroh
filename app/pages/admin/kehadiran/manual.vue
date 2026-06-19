@@ -55,37 +55,39 @@
                 <thead>
                   <tr>
                     <th class="ps-4 txt-label" style="width: 5%;">NO</th>
-                    <th class="txt-label" style="width: 30%;">NAMA PESERTA</th>
-                    <th class="txt-label" style="width: 25%;">KODE TIKET</th>
-                    <th class="txt-label" style="width: 15%;">L/P</th>
-                    <template v-if="globalStore.activeEventDays.length <= 1">
+                    <th class="txt-label" style="width: 45%;">INFORMASI PESERTA</th>
+                    <template v-if="displayDays.length <= 1">
                       <th class="text-center pe-4 txt-label" style="width: 25%;">KEHADIRAN</th>
                     </template>
                     <template v-else>
-                      <th v-for="day in globalStore.activeEventDays" :key="'th-'+day" class="text-center txt-label" style="width: 10%;">HARI KE-{{ day }}</th>
+                      <th v-for="day in displayDays" :key="'th-'+day" class="text-center txt-label" style="width: 15%;">HARI KE-{{ day }}</th>
                     </template>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(item, index) in paginatedData" :key="item.ticketId">
                     <td class="ps-4 fw-medium text-muted txt-body">{{ (currentPage - 1) * perPage + index + 1 }}</td>
-                    <td class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</td>
-                    <td><span class="badge bg-light text-dark border font-monospace px-2 py-1 txt-body">{{ item.ticketId }}</span></td>
-                    <td class="text-muted txt-body">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }}</td>
+                    <td class="align-middle">
+                      <div class="fw-bold text-dark text-capitalize txt-body">{{ item.name }}</div>
+                      <div class="text-muted txt-caption">{{ item.gender === 'l' ? 'Ikhwan' : 'Akhwat' }} - {{ item.age }} thn</div>
+                    </td>
                     
-                    <template v-if="globalStore.activeEventDays.length <= 1">
+                    <template v-if="displayDays.length <= 1">
                       <td class="text-center pe-4 align-middle">
-                        <button @click="processManualCheckIn(item, '1')" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-none txt-caption fw-bold" :disabled="isProcessing">
+                        <button v-if="!(item.scanTime && (item.scanTime as any)['1'])" @click="processManualCheckIn(item, '1')" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-none txt-caption fw-bold">
                           <i class="bi bi-check-lg me-1"></i> Check In
                         </button>
+                        <div v-else class="text-success fw-bold">
+                          <i class="bi bi-check-lg fs-4"></i>
+                        </div>
                       </td>
                     </template>
                     <template v-else>
-                      <td v-for="day in globalStore.activeEventDays" :key="'td-'+day" class="text-center align-middle">
+                      <td v-for="day in displayDays" :key="'td-'+day" class="text-center align-middle">
                         <div v-if="item.scanTime && (item.scanTime as any)[day]" class="text-success fw-bold">
                           <i class="bi bi-check-lg fs-4"></i>
                         </div>
-                        <button v-else @click="processManualCheckIn(item, day)" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 shadow-none txt-caption fw-bold" :disabled="isProcessing">
+                        <button v-else @click="processManualCheckIn(item, day)" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 shadow-none txt-caption fw-bold">
                           Check In
                         </button>
                       </td>
@@ -143,7 +145,7 @@ definePageMeta({ layout: 'admin' });
 
 const store = useAttendanceStore();
 const globalStore = useGlobalEventStore();
-const { alert: swalAlert, confirm: swalConfirm } = useAlert();
+const { alert: swalAlert, confirm: swalConfirm, loading: swalLoading } = useAlert();
 const searchQuery = ref('');
 const isProcessing = ref(false);
 
@@ -161,13 +163,37 @@ const filteredAttendees = computed(() => {
   if (!store.participants) return [];
   return store.participants.filter(item => {
     // Cek apakah semua hari sudah di-absen
-    const allDaysCheckedIn = globalStore.activeEventDays.length > 0 && 
-                             globalStore.activeEventDays.every(day => item.scanTime && (item.scanTime as any)[day]);
+    const allDaysCheckedIn = displayDays.value.length > 0 && 
+                             displayDays.value.every(day => item.scanTime && (item.scanTime as any)[day]);
     if (allDaysCheckedIn) return false;
 
     return item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
            item.ticketId.toLowerCase().includes(searchQuery.value.toLowerCase());
   });
+});
+
+// Infer hari dari data peserta kalau BE belum ngasih Date object di list-event
+const displayDays = computed(() => {
+  if (globalStore.activeEventDays.length > 1) {
+    return globalStore.activeEventDays;
+  }
+  
+  // Deteksi otomatis dari keys scanTime peserta
+  let maxDays = 1;
+  store.participants.forEach(p => {
+    if (p.scanTime && typeof p.scanTime === 'object') {
+      const keys = Object.keys(p.scanTime).map(Number).filter(n => !isNaN(n));
+      if (keys.length > 0) {
+        maxDays = Math.max(maxDays, ...keys);
+      }
+    }
+  });
+
+  if (maxDays > 1) {
+    return Array.from({ length: maxDays }, (_, i) => String(i + 1));
+  }
+
+  return ['1'];
 });
 
 const { perPage, currentPage, totalPages, totalItems, paginatedData, changePage } = usePagination(filteredAttendees, 10);
@@ -182,11 +208,10 @@ const processManualCheckIn = async (item: any, day: string) => {
   );
 
   if (result.isConfirmed) {
-    isProcessing.value = true;
+    swalLoading('Memproses Check In...', 'Mohon tunggu sebentar');
     try {
-      // NOTE UNTUK BACKEND: Pastikan API tetap mengembalikan data ini jika peserta belum absen SEMUA sesi
-      const payload: Record<string, boolean> = { [day]: true };
-      const res = await store.markManualAttendance(item.pk, item.ticketId, payload);
+      // Panggil API dengan parameter hari secara langsung
+      const res = await store.markManualAttendance(item.pk, item.ticketId, day);
       
       if (res.success) {
         swalAlert('Berhasil', `Peserta berhasil check-in manual untuk ${label}.`, 'success');
@@ -197,10 +222,7 @@ const processManualCheckIn = async (item: any, day: string) => {
         swalAlert('Gagal', res.message || 'Terjadi kesalahan saat check-in.', 'error');
       }
     } catch (error) {
-      console.error("Manual CheckIn Error:", error);
-      swalAlert('Error', 'Gagal terhubung ke server.', 'error');
-    } finally {
-      isProcessing.value = false;
+      swalAlert('Gagal', 'Gagal melakukan check-in manual. Silakan coba lagi.', 'error');
     }
   }
 };

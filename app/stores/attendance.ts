@@ -42,9 +42,16 @@ export const useAttendanceStore = defineStore('attendance', () => {
       participants.value = rawData.map((p: any) => {
         let parsedScanTime = p.CheckIn || null;
         
-        // Kompatibilitas mundur: jika data di DB masih string (format lama), ubah ke format object dinamis
+        // Normalisasi format: jika data string, jadikan object. Jika object dengan prefix day_, hilangkan prefixnya.
         if (typeof parsedScanTime === 'string') {
           parsedScanTime = { "1": parsedScanTime };
+        } else if (parsedScanTime && typeof parsedScanTime === 'object') {
+          const normalized: Record<string, string> = {};
+          for (const key in parsedScanTime) {
+            const cleanKey = key.replace('day_', ''); // Ubah "day_3" jadi "3"
+            normalized[cleanKey] = parsedScanTime[key];
+          }
+          parsedScanTime = normalized;
         }
 
         return {
@@ -70,7 +77,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
   }
 
   // Fungsi untuk check-in Manual (Admin)
-  async function markManualAttendance(pk: string, sk: string, sessions: Record<string, boolean>) {
+  async function markManualAttendance(pk: string, sk: string, day: string) {
     try {
       const { $apiBase } = useNuxtApp() as any;
       const { accessToken } = useAuth();
@@ -78,14 +85,13 @@ export const useAttendanceStore = defineStore('attendance', () => {
       const payload = {
         AccessToken: accessToken.value,
         PK: pk,
-        SK: sk,
-        Sessions: sessions // TODO: Backend harus mengekstrak sesi mana saja yang dicentang
+        SK: sk
       };
 
-      await $apiBase.put('/update-attendance?type=admin', payload);
+      await $apiBase.put(`/update-attendance?type=admin&day=day_${day}`, payload);
 
-      // Auto-hapus peserta dari state jika saat ini lagi buka tab "not-present"
-      participants.value = participants.value.filter(p => p.ticketId !== sk);
+      // Catatan: Penghapusan peserta dari tabel tidak dilakukan di store,
+      // melainkan otomatis difilter oleh computed property di komponen Vue.
 
       return { success: true };
     } catch (error: any) {

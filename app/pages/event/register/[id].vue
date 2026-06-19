@@ -160,8 +160,9 @@
                   <span class="txt-title fw-bold text-primary lh-1">{{ formatCurrency(totalPrice) }}</span>
                 </div>
                 <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill txt-body fw-bold shadow-sm"
-                  :disabled="totalTickets === 0">
-                  Bayar Sekarang
+                  :disabled="totalTickets === 0 || isSubmitting">
+                  <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+                  {{ totalPrice === 0 ? 'Daftar Sekarang' : 'Bayar Sekarang' }}
                 </button>
               </div>
             </div>
@@ -399,6 +400,7 @@ const isSoldOut = computed(() => {
 const totalTickets = computed(() => formState.qtyIkhwan + formState.qtyAkhwat);
 const totalPrice = computed(() => (event.value?.Price || 0) * totalTickets.value);
 const isMaxReached = computed(() => totalTickets.value >= 4);
+const isSubmitting = ref(false);
 
 // --- METHODS ---
 const updateTicket = (type: 'ikhwan' | 'akhwat', change: number) => {
@@ -469,8 +471,12 @@ const formatCurrency = (val: number) => {
 };
 
 const handleSubmit = async () => {
-  checkoutStore.noRepay()
-  if (!event.value || !event.value.SK) return;
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+
+  try {
+    checkoutStore.noRepay()
+    if (!event.value || !event.value.SK) return;
 
   const userRole = (user.value?.role || user.value?.Role || "").toLowerCase();
   const isRegistrasi = userRole === 'registrasi';
@@ -568,6 +574,9 @@ const handleSubmit = async () => {
     if (checkoutStore.clearCheckout) checkoutStore.clearCheckout();
     checkoutStore.startCheckout(registrationData);
     router.push('/checkout');
+  }
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>

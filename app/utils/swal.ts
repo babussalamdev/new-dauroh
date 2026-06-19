@@ -55,5 +55,25 @@ export const useAlert = () => {
     });
   };
 
-  return { alert, confirm };
+  const loading = (title: string = 'Memproses...', text: string = 'Mohon tunggu sebentar') => {
+    return Swal.fire({
+      title,
+      text,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      width: '24rem',
+      padding: '1.25rem',
+      customClass: {
+        popup: 'rounded-4 shadow-sm border-0',
+        title: 'fs-5 fw-bold mb-1',
+        htmlContainer: 'txt-caption text-muted mt-0'
+      },
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  };
+
+  return { alert, confirm, loading };
 };
