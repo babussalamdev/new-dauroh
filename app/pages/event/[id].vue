@@ -456,18 +456,11 @@ const handleRegisterClick = async () => {
    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-:deep(.blog-body p) {
-   margin-bottom: 1.5rem;
-}
 
 :deep(.blog-body ul),
 :deep(.blog-body ol) {
    padding-left: 1.5rem;
-   margin-bottom: 1.5rem;
-}
 
-:deep(.blog-body li) {
-   margin-bottom: 0.5rem;
 }
 
 :deep(.blog-body h2) {

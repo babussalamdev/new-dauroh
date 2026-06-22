@@ -181,9 +181,12 @@ const fetchEventDashboardData = async () => {
         available: data.mixed?.totalNotSold || (data.ikhwan?.totalNotSold || 0) + (data.akhwat?.totalNotSold || 0),
         soldIkhwan: data.ikhwan?.totalSold || 0,
         soldAkhwat: data.akhwat?.totalSold || 0,
-        checkInTotal: data.mixed?.totalCheckedIn || (data.ikhwan?.totalCheckedIn || 0) + (data.akhwat?.totalCheckedIn || 0),
-        checkInIkhwan: data.ikhwan?.totalCheckedIn || 0,
-        checkInAkhwat: data.akhwat?.totalCheckedIn || 0
+        checkInRawMixed: data.mixed?.checkIn || null,
+        checkInRawIkhwan: data.ikhwan?.checkIn || null,
+        checkInRawAkhwat: data.akhwat?.checkIn || null,
+        checkInTotal: 0, // Fallback fields
+        checkInIkhwan: 0,
+        checkInAkhwat: 0
       };
     }
   } catch (error) {
