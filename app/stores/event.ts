@@ -47,6 +47,8 @@ const mapApiToEvent = (event: ApiEventRaw): Event => ({
   Status: event.Status || 'inactive',
   Description: event.Description || "",
   Whatsapp: event.Whatsapp || "",
+  Maps: event.Maps || "",
+  GroupLink: event.GroupLink || "",
 });
 
 const createEventPayload = (data: EventBasicData, accessToken: string, existingDate: any = {}) => {
@@ -61,6 +63,8 @@ const createEventPayload = (data: EventBasicData, accessToken: string, existingD
     Status: data.Status,
     Description: data.Description || "",
     Whatsapp: data.Whatsapp || "",
+    Maps: data.Maps || "",
+    GroupLink: data.GroupLink || "",
   };
   const g = payload.Gender;
   if (g === 'ikhwan') {
@@ -110,7 +114,9 @@ export const useEventStore = defineStore("event", () => {
   RegEndTime: '',
   isUnlimited: { total: false, ikhwan: false, akhwat: false },
   quotaValues: { total: 0, ikhwan: 0, akhwat: 0 },
-  status: 'active'
+  status: 'active',
+  Maps: '',
+  GroupLink: ''
 });
 
   // Getters
@@ -177,7 +183,9 @@ function resetDraftEvent() {
     HasRegStart: false, HasRegEnd: false, RegStartDate: '', RegStartTime: '', RegEndDate: '', RegEndTime: '',
     isUnlimited: { total: false, ikhwan: false, akhwat: false },
     quotaValues: { total: 0, ikhwan: 0, akhwat: 0 },
-    status: 'active'
+    status: 'active',
+    Maps: '',
+    GroupLink: ''
   };
 }
 

@@ -121,7 +121,8 @@ const openDetailModal = async (ticket: any) => {
     selectedTicketDetail.value = { 
       ...selectedTicketDetail.value, 
       participants: freshData.participants.length > 0 ? freshData.participants : selectedTicketDetail.value?.participants,
-      status: freshData.status || selectedTicketDetail.value?.status
+      status: freshData.status || selectedTicketDetail.value?.status,
+      GroupLink: freshData.GroupLink || selectedTicketDetail.value?.GroupLink
     };
   }
 };

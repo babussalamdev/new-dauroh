@@ -348,7 +348,8 @@ const openDetailParticipant = async (ticket) => {
     selectedTicket.value = {
       ...selectedTicket.value,
       participants: freshData.participants.length > 0 ? freshData.participants : selectedTicket.value.participants,
-      status: freshData.status || selectedTicket.value.status
+      status: freshData.status || selectedTicket.value.status,
+      GroupLink: freshData.GroupLink || selectedTicket.value.GroupLink
     };
   }
 };

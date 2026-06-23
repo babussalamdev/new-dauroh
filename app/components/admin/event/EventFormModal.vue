@@ -176,6 +176,27 @@
                   </div>
                 </div>
               </div>
+
+              <div class="col-md-6">
+                <label for="eventMapsModal" class="form-label txt-label fw-bold text-muted">Link Google Maps</label>
+                <div class="input-group modern-input-group">
+                  <span class="input-group-text border-0 bg-transparent text-danger ps-3 txt-body fw-bold">
+                    <i class="bi bi-geo-alt-fill"></i>
+                  </span>
+                  <input type="url" class="form-control border-0 bg-transparent ps-1 txt-body fw-bold text-dark" id="eventMapsModal" v-model="formState.Maps" placeholder="Cth: https://maps.app.goo.gl/...">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="eventGroupModal" class="form-label txt-label fw-bold text-muted">Link Grup WhatsApp Peserta</label>
+                <div class="input-group modern-input-group">
+                  <span class="input-group-text border-0 bg-transparent text-success ps-3 txt-body fw-bold">
+                    <i class="bi bi-link-45deg"></i>
+                  </span>
+                  <input type="url" class="form-control border-0 bg-transparent ps-1 txt-body fw-bold text-dark" id="eventGroupModal" v-model="formState.GroupLink" placeholder="Cth: https://chat.whatsapp.com/...">
+                </div>
+              </div>
+
             </div>
           </form>
         </div>
@@ -327,6 +348,8 @@ watch(() => props.show, (newVal) => {
 
       draft.Price = d.Price || 0;
       draft.Whatsapp = d.Whatsapp || '';
+      draft.Maps = d.Maps || '';
+      draft.GroupLink = d.GroupLink || '';
       draft.status = d.Status || 'inactive';
 
       if (d.Registration) {
@@ -434,6 +457,8 @@ const save = () => {
     Quota_Ikhwan: finalQuotaIkhwan,
     Quota_Akhwat: finalQuotaAkhwat,
     Status: draft.status,
+    Maps: draft.Maps,
+    GroupLink: draft.GroupLink,
     Registration: { start_registration: startString, end_registration: endString }
   };
 

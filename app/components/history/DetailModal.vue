@@ -10,8 +10,15 @@
 
         <div class="modal-body">
           <div v-if="ticket" class="mb-3">
-            <h6 class="text-primary txt-body fw-bold mb-1">{{ ticket.Title || ticket.title || ticket.event?.Title }}</h6>
-            <span class="text-muted txt-caption">ID: {{ ticket.SK }}</span>
+            <h6 class="text-primary txt-body fw-bold mb-1 text-capitalize">{{ ticket.Title }}</h6>
+            <div v-if="ticket.GroupLink && getSmartStatus(ticket) === 'SUCCESSFUL'" class="mt-2 d-flex align-items-center justify-content-between bg-success bg-opacity-10 rounded-3 p-2 border border-success border-opacity-25">
+              <span class="txt-caption text-success-emphasis fw-medium mb-0 me-2" style="font-size: 0.75rem; line-height: 1.2;">
+                Silakan gabung grup untuk info lebih lanjut.
+              </span>
+              <a :href="ticket.GroupLink" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 py-1 txt-caption fw-bold shadow-sm flex-shrink-0">
+                <i class="bi bi-whatsapp"></i> Join
+              </a>
+            </div>
           </div>
 
           <div class="card bg-light border-0 rounded-3 overflow-hidden" v-if="ticket">
@@ -27,7 +34,7 @@
                 <tr v-for="(p, idx) in (Array.isArray(ticket?.participants) ? ticket?.participants : ticket?.Participant)" :key="idx">
                   <td class="ps-3 py-2 align-middle">
                     <div class="fw-bold text-dark txt-body text-capitalize">{{ p.Name }}</div>
-                    <span class="text-muted txt-caption">{{ p.Gender || 'Umum' }}</span>
+                    <span class="text-muted txt-caption text-capitalize">{{ p.Gender || 'Umum' }} - {{ p.Age }} Tahun </span>
                   </td>
 
                   <td class="text-center py-2 align-middle">

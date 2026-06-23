@@ -27,6 +27,8 @@ export interface ApiEventRaw {
   Status?: string;
   Description?: string;
   Whatsapp?: string;
+  Maps?: string;
+  GroupLink?: string;
 }
 
 export interface Event {
@@ -49,6 +51,8 @@ export interface Event {
   Description?: string;
   isDetailFetched?: boolean;
   Whatsapp?: string;
+  Maps?: string;
+  GroupLink?: string;
 }
 
 export interface EventBasicData {
@@ -64,6 +68,8 @@ export interface EventBasicData {
   Status: string;
   Description?: string;
   Whatsapp?: string;
+  Maps?: string;
+  GroupLink?: string;
 }
 
 export interface EventSchedulePayload {

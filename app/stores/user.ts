@@ -175,12 +175,14 @@ export const useUserStore = defineStore("user", () => {
             ...tickets.value[index], 
             participants: freshParticipants.length > 0 ? freshParticipants : tickets.value[index]?.participants,
             status: newData?.Status || tickets.value[index]?.status,
-            Status: newData?.Status
+            Status: newData?.Status,
+            GroupLink: newData?.GroupLink || tickets.value[index]?.GroupLink
           } as any; 
         }
         return {
           participants: freshParticipants,
-          status: newData?.Status
+          status: newData?.Status,
+          GroupLink: newData?.GroupLink
         };
       }
       return null;

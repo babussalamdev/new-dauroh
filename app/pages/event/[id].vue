@@ -171,16 +171,16 @@
                         </div>
                      </div>
 
-                     <!-- DUMMY LOKASI EVENT MAP -->
-                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
+                     <!-- LOKASI EVENT MAP -->
+                     <div v-if="event.Maps" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border">
                         <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
                            <h6 class="fw-bold text-dark m-0 d-flex align-items-center gap-2 txt-subtitle">
                               <i class="bi bi-geo-alt-fill text-danger"></i> Lokasi Event
                            </h6>
                         </div>
                         <div class="card-body p-4">
-                           <a href="https://maps.app.goo.gl/yjs96J4n19Qam1pP6" target="_blank" class="d-block rounded-3 overflow-hidden border position-relative text-decoration-none" style="height: 150px;">
-                              <img src="~/assets/img/iframe.png" alt="Lokasi Peta" class="w-100 h-100" style="object-fit: cover; opacity: 0.8;">
+                           <a :href="event.Maps" target="_blank" class="d-block rounded-3 overflow-hidden border position-relative text-decoration-none" style="height: 150px;">
+                              <img src="~/assets/img/googlemaps.jpg" alt="Lokasi Peta" class="w-100 h-100" style="object-fit: cover; opacity: 0.8;">
                               <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-10 transition-all hover-opacity-50">
                                  <div class="bg-white text-dark px-3 py-2 rounded-pill fw-bold shadow-sm txt-caption d-flex align-items-center gap-2 hover-up">
                                     <i class="bi bi-box-arrow-up-right text-primary"></i> Buka Maps

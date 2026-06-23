@@ -89,6 +89,22 @@
               </div>
 
               <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted txt-caption">Google Maps</span>
+                <span class="txt-body fw-bold text-end text-truncate" style="max-width: 140px;">
+                  <a v-if="eventData.Maps" :href="eventData.Maps" target="_blank" class="text-primary text-decoration-none">Buka Link</a>
+                  <span v-else>-</span>
+                </span>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="text-muted txt-caption">Grup WA</span>
+                <span class="txt-body fw-bold text-end text-truncate" style="max-width: 140px;">
+                  <a v-if="eventData.GroupLink" :href="eventData.GroupLink" target="_blank" class="text-primary text-decoration-none">Buka Link</a>
+                  <span v-else>-</span>
+                </span>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-start">
                 <span class="text-muted txt-caption">Kuota</span>
                 <div class="text-end">
                   
