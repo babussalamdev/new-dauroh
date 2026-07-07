@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { useStorage } from "@vueuse/core";
 import { useEventStore } from "~/stores/event";
 // import { useCheckoutStore } from "./checkout";
 import { useToastStore } from "./toast";
@@ -9,7 +8,7 @@ import type { Participant, UserTicket } from "~/types/user";
 
 export const useUserStore = defineStore("user", () => {
   // --- STATE ---
-  const tickets = useStorage<UserTicket[]>("user_tickets_v2", []);
+  const tickets = ref<UserTicket[]>([]);
   // const user = ref<UserProfile | null>(null);
   const isLoading = ref(false);
   const hasFetched = ref(false);
@@ -44,7 +43,9 @@ export const useUserStore = defineStore("user", () => {
     isLoading.value = false;
   }
 
-  async function fetchUserTransactions() {
+  async function fetchUserTransactions(force = false) {
+    if (hasFetched.value && !force) return;
+
     const { $apiBase } = useNuxtApp();
     if (!$apiBase) return;
 
@@ -108,6 +109,11 @@ export const useUserStore = defineStore("user", () => {
       );
     } catch (error) {
       console.error("Fetch Transactions Error:", error);
+      const toastStore = useToastStore();
+      toastStore.showToast({
+        message: "Gagal memuat riwayat tiket. Periksa koneksi Anda.",
+        type: "danger"
+      });
     } finally {
       isLoading.value = false;
       hasFetched.value = true;
@@ -188,6 +194,11 @@ export const useUserStore = defineStore("user", () => {
       return null;
     } catch (error) {
       console.error("Gagal mengambil detail tiket dari API:", error);
+      const toastStore = useToastStore();
+      toastStore.showToast({
+        message: "Gagal memuat detail tiket. Periksa koneksi Anda.",
+        type: "danger"
+      });
       return null;
     }
   }

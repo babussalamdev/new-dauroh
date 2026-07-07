@@ -83,7 +83,7 @@
                         <div class="p-3 ps-1 d-flex flex-column justify-content-between flex-grow-1">
                           <div>
                             <h6 class="fw-bold mb-1 text-truncate-2 txt-body">{{ ticket.event?.Title || ticket.Title }}</h6>
-                            <p class="text-muted txt-caption fw-bold mb-0"><i class="bi bi-calendar-event me-1"></i>{{ formatTicketDate(ticket.event?.Date) }}</p>
+                            <p class="text-muted txt-caption fw-bold mb-0"><i class="bi bi-calendar-event me-1"></i>{{ formatEventDates(ticket.event?.Date) }}</p>
                           </div>
                           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-auto pt-2">
                             <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle txt-caption fw-bold text-nowrap">
@@ -410,6 +410,7 @@ const formatTicketDate = (dateObj) => {
 .text-truncate-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

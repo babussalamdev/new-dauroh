@@ -206,6 +206,7 @@ function resetDraftEvent() {
         .map((event: ApiEventRaw) => mapApiToEvent(event));
     } catch (error) {
       console.error(error);
+      useToastStore().showToast({ message: "Gagal memuat event publik. Periksa koneksi Anda.", type: "danger" });
     } finally {
       loading.tiketEvent = false;
     }
@@ -234,6 +235,7 @@ function resetDraftEvent() {
     userLogs.value = rawLogs;
   } catch (error) {
     console.error(error);
+    useToastStore().showToast({ message: "Gagal memuat event. Periksa koneksi Anda.", type: "danger" });
   } finally {
     loading.tiketEvent = false;
   }
@@ -249,6 +251,7 @@ function resetDraftEvent() {
       adminTiketEvent.value = Array.isArray(data) ? data.map(mapApiToEvent) : [];
     } catch (error) {
       console.error(error);
+      useToastStore().showToast({ message: "Gagal memuat data admin. Periksa koneksi Anda.", type: "danger" });
     } finally {
       loading.adminTiketEvent = false;
     }
@@ -329,6 +332,7 @@ async function fetchEventDetail(SK: string) {
       }
     } catch (error) {
       console.error('Gagal fetch event detail:', error);
+      useToastStore().showToast({ message: "Gagal memuat detail event.", type: "danger" });
     } finally {
       loading.detail = false;
     }
@@ -346,6 +350,7 @@ async function fetchEventDetail(SK: string) {
       return res.data?.event || res.data; 
     } catch (error) {
       console.error(`Gagal mengambil data view untuk type ${viewType}:`, error);
+      useToastStore().showToast({ message: "Gagal mengambil data. Periksa koneksi Anda.", type: "danger" });
       return null;
     }
   }
