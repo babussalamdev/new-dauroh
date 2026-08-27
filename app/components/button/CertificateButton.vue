@@ -14,6 +14,7 @@
 import { ref } from 'vue';
 import { jsPDF } from 'jspdf';
 import { useNuxtApp, useRuntimeConfig } from '#app';
+import { useAlert } from '~/utils/swal';
 
 const props = defineProps({
   pk: { type: String, required: true },  // ID Transaksi
@@ -24,6 +25,7 @@ const props = defineProps({
 const isGenerating = ref(false);
 const { $apiBase } = useNuxtApp();
 const config = useRuntimeConfig();
+const { alert: swalAlert } = useAlert();
 const imgBaseUrl = config.public.img || 'https://d29bixrlxe7n06.cloudfront.net';
 
 const downloadCertificate = async () => {
@@ -112,7 +114,7 @@ const downloadCertificate = async () => {
 
   } catch (error: any) {
     console.error("Gagal cetak sertifikat:", error);
-    alert(error.message || "Terjadi kesalahan saat mengunduh sertifikat.");
+    swalAlert('Gagal Mengunduh', error.message || "Terjadi kesalahan saat mengunduh sertifikat.", 'error');
   } finally {
     isGenerating.value = false;
   }

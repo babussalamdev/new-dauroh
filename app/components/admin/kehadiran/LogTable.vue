@@ -377,6 +377,19 @@ const handleBagikanSertifikat = () => {
     if (result.isConfirmed) {
       isDistributing.value = true;
       try {
+        // VALIDASI: Cek dulu apakah Event ini udah punya desain sertifikat (pakai data peserta pertama)
+        const firstTicketId = selectedParticipants.value[0];
+        const firstParticipant = store.participants.find(p => p.ticketId === firstTicketId);
+        
+        if (firstParticipant) {
+          const checkRes = await store.fetchCertificatePreview(firstParticipant.pk, firstTicketId, globalStore.activeEventSK);
+          if (!checkRes || !checkRes.Certificate_Configuration) {
+             swalAlert('Gagal', 'Desain sertifikat belum dibuat. Silakan upload desain sertifikat untuk event ini terlebih dahulu sebelum membagikannya!', 'warning');
+             isDistributing.value = false;
+             return; // Stop eksekusi
+          }
+        }
+
         const updatesPayload = selectedParticipants.value.map(ticketId => {
           const participant = store.participants.find(p => p.ticketId === ticketId);
           return { PK: participant?.pk, SK: ticketId, Eligible: "true" };

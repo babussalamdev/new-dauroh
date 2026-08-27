@@ -1,7 +1,7 @@
 .auth-container {
   display: flex;
   min-height: 100vh;
-  background: url("~/assets/img/city-rain.jpg") no-repeat center center/cover;
+  background-color: transparent; /* Transparan agar animasi spotlight di layout terlihat */
 }
 
 .auth-overlay {
@@ -11,7 +11,7 @@
   flex: 1;
   width: 100%;
   padding: 2rem 1rem;
-  background-color: rgba(0, 0, 0, 0.55);
+  /* Hapus background transparan hitam karena udah nggak pakai gambar */
 }
 
 .auth-box {
